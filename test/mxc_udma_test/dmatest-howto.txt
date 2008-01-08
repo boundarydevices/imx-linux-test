@@ -1,0 +1,176 @@
+
+/*********************************************/
+/*        DmaTest Howto-For Mx21 only        */
+/*        Jan.15th, 2006                      */
+/*********************************************/
+
+1.Use "zmrx" to download mxc_dma_testdriver.o & test.elf to /tmp directory;
+
+
+2. #chmod +x mxc_dma_test.out
+
+3. #insmod mxc_dma_testdriver.ko 
+
+It would echo:
+Using mxc_dma_testdriver.ko
+register virtual dma driver.
+dma major number = 253
+
+***********Comment
+Make sure that current working path is "/tmp", because the test programme would open 
+dma device in "/tmp/dma".
+
+
+4. # mknod dma c 253 0 
+
+5. #./mxc_dma_test.out 0
+The parameter of test.elf would be:
+
+0 test 1d-1d linear DMA. 
+1 test 2d-2d linear DMA. 
+2 test 1d-2d linear DMA. 
+3 test 2d-1d linear DMA. 
+4 test multiple request buffers 
+5 test multiple request buffers by dma chaining for mx27 *******1
+
+eg.:
+#./mxc_dma_test.out 4 0 0 0 0 0 0 0 200 1 4 0
+means   
+
+SourceMode = DMA_TYPE_LINEAR;          
+DestMode = DMA_TYPE_LINEAR;            
+SourcePort = DMA_MEM_SIZE_32;          
+DestPort = DMA_MEM_SIZE_32;            
+X = 0;                   
+Y = 0;                   
+W = 0;                   
+Count = 200;               
+Direction = ADDR_DEC;          
+BurstLength = 4;        
+Repeat = 0;             
+
+
+
+
+*******1 Comment: Other para is needed:
+The next para means the transfer times of the chain. It should between 1 to 4;
+
+eg.: #./mxc_dma_test.out 5 4
+means Test 4 Chain Buffer Dma.
+
+
+6. View a succest report:
+Fill 1d mem c2650000
+==========dma transfer is success==========
+dma transfer complete: error =0
+Verify 1d mem c2652000,x=175,pÄ0Ü175
+PASSED
+
+
+===========check the status of DMA module
+
+
+7. View a Failed report:
+Get chainbuffer 0 verify
+i = 0, Exp 145:0
+i = 1, Exp 88:0
+i = 2, Exp 17:0
+i = 3, Exp 41:0
+i = 4, Exp 235:0
+i = 5, Exp 37:0
+i = 6, Exp 69:0
+i = 7, Exp 51:0
+i = 8, Exp 87:0
+i = 9, Exp 226:0
+Verify 1d mem c2cb1000,x=175,p[10]=0
+i = 10, Exp 175:0
+i = 11, Exp 40:0
+i = 12, Exp 36:0
+i = 13, Exp 103:0
+i = 14, Exp 75:0
+i = 15, Exp 32:0
+i = 16, Exp 5:0
+i = 17, Exp 195:0
+i = 18, Exp 166:0
+i = 19, Exp 68:0
+i = 20, Exp 150:0
+i = 21, Exp 25:0
+i = 22, Exp 171:0
+i = 23, Exp 92:0
+i = 24, Exp 225:0
+i = 25, Exp 191:0
+i = 26, Exp 61:0
+i = 27, Exp 3:0
+i = 28, Exp 229:0
+i = 29, Exp 68:0
+i = 30, Exp 94:0
+i = 31, Exp 166:0
+i = 32, Exp 104:0
+i = 33, Exp 51:0
+i = 34, Exp 209:0
+i = 35, Exp 2:0
+i = 36, Exp 69:0
+i = 37, Exp 36:0
+i = 38, Exp 89:0
+i = 39, Exp 59:0
+i = 40, Exp 16:0
+i = 41, Exp 215:0
+i = 42, Exp 230:0
+i = 43, Exp 158:0
+i = 44, Exp 184:0
+i = 45, Exp 130:0
+i = 46, Exp 198:0
+i = 47, Exp 79:0
+i = 48, Exp 59:0
+i = 49, Exp 161:0
+i = 50, Exp 143:0
+i = 51, Exp 193:0
+i = 52, Exp 206:0
+i = 53, Exp 48:0
+i = 54, Exp 18:0
+i = 55, Exp 83:0
+i = 56, Exp 66:0
+i = 57, Exp 104:0
+i = 58, Exp 7:0
+i = 59, Exp 31:0
+i = 60, Exp 246:0
+i = 61, Exp 149:0
+i = 62, Exp 222:0
+i = 63, Exp 124:0
+i = 64, Exp 222:0
+i = 65, Exp 83:0
+i = 66, Exp 34:0
+i = 67, Exp 21:0
+i = 68, Exp 213:0
+i = 69, Exp 158:0
+i = 70, Exp 36:0
+i = 71, Exp 221:0
+i = 72, Exp 72:0
+i = 73, Exp 197:0
+i = 74, Exp 179:0
+i = 75, Exp 18:0
+i = 76, Exp 155:0
+i = 77, Exp 39:0
+i = 78, Exp 63:0
+i = 79, Exp 6:0
+i = 80, Exp 168:0
+i = 81, Exp 21:0
+i = 82, Exp 211:0
+i = 83, Exp 78:0
+i = 84, Exp 51:0
+i = 85, Exp 220:0
+i = 86, Exp 139:0
+i = 87, Exp 43:0
+i = 88, Exp 159:0
+i = 89, Exp 235:0
+i = 90, Exp 45:0
+i = 91, Exp 66:0
+i = 92, Exp 115:0
+i = 93, Exp 1:0
+i = 94, Exp 101:0
+i = 95, Exp 14:0
+i = 96, Exp 129:0
+i = 97, Exp 115:0
+i = 98, Exp 78:0
+Fail!
+ 
