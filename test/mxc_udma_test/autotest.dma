@@ -1,0 +1,20 @@
+#! /bin/sh
+cd /tmp
+echo 'Starting Dma Test . . .'
+export HOME=/tmp
+export PATH=.:/tmp:$PATH
+insmod /drivers/mxc_udma_testdriver.ko
+major=`cat /proc/devices | grep dma | sed -e 's/dma//' | sed -e 's/ //'`
+mknod dma c $major 0
+echo 'Starting 1D to 1D Linear Dma Test . . .'
+/test/mxc_dma_test.out 0
+echo 'Starting 2D to 2D Dma Test . . .'
+/test/mxc_dma_test.out 1
+echo 'Starting 1D to 2D Dma Test . . .'
+/test/mxc_dma_test.out 2
+echo 'Starting 2D to 1D Dma Test . . .'
+/test/mxc_dma_test.out 3
+echo 'Starting multiple request buffer . . .'
+/test/mxc_dma_test.out 4 3
+echo 'Starting multiple request buffer by dma chainningfor mx27. . .'
+/test/mxc_dma_test.out 5 3
