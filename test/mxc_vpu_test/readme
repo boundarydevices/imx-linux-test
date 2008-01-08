@@ -1,0 +1,82 @@
+Some examples:
+
+For H.264 decode
+./mxc_vpu_test.out -D "-i /usr/vectors/h264/vga.264 -f 2"
+
+For MPEG4 decode with rotation
+./mxc_vpu_test.out -D "-i /usr/vectors/mp4/d1.mpeg4 -f 0 -r 90"
+
+Using the config file
+./mxc_vpu_test.out -C config_dec
+
+For H.264 encode
+./mxc_vpu_test.out -E "-o out.264 -w 240 -h 320 -f 2"
+
+Doing a simultaneous encode and decode
+./mxc_vpu_test.out -E "-o enc.264 -w 176 -h 144 -f 0" -D "-i /vectors/vga.264 -f 2"
+
+Using the loopback test (The enocoded image from the camera is decoded immediately)
+./mxc_vpu_test.out -L "-f 2 -w 240 -h 320"
+
+Network use case:
+
+Board 1 (IP = 10.0.0.1)
+./mxc_vpu_test.out -D "-f 2" -E "-n 10.0.0.2 -w 240 -h 320 -f 2"
+
+Board 2 (IP = 10.0.0.2)
+./mxc_vpu_test.out -D "-f 2" -E "-n 10.0.0.1 -w 240 -h 320 -f 2"
+
+
+Usage: ./mxc_vpu_test.out -D "<decode options>" -E "<encode options>" -L "<loopback options>" -C <config file> -H display this help
+
+decode options
+   -i <input file> Read input from file
+        If no input file is specified, default is network
+   -o <output file> Write output to file
+        If no output is specified, default is LCD
+   -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+        If no format specified, default is 0 (MPEG4)
+   -p <port number> UDP port number to bind
+        If no port number is secified, 5555 is used
+   -c <count> Number of frames to decode
+   -d <deblocking> Enable deblock - 1. Not for MX27
+        default deblock is disabled (0).
+   -r <rotation angle> 0, 90, 180, 270
+        default rotation is disabled (0)
+   -m <mirror direction> 0, 1, 2, 3
+        default no mirroring (0)
+
+encode options
+   -i <input file> Read input from file (yuv)
+        If no input file specified, default is camera
+   -o <output file> Write output to file
+        This option will be ignored if 'n' is specified
+        If no output is specified, def files are created
+   -n <ip address> Send output to this IP address
+   -p <port number> UDP port number at server
+        If no port number is secified, 5555 is used
+   -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+        If no format specified, default is 0 (MPEG4)
+   -c <count> Number of frames to encode
+   -r <rotation angle> 0, 90, 180, 270
+        default rotation is disabled (0)
+   -m <mirror direction> 0, 1, 2, 3
+        default no mirroring (0)
+   -w <width> capture image width
+        default is 176.
+   -h <height>capture image height
+        default is 144
+   -b <bitrate in kbps>
+        default is auto (0)
+   -g <gop size>
+        default is 0
+
+loopback options
+   -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+        If no format specified, default is 0 (MPEG4)
+   -w <width> capture image width
+        default is 176.
+   -h <height>capture image height
+        default is 144
+
+config file - Use config file for specifying options
