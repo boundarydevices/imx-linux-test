@@ -1,0 +1,203 @@
+#
+# Tools to play/record a file:
+#
+tool_player
+tool_listplayer
+check_2play_capability
+tool_recorder
+
+
+#
+# Tools to test audio and mixer IOCTLs
+#
+check_minor_open check_open_limitation
+check_2w1r
+check_balance
+check_ioctls
+check_audio_config
+check_volume
+
+
+#
+#Debugging tools (should not be use for unitary tests)
+#
+tool_dump_ssi_registers
+tool_playd
+tool_readreg
+tool_writereg
+check_device_selection
+check_outsrc
+check_ssi_sisr
+tool_loopback
+
+#
+# General remarks
+#
+1/ arguments <arg> are mandatory
+2/ arguments [arg] are optional
+3/ argument order is important (no switch)
+4/ when not argument are specified, the help is displayed
+5/ to compile:
+	- set the CC value in Makefile to the correct path
+	- type "make all" or "make <app_name>"
+	- you can also type "make tar" to tar all the executables
+
+
+#
+# tool_player 
+#
+description:
+        Plays the file to /dev/dspX (uncompressed data)
+usage:
+        tool_player <device> <ssi_nb> <soundfile.wav> [nb_loops]
+	device : 0 for stdac; 1 for codec
+        ssi_nb : 1 for SSI1, 2 for SSI2
+        nb_loops : number of times the current file is played
+
+
+#
+# tool_listplayer 
+#
+description:
+        Plays the playlist to /dev/dspX (uncompressed data)
+usage:
+        tool_listplayer <ssi_nb> <playlist.txt> <file_loop> <list_loop> [device]
+        ssi_nb : 1 for SSI1, 2 for SSI2
+        file_loop : number of times the current file is played
+        list_loop : number of times the playlist is played
+        device : 0 for StDac, 1 for Codec
+
+
+#
+# check_2play_capability 
+#
+description:
+        Plays two file to /dev/dsp and /dev/dsp1 (uncompressed data)
+usage:
+        tool_listplayer <device> <file1.wav> <file2.wav> [nb_loops]
+        nb_loops : number of times the current file is played
+        device : 0 for StDac, 1 for Codec
+
+
+#
+# tool_recorder
+#
+description:
+        Records the file from /dev/dspX (uncompressed data)
+usage:
+        tool_player <ssi_nb> <soundfile.wav> <source> <bytes> [b f c]
+        ssi_nb : 1 for SSI1 or 2 for SSI2
+        source: 1:handset, 2:headset, 3: line in
+        b = bits number
+        f = frequency
+        c = channel count
+note:
+        Record on SSI2 not yet supported by the driver
+
+
+#
+# tool_loopback
+#
+description:
+        
+usage:
+        loopback <source> <type> <bytes> [b f c]. Plays data recorded (loopback at SSI level)
+	source: 1:handset, 2:headset, 3: line in
+	type: 1:kernel space loopback(SSI1)
+	type: 2:kernel space loopback(SSI2)
+        type: 3:user space loopback (SSI1)
+        type: 4:user space loopback (SSI2)
+        type: 5:user space loopback (SSI1->SSI2)
+        type: 6:user space loopback (SSI2->SSI1)
+	b = bits number
+	f = frequency
+	c = channel count
+note:
+        Record on SSI2 not yet supported by the driver
+
+
+#
+# check_minor_open and check_open_limitation
+#
+description:
+        This program checks that it is possible to open only once a driver instance
+usage:
+        check_minor_open <number of installed driver instances>
+note:
+        MXC platforms currently support up to 2 driver instances (2 SSIs)
+
+
+#
+# check_2w1r
+#
+description:
+        This program checks that it is possible to open the driver for 2W and 1R
+usage:
+        check_2w1r (no arg)
+
+
+
+#
+# check_balance
+#
+description:
+        This program reconfigures the balance and plays a file
+usage:
+        check_balance <soundfile.wav> <bal> [nb_loops] 
+        bal : the new balance setting; 0=full left; 50: none; 100: full right
+        nb_loops : number of times the current file is played
+
+
+#
+# check_ioctls
+#
+description:
+        This program checks some mixer and audio IOCTLs
+usage:
+        check_ioctls (no arg)
+
+
+#
+# check_audio_config
+#
+description:
+        This program checks advanced mixer and audio IOCTLs
+usage:
+        check_audio_config -file filename.wav -device d -inc i
+        d: 0 = StDAC, 1 = CODEC, 2 = StDAC + CODEC, 3 = ADDER
+        i: volume and balance increment during tests
+note:
+        type "check_audio_config -" to get access to help page
+
+
+#
+# check_outsrc
+#
+description:
+        This program forces the audio driver to play on a given source (debug)
+usage:
+        check_outsrc <ssi_nb> <soundfile.wav> <outsrc> [nb_loops]\n Plays the file to /dev/dspX (uncompressed data)
+        ssi_nb : 1 for SSI1, 2 for SSI2
+        outsrc : 0: earpiece, 1:handsfree, 2:headset, 3: line out
+        nb_loops : number of times the current file is played
+
+
+#
+# check_volume
+#
+description:
+        This application sets the volume and plays a file. R and L vol can be different
+usage:
+        check_volume <soundfile.wav> <L_vol> <R_vol> [nb_loops]\n Plays the file to /dev/dspX (uncompressed data)
+        nb_loops : number of times the current file is played
+        L_vol and R_vol are between 0 and 100 (-39 to +6 dB).
+        balance possible range is 0 -21 dB on a channel
+
+
+#
+# check_ssi_sisr
+#
+description:
+        This application allows the user to check the SSI fifo statuses update
+usage:
+        check_sisr <noarg>
