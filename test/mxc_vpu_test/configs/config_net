@@ -1,0 +1,93 @@
+# Write your options here!
+
+# Type of operation encode or decode; encode = 1, decode = 2
+operation=2
+
+# read input from file. For network, leave blank. If not specified for encode
+# then default is camera
+input=
+
+# write output to file. For decode, if not specified, then default is LCD
+output=
+
+# port number for server to listen. If none specified, default is 5555
+port=
+
+# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+format=2
+
+# rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
+rotation=
+
+# count, number of frames to encode or decode
+count=
+
+# deblocking . 1 - Enable deblock
+deblock=
+
+# mirroring (0, 1, 2 , 3)
+mirror=
+
+# width for encoding. This will be the capture/yuv image width
+width=
+
+# height for encoding. This will be the capture/yuv image height
+height=
+
+# bitrate. default is auto
+bitrate=
+
+# gop size. default is 0
+gop=
+
+# This option specifies the end of option list for one instance
+# Each option list must be end with this option. This is mandatory.
+end
+
+
+# Type of operation encode or decode; encode = 1, decode = 2
+operation=1
+
+# read input from file. leave blank for network. If not specified for encode
+# then default is camera
+input=
+
+# write output to file. For decode, if not specified, then default is LCD
+output=
+
+# send encoded data to server. specify server ip address
+ip=10.0.0.1
+
+# port number of server. If none specified, default is 5555.
+port=
+
+# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+format=2
+
+# rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
+rotation=
+
+# count, number of frames to encode or decode
+count=500
+
+# deblocking . 1 - Enable deblock
+deblock=
+
+# mirroring (0, 1, 2 , 3)
+mirror=
+
+# width for encoding. This will be the capture/yuv image width
+width=240
+
+# height for encoding. This will be the capture/yuv image height
+height=320
+
+# bitrate. default is auto
+bitrate=0
+
+# gop size. default is 0
+gop=0
+
+# This option specifies the end of option list for one instance
+# Each option list must be end with this option. This is mandatory.
+end

@@ -1,0 +1,76 @@
+ifdef VERBOSE
+	VERBOSE=
+else
+	VERBOSE=@
+endif
+
+AS		= $(CROSS_COMPILE)as
+LD		= $(CROSS_COMPILE)ld
+CC		= $(CROSS_COMPILE)gcc
+CPP		= $(CC) -E
+AR		= $(CROSS_COMPILE)ar
+NM		= $(CROSS_COMPILE)nm
+STRIP		= $(CROSS_COMPILE)strip
+OBJCOPY		= $(CROSS_COMPILE)objcopy
+OBJDUMP		= $(CROSS_COMPILE)objdump
+RM		= rm -f
+MAKEDIR		= mkdir -p
+
+CFLAGS 		+= -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
+	  	   -fno-strict-aliasing -fno-common
+AFLAGS		:= -D__ASSEMBLY__
+
+$(OBJDIR)/%.o : $(SRCDIR)/%.c
+	@mkdir -p `dirname $@`
+	@echo "     Building $@"
+	$(VERBOSE)$(CC) -c -g $(INC) $(CFLAGS) $< -o $@
+
+$(OBJDIR)/%.out : $(SRCDIR)/%.c
+	@mkdir -p `dirname $@`
+	@echo "     Building $@"
+	$(VERBOSE)$(CC) -g $(INC) $(CFLAGS) $< $(LIBS) -o $@
+
+$(OBJDIR)/%.out : $(SRCDIR)/%.s
+	@mkdir -p `dirname $@`
+	@echo "     Building $@"
+	$(VERBOSE)$(CC) -g $(INC) $(CFLAGS) -DASSEMBLER $< -o $@
+
+$(OBJDIR)/%.out : $(SRCDIR)/%.S
+	@mkdir -p `dirname $@`
+	@echo "     Building $@"
+	$(VERBOSE)$(CC) -g  $(INC) $(CFLAGS) -DASSEMBLER $< -o $@
+
+$(OBJDIR)/%.out : ./%.c
+	@mkdir -p `dirname $@`
+	@echo "     Building $@"
+	$(VERBOSE)$(CC) -g $(INC) $(CFLAGS) $< $(LIBS) -o $@
+
+$(OBJDIR)/%.out : ./%.S
+	@mkdir -p `dirname $@`
+	@echo "     Building $@"
+	$(VERBOSE)$(CC) -g $(INC) $(CFLAGS) -DASSEMBLER $< -o $@
+
+$(OBJDIR)/% : ./%.c
+	@mkdir -p `dirname $@`
+	@echo "     Building $@"
+	$(VERBOSE)$(CC) -g $(INC) $(CFLAGS) $< $(LIBS) -o $@
+
+$(OBJDIR)/%.d : %.c
+	$(VERBOSE)set -e; \
+	mkdir -p `dirname $@`; \
+	echo "Updating dependencies ..."; \
+	$(CC) $(CFLAGS) -MM $(INC) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(OBJDIR)/\1.o $@ : ,g' < $@.$$$$ > $@; \
+	/bin/rm -f $@.$$$$
+
+$(OBJDIR)/%.sh : ./%.sh
+	$(VERBOSE)mkdir -p `dirname $@`
+	$(VERBOSE)echo "     Copying $< to $@"
+	$(VERBOSE)cp -af $< $@
+	$(VERBOSE)chmod u+x $@
+
+$(OBJDIR)/%.sh : %.sh
+	$(VERBOSE)mkdir -p `dirname $@`
+	$(VERBOSE)echo "     Copying $< to $@"
+	$(VERBOSE)cp -af $< $@
+	$(VERBOSE)chmod u+x $@
