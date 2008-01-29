@@ -1,14 +1,8 @@
 TOPDIR	:= $(shell /bin/pwd)
 OBJDIR=$(TOPDIR)/platform/$(PLATFORM)/
 
-# Suffix for install dir (e.g. DESTDIR_SUFFIX=unittests)
-DESTDIR_SUFFIX=
-
 MISC_DIR := $(shell echo $(TOPDIR) | sed 's/^.*\///')
 PKG_NAME := $(MISC_DIR).tar.gz
-
-EXCLUDES := $(foreach ex, $(PKG_EXCLUDES), --exclude $(ex))
-EXCLUDES += --exclude $(PKG_NAME)
 
 #
 # ltib requires CROSS_COMPILE to be undefined
@@ -32,38 +26,19 @@ install_target=$(shell if [ -d $(TOPDIR)/platform/$(PLATFORM) ]; then echo insta
 		       else echo install_dummy; fi; )
 endif
 
-# remove the string './test/' from the list of targets
-app_targets = $(subst ./test/, ,$(app_dir))
-
 #
 # Export all variables that might be needed by other Makefiles
 #
 export INC CROSS_COMPILE LINUXPATH PLATFORM TOPDIR OBJDIR
 
-.PHONY: test misc demo tool module_test clean pkg
-.PHONY: $(app_targets)
+.PHONY: test module_test clean pkg install
 
-all  : misc test module_test
+all : test module_test
 
-misc:
-	@mkdir -p $(OBJDIR)
-	@echo "CFLAGS:    $(CFLAGS)"
-	@echo "AFLAGS:    $(AFLAGS)"
-	@echo "OBJDIR:    $(OBJDIR)"
-	@echo ""
-
-test: 
+test:
 	@echo
 	@echo Invoking test make...
 	$(MAKE) -C $(TOPDIR)/test
-	@for script in autorun.sh test-utils.sh autorun-suite.txt misc-testdatabase.txt; do \
-		echo "copying $$script..."; \
-		cp -af $(TOPDIR)/$$script $(OBJDIR)/; \
-		chmod u+x $(OBJDIR)/$$script; \
-	done
-
-%::
-	$(MAKE) -C $(TOPDIR)/test $@
 
 module_test:
 	@echo
@@ -77,18 +52,19 @@ install_dummy:
 	@echo -e "**If build is complete files will be under $(TOPDIR)/platform/$(PLATFORM)/ dir."
 
 install_actual:
-	@echo -e "\nInstalling files from platform/$(PLATFORM)/ to $(DESTDIR)/$(DESTDIR_SUFFIX)/"
-	mkdir -p $(DESTDIR)/$(DESTDIR_SUFFIX)
-	-rm -rf $(DESTDIR)/$(DESTDIR_SUFFIX)
-	mv $(TOPDIR)/platform/$(PLATFORM) $(DESTDIR)/$(DESTDIR_SUFFIX)
+	@echo -e "\nInstalling files from platform/$(PLATFORM) to $(DESTDIR)"
+	mkdir -p $(DESTDIR)
+	-rm -rf $(DESTDIR)/*
+	cp -rf $(OBJDIR)/* $(DESTDIR)
+	cp autorun.sh test-utils.sh autorun-suite.txt misc-testdatabase.txt $(DESTDIR)
 
 clean :
-	@for X in test module_test $(shell /bin/ls -d lib/*); do \
-		if [ -r "$$X/Makefile" ]; then \
-			$(MAKE) -C $$X clean; \
-		fi \
-	done
+	$(MAKE) -C $(TOPDIR)/test $@
+	$(MAKE) -C $(TOPDIR)/module_test $@
 	-rm -rf platform
 
 pkg : clean
 	tar --exclude CVS -C .. $(EXCLUDES) -czf $(PKG_NAME) $(MISC_DIR)
+
+%::
+	$(MAKE) -C $(TOPDIR)/test $@
