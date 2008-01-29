@@ -1,24 +1,12 @@
 export INC = -I$(TOPDIR)/include $(INCLUDE)
+ 
+# Get all dirs with a Makefile
+TMP_DIRS := $(foreach dir, $(wildcard *), $(wildcard $(dir)/Makefile))
+DIRS := $(patsubst %/Makefile,%,$(TMP_DIRS))
 
-subdirs 	= $(shell /bin/ls -d */)
+.PHONY: all
+.PHONY: $(DIRS)
+all: $(DIRS)
 
-all:
-	@for X in $(subdirs); do        \
-	    if [ -r "$$X/Makefile" ]; then \
-		$(MAKE) -C $$X MODULE_NAME=$$X OBJDIR=$$TOPDIR/platform/$$PLATFORM/$$X; \
-	    fi; 			\
-	done
-
-.PHONY: clean
-clean:
-	@for X in $(subdirs); do        \
-	    if [ -r "$$X/Makefile" ]; then \
-		$(MAKE) -C $$X MODULE_NAME=$$X clean; \
-	    fi; 			\
-	done
-
-%::
-	if [ -r "$$X/Makefile" ]; then \
-		$(MAKE) -C $@ MODULE_NAME=$@ OBJDIR=$$TOPDIR/platform/$$PLATFORM/$@; \
-	fi;
-	
+$(DIRS):
+	-$(MAKE) -C $< $@
