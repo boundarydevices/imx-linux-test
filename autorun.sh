@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# If this script is run with no parameters, it will run all the test ID's in 
-# autorun-suite.txt.  The autorun-suite.txt file also describes how each test 
+# If this script is run with no parameters, it will run all the test ID's in
+# autorun-suite.txt.  The autorun-suite.txt file also describes how each test
 # ID is to be run.
 #
 # This script can be run with one or more test id's to run individual tests, i.e.:
@@ -120,10 +120,10 @@ printf "Test cases run: %d  Pass: %d  Fail: %d\n\n" \
 	$total_count $pass_count $fail_count
 
 if [ $pass_count -ne 0 ] && [ $pass_count -eq $total_count ]; then
-	echo "Misc test suite: PASS"
+	echo "imx-test suite: PASS"
 	exit 0
 fi
 
-echo "Misc test suite: FAIL"
+echo "imx-test suite: FAIL"
 exit 1
 
