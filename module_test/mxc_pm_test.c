@@ -36,12 +36,10 @@
 ulong *gtempu32ptr;
 static struct class *mxc_test_class;
 
-#if defined(CONFIG_ARCH_MXC91321) || defined(CONFIG_ARCH_MXC91331) || defined(CONFIG_ARCH_MXC91311)
+#if defined(CONFIG_ARCH_MXC91321)
 #define CLK_OUT "cko2_clk"
 #elif defined(CONFIG_ARCH_MX3)
 #define CLK_OUT "cko1_clk"
-#elif defined(CONFIG_MACH_MXC30031ADS)
-#define CLK_OUT "ckoh_clk"
 #else
 #define CLK_OUT "cko_clk"
 #endif
@@ -130,7 +128,6 @@ static int mxc_call_ckohsel(mxc_pm_test * arg)
 	return 0;
 }
 
-#if defined(CONFIG_ARCH_MXC91321) || defined(CONFIG_ARCH_MXC91311) ||defined(CONFIG_ARCH_MXC91331) || defined(CONFIG_ARCH_MX3) || defined(CONFIG_ARCH_MX27)
 static int mxc_call_lowpower(mxc_pm_test * arg)
 {
 	printk("============= Low-Power mode IOCTL ============\n");
@@ -154,27 +151,6 @@ static int mxc_call_lowpower(mxc_pm_test * arg)
 	}
 	return 0;
 }
-#else
-static int mxc_call_lowpower(mxc_pm_test * arg)
-{
-	printk("============= Low-Power mode IOCTL ============\n");
-	switch (arg->lpmd) {
-	case 1:
-		printk("To Test WAIT mode\n");
-		mxc_pm_lowpower(WAIT_MODE);
-		break;
-	case 2:
-		printk("To Test STOP mode\n");
-		mxc_pm_lowpower(STOP_MODE);
-		break;
-	case 3:
-		printk("To Test DSM mode\n");
-		mxc_pm_lowpower(DSM_MODE);
-		break;
-	}
-	return 0;
-}
-#endif
 
 static int mxc_call_pmic_high(void)
 {
@@ -235,25 +211,9 @@ static int mxc_call_pmic_hilo(void)
 
 static int mxc_get_platform(unsigned long *platform)
 {
-if(cpu_is_mxc91231())
-	{
-	*platform=mxc91231;
-	}
-else if(cpu_is_mxc91221())
-	{
-	*platform=mxc91221;
-	}
-else if(cpu_is_mxc91321())
+if(cpu_is_mxc91321())
 	{
 	*platform=mxc91321;
-	}
-else if(cpu_is_mxc91311())
-	{
-	*platform=mxc91311;
-	}
-else if(cpu_is_mxc92323())
-	{
-	*platform=mxc92323;
 	}
 else if(cpu_is_mx21())
 	{
