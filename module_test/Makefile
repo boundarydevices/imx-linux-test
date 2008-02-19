@@ -1,11 +1,10 @@
 
 ifneq ($(KERNELRELEASE),)
-# kbuild part of makefile 
+# kbuild part of makefile
 
-# When adding modules, either add to the 'module_list' for all platfoms or add 
+# When adding modules, either add to the 'module_list' for all platfoms or add
 # below to the 'module_list +=...' list for each platform that needs it.
-module_list-y := mxc_rtic_test.o \
-		mxc_udma_testdriver.o 
+module_list-y := mxc_rtic_test.o
 
 module_list-$(CONFIG_MXC_PMIC_MC13783) += mxc_pm_test.o mxc_pmic_power_testmod.o
 module_list-$(CONFIG_MXC_IPC) += ipctestmod.o
@@ -45,12 +44,12 @@ EXTRA_CFLAGS := -DLINUX_KERNEL
 
 ## NOTE: The following should be removed. They are directly requesting kernel
 ##       source.
-EXTRA_CFLAGS += -I$(LINUXPATH)/drivers/mxc/security/rng/include -I$(LINUXPATH)/drivers/mxc/security/sahara2/include 
+EXTRA_CFLAGS += -I$(LINUXPATH)/drivers/mxc/security/rng/include -I$(LINUXPATH)/drivers/mxc/security/sahara2/include
 
 else
 
 # Need to remove sahara objects because the test app uses same objects
-all: 
+all:
 	$(MAKE) -C $(LINUXPATH) M=`pwd` KBUILD_OUTPUT=$(KBUILD_OUTPUT) ARCH=arm CROSS_COMPILE=$(CROSS_COMPILE)  modules
 
 install:
