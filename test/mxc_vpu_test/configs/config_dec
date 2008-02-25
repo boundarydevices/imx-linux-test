@@ -10,7 +10,7 @@ input=akiyo.mp4
 # write output to file. For decode, if not specified, then default is LCD
 output=
 
-# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 4 - MPEG2, 5 - DIV3
 format=0
 
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
@@ -21,6 +21,9 @@ count=
 
 # deblocking . 1 - Enable deblock
 deblock=
+
+# dering . 1 - Enable dering
+dering=
 
 # mirroring (0, 1, 2 , 3)
 mirror=

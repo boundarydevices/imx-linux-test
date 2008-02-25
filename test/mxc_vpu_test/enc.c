@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -32,8 +32,8 @@ extern int quitflag;
 
 #if STREAM_ENC_PIC_RESET == 0
 static int
-enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd, 
-		u32 bs_va_startaddr, u32 bs_va_endaddr, u32 bs_pa_startaddr, 
+enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
+		u32 bs_va_startaddr, u32 bs_va_endaddr, u32 bs_pa_startaddr,
 		int defaultsize)
 {
 	RetCode ret;
@@ -188,7 +188,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		return -1;
 	}
 	
-	pfbpool = enc->pfbpool = calloc(fbcount + 1, 
+	pfbpool = enc->pfbpool = calloc(fbcount + 1,
 					sizeof(struct frame_buf *));
 	if (pfbpool == NULL) {
 		printf("Failed to allocate enc->pfbpool\n");
@@ -226,7 +226,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		}
 	} else {
 		/* Allocate a single frame buffer for source frame */
-		pfbpool[src_fbid] = framebuf_alloc(enc->picwidth, 
+		pfbpool[src_fbid] = framebuf_alloc(enc->picwidth,
 						   enc->picheight);
 		if (pfbpool[src_fbid] == NULL) {
 			printf("failed to allocate single framebuf\n");
@@ -308,12 +308,12 @@ encoder_start(struct encode *enc)
 			}
 			
 			fb[src_fbid].bufY = cap_buffers[v4l2_buf.index].offset;
-			fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size; 
-			fb[src_fbid].bufCr = fb[src_fbid].bufCb + 
-						(img_size >> 2); 
+			fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
+			fb[src_fbid].bufCr = fb[src_fbid].bufCb +
+						(img_size >> 2);
 		} else {
 			pfb = pfbpool[src_fbid];
-			yuv_addr = pfb->addrY + pfb->desc.virt_uaddr - 
+			yuv_addr = pfb->addrY + pfb->desc.virt_uaddr -
 					pfb->desc.phy_addr;
 			ret = freadn(src_fd, (void *)yuv_addr, img_size);
 			if (ret <= 0)
@@ -339,13 +339,13 @@ encoder_start(struct encode *enc)
 		while (vpu_IsBusy()) {
 #if STREAM_ENC_PIC_RESET == 0
 			ret = enc_readbs_ring_buffer(handle, enc->cmdl,
-					virt_bsbuf_start, virt_bsbuf_end, 
+					virt_bsbuf_start, virt_bsbuf_end,
 					phy_bsbuf_start, STREAM_READ_SIZE);
 			if (ret < 0) {
 				unlock(enc->cmdl);
 				goto err2;
 			}
-#endif			
+#endif
 			vpu_WaitForInt(200);
 		}
 
@@ -364,7 +364,7 @@ encoder_start(struct encode *enc)
 			break;
 
 #if STREAM_ENC_PIC_RESET == 1
-		vbuf = (enc->virt_bsbuf_addr + outinfo.bitstreamBuffer 
+		vbuf = (enc->virt_bsbuf_addr + outinfo.bitstreamBuffer
 					- enc->phy_bsbuf_addr);
 		ret = vpu_write(enc->cmdl, (void *)vbuf, outinfo.bitstreamSize);
 		if (ret < 0) {
@@ -378,7 +378,7 @@ encoder_start(struct encode *enc)
 	}
 
 #if STREAM_ENC_PIC_RESET == 0
-	enc_readbs_ring_buffer(handle, enc->cmdl, virt_bsbuf_start, 
+	enc_readbs_ring_buffer(handle, enc->cmdl, virt_bsbuf_start,
 			virt_bsbuf_end, phy_bsbuf_start, 0);
 #endif
 
@@ -386,7 +386,7 @@ encoder_start(struct encode *enc)
 err2:
 	if (src_scheme == PATH_V4L2) {
 		v4l_stop_capturing();
-	}	
+	}
 
 	/* Inform the other end that no more frames will be sent */
 	if (enc->cmdl->dst_scheme == PATH_NET) {
@@ -412,8 +412,8 @@ encoder_configure(struct encode *enc)
 	if (platform_is_mx27()) {
 		search_pa.searchRamAddr = 0xFFFF4C00;
 	} else if (platform_is_mxc30031()) {
-		search_pa.searchRamAddr = 0xD0000000; 
-		search_pa.SearchRamSize = 
+		search_pa.searchRamAddr = 0xD0000000;
+		search_pa.SearchRamSize =
 			((enc->picwidth + 15) & ~15) * 36 + 2048;
 	}
 
@@ -428,7 +428,7 @@ encoder_configure(struct encode *enc)
 	if (enc->cmdl->rot_en) {
 		vpu_EncGiveCommand(handle, ENABLE_ROTATION, 0);
 		vpu_EncGiveCommand(handle, ENABLE_MIRRORING, 0);
-		vpu_EncGiveCommand(handle, SET_ROTATION_ANGLE, 
+		vpu_EncGiveCommand(handle, SET_ROTATION_ANGLE,
 					&enc->cmdl->rot_angle);
 		mirror = enc->cmdl->mirror;
 		vpu_EncGiveCommand(handle, SET_MIRROR_DIRECTION, &mirror);
@@ -462,7 +462,7 @@ encoder_configure(struct encode *enc)
 	return 0;
 }
 
-void 
+void
 encoder_close(struct encode *enc)
 {
 	EncOutputInfo outinfo = {0};
@@ -477,7 +477,7 @@ encoder_close(struct encode *enc)
 	unlock(enc->cmdl);
 }
 
-int 
+int
 encoder_open(struct encode *enc)
 {
 	EncHandle handle = {0};
@@ -499,7 +499,7 @@ encoder_open(struct encode *enc)
 		encop.picWidth = enc->picheight;
 		encop.picHeight = enc->picwidth;
 	} else {
-		encop.picWidth = enc->picwidth;	
+		encop.picWidth = enc->picwidth;
 		encop.picHeight = enc->picheight;
 	}
 
@@ -510,13 +510,34 @@ encoder_open(struct encode *enc)
 	encop.slicemode.sliceSizeMode = 0;
 	encop.slicemode.sliceSize = 4000;
 
-	if (enc->cmdl->format == STD_H263) {
-		if (encop.EncStdParam.h263Param.h263_annexJEnable == 0 &&
-		    encop.EncStdParam.h263Param.h263_annexKEnable == 0 &&
-			encop.EncStdParam.h263Param.h263_annexTEnable == 0 ) {
-			encop.frameRateInfo = 0x3E87530;
-		}
+	encop.initialDelay = 0;
+	encop.vbvBufferSize = 0;        /* 0 = ignore 8 */
+	encop.enableAutoSkip = 1;
+	encop.intraRefresh = 0;
+	encop.sliceReport = 0;
+	encop.mbReport = 0;
+	encop.mbQpReport = 0;
+	encop.rcIntraQp = -1;
+	encop.ringBufferEnable = 0;
+	encop.dynamicAllocEnable = 0;
+
+	if (enc->cmdl->format == STD_MPEG4) {
+		encop.EncStdParam.mp4Param.mp4_dataPartitionEnable = 0;
+		encop.EncStdParam.mp4Param.mp4_reversibleVlcEnable = 0;
+		encop.EncStdParam.mp4Param.mp4_intraDcVlcThr = 0;
+		encop.EncStdParam.mp4Param.mp4_hecEnable = 0;
+		encop.EncStdParam.mp4Param.mp4_verid = 2;
+	} else if ( enc->cmdl->format == STD_H263) {
+		encop.EncStdParam.h263Param.h263_annexJEnable = 0;
+		encop.EncStdParam.h263Param.h263_annexKEnable = 0;
+		encop.EncStdParam.h263Param.h263_annexTEnable = 0;
 	} else if (enc->cmdl->format == STD_AVC) {
+		encop.EncStdParam.avcParam.avc_constrainedIntraPredFlag = 0;
+		encop.EncStdParam.avcParam.avc_disableDeblk = 0;
+		encop.EncStdParam.avcParam.avc_deblkFilterOffsetAlpha = 0;
+		encop.EncStdParam.avcParam.avc_deblkFilterOffsetBeta = 0;
+		encop.EncStdParam.avcParam.avc_chromaQpOffset = 0;
+		encop.EncStdParam.avcParam.avc_audEnable = 0;
 		encop.EncStdParam.avcParam.avc_fmoEnable = 0;
 		encop.EncStdParam.avcParam.avc_fmoType = 0;
 		encop.EncStdParam.avcParam.avc_fmoSliceNum = 0;
@@ -545,7 +566,7 @@ encode_test(void *arg)
 		sleep(10);
 	}
 
-	/* allocate memory for must remember stuff */	
+	/* allocate memory for must remember stuff */
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
 	if (enc == NULL) {
 		printf("Failed to allocate encode structure\n");
@@ -559,7 +580,7 @@ encode_test(void *arg)
 		printf("Unable to obtain physical memory\n");
 		free(enc);
 		return -1;
-	}	
+	}
 
 	/* mmap that physical buffer */
 	enc->virt_bsbuf_addr = IOGetVirtMem(&mem_desc);
@@ -575,7 +596,7 @@ encode_test(void *arg)
 
 	/* open the encoder */
 	ret = encoder_open(enc);
-	if (ret) 
+	if (ret)
 		goto err;
 
 	/* configure the encoder */
@@ -588,7 +609,7 @@ encode_test(void *arg)
 	if (ret)
 		goto err1;
 
-	/* start encoding */	
+	/* start encoding */
 	ret = encoder_start(enc);
 	
 	/* free the allocated framebuffers */
