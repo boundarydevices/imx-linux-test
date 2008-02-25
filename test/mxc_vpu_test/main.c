@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -36,13 +35,16 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	If no input file is specified, default is network \n "\
 	       "  -o <output file> Write output to file \n "\
 	       "	If no output is specified, default is LCD \n "\
-	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1 \n "\
+	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, \n "\
+	       "	4 - MPEG2, 5 - DIVX, \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
 	       "  -p <port number> UDP port number to bind \n "\
 	       "	If no port number is secified, 5555 is used \n "\
 	       "  -c <count> Number of frames to decode \n "\
-	       "  -d <deblocking> Enable deblock - 1. Not for MX27 \n "\
+	       "  -d <deblocking> Enable deblock - 1. enabled \n "\
 	       "	default deblock is disabled (0). \n "\
+	       "  -e <dering> Enable dering - 1. enabled \n "\
+	       "	default dering is disabled (0). \n "\
 	       "  -r <rotation angle> 0, 90, 180, 270 \n "\
 	       "	default rotation is disabled (0) \n "\
 	       "  -m <mirror direction> 0, 1, 2, 3 \n "\
@@ -86,7 +88,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 struct input_argument {
 	int mode;
 	pthread_t tid;
-	char line[128];
+	char line[256];
 	struct cmd_line cmd;
 };
 
@@ -106,9 +108,9 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:m:";
+static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:";
 
-int 
+int
 parse_config_file(char *file_name)
 {
 	FILE *fp;
@@ -130,7 +132,7 @@ parse_config_file(char *file_name)
 
 		ptr = skip_unwanted(line);
 
-		end = parse_options(ptr, &input_arg[instance].cmd, 
+		end = parse_options(ptr, &input_arg[instance].cmd,
 					&input_arg[instance].mode);
 		if (end == 100) {
 			instance++;
@@ -141,7 +143,7 @@ parse_config_file(char *file_name)
 	return 0;
 }
 
-int 
+int
 parse_main_args(int argc, char *argv[])
 {
 	int status = 0, opt;
@@ -195,7 +197,7 @@ parse_main_args(int argc, char *argv[])
 	return status;
 }
 
-int 
+int
 parse_args(int argc, char *argv[], int i)
 {
 	int status = 0, opt;
@@ -214,13 +216,13 @@ parse_args(int argc, char *argv[], int i)
 				break;
 			}
 			strncpy(input_arg[i].cmd.output, optarg, 64);
-			input_arg[i].cmd.dst_scheme = PATH_FILE; 
+			input_arg[i].cmd.dst_scheme = PATH_FILE;
 			break;
 		case 'n':
 			if (input_arg[i].mode == ENCODE) {
 				/* contains the ip address */
 				strncpy(input_arg[i].cmd.output, optarg, 64);
-				input_arg[i].cmd.dst_scheme = PATH_NET; 
+				input_arg[i].cmd.dst_scheme = PATH_NET;
 			} else {
 				printf("Warn:-n option used only for encode\n");
 			}
@@ -251,10 +253,13 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.bitrate = atoi(optarg);
 			break;
 		case 'd':
-			input_arg[i].cmd.mp4dblk_en = 1; 
+			input_arg[i].cmd.mp4dblk_en = 1;
+			break;
+		case 'e':
+			input_arg[i].cmd.dering_en = 1;
 			break;
 		case 'm':
-			input_arg[i].cmd.mirror = atoi(optarg); 
+			input_arg[i].cmd.mirror = atoi(optarg);
 			break;
 		case -1:
 			break;
@@ -268,7 +273,7 @@ parse_args(int argc, char *argv[], int i)
 	return status;
 }
 
-static int 
+static int
 signal_thread(void *arg)
 {
 	int sig, err;
@@ -289,7 +294,7 @@ signal_thread(void *arg)
 	return 0;
 }
 
-int 
+int
 main(int argc, char *argv[])
 {
 	int err, nargc, i, ret = 0;
@@ -344,7 +349,7 @@ main(int argc, char *argv[])
 				}
 			}
 
-			if (check_params(&input_arg[i].cmd, 
+			if (check_params(&input_arg[i].cmd,
 						input_arg[i].mode) == 0) {
 				if (open_files(&input_arg[i].cmd) == 0) {
 					input_arg[i].cmd.mutex = &fastmutex;
@@ -353,10 +358,10 @@ main(int argc, char *argv[])
 						   NULL,
 						   (void *)&decode_test,
 						   (void *)&input_arg[i].cmd);
-					} else if (input_arg[i].mode == 
+					} else if (input_arg[i].mode ==
 							ENCODE) {
 					     pthread_create(&input_arg[i].tid,
-						   NULL, 
+						   NULL,
 						   (void *)&encode_test,
 						   (void *)&input_arg[i].cmd);
 					}

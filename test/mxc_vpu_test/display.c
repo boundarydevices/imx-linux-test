@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -70,7 +70,7 @@ calculate_ratio(int width, int height, int maxwidth, int maxheight)
 	return ratio;
 }
 
-struct vpu_display * 
+struct vpu_display *
 v4l_display_open(int width, int height, int nframes, int rot, int stride)
 {
 	int fd, err, out, i;
@@ -120,7 +120,7 @@ v4l_display_open(int width, int height, int nframes, int rot, int stride)
 		goto err;
 	}
 
-	ratio = calculate_ratio(width, height, cropcap.bounds.width, 
+	ratio = calculate_ratio(width, height, cropcap.bounds.width,
 				cropcap.bounds.height);
 
 	crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -230,7 +230,7 @@ void v4l_display_close(struct vpu_display *disp)
 	int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	ioctl(disp->fd, VIDIOC_STREAMOFF, &type);
 	v4l_free_bufs(disp->nframes, disp);
-	close(disp->fd);	
+	close(disp->fd);
 	free(disp);
 }
 
@@ -298,6 +298,6 @@ int v4l_put_data(struct vpu_display *disp)
 	return 0;
 
 err:
-	return -1;	
+	return -1;
 }
 
