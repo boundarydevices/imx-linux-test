@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -29,7 +29,7 @@ struct decode *dec;
 extern int quitflag;
 extern struct capture_testbuffer cap_buffers[];
 
-static int 
+static int
 decode()
 {
 	DecHandle handle = dec->handle;
@@ -68,7 +68,7 @@ decode()
 		return -1;
 	}
 			
-	if ((outinfo.indexFrameDisplay == -1) || 
+	if ((outinfo.indexFrameDisplay == -1) ||
 			(outinfo.indexFrameDisplay > dec->fbcount))
 		return -1;
 
@@ -111,7 +111,7 @@ dec_fill_bsbuffer(char *buf, int size)
 	if (space < size)
 		return 0;
 
-	/* Fill the bitstream buffer */	
+	/* Fill the bitstream buffer */
 	target_addr = bs_va_startaddr + (pa_write_ptr - bs_pa_startaddr);
 	if ( (target_addr + size) > bs_va_endaddr) {
 		room = bs_va_endaddr - target_addr;
@@ -205,7 +205,7 @@ encode()
 
 	img_size = enc->picwidth * enc->picheight;
 	fb[src_fbid].bufY = cap_buffers[v4l2_buf.index].offset;
-	fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size; 
+	fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
 	fb[src_fbid].bufCr = fb[src_fbid].bufCb + (img_size >> 2);
 
 	enc_param.sourceFrame = &enc->fb[src_fbid];
@@ -230,7 +230,7 @@ encode()
 	}
 
 	v4l_put_capture_data(&v4l2_buf);
-	vbuf = (enc->virt_bsbuf_addr + outinfo.bitstreamBuffer 
+	vbuf = (enc->virt_bsbuf_addr + outinfo.bitstreamBuffer
 				- enc->phy_bsbuf_addr);
 	ret = dec_fill_bsbuffer((void *)vbuf, outinfo.bitstreamSize);
 	if (ret < 0) {
@@ -259,7 +259,7 @@ encdec_test(void *arg)
 	return 0;
 #endif
 
-	/* allocate memory for must remember stuff */	
+	/* allocate memory for must remember stuff */
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
 	if (enc == NULL) {
 		printf("Failed to allocate encode structure\n");
@@ -273,7 +273,7 @@ encdec_test(void *arg)
 		printf("Unable to obtain physical memory\n");
 		free(enc);
 		return -1;
-	}	
+	}
 
 	/* mmap that physical buffer */
 	enc->virt_bsbuf_addr = IOGetVirtMem(&enc_mem_desc);
@@ -336,7 +336,7 @@ encdec_test(void *arg)
 
 	/* open the encoder */
 	ret = encoder_open(enc);
-	if (ret) 
+	if (ret)
 		goto err1;
 
 	/* configure the encoder */
@@ -360,7 +360,7 @@ encdec_test(void *arg)
 		goto err4;
 	}
 
-	/* start capture */	
+	/* start capture */
 	ret = v4l_start_capturing();
 	if (ret < 0) {
 		printf("v4l2 start failed\n");
@@ -407,17 +407,17 @@ encdec_test(void *arg)
 
 	/* free the frame buffers */
 	decoder_free_framebuffer(dec);
-err5:	
+err5:
 	v4l_stop_capturing();
 err4:
 	vpu_DecClose(dec->handle);
-err3:	
+err3:
 	/* free the allocated framebuffers */
 	encoder_free_framebuffer(enc);
 err2:
 	/* close the encoder */
 	encoder_close(enc);
-err1:	
+err1:
 	if (cmdl->format == STD_AVC) {
 		IOFreeVirtMem(&ps_mem_desc);
 		IOFreePhyMem(&slice_mem_desc);
