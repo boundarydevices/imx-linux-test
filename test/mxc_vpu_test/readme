@@ -34,7 +34,8 @@ decode options
         If no input file is specified, default is network
    -o <output file> Write output to file
         If no output is specified, default is LCD
-   -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+   -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1,
+	4 - MPEG2, 5 - DIVX (4, 5 for MX37)
         If no format specified, default is 0 (MPEG4)
    -p <port number> UDP port number to bind
         If no port number is secified, 5555 is used

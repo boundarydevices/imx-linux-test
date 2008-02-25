@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -100,8 +100,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 			return 0;
 		}
 
-		/* 
-		 * There was some data pending from the previous recvfrom.
+		/* There was some data pending from the previous recvfrom.
 		 * copy that data into the buffer
 		 */
 		if (cmd->nlen > n) {
@@ -154,7 +153,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 			break;
 		}
 
-		nread = recvfrom(sd, cmd->nbuf, DEFAULT_PKT_SIZE, 0, 
+		nread = recvfrom(sd, cmd->nbuf, DEFAULT_PKT_SIZE, 0,
 					NULL, NULL);
 		if (nread < 0) {
 			perror("recvfrom");
@@ -186,7 +185,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 
 		/* check if there is space in user buffer to copy all the
 		 * received data
-		 */		
+		 */
 		if (nactual > nleft) {
 			nremain = nleft;
 			cmd->nlen = nactual - nleft;
@@ -219,7 +218,7 @@ udp_send(struct cmd_line *cmd, int sd, char *buf, int n)
 	}
 	
 	if (n == 0) {
-		net_h.seqno = -1; 
+		net_h.seqno = -1;
 		net_h.len = 0;
 		memcpy(cmd->nbuf, (char *)&net_h, hdrlen);
 	} else {
@@ -235,7 +234,7 @@ udp_send(struct cmd_line *cmd, int sd, char *buf, int n)
 	addr.sin_port = htons(cmd->port);
 	addr.sin_addr.s_addr = inet_addr(cmd->output);
 	
-	nwrite = sendto(sd, cmd->nbuf, n, 0, (struct sockaddr *)&addr, 
+	nwrite = sendto(sd, cmd->nbuf, n, 0, (struct sockaddr *)&addr,
 				sizeof(addr));
 	if (nwrite != n) {
 		printf("sendto: error\n");
@@ -272,11 +271,11 @@ static char*
 skip(char *ptr)
 {
 	switch (*ptr) {
-	case    '\0':   
+	case    '\0':
 	case    ' ':
-	case    '\t':   
+	case    '\t':
 	case    '\n':
-		break ;
+		break;
 	case    '\"':
 		ptr++;
 		while ((*ptr != '\"') && (*ptr != '\0') && (*ptr != '\n')) {
@@ -285,8 +284,8 @@ skip(char *ptr)
 		if (*ptr != '\0') {
 			*ptr++ = '\0';
 		}
-		break ;
-	default :   
+		break;
+	default :
 		while ((*ptr != ' ') && (*ptr != '\t')
 			&& (*ptr != '\0') && (*ptr != '\n')) {
 			ptr++;
@@ -294,7 +293,7 @@ skip(char *ptr)
 		if (*ptr != '\0') {
 			*ptr++ = '\0';
 		}
-		break ;
+		break;
 	}
 	
 	while ((*ptr == ' ') || (*ptr == '\t') || (*ptr == '\n')) {
@@ -304,7 +303,7 @@ skip(char *ptr)
 	return (ptr);
 }
 
-void 
+void
 get_arg(char *buf, int *argc, char *argv[])
 {
 	char *ptr;
@@ -323,7 +322,7 @@ get_arg(char *buf, int *argc, char *argv[])
 	argv[*argc] = NULL;
 }
 
-static int 
+static int
 udp_open(struct cmd_line *cmd)
 {
 	int sd;
@@ -362,7 +361,7 @@ udp_open(struct cmd_line *cmd)
 	return sd;
 }
 
-int 
+int
 open_files(struct cmd_line *cmd)
 {
 	if (cmd->src_scheme == PATH_FILE) {
@@ -378,11 +377,11 @@ open_files(struct cmd_line *cmd)
 			return -1;
 		}
 		
-		printf("decoder listening on port %d\n", cmd->port); 
+		printf("decoder listening on port %d\n", cmd->port);
 	}
 	
 	if (cmd->dst_scheme == PATH_FILE) {
-		cmd->dst_fd = open(cmd->output, O_CREAT | O_RDWR, S_IRWXU | 
+		cmd->dst_fd = open(cmd->output, O_CREAT | O_RDWR, S_IRWXU |
 					S_IRWXG | S_IRWXO);
 		if (cmd->dst_fd < 0) {
 			perror("file open");
@@ -401,7 +400,7 @@ open_files(struct cmd_line *cmd)
 			return -1;
 		}
 		
-		printf("encoder sending on port %d\n", cmd->port); 
+		printf("encoder sending on port %d\n", cmd->port);
 	}
 
 	return 0;
@@ -429,16 +428,31 @@ close_files(struct cmd_line *cmd)
 int
 check_params(struct cmd_line *cmd, int op)
 {
-	if (cmd->format != STD_MPEG4 && cmd->format != STD_H263 && 
-			cmd->format != STD_AVC && (platform_is_mx27() || 
-				cmd->format != STD_VC1)) {
-		printf("Invalid format\n");
-		return -1;
+	printf("Format: ");
+	switch (cmd->format) {
+	case STD_MPEG4:
+		printf("STD_MPEG4");
+		break;
+	case STD_H263:
+		printf("STD_H263");
+		break;
+	case STD_AVC:
+		printf("STD_AVC");
+		break;
+	case STD_VC1:
+		printf("STD_VC1");
+		break;
+	case STD_MPEG2:
+		printf("STD_MPEG2");
+		break;
+	case STD_DIV3:
+		printf("STD_DIV3");
+		break;
+	default:
+		printf("Unsupported Format!");
+		break;
 	}
-
-	printf("Format: %s\n", (cmd->format != STD_MPEG4) ? 
-		       ((cmd->format != STD_H263) ? ((cmd->format != STD_AVC) ?
-			"STD_VC1" : "STD_AVC") : "STD_H263") : "STD_MPEG4");
+	printf("\n");
 
 	if (cmd->port == 0) {
 		cmd->port = DEFAULT_PORT;
@@ -505,7 +519,9 @@ check_params(struct cmd_line *cmd, int op)
 		cmd->mirror = 0;
 	}
 
-	if (cmd->format != STD_MPEG4 && cmd->mp4dblk_en) {
+	if (!(cmd->format == STD_MPEG4 || cmd->format == STD_H263 ||
+	    cmd->format == STD_MPEG2 || cmd->format == STD_DIV3) &&
+	    cmd->mp4dblk_en) {
 		printf("Warn: Deblocking only for MPEG4. Disabled!\n");
 		cmd->mp4dblk_en = 0;
 	}
@@ -524,7 +540,7 @@ skip_unwanted(char *ptr)
 			continue;
 		}
 
-		if (*ptr == '#') 
+		if (*ptr == '#')
 			break;
 		
 		buf[i++] = *ptr;
@@ -659,6 +675,19 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 			str++;
 			if (*str != '\0') {
 				cmd->mp4dblk_en = strtol(str, NULL, 10);
+			}
+		}
+		
+		return 0;
+	}
+
+	str = strstr(buf, "dering");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				cmd->dering_en = strtol(str, NULL, 10);
 			}
 		}
 		
