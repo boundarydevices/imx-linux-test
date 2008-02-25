@@ -22,6 +22,9 @@ count=100
 # deblocking . 1 - Enable deblock
 deblock=
 
+# dering . 1 - Enable dering
+dering=
+
 # mirroring (0, 1, 2 , 3)
 mirror=
 

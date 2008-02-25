@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -29,7 +29,7 @@ typedef signed int s32;
 typedef signed short s16;
 typedef signed char s8;
 
-#define STREAM_BUF_SIZE		0x40000	
+#define STREAM_BUF_SIZE		0x40000
 #define STREAM_FILL_SIZE	0x8000
 #define STREAM_READ_SIZE	(512 * 4)
 #define STREAM_END_SIZE		0
@@ -54,13 +54,14 @@ struct frame_buf {
 	int addrY;
 	int addrCb;
 	int addrCr;
+	int mvColBuf;
 	vpu_mem_desc desc;
 };
 
 struct v4l_buf {
 	void *start;
 	off_t offset;
-	size_t length;	
+	size_t length;
 };
 
 struct vpu_display {
@@ -82,7 +83,7 @@ struct capture_testbuffer {
 struct cmd_line {
 	char input[MAX_PATH];	/* Input file name */
 	char output[MAX_PATH];  /* Output file name */
-	int src_scheme;	
+	int src_scheme;
 	int dst_scheme;
 	int src_fd;
 	int dst_fd;
@@ -90,6 +91,7 @@ struct cmd_line {
 	int height;
 	int format;
 	int mp4dblk_en;
+	int dering_en;
 	int rot_en;
 	int rot_angle;
 	int mirror;
@@ -149,7 +151,7 @@ int check_params(struct cmd_line *cmd, int op);
 char*skip_unwanted(char *ptr);
 int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
-struct vpu_display *v4l_display_open(int width, int height, int nframes, 
+struct vpu_display *v4l_display_open(int width, int height, int nframes,
 					int rot, int stride);
 
 int v4l_put_data(struct vpu_display *disp);
