@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -27,7 +26,7 @@
 #include <stdio.h>
 #include "vpu_test.h"
 
-#define NUM_FRAME_BUFS	32	
+#define NUM_FRAME_BUFS	32
 #define FB_INDEX_MASK	(NUM_FRAME_BUFS - 1)
 
 static int fb_index;
@@ -53,7 +52,7 @@ struct frame_buf *get_framebuf()
 	++fb_index;
 	fb_index &= FB_INDEX_MASK;
 
-	return fb;	
+	return fb;
 }
 
 void put_framebuf(struct frame_buf *fb)
@@ -75,6 +74,8 @@ struct frame_buf *framebuf_alloc(int strideY, int height)
 
 	memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
 	fb->desc.size = (strideY * height * 3 / 2);
+	if (platform_is_mx37())
+		fb->desc.size += strideY * height / 4;
 	
 	err = IOGetPhyMem(&fb->desc);
 	if (err) {
@@ -86,6 +87,9 @@ struct frame_buf *framebuf_alloc(int strideY, int height)
 	fb->addrY = fb->desc.phy_addr;
 	fb->addrCb = fb->addrY + strideY * height;
 	fb->addrCr = fb->addrCb + strideY / 2 * height / 2;
+	if (platform_is_mx37()) {
+		fb->mvColBuf = fb->addrCr + strideY / 2 * height / 2;
+	}
 	fb->desc.virt_uaddr = IOGetVirtMem(&(fb->desc));
 	if (fb->desc.virt_uaddr <= 0) {
 		IOFreePhyMem(&fb->desc);
