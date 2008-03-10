@@ -9,11 +9,11 @@ STATUS=0
 DESCRIPTION="USB Ethernet Gadget test"
 # Modules in the order in which they should be loaded
 MODULES="/lib/modules/$(kernel_version)/kernel/drivers/usb/gadget/arcotg_udc.ko
-         /lib/modules/$(kernel_version)/kernel/drivers/usb/gadget/g_ether.ko" 
+         /lib/modules/$(kernel_version)/kernel/drivers/usb/gadget/g_ether.ko"
 
 # IP address of the USB Host PC to which the target is connected to
 USB_HOST_IP=$1
-USB_TARGET_IP="192.168.1.1"
+USB_TARGET_IP="192.168.0.2"
 USB_IFACE="usb0"
 PACKETS=4
 SIZE=512
@@ -49,7 +49,7 @@ done
 sleep 2
 
 { time $PING_CMD; } 1>$PING_LOG_1 2>$PING_LOG
-if [ "$?" == 0 ] ; then 
+if [ "$?" == 0 ] ; then
 	TIME=`cat $PING_LOG | grep real | awk '{ printf "%f\n", $2 * 60 + $3 }';`
 	PACKETS=`cat $PING_LOG_1 | grep transmitted | awk '{ printf "%d\n", ($1 + $4) }';`
 	SIZE=`cat $PING_LOG_1 | grep PING | awk '{ printf "%d\n", $4 }';`
