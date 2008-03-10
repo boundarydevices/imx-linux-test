@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -13,9 +13,9 @@
 
 /*
  * @file mxc_v4l2_overlay.c
- * 
+ *
  * @brief Mxc Video For Linux 2 driver test application
- * 
+ *
  */
 
 #ifdef __cplusplus
@@ -29,11 +29,11 @@ extern "C"{
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/types.h>  
-#include <sys/stat.h>   
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <unistd.h>    
+#include <unistd.h>
 #include <asm/arch/mxcfb.h>
 #include <sys/mman.h>
 #include <math.h>
@@ -42,7 +42,7 @@ extern "C"{
 
 #define TFAIL -1
 #define TPASS 0
-#ifdef CONFIG_SDC /* SDC */ 
+#ifdef CONFIG_SDC /* SDC */
 #define MXCFB_SCREEN_WIDTH      240
 #define MXCFB_SCREEN_HEIGHT     320
 #endif
@@ -106,7 +106,7 @@ int process_cmdline(int argc, char **argv)
                         i++;
                         g_in_fmt = v4l2_fourcc(argv[i][0], argv[i][1],argv[i][2],argv[i][3]);
 
-                        if ( (g_in_fmt != V4L2_PIX_FMT_BGR24) && 
+                        if ( (g_in_fmt != V4L2_PIX_FMT_BGR24) &&
                              (g_in_fmt != V4L2_PIX_FMT_BGR32) &&
                              (g_in_fmt != V4L2_PIX_FMT_RGB565) &&
                              (g_in_fmt != 'PMBW') &&
@@ -124,7 +124,7 @@ int process_cmdline(int argc, char **argv)
         printf("g_in_width = %d, g_in_height = %d\n", g_in_width, g_in_height);
         printf("g_display_width = %d, g_display_height = %d\n", g_display_width, g_display_height);
         
-        if ((g_in_width == 0) || (g_display_width == 0) || (g_in_height == 0) || 
+        if ((g_in_width == 0) || (g_display_width == 0) || (g_in_height == 0) ||
             (g_display_height == 0)) {
                 return -1;
         }
@@ -290,29 +290,7 @@ void fb_test_pan(int fd_fb, unsigned short * fb, struct fb_var_screeninfo * var)
         printf("Pan test done.\n");
 }
 
-void fb_test_set_brightness(void)
-{
-        u_int8_t i;
-        int retval;
-
-        for (i = 0; i < 255; i++)
-        {
-                retval = ioctl(fd_fb0, MXCFB_SET_BRIGHTNESS, &i);
-                if (retval < 0) {
-                        printf("Error setting brightness\n");
-                        break;
-                }
-                
-                // Wait for VSYNC
-                retval = ioctl(fd_fb0, MXCFB_WAIT_FOR_VSYNC, 0);
-                if (retval < 0) {
-                        printf("Error waiting on VSYNC\n");
-                        break;
-                }
-        }
-}
-
-int 
+int
 main(int argc, char **argv)
 {
         int retval = TPASS;
@@ -400,10 +378,7 @@ main(int argc, char **argv)
                 goto err3;
         }
 
-        fb_test_set_brightness();
         fb_test_gbl_alpha();
-
-//        fb_test_bpp(fd_fb1, fb1);
 
         retval = ioctl(fd_fb1, FBIOGET_VSCREENINFO, &screen_info);
         if (retval < 0) {
@@ -422,8 +397,6 @@ main(int argc, char **argv)
         gbl_alpha.alpha = 0xFF;
         retval = ioctl(fd_fb0, MXCFB_SET_GBL_ALPHA, &gbl_alpha);
 
-//        fb_test_bpp(fd_fb0, fb0);
-      
         retval = ioctl(fd_fb0, FBIOGET_VSCREENINFO, &screen_info);
         if (retval < 0) {
                 goto err4;
