@@ -22,6 +22,9 @@ endif
 ifeq ("$(PLATFORM)", "IMX31ADS")
 TARGET_ARCH=-DCONFIG_ARCH_MX3
 endif
+ifeq ("$(PLATFORM)", "IMX31_3DS")
+TARGET_ARCH=-DCONFIG_ARCH_MX3
+endif
 ifeq ("$(PLATFORM)", "MXC91131EVB")
 TARGET_ARCH=-DCONFIG_ARCH_MXC91131
 endif
@@ -45,11 +48,11 @@ LIBS_DIR=$(TOPDIR)/lib/rng
 LIBS=$(LIBS_DIR)/libfsl_shw.a
 
 OPTFLAGS = -O2
-CFLAGS += $(OPTFLAGS) -DARM_LINUX -Wall $(INCLUDEDIR) 
+CFLAGS += $(OPTFLAGS) -DARM_LINUX -Wall $(INCLUDEDIR)
 
 # In absence of kernel CONFIG flags, set API library to build on
 # 'unknown' platform which has an RNGA.
-CFLAGS += $(TARGET_ARCH) 
+CFLAGS += $(TARGET_ARCH)
  
 
 CC=$(CROSS_COMPILE)gcc
@@ -69,7 +72,7 @@ $(LIBS):
 move:
 	mkdir -p $(OBJDIR)
 	mv apitest rng_test $(OBJDIR)
-	cp -f autorun-*.sh $(OBJDIR) 
+	cp -f autorun-*.sh $(OBJDIR)
 #	mv *.o $(OBJDIR)
 
 .PHONY: clean
