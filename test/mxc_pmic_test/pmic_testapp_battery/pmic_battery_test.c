@@ -1,18 +1,18 @@
-/* 
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2005-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  */
  
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
- * @file   pmic_battery_test.c 
+ * @file   pmic_battery_test.c
  * @brief  Test scenario C source PMIC.
  */
 
@@ -57,7 +57,8 @@ int VT_pmic_batt_test(int switch_fct)
 	int VT_rv = PMIC_SUCCESS;
 	t_control control;
 	int threshold;
-	unsigned short c_current;
+	unsigned int c_current;
+	unsigned int c_voltage;
 	int i, j;
 
 	t_charger_setting tset1;
@@ -219,7 +220,7 @@ int VT_pmic_batt_test(int switch_fct)
 		break;
 	case 1:
 		tst_resm(TINFO, "Test enable eol function of PMIC Battery");
-		tset2.threshold = 0;
+		//r65093 comment this line: tset2.threshold = 0;
 		for (i = 0; i < CHGR_OVOLT_THRESH_MAX; i++) {
 			tset2.typical = i;
 
@@ -395,6 +396,47 @@ int VT_pmic_batt_test(int switch_fct)
 
 		break;
 
+	case 7:
+		tst_resm(TINFO,
+			 "Test get battery voltage function of PMIC Battery");
+		status = ioctl(fd, PMIC_BATT_GET_BATTERY_VOLTAGE, &c_voltage);
+		if (status != PMIC_SUCCESS) {
+			VT_rv = status;
+			tst_resm(TFAIL,
+				 "Error in pmic_batt_get_battery_voltage. Error code: %d",
+				 status);
+		}
+		printf("battery voltage : %d.\n", c_voltage);
+
+		break;
+
+	case 8:
+		tst_resm(TINFO,
+			 "Test get battery current function of PMIC Battery");
+		status = ioctl(fd, PMIC_BATT_GET_BATTERY_CURRENT, &c_current);
+		if (status != PMIC_SUCCESS) {
+			VT_rv = status;
+			tst_resm(TFAIL,
+				 "Error in pmic_batt_get_battery_current. Error code: %d",
+				 status);
+		}
+		printf("battery current : %d.\n", c_current);
+
+		break;
+
+	case 9:
+		tst_resm(TINFO,
+			 "Test get charger voltage function of PMIC Battery");
+		status = ioctl(fd, PMIC_BATT_GET_CHARGER_VOLTAGE, &c_voltage);
+		if (status != PMIC_SUCCESS) {
+			VT_rv = status;
+			tst_resm(TFAIL,
+				 "Error in pmic_batt_get_charger_voltage. Error code: %d",
+				 status);
+		}
+		printf("charger voltage : %d.\n", c_voltage);
+
+		break;
 	default:
 		tst_resm(TINFO,
 			 "Error in PMIC Battery Test: Unsupported operation");
