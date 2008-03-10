@@ -1,10 +1,10 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:= 
+EXCLUDE_LIST:=
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = $(OBJDIR)/autorun-fb.sh $(OBJDIR)/mxc_fb_test.out $(OBJDIR)/mxc_tvout_test.out
 else
-OBJS = 
+OBJS =
 endif
 
 all : $(OBJS)
@@ -17,4 +17,3 @@ clean :
 # include the Rules
 #
 include ../make.rules
-

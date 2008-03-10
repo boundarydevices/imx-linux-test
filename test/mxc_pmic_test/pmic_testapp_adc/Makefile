@@ -1,7 +1,7 @@
 #
 # Here are a list of OBJS needed
 #
-TARGET=pmic_testapp_adc
+TARGET=pmic_testapp_adc.out
 SRCS=$(wildcard *.c)
 OBJS=$(patsubst %.c,%.o,$(SRCS))
 
