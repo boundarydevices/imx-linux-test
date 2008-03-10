@@ -1,18 +1,18 @@
-/* 
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2005-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  */
  
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
- * @file   pmic_battery_main.c 
+ * @file   pmic_battery_main.c
  * @brief  PMIC Battery test main source file
  */
 
@@ -22,8 +22,8 @@ Total Tests: PMIC battery
 Test Name: charger, eol, led, reverse supply and unregulated tests
 
 Test Assertion
-& Strategy: This test is using to test charger, eol, led, reverse supply and unregulated functions 
-of sc55112 Battery driver. 
+& Strategy: This test is using to test charger, eol, led, reverse supply and unregulated functions
+of sc55112 Battery driver.
 ==============================================================================*/
 
 #ifdef __cplusplus
@@ -110,7 +110,7 @@ extern "C" {
         is called and test exits with an appropriate return code.
 
 @param  Input :      argc - number of command line parameters.
-        Output:      **argv - pointer to the array of the command 
+        Output:      **argv - pointer to the array of the command
         		      line parameters.
   
 @return On failure - Exits by calling cleanup().
@@ -128,7 +128,7 @@ extern "C" {
 
 		option_t options[] = {
 			{"T:", &tflag, &ch_test_case},	/* argument required */
-			{NULL, NULL, NULL}	/* NULL required to 
+			{NULL, NULL, NULL}	/* NULL required to
 						   end array */
 		};
 
@@ -151,7 +151,7 @@ extern "C" {
 
 		change_test_case = atoi(ch_test_case);
 
-		if (change_test_case >= 0 && change_test_case < 7) {
+		if (change_test_case >= 0 && change_test_case < 10) {
 			VT_rv = VT_pmic_batt_test(change_test_case);
 			tst_resm(TINFO, "Testing %s_%s test case is OK", TCID,
 				 ch_test_case);
@@ -189,6 +189,9 @@ extern "C" {
 		printf("\t  '-T 4'   Test set out control\n");
 		printf("\t  '-T 5'   Test set over voltage threshold\n");
 		printf("\t  '-T 6'   Test get charger current\n");
+		printf("\t  '-T 7'   Test get battery voltage\n");
+		printf("\t  '-T 8'   Test get battery current\n");
+		printf("\t  '-T 9'   Test get charger voltage\n");
 	}
 
 #ifdef __cplusplus
