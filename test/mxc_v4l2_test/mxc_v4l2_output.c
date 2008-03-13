@@ -13,9 +13,9 @@
 
 /*
  * @file mxc_v4l2_overlay.c
- * 
+ *
  * @brief Mxc Video For Linux 2 driver test application
- * 
+ *
  */
 
 #ifdef __cplusplus
@@ -31,10 +31,10 @@ extern "C"{
 #include <errno.h>
 #include <sys/types.h>
 #include <stdint.h>
-#include <sys/stat.h>	
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <unistd.h>    
+#include <unistd.h>
 #include <linux/videodev.h>
 #include <sys/mman.h>
 #include <math.h>
@@ -142,7 +142,7 @@ void gen_fill_pattern(char * buf, int frame_num)
 			if (rgb > 255)
 				rgb = 0;
 		}
-		
+
 	}
 	if (inc_alpha) {
 		alpha+=4;
@@ -188,8 +188,8 @@ mxc_v4l_output_test(FILE *in)
                 buffers[i].length = buf.length;
                 buffers[i].offset = (size_t) buf.m.offset;
                 printf("VIDIOC_QUERYBUF: length = %d, offset = %d\n",  buffers[i].length, buffers[i].offset);
-                buffers[i].start = mmap (NULL, buffers[i].length, 
-                                         PROT_READ | PROT_WRITE, MAP_SHARED, 
+                buffers[i].start = mmap (NULL, buffers[i].length,
+                                         PROT_READ | PROT_WRITE, MAP_SHARED,
                                          fd_v4l, buffers[i].offset);
                 if (buffers[i].start == NULL) {
                         printf("v4l2_out test: mmap failed\n");
@@ -257,7 +257,7 @@ mxc_v4l_output_test(FILE *in)
                 buf.timestamp.tv_usec = tv_start.tv_usec + (g_frame_period * i);
                 //printf("buffer timestamp = %d s, %d us\n", buf.timestamp.tv_sec, buf.timestamp.tv_usec);
                 if (g_extra_pixel) {
-                	buf.m.offset = buffers[buf.index].offset + g_extra_pixel * 
+                	buf.m.offset = buffers[buf.index].offset + g_extra_pixel *
                 		(g_in_width + 2 * g_extra_pixel) + g_extra_pixel;
 				}
                 if (ioctl(fd_v4l, VIDIOC_QBUF, &buf) < 0)
@@ -293,16 +293,16 @@ cleanup:
 	return retval;
 }
 
-int 
+int
 mxc_v4l_output_setup(struct v4l2_format *fmt)
 {
         struct v4l2_requestbuffers buf_req;
-        
+
         if (ioctl(fd_v4l, VIDIOC_S_FMT, fmt) < 0)
         {
                 printf("set format failed\n");
                 return TFAIL;
-        } 
+        }
 
         if (ioctl(fd_v4l, VIDIOC_G_FMT, fmt) < 0)
         {
@@ -354,7 +354,9 @@ int fb_setup(void)
                 if ( ioctl(fd_fb, FBIOGET_FSCREENINFO, &fb_fix) < 0) {
                         goto err1;
                 }
-		if ((g_output == 4) && (strcmp(fb_fix.id, "DISP3 BG") == 0)) {
+		if ((g_output == 5) && (strcmp(fb_fix.id, "DISP3 BG - DI1") == 0)) {
+			break;
+		} else if ((g_output == 4) && (strcmp(fb_fix.id, "DISP3 BG") == 0)) {
 			break;
 		} else if ((g_output == 3) && (strcmp(fb_fix.id, "DISP3 FG") == 0)) {
 			break;
@@ -403,7 +405,7 @@ int fb_setup(void)
                 goto err1;
         }
 
-        
+
         if (fb_var.bits_per_pixel == 16) {
                 for (h = g_display_top; h < (g_display_height + g_display_top); h++) {
                         cur_fb16 = (unsigned short *)((__u32)fb0 + h*fb_fix.line_length);
@@ -438,13 +440,13 @@ err1:
 err0:
         return retval;
 }
-        
+
 
 
 int process_cmdline(int argc, char **argv)
 {
         int i;
-        
+
         for (i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-iw") == 0) {
                         g_in_width = atoi(argv[++i]);
@@ -487,7 +489,7 @@ int process_cmdline(int argc, char **argv)
                         i++;
                         g_in_fmt = v4l2_fourcc(argv[i][0], argv[i][1],argv[i][2],argv[i][3]);
 
-                        if ( (g_in_fmt != V4L2_PIX_FMT_BGR24) && 
+                        if ( (g_in_fmt != V4L2_PIX_FMT_BGR24) &&
                              (g_in_fmt != V4L2_PIX_FMT_BGR32) &&
                              (g_in_fmt != V4L2_PIX_FMT_RGB565) &&
                              (g_in_fmt != 'PMBW') &&
@@ -504,14 +506,14 @@ int process_cmdline(int argc, char **argv)
 
         printf("g_in_width = %d, g_in_height = %d\n", g_in_width, g_in_height);
         printf("g_display_width = %d, g_display_height = %d\n", g_display_width, g_display_height);
-        
+
         if ((g_in_width == 0) || (g_in_height == 0)) {
                 return -1;
         }
         return 0;
 }
 
-int 
+int
 main(int argc, char **argv)
 {
         struct v4l2_control ctrl;
@@ -551,7 +553,7 @@ main(int argc, char **argv)
         {
                 printf("set output failed\n");
                 return TFAIL;
-        } 
+        }
 
         memset(&cropcap, 0, sizeof(cropcap));
         cropcap.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -595,7 +597,7 @@ main(int argc, char **argv)
         else
                 fb.flags = V4L2_FBUF_FLAG_PRIMARY;
         ioctl(fd_v4l, VIDIOC_S_FBUF, &fb);
-        
+
         memset(&fmt, 0, sizeof(fmt));
         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
         fmt.fmt.pix.width=g_in_width;
@@ -604,12 +606,12 @@ main(int argc, char **argv)
 		if (g_extra_pixel) {
 			off.u_offset = (2 * g_extra_pixel + g_in_width) * (g_in_height + g_extra_pixel)
 				 - g_extra_pixel + (g_extra_pixel / 2) * ((g_in_width / 2)
-				 + g_extra_pixel) + g_extra_pixel / 2;  
-			off.v_offset = off.u_offset + (g_extra_pixel + g_in_width / 2) * 
-				((g_in_height / 2) + g_extra_pixel);  
+				 + g_extra_pixel) + g_extra_pixel / 2;
+			off.v_offset = off.u_offset + (g_extra_pixel + g_in_width / 2) *
+				((g_in_height / 2) + g_extra_pixel);
         	fmt.fmt.pix.bytesperline = g_in_width + g_extra_pixel * 2;
 			fmt.fmt.pix.priv = (uint32_t) &off;
-        	fmt.fmt.pix.sizeimage = (g_in_width + g_extra_pixel * 2 ) 
+        	fmt.fmt.pix.sizeimage = (g_in_width + g_extra_pixel * 2 )
         		* (g_in_height + g_extra_pixel * 2) * 3 / 2;
         } else {
         	fmt.fmt.pix.bytesperline = g_in_width;
@@ -629,7 +631,7 @@ main(int argc, char **argv)
         */
         if (fd_in)
                 fseek(fd_in, 0, SEEK_SET);
-        
+
         retval = mxc_v4l_output_test(fd_in);
 
         if (fd_in)
