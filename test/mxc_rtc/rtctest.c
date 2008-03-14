@@ -40,7 +40,8 @@ void usage(void)
 {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "   rtctest --full         = do all tests\n");
-	fprintf(stderr, "   rtctest --no-periodic  = don't do periodic interrupt tests\n");
+	fprintf(stderr,
+		"   rtctest --no-periodic  = don't do periodic interrupt tests\n");
 }
 
 int main(int argc, char **argv)
@@ -71,60 +72,58 @@ int main(int argc, char **argv)
 
 	fprintf(stderr, "\n\t\t\tRTC Driver Test Example.\n\n");
 
-	if (periodic_test != 0) {
-		/* Turn on update interrupts (one per second) */
-		retval = ioctl(fd, RTC_UIE_ON, 0);
+	/* Turn on update interrupts (one per second) */
+	retval = ioctl(fd, RTC_UIE_ON, 0);
+	if (retval == -1) {
+		perror("ioctl");
+		exit(errno);
+	}
+
+	fprintf(stderr,
+		"Counting 5 update (1/sec) interrupts from reading /dev/rtc0:");
+	fflush(stderr);
+	for (i = 1; i < 6; i++) {
+		/* This read will block */
+		retval = read(fd, &data, sizeof(unsigned long));
 		if (retval == -1) {
-			perror("ioctl");
+			perror("read");
 			exit(errno);
 		}
-
-		fprintf(stderr,
-			"Counting 5 update (1/sec) interrupts from reading /dev/rtc0:");
+		fprintf(stderr, " %d", i);
 		fflush(stderr);
-		for (i = 1; i < 6; i++) {
-			/* This read will block */
-			retval = read(fd, &data, sizeof(unsigned long));
-			if (retval == -1) {
-				perror("read");
-				exit(errno);
-			}
-			fprintf(stderr, " %d", i);
-			fflush(stderr);
-			irqcount++;
-		}
+		irqcount++;
+	}
 
-		fprintf(stderr, "\nAgain, from using select(2) on /dev/rtc0:");
-		fflush(stderr);
-		for (i = 1; i < 6; i++) {
-			struct timeval tv = { 5, 0 };	/* 5 second timeout on select */
-			fd_set readfds;
+	fprintf(stderr, "\nAgain, from using select(2) on /dev/rtc0:");
+	fflush(stderr);
+	for (i = 1; i < 6; i++) {
+		struct timeval tv = { 5, 0 };	/* 5 second timeout on select */
+		fd_set readfds;
 
-			FD_ZERO(&readfds);
-			FD_SET(fd, &readfds);
-			/* The select will wait until an RTC interrupt happens. */
-			retval = select(fd + 1, &readfds, NULL, NULL, &tv);
-			if (retval == -1) {
-				perror("select");
-				exit(errno);
-			}
-			/* This read won't block unlike the select-less case above. */
-			retval = read(fd, &data, sizeof(unsigned long));
-			if (retval == -1) {
-				perror("read");
-				exit(errno);
-			}
-			fprintf(stderr, " %d", i);
-			fflush(stderr);
-			irqcount++;
-		}
-
-		/* Turn off update interrupts */
-		retval = ioctl(fd, RTC_UIE_OFF, 0);
+		FD_ZERO(&readfds);
+		FD_SET(fd, &readfds);
+		/* The select will wait until an RTC interrupt happens. */
+		retval = select(fd + 1, &readfds, NULL, NULL, &tv);
 		if (retval == -1) {
-			perror("ioctl");
+			perror("select");
 			exit(errno);
 		}
+		/* This read won't block unlike the select-less case above. */
+		retval = read(fd, &data, sizeof(unsigned long));
+		if (retval == -1) {
+			perror("read");
+			exit(errno);
+		}
+		fprintf(stderr, " %d", i);
+		fflush(stderr);
+		irqcount++;
+	}
+
+	/* Turn off update interrupts */
+	retval = ioctl(fd, RTC_UIE_OFF, 0);
+	if (retval == -1) {
+		perror("ioctl");
+		exit(errno);
 	}
 
 	/* Read the RTC time/date */
@@ -193,7 +192,9 @@ int main(int argc, char **argv)
 		exit(errno);
 	}
 
-	if (periodic_test != 0) {
+	if (periodic_test == 0) {
+		irqcount = 1;
+	} else {
 		/* Read periodic IRQ rate */
 		retval = ioctl(fd, RTC_IRQP_READ, &tmp);
 		if (retval == -1) {
