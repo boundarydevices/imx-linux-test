@@ -4,7 +4,7 @@ ifneq ($(KERNELRELEASE),)
 
 # When adding modules, either add to the 'module_list' for all platfoms or add
 # below to the 'module_list +=...' list for each platform that needs it.
-module_list-y := mxc_rtic_test.o
+module_list-y := mxc_rtic_test.o mxc_wdog_tm.o
 
 module_list-$(CONFIG_MXC_PMIC_MC13783) += mxc_pm_test.o mxc_pmic_power_testmod.o
 module_list-$(CONFIG_MXC_IPC) += ipctestmod.o
