@@ -15,7 +15,7 @@ EXES = \
 	$(OBJDIR)/mxc_mpeg4enc_test.out \
 	$(OBJDIR)/mxc_mpeg4dec_test.out
 else
-EXES = 
+EXES =
 endif
 
 all : $(EXES) clean_build
@@ -29,10 +29,6 @@ include $(TOPDIR)/test/make.rules
 $(OBJDIR)/%.out : ./%.c
 
 $(OBJDIR)/%.out : $(SRCDIR)/%.c
-
-%.out : %.o 
-	$(VERBOSE)echo "     Building $@"
-	$(VERBOSE)$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 include $(EXES:.out=.d)
 
