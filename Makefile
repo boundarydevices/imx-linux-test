@@ -56,7 +56,7 @@ install_actual:
 	mkdir -p $(DESTDIR)
 	-rm -rf $(DESTDIR)/*
 	cp -rf $(OBJDIR)/* $(DESTDIR)
-	cp autorun.sh test-utils.sh autorun-suite.txt misc-testdatabase.txt $(DESTDIR)
+	cp autorun.sh test-utils.sh autorun-suite.txt $(DESTDIR)
 
 clean :
 	$(MAKE) -C $(TOPDIR)/test $@
