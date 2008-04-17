@@ -22,6 +22,12 @@
 #include "vpu_lib.h"
 #include "vpu_io.h"
 
+#define	DEBUG_LEVEL	0
+#define dprintf(level, fmt, arg...)     if (DEBUG_LEVEL >= level) \
+        printf("<VPU-test> " fmt , ## arg)
+
+/*#define TVOUT_ENABLE*/
+
 typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
@@ -79,6 +85,12 @@ struct capture_testbuffer {
 	unsigned int length;
 };
 
+struct rot {
+	int rot_en;
+	int ipu_rot_en;
+	int rot_angle;
+};
+
 #define MAX_PATH	64
 struct cmd_line {
 	char input[MAX_PATH];	/* Input file name */
@@ -93,6 +105,7 @@ struct cmd_line {
 	int mp4dblk_en;
 	int dering_en;
 	int rot_en;
+	int ipu_rot_en;
 	int rot_angle;
 	int mirror;
 	int bitrate;
@@ -123,6 +136,7 @@ struct decode {
 	FrameBuffer *fb;
 	struct frame_buf **pfbpool;
 	struct vpu_display *disp;
+	vpu_mem_desc *mvcol_memdesc;
 	struct cmd_line *cmdl;
 };
 
@@ -152,7 +166,7 @@ char*skip_unwanted(char *ptr);
 int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
 struct vpu_display *v4l_display_open(int width, int height, int nframes,
-					int rot, int stride);
+					struct rot rotation, int stride);
 
 int v4l_put_data(struct vpu_display *disp);
 void v4l_display_close(struct vpu_display *disp);
