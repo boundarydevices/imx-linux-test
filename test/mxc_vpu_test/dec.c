@@ -195,6 +195,7 @@ decoder_start(struct decode *dec)
 	float total_time = 0, frame_id = 0;
 	int rotid = 0, dblkid = 0, mirror;
 	int count = dec->cmdl->count;
+	int totalNumofErrMbs = 0;
 
 	if (rot_en || dering_en) {
 		rotid = dec->fbcount;
@@ -422,6 +423,12 @@ decoder_start(struct decode *dec)
 			}
 		}
 		
+		if (outinfo.numOfErrMBs) {
+			totalNumofErrMbs += outinfo.numOfErrMBs;
+			printf("Num of Error Mbs : %d, in Frame : %d \n",
+					outinfo.numOfErrMBs, (int)frame_id);
+		}
+
 		frame_id++;
 		if ((count != 0) && (frame_id >= count))
 			break;
@@ -439,6 +446,10 @@ decoder_start(struct decode *dec)
 		}
 	}
 
+	if (totalNumofErrMbs) {
+		printf("Total Num of Error MBs : %d\n", totalNumofErrMbs);
+	}
+
 	printf("%d frames took %d microseconds\n", (int)frame_id,
 						(int)total_time);
 	printf("fps = %.2f\n", (frame_id / (total_time / 1000000)));
@@ -449,9 +460,22 @@ void
 decoder_free_framebuffer(struct decode *dec)
 {
 	int i, totalfb;
+	vpu_mem_desc *mvcol_md = dec->mvcol_memdesc;
+       	int rot_en = dec->cmdl->rot_en;
+	int mp4dblk_en = dec->cmdl->mp4dblk_en;
+	int dering_en = dec->cmdl->dering_en;
 
 	if (dec->cmdl->dst_scheme == PATH_V4L2) {
 		v4l_display_close(dec->disp);
+
+		if ((rot_en == 0) && (mp4dblk_en == 0) && (dering_en == 0)) {
+			if (platform_is_mx37()) {
+				for (i = 0; i < dec->fbcount; i++) {
+					IOFreePhyMem(&mvcol_md[i]);
+				}
+				free(mvcol_md);
+			}
+		}
 	}
 
 	if ((dec->cmdl->dst_scheme != PATH_V4L2) ||
@@ -473,16 +497,18 @@ int
 decoder_allocate_framebuffer(struct decode *dec)
 {
 	DecBufInfo bufinfo;
-	int i, fbcount = dec->fbcount, rotation, extrafb = 0, totalfb, img_size;
+	int i, fbcount = dec->fbcount, extrafb = 0, totalfb, img_size;
        	int dst_scheme = dec->cmdl->dst_scheme, rot_en = dec->cmdl->rot_en;
 	int mp4dblk_en = dec->cmdl->mp4dblk_en;
 	int dering_en = dec->cmdl->dering_en;
+	struct rot rotation;
 	RetCode ret;
 	DecHandle handle = dec->handle;
 	FrameBuffer *fb;
 	struct frame_buf **pfbpool;
 	struct vpu_display *disp = NULL;
 	int stride;
+	vpu_mem_desc *mvcol_md = NULL;
 
 	/* 1 extra fb for rotation(or dering) */
 	if (rot_en || dering_en) {
@@ -533,8 +559,13 @@ decoder_allocate_framebuffer(struct decode *dec)
 	}
 	
 	if (dst_scheme == PATH_V4L2) {
-		rotation = (dec->cmdl->rot_angle == 90 ||
-				dec->cmdl->rot_angle == 270) ? 1 : 0;
+		rotation.rot_en = dec->cmdl->rot_en;
+		rotation.rot_angle = dec->cmdl->rot_angle;
+		/* use the ipu h/w rotation instead of vpu rotaton */
+		if (platform_is_mx37() && rotation.rot_en) {
+			rotation.rot_en = 0;
+			rotation.ipu_rot_en = 1;
+		}
 
 		disp = v4l_display_open(dec->picwidth, dec->picheight,
 					fbcount, rotation, dec->stride);
@@ -544,11 +575,27 @@ decoder_allocate_framebuffer(struct decode *dec)
 
 		if ((rot_en == 0) && (mp4dblk_en == 0) && (dering_en == 0)) {
 			img_size = dec->stride * dec->picheight;
+
+			if (platform_is_mx37()) {
+				mvcol_md = dec->mvcol_memdesc =
+					calloc(fbcount, sizeof(vpu_mem_desc));
+			}
 			for (i = 0; i < fbcount; i++) {
 				fb[i].bufY = disp->buffers[i]->offset;
 				fb[i].bufCb = fb[i].bufY + img_size;
 				fb[i].bufCr = fb[i].bufCb + (img_size >> 2);
-				/* TODO: bufMvCol */
+				/* allocate MvCol buffer here */
+				if (platform_is_mx37()) {
+					memset(&mvcol_md[i], 0,
+							sizeof(vpu_mem_desc));
+					mvcol_md[i].size = img_size >> 2;
+					ret = IOGetPhyMem(&mvcol_md[i]);
+					if (ret) {
+						printf("buffer alloc failed\n");
+						goto err1;
+					}
+					fb[i].bufMvCol = mvcol_md[i].phy_addr;
+				}
 			}
 		}
 	}
@@ -754,8 +801,10 @@ decode_test(void *arg)
 
 err1:
 	if (cmdl->format == STD_AVC) {
-		IOFreeVirtMem(&ps_mem_desc);
+		IOFreeVirtMem(&slice_mem_desc);
 		IOFreePhyMem(&slice_mem_desc);
+		IOFreeVirtMem(&ps_mem_desc);
+		IOFreePhyMem(&ps_mem_desc);
 	}
 
 	lock(cmdl);
