@@ -71,7 +71,8 @@ calculate_ratio(int width, int height, int maxwidth, int maxheight)
 }
 
 struct vpu_display *
-v4l_display_open(int width, int height, int nframes, int rot, int stride)
+v4l_display_open(int width, int height, int nframes, struct rot rotation,
+							int stride)
 {
 	int fd, err, out, i;
 	char v4l_device[32] = "/dev/video16";
@@ -81,15 +82,26 @@ v4l_display_open(int width, int height, int nframes, int rot, int stride)
 	struct v4l2_format fmt = {0};
 	struct v4l2_requestbuffers reqbuf = {0};
 	struct vpu_display *disp;
-	int ratio;
-
+	int ratio = 1;
+	
 	if (platform_is_mx27()) {
 		out = 0;
 	} else {
 		out = 3;
 	}
+	dprintf(3, "rot_en:%d; rot_angle:%d; ipu_rot_en:%d\n", rotation.rot_en,
+			rotation.rot_angle, rotation.ipu_rot_en);
 	
-	if (rot) {
+#ifdef	TVOUT_ENABLE
+	err = system("/bin/echo U:720x480i-60 > /sys/class/graphics/fb1/mode");
+	if (err == -1) {
+		printf("set tv mode error\n");
+	}
+
+	out = 5;
+#endif
+		
+	if (rotation.rot_en) {
 		i = width;
 		width = height;
 		height = i;
@@ -119,20 +131,56 @@ v4l_display_open(int width, int height, int nframes, int rot, int stride)
 		printf("VIDIOC_CROPCAP failed\n");
 		goto err;
 	}
+	dprintf(1, "cropcap.bounds.width = %d\ncropcap.bound.height = %d\n" \
+		"cropcap.defrect.width = %d\ncropcap.defrect.height = %d\n",
+		cropcap.bounds.width, cropcap.bounds.height,
+		cropcap.defrect.width, cropcap.defrect.height);
 
-	ratio = calculate_ratio(width, height, cropcap.bounds.width,
+	if (rotation.ipu_rot_en == 0) {
+		ratio = calculate_ratio(width, height, cropcap.bounds.width,
 				cropcap.bounds.height);
+	}
 
 	crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	crop.c.top = 0;
 	crop.c.left = 0;
 	crop.c.width = width / ratio;
 	crop.c.height = height / ratio;
+	dprintf(1, "crop.c.width/height: %d/%d\n", width/ratio, height/ratio);
+	
+	if (platform_is_mx37()) {
+		crop.c.width = cropcap.bounds.width;
+		crop.c.height = cropcap.bounds.height;
+	}
 
 	err = ioctl(fd, VIDIOC_S_CROP, &crop);
 	if (err < 0) {
 		printf("VIDIOC_S_CROP failed\n");
 		goto err;
+	}
+
+	if (rotation.ipu_rot_en) {
+		/* Set rotation via V4L2 i/f */
+		struct v4l2_control ctrl;
+		ctrl.id = V4L2_CID_PRIVATE_BASE;
+		if (rotation.rot_angle == 90)
+			ctrl.value = 4;
+		else if (rotation.rot_angle == 270)
+			ctrl.value = 7;
+		err = ioctl(fd, VIDIOC_S_CTRL, &ctrl);
+		if (err < 0) {
+			printf("VIDIOC_S_CTRL failed\n");
+			goto err;
+		}
+	} else {
+		struct v4l2_control ctrl;
+		ctrl.id = V4L2_CID_PRIVATE_BASE;
+		ctrl.value = 0;
+		err = ioctl(fd, VIDIOC_S_CTRL, &ctrl);
+		if (err < 0) {
+			printf("VIDIOC_S_CTRL failed\n");
+			goto err;
+		}
 	}
 
 	if (platform_is_mx27()) {
@@ -150,7 +198,13 @@ v4l_display_open(int width, int height, int nframes, int rot, int stride)
 	fmt.fmt.pix.width = width;
 	fmt.fmt.pix.height = height;
 	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-	fmt.fmt.pix.bytesperline = stride;
+	dprintf(1, "stride %d , width %d\n", stride , width);
+	/*fmt.fmt.pix.bytesperline = stride;*/
+	if (rotation.ipu_rot_en) {
+		fmt.fmt.pix.bytesperline = height;
+	} else {
+		fmt.fmt.pix.bytesperline = width;
+	}
 
 	err = ioctl(fd, VIDIOC_S_FMT, &fmt);
 	if (err < 0) {
@@ -204,6 +258,8 @@ v4l_display_open(int width, int height, int nframes, int rot, int stride)
 
 		buf->offset = buffer.m.offset;
 		buf->length = buffer.length;
+		dprintf(3, "V4L2buf phy addr: %08x, size = %d\n",
+					(unsigned int)buf->offset, buf->length);
 		buf->start = mmap(NULL, buffer.length, PROT_READ | PROT_WRITE,
 				MAP_SHARED, fd, buffer.m.offset);
 		
