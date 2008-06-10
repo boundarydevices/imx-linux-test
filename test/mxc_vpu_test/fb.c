@@ -74,7 +74,7 @@ struct frame_buf *framebuf_alloc(int strideY, int height)
 
 	memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
 	fb->desc.size = (strideY * height * 3 / 2);
-	if (platform_is_mx37())
+	if (cpu_is_mx37())
 		fb->desc.size += strideY * height / 4;
 	
 	err = IOGetPhyMem(&fb->desc);
@@ -87,7 +87,7 @@ struct frame_buf *framebuf_alloc(int strideY, int height)
 	fb->addrY = fb->desc.phy_addr;
 	fb->addrCb = fb->addrY + strideY * height;
 	fb->addrCr = fb->addrCb + strideY / 2 * height / 2;
-	if (platform_is_mx37()) {
+	if (cpu_is_mx37()) {
 		fb->mvColBuf = fb->addrCr + strideY / 2 * height / 2;
 	}
 	fb->desc.virt_uaddr = IOGetVirtMem(&(fb->desc));
