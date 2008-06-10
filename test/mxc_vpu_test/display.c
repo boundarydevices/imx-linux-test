@@ -84,7 +84,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	struct vpu_display *disp;
 	int ratio = 1;
 	
-	if (platform_is_mx27()) {
+	if (cpu_is_mx27()) {
 		out = 0;
 	} else {
 		out = 3;
@@ -148,7 +148,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	crop.c.height = height / ratio;
 	dprintf(1, "crop.c.width/height: %d/%d\n", width/ratio, height/ratio);
 	
-	if (platform_is_mx37()) {
+	if (cpu_is_mx37()) {
 		crop.c.width = cropcap.bounds.width;
 		crop.c.height = cropcap.bounds.height;
 	}
@@ -183,7 +183,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 		}
 	}
 
-	if (platform_is_mx27()) {
+	if (cpu_is_mx27()) {
 		fb.capability = V4L2_FBUF_CAP_EXTERNOVERLAY;
 		fb.flags = V4L2_FBUF_FLAG_PRIMARY;
 	

@@ -415,7 +415,7 @@ decoder_start(struct decode *dec)
 					pfb->desc.phy_addr;
 		
 			
-			if (platform_is_mxc30031()) {
+			if (cpu_is_mxc30031()) {
 				write_to_file(dec, (u8 *)yuv_addr);
 			} else {
 				fwriten(dec->cmdl->dst_fd, (u8 *)yuv_addr,
@@ -469,7 +469,7 @@ decoder_free_framebuffer(struct decode *dec)
 		v4l_display_close(dec->disp);
 
 		if ((rot_en == 0) && (mp4dblk_en == 0) && (dering_en == 0)) {
-			if (platform_is_mx37()) {
+			if (cpu_is_mx37()) {
 				for (i = 0; i < dec->fbcount; i++) {
 					IOFreePhyMem(&mvcol_md[i]);
 				}
@@ -481,7 +481,7 @@ decoder_free_framebuffer(struct decode *dec)
 	if ((dec->cmdl->dst_scheme != PATH_V4L2) ||
 			((dec->cmdl->dst_scheme == PATH_V4L2) &&
 			 (dec->cmdl->rot_en || dec->cmdl->mp4dblk_en ||
-			 (platform_is_mx37() && dec->cmdl->dering_en)))) {
+			 (cpu_is_mx37() && dec->cmdl->dering_en)))) {
 		totalfb = dec->fbcount + dec->extrafb;
 		for (i = 0; i < totalfb; i++) {
 			framebuf_free(dec->pfbpool[i]);
@@ -539,7 +539,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	
 	if ((dst_scheme != PATH_V4L2) ||
 		((dst_scheme == PATH_V4L2) && (rot_en || mp4dblk_en ||
-			(platform_is_mx37() && dering_en)))) {
+			(cpu_is_mx37() && dering_en)))) {
 
 		for (i = 0; i < totalfb; i++) {
 			pfbpool[i] = framebuf_alloc(dec->stride,
@@ -552,7 +552,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 			fb[i].bufY = pfbpool[i]->addrY;
 			fb[i].bufCb = pfbpool[i]->addrCb;
 			fb[i].bufCr = pfbpool[i]->addrCr;
-			if (platform_is_mx37()) {
+			if (cpu_is_mx37()) {
 				fb[i].bufMvCol = pfbpool[i]->mvColBuf;
 			}
 		}
@@ -562,7 +562,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		rotation.rot_en = dec->cmdl->rot_en;
 		rotation.rot_angle = dec->cmdl->rot_angle;
 		/* use the ipu h/w rotation instead of vpu rotaton */
-		if (platform_is_mx37() && rotation.rot_en) {
+		if (cpu_is_mx37() && rotation.rot_en) {
 			rotation.rot_en = 0;
 			rotation.ipu_rot_en = 1;
 		}
@@ -576,7 +576,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		if ((rot_en == 0) && (mp4dblk_en == 0) && (dering_en == 0)) {
 			img_size = dec->stride * dec->picheight;
 
-			if (platform_is_mx37()) {
+			if (cpu_is_mx37()) {
 				mvcol_md = dec->mvcol_memdesc =
 					calloc(fbcount, sizeof(vpu_mem_desc));
 			}
@@ -585,7 +585,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 				fb[i].bufCb = fb[i].bufY + img_size;
 				fb[i].bufCr = fb[i].bufCb + (img_size >> 2);
 				/* allocate MvCol buffer here */
-				if (platform_is_mx37()) {
+				if (cpu_is_mx37()) {
 					memset(&mvcol_md[i], 0,
 							sizeof(vpu_mem_desc));
 					mvcol_md[i].size = img_size >> 2;
@@ -623,7 +623,7 @@ err1:
 err:
 	if ((dst_scheme != PATH_V4L2) ||
 		((dst_scheme == PATH_V4L2) && (rot_en || mp4dblk_en ||
-			(platform_is_mx37() && dering_en)))) {
+			(cpu_is_mx37() && dering_en)))) {
 		for (i = 0; i < totalfb; i++) {
 			framebuf_free(pfbpool[i]);
 		}
@@ -637,7 +637,7 @@ err:
 static void
 calculate_stride(struct decode *dec)
 {
-	if (platform_is_mxc30031()) {
+	if (cpu_is_mxc30031()) {
 		if (dec->picwidth <= 128) {
 			dec->stride = 128;
 		} else if (dec->picwidth <= 256) {
