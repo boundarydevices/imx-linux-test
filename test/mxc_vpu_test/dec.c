@@ -676,8 +676,8 @@ decoder_parse(struct decode *dec)
 			initinfo.minFrameBufferCount);
 
 	dec->fbcount = initinfo.minFrameBufferCount;
-	dec->picwidth = initinfo.picWidth;
-	dec->picheight = initinfo.picHeight;
+	dec->picwidth = ((initinfo.picWidth + 15) & ~15);
+	dec->picheight = ((initinfo.picHeight + 15) & ~15);
 	if ((dec->picwidth == 0) || (dec->picheight == 0))
 		return -1;
 
