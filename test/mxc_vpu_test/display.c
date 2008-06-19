@@ -27,6 +27,15 @@
 #include <stdio.h>
 #include "vpu_test.h"
 
+#define V4L2_MXC_ROTATE_NONE                    0
+#define V4L2_MXC_ROTATE_VERT_FLIP               1
+#define V4L2_MXC_ROTATE_HORIZ_FLIP              2
+#define V4L2_MXC_ROTATE_180                     3
+#define V4L2_MXC_ROTATE_90_RIGHT                4
+#define V4L2_MXC_ROTATE_90_RIGHT_VFLIP          5
+#define V4L2_MXC_ROTATE_90_RIGHT_HFLIP          6
+#define V4L2_MXC_ROTATE_90_LEFT                 7
+
 void v4l_free_bufs(int n, struct vpu_display *disp)
 {
 	int i;
@@ -91,7 +100,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	}
 	dprintf(3, "rot_en:%d; rot_angle:%d; ipu_rot_en:%d\n", rotation.rot_en,
 			rotation.rot_angle, rotation.ipu_rot_en);
-	
+
 #ifdef	TVOUT_ENABLE
 	err = system("/bin/echo U:720x480i-60 > /sys/class/graphics/fb1/mode");
 	if (err == -1) {
@@ -100,11 +109,13 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 
 	out = 5;
 #endif
-		
+
 	if (rotation.rot_en) {
-		i = width;
-		width = height;
-		height = i;
+		if (rotation.rot_angle == 90 || rotation.rot_angle == 270) {
+			i = width;
+			width = height;
+			height = i;
+		}
 	}
 
 	disp = (struct vpu_display *)calloc(1, sizeof(struct vpu_display));
@@ -146,12 +157,12 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	crop.c.left = 0;
 	crop.c.width = width / ratio;
 	crop.c.height = height / ratio;
-	dprintf(1, "crop.c.width/height: %d/%d\n", width/ratio, height/ratio);
 	
 	if (cpu_is_mx37()) {
 		crop.c.width = cropcap.bounds.width;
 		crop.c.height = cropcap.bounds.height;
 	}
+	dprintf(1, "crop.c.width/height: %d/%d\n", crop.c.width, crop.c.height);
 
 	err = ioctl(fd, VIDIOC_S_CROP, &crop);
 	if (err < 0) {
@@ -164,9 +175,11 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 		struct v4l2_control ctrl;
 		ctrl.id = V4L2_CID_PRIVATE_BASE;
 		if (rotation.rot_angle == 90)
-			ctrl.value = 4;
+			ctrl.value = V4L2_MXC_ROTATE_90_RIGHT;
+		else if (rotation.rot_angle == 180)
+			ctrl.value = V4L2_MXC_ROTATE_180;
 		else if (rotation.rot_angle == 270)
-			ctrl.value = 7;
+			ctrl.value = V4L2_MXC_ROTATE_90_LEFT;
 		err = ioctl(fd, VIDIOC_S_CTRL, &ctrl);
 		if (err < 0) {
 			printf("VIDIOC_S_CTRL failed\n");
@@ -198,8 +211,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	fmt.fmt.pix.width = width;
 	fmt.fmt.pix.height = height;
 	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-	dprintf(1, "stride %d , width %d\n", stride , width);
-	/*fmt.fmt.pix.bytesperline = stride;*/
+	dprintf(1, "stride %d , width %d, height %d\n", stride, width, height);
 	if (rotation.ipu_rot_en) {
 		fmt.fmt.pix.bytesperline = height;
 	} else {
