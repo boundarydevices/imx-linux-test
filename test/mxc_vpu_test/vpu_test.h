@@ -27,6 +27,8 @@
         printf("<VPU-test> " fmt , ## arg)
 
 /*#define TVOUT_ENABLE*/
+/* Available on MX37. If not defined, then use VPU rotation.  */
+#define USE_IPU_ROTATION
 
 typedef unsigned long u32;
 typedef unsigned short u16;

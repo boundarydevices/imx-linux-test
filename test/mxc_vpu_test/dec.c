@@ -179,6 +179,7 @@ decoder_start(struct decode *dec)
 	DecOutputInfo outinfo = {0};
 	DecParam decparam = {0};
 	int rot_en = dec->cmdl->rot_en, rot_stride, fwidth, fheight;
+	int rot_angle = dec->cmdl->rot_angle;
 	int mp4dblk_en = dec->cmdl->mp4dblk_en;
 	int dering_en = dec->cmdl->dering_en;
 	FrameBuffer *rot_fb = NULL;
@@ -196,6 +197,12 @@ decoder_start(struct decode *dec)
 	int rotid = 0, dblkid = 0, mirror;
 	int count = dec->cmdl->count;
 	int totalNumofErrMbs = 0;
+
+#ifdef USE_IPU_ROTATION
+	if (cpu_is_mx37() && rot_en) {
+		rot_en = 0;
+	}
+#endif
 
 	if (rot_en || dering_en) {
 		rotid = dec->fbcount;
@@ -215,16 +222,22 @@ decoder_start(struct decode *dec)
 		rot_fb = &fb[rotid];
 
 		lock(dec->cmdl);
+		/*
+		 * VPU is setting the rotation angle by counter-clockwise.
+		 * We convert it to clockwise, which is consistent with V4L2
+		 * rotation angle strategy.
+		 */
+		if (rot_angle == 90 || rot_angle == 270)
+			rot_angle = 360 - rot_angle;
 		vpu_DecGiveCommand(handle, SET_ROTATION_ANGLE,
-					&dec->cmdl->rot_angle);
+					&rot_angle);
 
 		mirror = dec->cmdl->mirror;
 		vpu_DecGiveCommand(handle, SET_MIRROR_DIRECTION,
 					&mirror);
 
-		rot_stride = (dec->cmdl->rot_angle == 90 ||
-				dec->cmdl->rot_angle == 270) ? fheight :
-				fwidth;
+		rot_stride = (rot_angle == 90 || rot_angle == 270) ?
+					fheight : fwidth;
 
 		vpu_DecGiveCommand(handle, SET_ROTATOR_STRIDE, &rot_stride);
 		unlock(dec->cmdl);
@@ -465,6 +478,12 @@ decoder_free_framebuffer(struct decode *dec)
 	int mp4dblk_en = dec->cmdl->mp4dblk_en;
 	int dering_en = dec->cmdl->dering_en;
 
+#ifdef USE_IPU_ROTATION
+	if (cpu_is_mx37() && rot_en) {
+		rot_en = 0;
+	}
+#endif
+
 	if (dec->cmdl->dst_scheme == PATH_V4L2) {
 		v4l_display_close(dec->disp);
 
@@ -480,8 +499,8 @@ decoder_free_framebuffer(struct decode *dec)
 
 	if ((dec->cmdl->dst_scheme != PATH_V4L2) ||
 			((dec->cmdl->dst_scheme == PATH_V4L2) &&
-			 (dec->cmdl->rot_en || dec->cmdl->mp4dblk_en ||
-			 (cpu_is_mx37() && dec->cmdl->dering_en)))) {
+			 (rot_en || mp4dblk_en ||
+			 (cpu_is_mx37() && dering_en)))) {
 		totalfb = dec->fbcount + dec->extrafb;
 		for (i = 0; i < totalfb; i++) {
 			framebuf_free(dec->pfbpool[i]);
@@ -509,6 +528,12 @@ decoder_allocate_framebuffer(struct decode *dec)
 	struct vpu_display *disp = NULL;
 	int stride;
 	vpu_mem_desc *mvcol_md = NULL;
+
+#ifdef USE_IPU_ROTATION
+	if (cpu_is_mx37() && rot_en) {
+		rot_en = 0;
+	}
+#endif
 
 	/* 1 extra fb for rotation(or dering) */
 	if (rot_en || dering_en) {
@@ -561,11 +586,13 @@ decoder_allocate_framebuffer(struct decode *dec)
 	if (dst_scheme == PATH_V4L2) {
 		rotation.rot_en = dec->cmdl->rot_en;
 		rotation.rot_angle = dec->cmdl->rot_angle;
+#ifdef USE_IPU_ROTATION
 		/* use the ipu h/w rotation instead of vpu rotaton */
 		if (cpu_is_mx37() && rotation.rot_en) {
 			rotation.rot_en = 0;
 			rotation.ipu_rot_en = 1;
 		}
+#endif
 
 		disp = v4l_display_open(dec->picwidth, dec->picheight,
 					fbcount, rotation, dec->stride);
