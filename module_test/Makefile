@@ -13,6 +13,7 @@ module_list-$(CONFIG_MXC_SECURITY_RNG) += rng_test_driver.o
 module_list-$(CONFIG_MXC_SECURITY_HAC) += mxc_HAC_test.o
 module_list-$(CONFIG_MXC_SAHARA) += sahara_test_driver.o
 module_list-$(CONFIG_MXC_HMP4E) += memalloc.o
+module_list-$(CONFIG_WATCHDOG) += mxc_wdog_tm.o
 
 ifeq ($(CONFIG_MXC_SDMA_API),y)
 module_list-y += mxc_sdma_mem_test.o
