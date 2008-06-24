@@ -1,5 +1,5 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:= IMX37_3STACK
+EXCLUDE_LIST:="IMX37_3STACK IMX35_3STACK"
 
 LTP_DIR = ../
 LOADLIBES+= -L$(LTP_DIR)lib -lltp -lpthread -lm
@@ -7,7 +7,7 @@ LOADLIBES+= -L$(LTP_DIR)lib -lltp -lpthread -lm
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = libltp.a $(OBJDIR)/autorun-pmic.sh
 else
-OBJS = 
+OBJS =
 endif
 
 CFLAGS+= -Wall -I../include
@@ -26,7 +26,7 @@ SUBDIRS =       protocol_tests \
 		pmic_testapp_light \
 		pmic_testapp_battery \
 		pmic_testapp_power \
-		pmic_testapp_rtc 
+		pmic_testapp_rtc
 
 all: $(OBJS)
 

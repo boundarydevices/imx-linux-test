@@ -15,7 +15,6 @@ export TERM=linux
 # Turn off blanking
 setterm -blank 0 > /dev/tty0
 
-
 # Blank test
 echo FB Blank test
 echo -n 3 > /sys/class/graphics/fb0/blank
@@ -25,11 +24,16 @@ echo -n 0 > /sys/class/graphics/fb0/blank
 
 # Color tests
 echo FB Color test
+if [ "$(platform)" = IMX31_3STACK ] || [ "$(platform)" = IMX35_3STACK ]; then
+	bpp_list="16"
+else
 if [ "$(platform)" = MXC27530EVB ]; then
 	bpp_list="16 24"
 else
 	bpp_list="16 24 32"
 fi
+fi
+
 for bpp in $bpp_list;
 do
 	echo Setting FB to $bpp-bpp
@@ -57,6 +61,7 @@ done
 # Pan test
 #
 echo FB panning test
+if [ ! "$(platform)" = IMX35_3STACK ]; then
 echo 240,640 > /sys/class/graphics/fb0/virtual_size
 if ! grep -sq 240,640 /sys/class/graphics/fb0/virtual_size;
 then
@@ -67,6 +72,7 @@ then
 	fi
 	echo FAIL - Unable to set virtual size
 	STATUS=1
+fi
 fi
 
 for i in $(seq 1 50); do
