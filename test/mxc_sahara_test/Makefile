@@ -3,7 +3,7 @@
 ###################################################################
 
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="MXC91131EVB I30030ADS I30030EVB IMX21ADS IMX31ADS IMX31_3DS MXC30020EVB MXC27520EVB"
+EXCLUDE_LIST:= MXC91131EVB I30030ADS I30030EVB IMX21ADS IMX31ADS IMX31_3STACK MXC30020EVB MXC27520EVB IMX35_3STACK
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = apitest
