@@ -5,7 +5,7 @@
 #****************************************************************************/
 
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS"
+EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS IMX35_3STACK"
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = apitest rng_test move
@@ -22,7 +22,7 @@ endif
 ifeq ("$(PLATFORM)", "IMX31ADS")
 TARGET_ARCH=-DCONFIG_ARCH_MX3
 endif
-ifeq ("$(PLATFORM)", "IMX31_3DS")
+ifeq ("$(PLATFORM)", "IMX31_3STACK")
 TARGET_ARCH=-DCONFIG_ARCH_MX3
 endif
 ifeq ("$(PLATFORM)", "MXC91131EVB")
