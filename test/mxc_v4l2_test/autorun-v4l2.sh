@@ -15,12 +15,20 @@ fi
 
 # devnode test
 if [ $TEST_CAMERA = 1 ]; then
+if [ "$(platform)" = "IMX35_3STACK" ]; then
+insmod ipu_prp_enc
+insmod ipu_prp_vf_sdc
+insmod ipu_prp_vf_sdc_bg
+insmod ipu_still
+insmod ov2640_camera
+insmod mxc_v4l2_capture
+fi
 check_devnode "/dev/video0"
 fi
 check_devnode "/dev/video16"
 
 # Turn off fb blanking
-echo -e "\033[9;0]" > /dev/vc/0
+echo -e "\033[9;0]" > /dev/tty0
 
 if [ "$(platform)" = IMX27ADS ]; then
 DISPLAY=0;
