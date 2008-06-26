@@ -23,7 +23,9 @@
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <asm/uaccess.h>
+#include <asm/hardware.h>
 #include "../include/mxc_test.h"
+
 /*
  * Driver specific include files
  */
@@ -83,9 +85,9 @@ static int mxc_wdog2_int_bind(void)
 {
 	int ret = 0;
 
-	if (request_irq(INT_WDOG2, mxc_wdog_int, SA_INTERRUPT, "WDOG2", NULL)) {
+	if (request_irq(MXC_INT_WDOG2, mxc_wdog_int, IRQF_DISABLED, "WDOG2", NULL)) {
 		printk(KERN_ERR "%s: IRQ%d already in use.\n", "WDOG2",
-		       INT_WDOG2);
+		       MXC_INT_WDOG2);
 		ret = -1;
 	}
 	return ret;
