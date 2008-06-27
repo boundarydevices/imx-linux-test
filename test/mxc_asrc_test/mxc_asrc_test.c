@@ -385,7 +385,7 @@ int main(int ac, char *av[])
 	if (err < 0)
 		goto end_err;
 
-	fd_raw = fopen("/tmp/raw.txt", "wb+");
+	fd_raw = fopen("/dev/raw.txt", "wb+");
 	/* Config HW */
 	err += play_file(fd_asrc, fd_dst, fd_raw, &audio_info);
 
