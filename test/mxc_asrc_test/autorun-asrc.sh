@@ -11,47 +11,47 @@ check_devnode "/dev/mxc_asrc"
 check_devnode "/dev/snd/pcmC0D0p"
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " ./mxc_asrc_test.out -to 48000 audio8k16S.wav /tmp/s48.wav"
+run_testcase " ./mxc_asrc_test.out -to 48000 audio8k16S.wav /dev/s48.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " aplay -N -M /tmp/s48.wav"
+run_testcase " aplay -N -M /dev/s48.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " ./mxc_asrc_test.out -to 96000 /tmp/s48.wav /tmp/s96.wav"
+run_testcase " ./mxc_asrc_test.out -to 96000 /dev/s48.wav /dev/s96.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " aplay -N -M /tmp/s96.wav"
+run_testcase " aplay -N -M /dev/s96.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " rm /tmp/s48.wav"
+run_testcase " rm /dev/s48.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " ./mxc_asrc_test.out -to 88200 /tmp/s96.wav /tmp/s882.wav"
+run_testcase " ./mxc_asrc_test.out -to 88200 /dev/s96.wav /dev/s882.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " aplay -N -M /tmp/s882.wav"
+run_testcase " aplay -N -M /dev/s882.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " rm /tmp/s96.wav"
+run_testcase " rm /dev/s96.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " ./mxc_asrc_test.out -to 44100 /tmp/s882.wav /tmp/s441.wav"
+run_testcase " ./mxc_asrc_test.out -to 44100 /dev/s882.wav /dev/s441.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " aplay -N -M /tmp/s441.wav"
+run_testcase " aplay -N -M /dev/s441.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " rm /tmp/s882.wav /tmp/s441.wav /tmp/raw.txt"
+run_testcase " rm /dev/s882.wav /dev/s441.wav /dev/raw.txt"
 fi
 print_status
 exit $STATUS
