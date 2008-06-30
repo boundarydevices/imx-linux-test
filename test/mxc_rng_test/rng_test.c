@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -9,20 +9,6 @@
  *
  * http://www.opensource.org/licenses/gpl-license.html
  * http://www.gnu.org/copyleft/gpl.html
- */
-
-/* +FHDR-----------------------------------------------------------------------
- * FILE NAME      : scc_test.c
- * ----------------------------------------------------------------------------
- * LATEST : $Revision: 1.7 $ $Date: Tue Jun 27 16:07:18 2006 $
- * ----------------------------------------------------------------------------
- * KEYWORDS : RNG Security, Linux driver
- * ----------------------------------------------------------------------------
- * PURPOSE: Provide a test program for access to RNG driver
- * ----------------------------------------------------------------------------
- * REUSE ISSUES
- * RNGB/RNGC may require some changes
- * -FHDR-----------------------------------------------------------------------
  */
 
 /*!
@@ -87,7 +73,7 @@ void rngAddEntropy(int device, uint32_t entropy);
 void rngAddUserEntropy(fsl_shw_uco_t * user_context, uint32_t entropy);
 
 /* utility print functions */
-void printEntropy(const char *data, size_t count);
+void printEntropy(const unsigned char *data, size_t count);
 void printRngStatusRegister(const uint32_t status);
 void printRngControlRegister(const uint32_t status);
 
@@ -316,7 +302,7 @@ int writeRngRegister(int device, uint32_t address, uint32_t value)
 
 void rngGetEntropy(int device, int byte_count)
 {
-	char *entropy;
+	unsigned char *entropy;
 	ssize_t error_code = -EIO;
 
 	if (byte_count < 0) {
@@ -354,7 +340,7 @@ void rngGetEntropy(int device, int byte_count)
 
 void rngGetUserEntropy(fsl_shw_uco_t * ctx, int byte_count)
 {
-	char *entropy;
+	unsigned char *entropy;
 	fsl_shw_return_t code;
 
 	if (byte_count < 0) {
@@ -402,11 +388,11 @@ void rngAddUserEntropy(fsl_shw_uco_t * ctx, uint32_t entropy)
 	}
 }
 
-void printEntropy(const char *data, size_t count)
+void printEntropy(const unsigned char *data, size_t count)
 {
-	const int valuesPerLine = 20;
+	const unsigned int valuesPerLine = 20;
 
-	int i;
+	unsigned int i;
 	for (i = 0; i < count; i++) {
 		printf("%02x ", *data++);
 		if (i % valuesPerLine == valuesPerLine - 1) {
@@ -480,11 +466,72 @@ void printRngControlRegister(const uint32_t control)
 }
 
 #else				/* RNGC ... */
+
+typedef struct registerNames_t
+{
+    uint32_t code;
+    char* name;
+} registerNames_t;
+
+registerNames_t RNGCStatusNames[] =
+    {{RNGC_STATUS_SEC_STATE,        "SecureState"},
+     {RNGC_STATUS_BUSY,             "Busy"},
+     {RNGC_STATUS_SLEEP,            "Sleeping"},
+     {RNGC_STATUS_RESEED,           "ReseedRequired"},
+     {RNGC_STATUS_ST_DONE,          "SelfTestDone"},
+     {RNGC_STATUS_SEED_DONE,        "SeedDone"},
+     {RNGC_STATUS_NEXT_SEED_DONE,   "NextSeedDone"},
+     {RNGC_STATUS_ERROR,            "Error"},
+     {RNGC_STATUS_ST_PF_PRNG,       "PRNGSelfTestFail"},
+     {RNGC_STATUS_ST_PF_TRNG,       "TRNGSelfTestFail"}};
+
+#define RNGCSTATUSNAMESLENGTH                                               \
+    sizeof(RNGCStatusNames)/sizeof(registerNames_t)
+
 void printRngStatusRegister(const uint32_t status)
 {
+    uint32_t i;
+	printf("RNGC Status: 0x%08x: ", status);
+
+    for (i = 0; i < RNGCSTATUSNAMESLENGTH; i++) {
+        if (status & RNGCStatusNames[i].code) {
+            printf("%s, ", RNGCStatusNames[i].name);
+        }
+    }
+    printf("\n");
+
+	printf("SelfTest: 0x%02x\n",
+	       (status & RNGC_STATUS_STAT_TEST_PF_MASK) >>
+	       RNGC_STATUS_STAT_TEST_PF_SHIFT);
+	printf("fifo level: %d, fifo size: %d\n",
+	       (status & RNGC_STATUS_FIFO_LEVEL_MASK) >>
+	       RNGC_STATUS_FIFO_LEVEL_SHIFT,
+	       (status & RNGC_STATUS_FIFO_SIZE_MASK) >>
+	       RNGC_STATUS_FIFO_SIZE_SHIFT);
+
 }
+
+registerNames_t RNGCControlNames[] =
+    {{RNGC_CONTROL_AUTO_SEED,       "AutoSeed"},
+     {RNGC_CONTROL_MASK_DONE,       "MaskDone"},
+     {RNGC_CONTROL_MASK_ERROR,      "MaskError"},
+     {RNGC_CONTROL_VERIF_MODE,      "VerificationMode"},
+     {RNGC_CONTROL_CTL_ACC,         "ControlAccessMode"}};
+
+#define RNGCCONTROLNAMESLENGTH                                              \
+    sizeof(RNGCStatusNames)/sizeof(registerNames_t)
 
 void printRngControlRegister(const uint32_t control)
 {
+    uint32_t i;
+	printf("RNGC Control: 0x%08x: ", control);
+
+    for (i = 0; i < RNGCCONTROLNAMESLENGTH; i++) {
+        if (control & RNGCControlNames[i].code) {
+            printf("%s, ", RNGCControlNames[i].name);
+        }
+    }
+    printf("\n");
 }
+
 #endif				/* RNGA or RNGC */
