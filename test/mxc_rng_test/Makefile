@@ -28,6 +28,9 @@ endif
 ifeq ("$(PLATFORM)", "MXC91131EVB")
 TARGET_ARCH=-DCONFIG_ARCH_MXC91131
 endif
+ifeq ("$(PLATFORM)", "IMX37_3STACK")
+TARGET_ARCH=-DCONFIG_ARCH_MX37
+endif
 
 # Location of local headers and API "common" sources
 INCLUDEDIR= -I. -I../../include -I../mxc_sahara_test $(INC)
