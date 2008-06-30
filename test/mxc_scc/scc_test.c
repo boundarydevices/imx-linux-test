@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -9,27 +9,6 @@
  *
  * http://www.opensource.org/licenses/gpl-license.html
  * http://www.gnu.org/copyleft/gpl.html
- */
-
-/* +FHDR-----------------------------------------------------------------------
- * FILE NAME      : scc_test.c
- * DEPARTMENT     : Security Technology Center (STC), NCSG
- * AUTHOR         : Ron Harvey (r66892)
- * ----------------------------------------------------------------------------
- * REVIEW(S) :
- * ----------------------------------------------------------------------------
- * RELEASE HISTORY
- * VERSION DATE       AUTHOR       DESCRIPTION
- * 0.0.1   2004-12-02 R. Harvey    Initial version
- * 0.0.8   2005-03-08 R. Harvey    Implementation complete
- * ----------------------------------------------------------------------------
- * KEYWORDS : SCC, SMN, SCM, Security, Linux driver
- * ----------------------------------------------------------------------------
- * PURPOSE: Provide a program to test the SCC (Security Controller) driver
- * ----------------------------------------------------------------------------
- * REUSE ISSUES
- * Version 2 of the SCC block will look a lot different
- * -FHDR-----------------------------------------------------------------------
  */
 
 /**
@@ -52,7 +31,7 @@
 #include <stdarg.h>
 
 #include <inttypes.h>
-#include "scc_test.h"
+#include "../include/scc_test_driver.h"
 
 
 /* test routines */
@@ -80,7 +59,7 @@ void print_smn_command_register(const uint32_t);
 void print_scc_debug_detector_register(uint32_t);
 void print_scc_return_code(const scc_return_t);
 void dump_cipher_control_block(scc_encrypt_decrypt*);
-int do_slot_function(int device, char* arg);
+int do_slot_function(int device, char *arg);
 
 /* utility register access functions */
 int write_scc_register(int device, uint32_t address, uint32_t value);
@@ -112,11 +91,11 @@ uint8_t plaintext[4096] = {0xca, 0xbb, 0xad, 0xba,
 void
 init_plaintext()
 {
-    int i;
+    uint32_t i;
 
     /* Starting after precompiled values, fill up the rest */
     for (i = 24; i < sizeof(plaintext); i++) {
-        plaintext[i] = i%256;
+        plaintext[i] = i % 256;
     }
 }
 
@@ -165,8 +144,8 @@ scc_configuration_access *get_scc_configuration(int);
  ****************************************************************************/
 int
 main(int arg_count,             /* # command-line arguments */
-     char*arg_list[])            /* pointers to command-line arguments */
-{ 
+     char *arg_list[])            /* pointers to command-line arguments */
+{
     /* Declare and initialize variables */
     int scc_fd;                 /* The SCC device */
     char *scc_device_path = "/dev/scc_test";
@@ -179,7 +158,7 @@ main(int arg_count,             /* # command-line arguments */
 #if 0
     int one = 1;                /* little-endian test vector */
 #endif
-    
+
     init_plaintext();
 
 #if 0
@@ -200,8 +179,8 @@ main(int arg_count,             /* # command-line arguments */
     }
 
     /* Process command line arguments - until we come up empty */
-    while ( (argument_switch = getopt(arg_count, arg_list, "K:L:MP:R:S:T:W:"))
-            != EOF ) {
+    while ((argument_switch = getopt(arg_count, arg_list, "K:L:MP:R:S:T:W:"))
+            != EOF) {
         switch (argument_switch) {
         case 'K':               /* Key slot functions */
             test_status |= do_slot_function(scc_fd, optarg);
@@ -437,7 +416,7 @@ main(int arg_count,             /* # command-line arguments */
         default:
             fprintf(stderr, "Test switch %c unknown\n", test_switch);
         }
-        
+
     }
 
     close(scc_fd);
@@ -450,7 +429,7 @@ main(int arg_count,             /* # command-line arguments */
 void
 display_configuration(int scc_fd) {
     scc_configuration_access *config;
-    
+
     config = get_scc_configuration(scc_fd);
     if (config == NULL) {
         perror("\nCannot display SCC Configuration");
@@ -863,7 +842,7 @@ run_cipher_tests(int scc_fd)
             read_scc_register(scc_fd, SMN_STATUS, &value);
             printf("SMN Status                  (0x%08x): ", value);
             print_smn_status_register(value);
-  
+
             read_scc_register(scc_fd, SCM_ERROR_STATUS, &value);
             printf("SCM Error Register          (0x%08x):", value);
             print_scc_error_status_register(value);
@@ -882,7 +861,7 @@ run_cipher_tests(int scc_fd)
             cipher_control.data_out = new_plaintext;
             cipher_control.data_out_length = plaintext_length +
                 decrypt_padding_allowance;
-        
+
             if (inject_crc_error) {
                 ciphertext[rand()%cipher_control.data_in_length] ^= 1;
             }
@@ -934,7 +913,7 @@ run_cipher_tests(int scc_fd)
                     printf("SCM Error Register          (0x%08x):", value);
                     print_scc_error_status_register(value);
                 }
- 
+
                 if (cipher_control.data_out_length != plaintext_length) {
                     printf("Error:  input plaintext length (%d) and output "
                            "plaintext length (%ld) do not match.\n",
@@ -1022,7 +1001,7 @@ run_aic_tests(int scc_fd) {
     printf("SMN Status: ");
     print_smn_status_register(value);
 
-    
+
     return 0;
 }
 
@@ -1130,8 +1109,8 @@ read_scc_register(int device, /* OS device connect */
 /***********************************************************************
  get_scc_configuration()
  **********************************************************************/
-scc_configuration_access*
-get_scc_configuration(int scc_fd) {
+scc_configuration_access
+*get_scc_configuration(int scc_fd) {
     static scc_configuration_access *config = NULL;
     int status;
 
@@ -1196,8 +1175,8 @@ run_wrap_tests (int scc_fd)
     scc_get_slot_info_access info_acc;
     scc_encrypt_slot_access unload_acc;
     int slot_allocated = 0;
-    
-    strcpy((char*)key,"abcdefgh");
+
+    strcpy((char *)key,"abcdefgh");
 
     alloc_acc.owner_id = owner1;
     alloc_acc.value_size_bytes = 8;
@@ -1219,7 +1198,7 @@ run_wrap_tests (int scc_fd)
         load_acc.slot = alloc_acc.slot;
         load_acc.owner_id = owner1;
         load_acc.key_is_red = 1;
-        load_acc.key_data = (uint8_t*)key;
+        load_acc.key_data = (uint8_t *)key;
         load_acc.key_data_length = alloc_acc.value_size_bytes;
         status = ioctl(scc_fd, SCC_TEST_LOAD_SLOT, &load_acc);
         if (status != 0) {
@@ -1228,7 +1207,7 @@ run_wrap_tests (int scc_fd)
             if (load_acc.scc_status != SCC_RET_OK) {
                 printf("Red value load returned %d\n", load_acc.scc_status);
                 status = 1;
-            }                
+            }
         }
     }
 
@@ -1270,7 +1249,7 @@ run_wrap_tests (int scc_fd)
             }
         }
     }
-                            
+
     /* Now unload the key */
     if (status == 0) {
         unload_acc.slot = alloc_acc.slot;
@@ -1290,7 +1269,7 @@ run_wrap_tests (int scc_fd)
             }
         }
     }
-    
+
     /* Reacquire a slot */
     if ((status == 0) && !slot_allocated) {
         status = ioctl(scc_fd, SCC_TEST_ALLOC_SLOT, &alloc_acc);
@@ -1379,7 +1358,7 @@ run_wrap_tests (int scc_fd)
  * @param arg      Argument associated with slot request
  */
 int
-do_slot_function(int scc_fd, char* arg)
+do_slot_function(int scc_fd, char *arg)
 {
     int status = 1;
     char request = *arg++;
@@ -1612,10 +1591,10 @@ print_smn_status_register(uint32_t status)
 {
     int version_id;
     uint8_t state;
-          
+
     version_id = (status&SMN_STATUS_VERSION_ID_MASK)
         >> SMN_STATUS_VERSION_ID_SHIFT;
-    state = (status&SMN_STATUS_STATE_MASK) >> SMN_STATUS_STATE_SHIFT; 
+    state = (status&SMN_STATUS_STATE_MASK) >> SMN_STATUS_STATE_SHIFT;
 
     printf("Version %d %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s, State: %s\n",
            version_id,
@@ -1645,10 +1624,9 @@ print_smn_status_register(uint32_t status)
 
 
 /** Interpret the state (a field of the SMN State register) and return its
- *  name 
+ *  name
 **/
-char *
-get_smn_state_name(const uint8_t state)
+char *get_smn_state_name(const uint8_t state)
 {
     switch (state) {
     case SMN_STATE_START:
@@ -1688,7 +1666,7 @@ print_scm_status_register(uint32_t status)
            (status&SCM_STATUS_CIPHERING) ? ", CIPHERING" : "",
            (status&SCM_STATUS_ZEROIZING) ? ", ZEROIZING" : "",
            (status&SCM_STATUS_BUSY) ? ", BUSY" : "");
-           
+
 
 }
 
@@ -1698,9 +1676,9 @@ void
 print_scm_control_register(uint32_t control)
 {
     printf("%s%s%s\n",
-           ((control&SCM_CONTROL_CIPHER_MODE_MASK)==SCM_DECRYPT_MODE) ? 
+           ((control&SCM_CONTROL_CIPHER_MODE_MASK)==SCM_DECRYPT_MODE) ?
            "DECRYPT " : "ENCRYPT ",
-           ((control&SCM_CONTROL_CHAINING_MODE_MASK)==SCM_CBC_MODE) ? 
+           ((control&SCM_CONTROL_CHAINING_MODE_MASK)==SCM_CBC_MODE) ?
            "CBC " : "ECB ",
            (control&SCM_CONTROL_START_CIPHER) ? "CipherStart":"");
 }
@@ -1725,7 +1703,7 @@ print_scc_error_status_register(uint32_t error)
            (error&SCM_ERR_CIPHERING) ? ", CIPHERING" : "",
            (error&SCM_ERR_ZEROIZING) ? ", ZEROIZING" : "",
            (error&SCM_ERR_BUSY) ? ", BUSY" : "");
-           
+
 }
 
 
