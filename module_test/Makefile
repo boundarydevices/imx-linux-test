@@ -5,10 +5,10 @@ ifneq ($(KERNELRELEASE),)
 # When adding modules, either add to the 'module_list' for all platfoms or add
 # below to the 'module_list +=...' list for each platform that needs it.
 module_list-y := mxc_rtic_test.o
-
 module_list-$(CONFIG_MXC_PMIC_MC13783) += mxc_pm_test.o mxc_pmic_power_testmod.o
 module_list-$(CONFIG_MXC_IPC) += ipctestmod.o
 module_list-$(CONFIG_MXC_SECURITY_SCC) += scc_test_driver.o
+module_list-$(CONFIG_MXC_SECURITY_SCC2) += scc2_test_driver.o
 module_list-$(CONFIG_MXC_SECURITY_RNG) += rng_test_driver.o
 module_list-$(CONFIG_MXC_SECURITY_HAC) += mxc_HAC_test.o
 module_list-$(CONFIG_MXC_SAHARA) += sahara_test_driver.o

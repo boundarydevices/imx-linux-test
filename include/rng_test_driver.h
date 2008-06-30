@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2005-2008 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -9,20 +9,6 @@
  *
  * http://www.opensource.org/licenses/gpl-license.html
  * http://www.gnu.org/copyleft/gpl.html
- */
-
-/* +FHDR-----------------------------------------------------------------------
- * FILE NAME      : rng_test_driver.h
- * ----------------------------------------------------------------------------
- * LATEST : $Revision: 1.5 $ $Date: Tue Jun 20 14:11:51 2006 $
- * ----------------------------------------------------------------------------
- * KEYWORDS : RNG, Security, Linux driver
- * ----------------------------------------------------------------------------
- * PURPOSE: Provide a test driver for access to the RNG driver
- * ----------------------------------------------------------------------------
- * REUSE ISSUES
- * RNGB/RNGC have different interface, but there might be some reuse
- * -FHDR-----------------------------------------------------------------------
  */
 
 /*! @file rng_test_driver.h
@@ -49,10 +35,10 @@
 
 #ifdef __KERNEL__
 
-static os_error_code rng_test_get_random(fsl_shw_uco_t * user_ctx,
-					 unsigned long rng_data);
-static os_error_code rng_test_add_entropy(fsl_shw_uco_t * user_ctx,
-					  unsigned long rng_data);
+static os_error_code rng_test_get_random(fsl_shw_uco_t* user_ctx,
+                                          unsigned long rng_data);
+static os_error_code rng_test_add_entropy(fsl_shw_uco_t* user_ctx,
+                                          unsigned long rng_data);
 static os_error_code rng_test_read_register(unsigned long rng_data);
 static os_error_code rng_test_write_register(unsigned long rng_data);
 static os_error_code rng_test_setup_user_driver_interaction(void);
@@ -60,15 +46,17 @@ static void rng_test_cleanup(void);
 
 extern int rng_major_node;
 
+
 #ifndef RNG_TEST_MAJOR_NODE
-/*! Linux major node value for the device special file (/dev/rng_test) */
+/** Linux major node value for the device special file (/dev/rng_test) */
 #define RNG_TEST_MAJOR_NODE  0
 #endif
 
-#endif				/* kernel */
+#endif /* kernel */
+
 
 #ifndef RNG_TEST_DRIVER_NAME
-/*! /dev/xxx name for this device */
+/** /dev/xxx name for this device */
 #define RNG_TEST_DRIVER_NAME "rng_test"
 #endif
 
@@ -87,60 +75,64 @@ extern int rng_major_node;
 
 /* Define RNG Driver Commands (Argument 2 of ioctl) */
 
-/*! @defgroup ioctlcmds ioctl command (argument 2) values */
-/*! @addtogroup ioctlcmds */
-/*! @{ */
-/*! ioctl cmd to test the rng_read_register() function of the RNG driver */
+/** @defgroup ioctlcmds ioctl command (argument 2) values */
+/** @addtogroup ioctlcmds */
+/** @{ */
+/** ioctl cmd to test the rng_read_register() function of the RNG driver */
 #define RNG_TEST_READ_REG        _IOWR(RNG_TEST_DRIVER_IOCTL_IDENTIFIER, 1, \
          rng_test_reg_access_t)
-/*! ioctl cmd to test the rng_write_register() function of the RNG driver */
+/** ioctl cmd to test the rng_write_register() function of the RNG driver */
 #define RNG_TEST_WRITE_REG       _IOWR(RNG_TEST_DRIVER_IOCTL_IDENTIFIER, 2, \
          rng_test_reg_access_t)
-/*! ioctl cmd to test the rng_add_entropy() function of the RNG driver */
+/** ioctl cmd to test the rng_add_entropy() function of the RNG driver */
 #define RNG_TEST_ADD_ENTROPY     _IOWR(RNG_TEST_DRIVER_IOCTL_IDENTIFIER, 3, \
          rng_test_add_entropy_t)
-/*! ioctl cmd to test the rng_get_random() function of the RNG driver */
+/** ioctl cmd to test the rng_get_random() function of the RNG driver */
 #define RNG_TEST_GET_RANDOM     _IOWR(RNG_TEST_DRIVER_IOCTL_IDENTIFIER, 4, \
          rng_test_get_random_t)
-/*! @} */
+/** @} */
 
-/*! @defgroup ioctlStructs Special structs for argument 3 of ioctl
+
+/** @defgroup ioctlStructs Special structs for argument 3 of ioctl
  *
  *
  */
-/*! @addtogroup ioctlStructs */
-/*! @{ */
+/** @addtogroup ioctlStructs */
+/** @{ */
 
-/*!
+/**
  * ioctl structure for add entropy to the RNG, through the driver, used
  * with #RNG_ADD_ENTROPY
  */
 typedef struct {
-	rng_return_t function_return_code;	/*!< Straight from RNG driver. */
-	uint32_t count_bytes;	/*!< Number of bytes at entropy.  */
-	uint8_t *entropy;	/*!< Location of entropy add to RNG.  */
+    rng_return_t function_return_code; /**< Straight from RNG driver. */
+    uint32_t  count_bytes;      /**< Number of bytes at entropy.  */
+    uint8_t*  entropy;          /**< Location of entropy add to RNG.  */
 } rng_test_add_entropy_t;
 
-/*!
+
+/**
  * ioctl structure for retrieving entropy from the RNG driver, used
  * with #RNG_GET_RANDOM
  */
 typedef struct {
-	int count_bytes;	/*!< Amount of entropy to retrieve */
-	uint8_t *random;	/*!< Place to copy the random data  */
-	int isr_flag;		/*!< Request entropy using isr mode */
-	rng_return_t function_return_code;	/*!< Straight from RNG driver */
+    int count_bytes;            /**< Amount of entropy to retrieve */
+    uint8_t* random;           /**< Place to copy the random data  */
+    int isr_flag;               /**< Request entropy using isr mode */
+    rng_return_t function_return_code; /**< Straight from RNG driver */
 } rng_test_get_random_t;
 
-/*!
+
+/**
  * ioctl structure for accessing RNG registers, used with
  * #RNG_TEST_READ_REG and #RNG_TEST_WRITE_REG.
  */
 typedef struct {
-	uint32_t reg_offset;	/*!< The register address from Memory Map */
-	uint32_t reg_data;	/*!< Data to/from the register */
-	rng_return_t function_return_code;	/*!< Straight from RNG driver */
+    uint32_t reg_offset;        /**< The register address from Memory Map */
+    uint32_t reg_data;          /**< Data to/from the register */
+    rng_return_t      function_return_code; /**< Straight from RNG driver */
 } rng_test_reg_access_t;
+
 
 /*! @} */
 
