@@ -171,7 +171,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 
 		nactual = (nread - hdrlen);
 		if (net_h->len != nactual) {
-			printf("warn: length mismatch\n");
+			warn_msg("length mismatch\n");
 		}
 		
 		if (cmd->seq_no++ != net_h->seqno) {
@@ -213,7 +213,7 @@ udp_send(struct cmd_line *cmd, int sd, char *buf, int n)
 
 	hdrlen = sizeof(net_h);
 	if ((n + hdrlen) > DEFAULT_PKT_SIZE) {
-		printf("panic: increase default udp pkt size! %d\n", n);
+		err_msg("panic: increase default udp pkt size! %d\n", n);
 		while (1);
 	}
 	
@@ -237,7 +237,7 @@ udp_send(struct cmd_line *cmd, int sd, char *buf, int n)
 	nwrite = sendto(sd, cmd->nbuf, n, 0, (struct sockaddr *)&addr,
 				sizeof(addr));
 	if (nwrite != n) {
-		printf("sendto: error\n");
+		err_msg("sendto: error\n");
 	}
 
 	return nwrite;
@@ -330,13 +330,13 @@ udp_open(struct cmd_line *cmd)
 
 	cmd->nbuf = (char *)malloc(DEFAULT_PKT_SIZE);
 	if (cmd->nbuf == NULL) {
-		printf("failed to malloc udp buffer\n");
+		err_msg("failed to malloc udp buffer\n");
 		return -1;
 	}
 	
 	sd = socket(PF_INET, SOCK_DGRAM, 0);
 	if (sd < 0) {
-		printf("failed to open udp socket\n");
+		err_msg("failed to open udp socket\n");
 		free(cmd->nbuf);
 		cmd->nbuf = 0;
 		return -1;
@@ -349,7 +349,7 @@ udp_open(struct cmd_line *cmd)
 		addr.sin_addr.s_addr = INADDR_ANY;
 
 		if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-			printf("udp bind failed\n");
+			err_msg("udp bind failed\n");
 			close(sd);
 			free(cmd->nbuf);
 			cmd->nbuf = 0;
@@ -377,7 +377,7 @@ open_files(struct cmd_line *cmd)
 			return -1;
 		}
 		
-		printf("decoder listening on port %d\n", cmd->port);
+		info_msg("decoder listening on port %d\n", cmd->port);
 	}
 	
 	if (cmd->dst_scheme == PATH_FILE) {
@@ -400,7 +400,7 @@ open_files(struct cmd_line *cmd)
 			return -1;
 		}
 		
-		printf("encoder sending on port %d\n", cmd->port);
+		info_msg("encoder sending on port %d\n", cmd->port);
 	}
 
 	return 0;
@@ -428,31 +428,29 @@ close_files(struct cmd_line *cmd)
 int
 check_params(struct cmd_line *cmd, int op)
 {
-	printf("Format: ");
 	switch (cmd->format) {
 	case STD_MPEG4:
-		printf("STD_MPEG4");
+		info_msg("Format: STD_MPEG4\n");
 		break;
 	case STD_H263:
-		printf("STD_H263");
+		info_msg("Format: STD_H263\n");
 		break;
 	case STD_AVC:
-		printf("STD_AVC");
+		info_msg("Format: STD_AVC\n");
 		break;
 	case STD_VC1:
-		printf("STD_VC1");
+		info_msg("Format: STD_VC1\n");
 		break;
 	case STD_MPEG2:
-		printf("STD_MPEG2");
+		info_msg("Format: STD_MPEG2\n");
 		break;
 	case STD_DIV3:
-		printf("STD_DIV3");
+		info_msg("Format: STD_DIV3\n");
 		break;
 	default:
-		printf("Unsupported Format!");
+		err_msg("Unsupported Format!\n");
 		break;
 	}
-	printf("\n");
 
 	if (cmd->port == 0) {
 		cmd->port = DEFAULT_PORT;
@@ -465,7 +463,7 @@ check_params(struct cmd_line *cmd, int op)
 	if (cmd->src_scheme == PATH_FILE && op == ENCODE) {
 		if ((cmd->width == 0) || (cmd->width % 16 != 0) ||
 			(cmd->height == 0) || (cmd->height % 16 != 0)) {
-			printf("Enter width and height for YUV file\n");
+			warn_msg("Enter width and height for YUV file\n");
 			return -1;
 		}
 	}
@@ -479,20 +477,20 @@ check_params(struct cmd_line *cmd, int op)
 
 		if (cmd->width % 16 != 0) {
 			cmd->width -= cmd->width % 16;
-			printf("Warn:width not divisible by 16, adjusted %d\n",
+			warn_msg("width not divisible by 16, adjusted %d\n",
 					cmd->width);
 		}
 	
 		if (cmd->height % 16 != 0) {
 			cmd->height -= cmd->height % 16;
-			printf("Warn:height not divisible by 16, adjusted %d\n",
+			warn_msg("height not divisible by 16, adjusted %d\n",
 					cmd->height);
 		}
 	}
 
 	if (cmd->dst_scheme != PATH_FILE && op == ENCODE) {
 		if (cmd->dst_scheme != PATH_NET) {
-			printf("Warn: No output file specified, using default\n");
+			warn_msg("No output file specified, using default\n");
 			cmd->dst_scheme = PATH_FILE;
 
 			if (cmd->format == STD_MPEG4) {
@@ -508,21 +506,21 @@ check_params(struct cmd_line *cmd, int op)
 	if (cmd->rot_en) {
 		if (cmd->rot_angle != 0 && cmd->rot_angle != 90 &&
 			cmd->rot_angle != 180 && cmd->rot_angle != 270) {
-			printf("Warn: Invalid rotation angle. No rotation!\n");
+			warn_msg("Invalid rotation angle. No rotation!\n");
 			cmd->rot_en = 0;
 			cmd->rot_angle = 0;
 		}
 	}
 
 	if (cmd->mirror < MIRDIR_NONE || cmd->mirror > MIRDIR_HOR_VER) {
-		printf("Warn: Invalid mirror angle. Using 0\n");
+		warn_msg("Invalid mirror angle. Using 0\n");
 		cmd->mirror = 0;
 	}
 
 	if (!(cmd->format == STD_MPEG4 || cmd->format == STD_H263 ||
 	    cmd->format == STD_MPEG2 || cmd->format == STD_DIV3) &&
 	    cmd->mp4dblk_en) {
-		printf("Warn: Deblocking only for MPEG4. Disabled!\n");
+		warn_msg("Deblocking only for MPEG4. Disabled!\n");
 		cmd->mp4dblk_en = 0;
 	}
 
