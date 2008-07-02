@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -29,7 +29,7 @@
 static int cap_fd = -1;
 struct capture_testbuffer cap_buffers[TEST_BUFFER_NUM];
 
-int 
+int
 v4l_start_capturing(void)
 {
 	unsigned int i;
@@ -42,7 +42,7 @@ v4l_start_capturing(void)
 		buf.memory = V4L2_MEMORY_MMAP;
 		buf.index = i;
 		if (ioctl(cap_fd, VIDIOC_QUERYBUF, &buf) < 0) {
-			printf("VIDIOC_QUERYBUF error\n");
+			err_msg("VIDIOC_QUERYBUF error\n");
 			return -1;
 		}
 
@@ -57,21 +57,21 @@ v4l_start_capturing(void)
 		buf.index = i;
 		buf.m.offset = cap_buffers[i].offset;
 		if (ioctl(cap_fd, VIDIOC_QBUF, &buf) < 0) {
-			printf("VIDIOC_QBUF error\n");
+			err_msg("VIDIOC_QBUF error\n");
 			return -1;
 		}
 	}
 
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(cap_fd, VIDIOC_STREAMON, &type) < 0) {
-		printf("VIDIOC_STREAMON error\n");
+		err_msg("VIDIOC_STREAMON error\n");
 		return -1;
 	}
 
 	return 0;
 }
 
-void 
+void
 v4l_stop_capturing(void)
 {
 	int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -80,7 +80,7 @@ v4l_stop_capturing(void)
 	cap_fd = -1;
 }
 
-int 
+int
 v4l_capture_setup(int width, int height, int fps)
 {
 	char v4l_device[32] = "/dev/video0";
@@ -89,12 +89,12 @@ v4l_capture_setup(int width, int height, int fps)
 	struct v4l2_requestbuffers req = {0};
 
 	if (cap_fd > 0) {
-		printf("capture device already opened\n");
+		warn_msg("capture device already opened\n");
 		return -1;
 	}
 
 	if ((cap_fd = open(v4l_device, O_RDWR, 0)) < 0) {
-		printf("Unable to open %s\n", v4l_device);
+		err_msg("Unable to open %s\n", v4l_device);
 		return -1;
 	}
 
@@ -107,7 +107,7 @@ v4l_capture_setup(int width, int height, int fps)
 	fmt.fmt.pix.sizeimage = 0;
 
 	if (ioctl(cap_fd, VIDIOC_S_FMT, &fmt) < 0) {
-		printf("set format failed\n");
+		err_msg("set format failed\n");
 		close(cap_fd);
 		cap_fd = -1;
 		return -1;
@@ -119,7 +119,7 @@ v4l_capture_setup(int width, int height, int fps)
 	parm.parm.capture.capturemode = 0;
 
 	if (ioctl(cap_fd, VIDIOC_S_PARM, &parm) < 0) {
-		printf("set frame rate failed\n");
+		err_msg("set frame rate failed\n");
 		close(cap_fd);
 		cap_fd = -1;
 		return -1;
@@ -131,7 +131,7 @@ v4l_capture_setup(int width, int height, int fps)
 	req.memory = V4L2_MEMORY_MMAP;
 
 	if (ioctl(cap_fd, VIDIOC_REQBUFS, &req) < 0) {
-		printf("v4l_capture_setup: VIDIOC_REQBUFS failed\n");
+		err_msg("v4l_capture_setup: VIDIOC_REQBUFS failed\n");
 		close(cap_fd);
 		cap_fd = -1;
 		return -1;
@@ -147,7 +147,7 @@ v4l_get_capture_data(struct v4l2_buffer *buf)
 	buf->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf->memory = V4L2_MEMORY_MMAP;
 	if (ioctl(cap_fd, VIDIOC_DQBUF, buf) < 0) {
-		printf("VIDIOC_DQBUF failed\n");
+		err_msg("VIDIOC_DQBUF failed\n");
 		return -1;
 	}
 
