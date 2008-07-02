@@ -120,13 +120,13 @@ parse_config_file(char *file_name)
 
 	fp = fopen(file_name, "r");
 	if (fp == NULL) {
-		printf("Failed to open config file\n");
+		err_msg("Failed to open config file\n");
 		return -1;
 	}
 
 	while (fgets(line, 64, fp) != NULL) {
 		if (instance > 3) {
-			printf("No more instances!!\n");
+			err_msg("No more instances!!\n");
 			break;
 		}
 
@@ -175,7 +175,8 @@ parse_main_args(int argc, char *argv[])
 			break;
 		case 'C':
 			if (instance > 0) {
-			 	printf("-C option not selected because of other options\n");
+			 	warn_msg("-C option not selected because of"
+							"other options\n");
 				break;
 			}
 
@@ -212,7 +213,7 @@ parse_args(int argc, char *argv[], int i)
 			break;
 		case 'o':
 			if (input_arg[i].cmd.dst_scheme == PATH_NET) {
-				printf("warn: -o ignored because of -n\n");
+				warn_msg("-o ignored because of -n\n");
 				break;
 			}
 			strncpy(input_arg[i].cmd.output, optarg, 64);
@@ -224,7 +225,7 @@ parse_args(int argc, char *argv[], int i)
 				strncpy(input_arg[i].cmd.output, optarg, 64);
 				input_arg[i].cmd.dst_scheme = PATH_NET;
 			} else {
-				printf("Warn:-n option used only for encode\n");
+				warn_msg("-n option used only for encode\n");
 			}
 			break;
 		case 'p':
@@ -283,9 +284,9 @@ signal_thread(void *arg)
 	while (1) {
 		err = sigwait(&sigset, &sig);
 		if (sig == SIGINT) {
-			printf("Ctrl-C received\n");
+			warn_msg("Ctrl-C received\n");
 		} else {
-			printf("Unknown signal. Still exiting\n");
+			warn_msg("Unknown signal. Still exiting\n");
 		}
 		quitflag = 1;
 		break;
@@ -320,20 +321,20 @@ main(int argc, char *argv[])
 
 	err = IOSystemInit(NULL);
 	if (err) {
-		printf("IOSystemInit failure\n");
+		err_msg("IOSystemInit failure\n");
 		return -1;
 	}
 
 	err = vpu_GetVersionInfo(&ver);
 	if (err) {
-		printf("Cannot get version info\n");
+		err_msg("Cannot get version info\n");
 		IOSystemShutdown();
 		return -1;
 	}
 
-	printf("VPU firmware version: %d.%d.%d\n", ver.fw_major, ver.fw_minor,
+	info_msg("VPU firmware version: %d.%d.%d\n", ver.fw_major, ver.fw_minor,
 						ver.fw_release);
-	printf("VPU library version: %d.%d.%d\n", ver.lib_major, ver.lib_minor,
+	info_msg("VPU library version: %d.%d.%d\n", ver.lib_major, ver.lib_minor,
 						ver.lib_release);
 
 	if (instance > 1) {
@@ -415,7 +416,7 @@ main(int argc, char *argv[])
 	return ret;
 
 usage:
-	printf("\n%s", usage);
+	info_msg("\n%s", usage);
 	return -1;
 }
 

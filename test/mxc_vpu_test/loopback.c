@@ -42,7 +42,7 @@ decode()
 
 	ret = vpu_DecStartOneFrame(handle, &decparam);
 	if (ret != RETCODE_SUCCESS) {
-		printf("DecStartOneFrame failed\n");
+		err_msg("DecStartOneFrame failed\n");
 		return -1;
 	}
 
@@ -54,17 +54,17 @@ decode()
 	if (ret == RETCODE_FAILURE) {
 		goto out;
 	} else if (ret != RETCODE_SUCCESS) {
-		printf("vpu_DecGetOutputInfo failed %d\n", ret);
+		err_msg("vpu_DecGetOutputInfo failed %d\n", ret);
 		return -1;
 	}
 
 	if (outinfo.notSufficientPsBuffer) {
-		printf("PS Buffer overflow\n");
+		err_msg("PS Buffer overflow\n");
 		return -1;
 	}
 	
 	if (outinfo.notSufficientSliceBuffer) {
-		printf("Slice Buffer overflow\n");
+		err_msg("Slice Buffer overflow\n");
 		return -1;
 	}
 			
@@ -73,7 +73,7 @@ decode()
 		return -1;
 
 	if ( (outinfo.prescanresult == 0) && (decparam.dispReorderBuf == 0)) {
-		printf("Prescan Enable: not enough bs data\n");
+		warn_msg("Prescan Enable: not enough bs data\n");
 		goto out;
 	}
 
@@ -100,7 +100,7 @@ dec_fill_bsbuffer(char *buf, int size)
 	ret = vpu_DecGetBitstreamBuffer(handle, &pa_read_ptr, &pa_write_ptr,
 					&space);
 	if (ret != RETCODE_SUCCESS) {
-		printf("vpu_DecGetBitstreamBuffer failed\n");
+		err_msg("vpu_DecGetBitstreamBuffer failed\n");
 		return -1;
 	}
 
@@ -123,7 +123,7 @@ dec_fill_bsbuffer(char *buf, int size)
 
 	ret = vpu_DecUpdateBitstreamBuffer(handle, size);
 	if (ret != RETCODE_SUCCESS) {
-		printf("vpu_DecUpdateBitstreamBuffer failed\n");
+		err_msg("vpu_DecUpdateBitstreamBuffer failed\n");
 		return -1;
 	}
 	
@@ -215,7 +215,7 @@ encode()
 
 	ret = vpu_EncStartOneFrame(handle, &enc_param);
 	if (ret != RETCODE_SUCCESS) {
-		printf("EncStartOneFrame failed\n");
+		err_msg("EncStartOneFrame failed\n");
 		return -1;
 	}
 
@@ -225,7 +225,7 @@ encode()
 
 	ret = vpu_EncGetOutputInfo(handle, &outinfo);
 	if (ret != RETCODE_SUCCESS) {
-		printf("EncGetOutputInfo failed\n");
+		err_msg("EncGetOutputInfo failed\n");
 		return -1;
 	}
 
@@ -234,12 +234,12 @@ encode()
 				- enc->phy_bsbuf_addr);
 	ret = dec_fill_bsbuffer((void *)vbuf, outinfo.bitstreamSize);
 	if (ret < 0) {
-		printf("writing bitstream buffer failed\n");
+		err_msg("writing bitstream buffer failed\n");
 		return -1;
 	}
 
 	if (ret != outinfo.bitstreamSize) {
-		printf("Oops...\n");
+		err_msg("Oops...\n");
 	}
 
 	return 0;
@@ -262,7 +262,7 @@ encdec_test(void *arg)
 	/* allocate memory for must remember stuff */
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
 	if (enc == NULL) {
-		printf("Failed to allocate encode structure\n");
+		err_msg("Failed to allocate encode structure\n");
 		return -1;
 	}
 
@@ -270,7 +270,7 @@ encdec_test(void *arg)
 	enc_mem_desc.size = STREAM_BUF_SIZE;
 	ret = IOGetPhyMem(&enc_mem_desc);
 	if (ret) {
-		printf("Unable to obtain physical memory\n");
+		err_msg("Unable to obtain physical memory\n");
 		free(enc);
 		return -1;
 	}
@@ -278,7 +278,7 @@ encdec_test(void *arg)
 	/* mmap that physical buffer */
 	enc->virt_bsbuf_addr = IOGetVirtMem(&enc_mem_desc);
 	if (enc->virt_bsbuf_addr <= 0) {
-		printf("Unable to map physical memory\n");
+		err_msg("Unable to map physical memory\n");
 		IOFreePhyMem(&enc_mem_desc);
 		free(enc);
 		return -1;
@@ -291,21 +291,21 @@ encdec_test(void *arg)
 
 	dec = (struct decode *)calloc(1, sizeof(struct decode));
 	if (dec == NULL) {
-		printf("Failed to allocate decode structure\n");
+		err_msg("Failed to allocate decode structure\n");
 		goto err;
 	}
 
 	dec_mem_desc.size = STREAM_BUF_SIZE;
 	ret = IOGetPhyMem(&dec_mem_desc);
 	if (ret) {
-		printf("Unable to obtain physical mem\n");
+		err_msg("Unable to obtain physical mem\n");
 		free(dec);
 		goto err;
 	}
 
 	dec->virt_bsbuf_addr = IOGetVirtMem(&dec_mem_desc);
 	if (dec->virt_bsbuf_addr <= 0) {
-		printf("Unable to obtain virtual mem\n");
+		err_msg("Unable to obtain virtual mem\n");
 		IOFreePhyMem(&dec_mem_desc);
 		free(dec);
 		goto err;
@@ -318,14 +318,14 @@ encdec_test(void *arg)
 		ps_mem_desc.size = PS_SAVE_SIZE;
 		ret = IOGetPhyMem(&ps_mem_desc);
 		if (ret) {
-			printf("Unable to obtain physical ps save mem\n");
+			err_msg("Unable to obtain physical ps save mem\n");
 			goto err;
 		}
 
 		slice_mem_desc.size = SLICE_SAVE_SIZE;
 		ret = IOGetPhyMem(&slice_mem_desc);
 		if (ret) {
-			printf("Unable to obtain physical slice save mem\n");
+			err_msg("Unable to obtain physical slice save mem\n");
 			IOFreePhyMem(&ps_mem_desc);
 			goto err;
 		}
@@ -356,14 +356,14 @@ encdec_test(void *arg)
 
 	ret = encoder_fill_headers();
 	if (ret) {
-		printf("fill headers failed\n");
+		err_msg("fill headers failed\n");
 		goto err4;
 	}
 
 	/* start capture */
 	ret = v4l_start_capturing();
 	if (ret < 0) {
-		printf("v4l2 start failed\n");
+		err_msg("v4l2 start failed\n");
 		goto err4;
 	}
 
@@ -377,7 +377,7 @@ encdec_test(void *arg)
 	/* parse the bitstream */
 	ret = decoder_parse(dec);
 	if (ret) {
-		printf("decoder parse failed\n");
+		err_msg("decoder parse failed\n");
 		goto err5;
 	}
 
@@ -390,13 +390,13 @@ encdec_test(void *arg)
 	while (1) {
 		ret = encode();
 		if (ret) {
-			printf("Encode failed\n");
+			err_msg("Encode failed\n");
 			break;
 		}
 		
 		ret = decode();
 		if (ret) {
-			printf("Decode failed\n");
+			err_msg("Decode failed\n");
 			break;
 		}
 

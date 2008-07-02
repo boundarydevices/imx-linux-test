@@ -104,7 +104,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 #ifdef	TVOUT_ENABLE
 	err = system("/bin/echo U:720x480i-60 > /sys/class/graphics/fb1/mode");
 	if (err == -1) {
-		printf("set tv mode error\n");
+		warn_msg("set tv mode error\n");
 	}
 
 	out = 5;
@@ -120,30 +120,30 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 
 	disp = (struct vpu_display *)calloc(1, sizeof(struct vpu_display));
        	if (disp == NULL) {
-		printf("falied to allocate vpu_display\n");
+		err_msg("falied to allocate vpu_display\n");
 		return NULL;
 	}
 
 	fd = open(v4l_device, O_RDWR, 0);
 	if (fd < 0) {
-		printf("unable to open %s\n", v4l_device);
+		err_msg("unable to open %s\n", v4l_device);
 		return NULL;
 	}
 
 	err = ioctl(fd, VIDIOC_S_OUTPUT, &out);
 	if (err < 0) {
-		printf("VIDIOC_S_OUTPUT failed\n");
+		err_msg("VIDIOC_S_OUTPUT failed\n");
 		goto err;
 	}
 
 	cropcap.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	err = ioctl(fd, VIDIOC_CROPCAP, &cropcap);
 	if (err < 0) {
-		printf("VIDIOC_CROPCAP failed\n");
+		err_msg("VIDIOC_CROPCAP failed\n");
 		goto err;
 	}
-	dprintf(1, "cropcap.bounds.width = %d\ncropcap.bound.height = %d\n" \
-		"cropcap.defrect.width = %d\ncropcap.defrect.height = %d\n",
+	dprintf(1, "cropcap.bounds.width = %d\n\tcropcap.bound.height = %d\n\t" \
+		"cropcap.defrect.width = %d\n\tcropcap.defrect.height = %d\n",
 		cropcap.bounds.width, cropcap.bounds.height,
 		cropcap.defrect.width, cropcap.defrect.height);
 
@@ -166,7 +166,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 
 	err = ioctl(fd, VIDIOC_S_CROP, &crop);
 	if (err < 0) {
-		printf("VIDIOC_S_CROP failed\n");
+		err_msg("VIDIOC_S_CROP failed\n");
 		goto err;
 	}
 
@@ -182,7 +182,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 			ctrl.value = V4L2_MXC_ROTATE_90_LEFT;
 		err = ioctl(fd, VIDIOC_S_CTRL, &ctrl);
 		if (err < 0) {
-			printf("VIDIOC_S_CTRL failed\n");
+			err_msg("VIDIOC_S_CTRL failed\n");
 			goto err;
 		}
 	} else {
@@ -191,7 +191,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 		ctrl.value = 0;
 		err = ioctl(fd, VIDIOC_S_CTRL, &ctrl);
 		if (err < 0) {
-			printf("VIDIOC_S_CTRL failed\n");
+			err_msg("VIDIOC_S_CTRL failed\n");
 			goto err;
 		}
 	}
@@ -202,7 +202,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	
 		err = ioctl(fd, VIDIOC_S_FBUF, &fb);
 		if (err < 0) {
-			printf("VIDIOC_S_FBUF failed\n");
+			err_msg("VIDIOC_S_FBUF failed\n");
 			goto err;
 		}
 	}
@@ -220,13 +220,13 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 
 	err = ioctl(fd, VIDIOC_S_FMT, &fmt);
 	if (err < 0) {
-		printf("VIDIOC_S_FMT failed\n");
+		err_msg("VIDIOC_S_FMT failed\n");
 		goto err;
 	}
 
 	err = ioctl(fd, VIDIOC_G_FMT, &fmt);
 	if (err < 0) {
-		printf("VIDIOC_G_FMT failed\n");
+		err_msg("VIDIOC_G_FMT failed\n");
 		goto err;
 	}
 
@@ -236,12 +236,12 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 
 	err = ioctl(fd, VIDIOC_REQBUFS, &reqbuf);
 	if (err < 0) {
-		printf("VIDIOC_REQBUFS failed\n");
+		err_msg("VIDIOC_REQBUFS failed\n");
 		goto err;
 	}
 
 	if (reqbuf.count < nframes) {
-		printf("VIDIOC_REQBUFS: not enough buffers\n");
+		err_msg("VIDIOC_REQBUFS: not enough buffers\n");
 		goto err;
 	}
 
@@ -263,7 +263,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 
 		err = ioctl(fd, VIDIOC_QUERYBUF, &buffer);
 		if (err < 0) {
-			printf("VIDIOC_QUERYBUF: not enough buffers\n");
+			err_msg("VIDIOC_QUERYBUF: not enough buffers\n");
 			v4l_free_bufs(i, disp);
 			goto err;
 		}
@@ -276,7 +276,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 				MAP_SHARED, fd, buffer.m.offset);
 		
 		if (buf->start == MAP_FAILED) {
-			printf("mmap failed\n");
+			err_msg("mmap failed\n");
 			v4l_free_bufs(i, disp);
 			goto err;
 		}
@@ -322,7 +322,7 @@ int v4l_put_data(struct vpu_display *disp)
 		disp->buf.index = disp->ncount;
 		err = ioctl(disp->fd, VIDIOC_QUERYBUF, &disp->buf);
 		if (err < 0) {
-			printf("VIDIOC_QUERYBUF failed\n");
+			err_msg("VIDIOC_QUERYBUF failed\n");
 			goto err;
 		}
 	} else {
@@ -330,7 +330,7 @@ int v4l_put_data(struct vpu_display *disp)
 		disp->buf.memory = V4L2_MEMORY_MMAP;
 		err = ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf);
 		if (err < 0) {
-			printf("VIDIOC_DQBUF failed\n");
+			err_msg("VIDIOC_DQBUF failed\n");
 			goto err;
 		}
 	}
@@ -349,7 +349,7 @@ int v4l_put_data(struct vpu_display *disp)
 
 	err = ioctl(disp->fd, VIDIOC_QBUF, &disp->buf);
 	if (err < 0) {
-		printf("VIDIOC_QBUF failed\n");
+		err_msg("VIDIOC_QBUF failed\n");
 		goto err;
 	}
 
@@ -357,7 +357,7 @@ int v4l_put_data(struct vpu_display *disp)
 		type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		err = ioctl(disp->fd, VIDIOC_STREAMON, &type);
 		if (err < 0) {
-			printf("VIDIOC_STREAMON failed\n");
+			err_msg("VIDIOC_STREAMON failed\n");
 			goto err;
 		}
 	}
