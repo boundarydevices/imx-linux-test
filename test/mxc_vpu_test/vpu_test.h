@@ -23,8 +23,22 @@
 #include "vpu_io.h"
 
 #define	DEBUG_LEVEL	0
+
 #define dprintf(level, fmt, arg...)     if (DEBUG_LEVEL >= level) \
-        printf("<VPU-test> " fmt , ## arg)
+        printf("[DEBUG]\t%s:%d " fmt, __FILE__, __LINE__, ## arg)
+
+#define err_msg(fmt, arg...) do { if (DEBUG_LEVEL >= 1)		\
+	printf("[ERR]\t%s:%d " fmt,  __FILE__, __LINE__, ## arg); else \
+	printf("[ERR]\t" fmt, ## arg);	\
+	} while (0)
+#define info_msg(fmt, arg...) do { if (DEBUG_LEVEL >= 1)		\
+	printf("[INFO]\t%s:%d " fmt,  __FILE__, __LINE__, ## arg); else \
+	printf("[INFO]\t" fmt, ## arg);	\
+	} while (0)
+#define warn_msg(fmt, arg...) do { if (DEBUG_LEVEL >= 1)		\
+	printf("[WARN]\t%s:%d " fmt,  __FILE__, __LINE__, ## arg); else \
+	printf("[WARN]\t" fmt, ## arg);	\
+	} while (0)
 
 /*#define TVOUT_ENABLE*/
 /* Available on MX37. If not defined, then use VPU rotation.  */
@@ -169,7 +183,6 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
 struct vpu_display *v4l_display_open(int width, int height, int nframes,
 					struct rot rotation, int stride);
-
 int v4l_put_data(struct vpu_display *disp);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int strideY, int height);
