@@ -44,7 +44,7 @@ enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
 	ret = vpu_EncGetBitstreamBuffer(handle, &pa_read_ptr, &pa_write_ptr,
 					&size);
 	if (ret != RETCODE_SUCCESS) {
-		printf("EncGetBitstreamBuffer failed\n");
+		err_msg("EncGetBitstreamBuffer failed\n");
 		return -1;
 	}
 
@@ -73,7 +73,7 @@ enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
 
 		ret = vpu_EncUpdateBitstreamBuffer(handle, space);
 		if (ret != RETCODE_SUCCESS) {
-			printf("EncUpdateBitstreamBuffer failed\n");
+			err_msg("EncUpdateBitstreamBuffer failed\n");
 			return -1;
 		}
 	}
@@ -184,14 +184,14 @@ encoder_allocate_framebuffer(struct encode *enc)
 
 	fb = enc->fb = calloc(fbcount + 1, sizeof(FrameBuffer));
 	if (fb == NULL) {
-		printf("Failed to allocate enc->fb\n");
+		err_msg("Failed to allocate enc->fb\n");
 		return -1;
 	}
 	
 	pfbpool = enc->pfbpool = calloc(fbcount + 1,
 					sizeof(struct frame_buf *));
 	if (pfbpool == NULL) {
-		printf("Failed to allocate enc->pfbpool\n");
+		err_msg("Failed to allocate enc->pfbpool\n");
 		free(fb);
 		return -1;
 	}
@@ -215,7 +215,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, stride);
 	unlock(enc->cmdl);
 	if (ret != RETCODE_SUCCESS) {
-		printf("Register frame buffer failed\n");
+		err_msg("Register frame buffer failed\n");
 		goto err1;
 	}
 	
@@ -229,7 +229,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		pfbpool[src_fbid] = framebuf_alloc(enc->picwidth,
 						   enc->picheight);
 		if (pfbpool[src_fbid] == NULL) {
-			printf("failed to allocate single framebuf\n");
+			err_msg("failed to allocate single framebuf\n");
 			goto err1;
 		}
 		
@@ -279,7 +279,7 @@ encoder_start(struct encode *enc)
 	/* Must put encode header before encoding */
 	ret = encoder_fill_headers(enc);
 	if (ret) {
-		printf("Encode fill headers failed\n");
+		err_msg("Encode fill headers failed\n");
 		return -1;
 	}
 
@@ -331,7 +331,8 @@ encoder_start(struct encode *enc)
 		lock(enc->cmdl);
 		ret = vpu_EncStartOneFrame(handle, &enc_param);
 		if (ret != RETCODE_SUCCESS) {
-			printf("EncStartOneFrame failed\n");
+			err_msg("vpu_EncStartOneFrame failed Err code:%d\n",
+									ret);
 			unlock(enc->cmdl);
 			goto err2;
 		}
@@ -352,7 +353,8 @@ encoder_start(struct encode *enc)
 		ret = vpu_EncGetOutputInfo(handle, &outinfo);
 		unlock(enc->cmdl);
 		if (ret != RETCODE_SUCCESS) {
-			printf("EncGetOutputInfo failed\n");
+			err_msg("vpu_EncGetOutputInfo failed Err code: %d\n",
+									ret);
 			goto err2;
 		}
 
@@ -368,7 +370,7 @@ encoder_start(struct encode *enc)
 					- enc->phy_bsbuf_addr);
 		ret = vpu_write(enc->cmdl, (void *)vbuf, outinfo.bitstreamSize);
 		if (ret < 0) {
-			printf("writing bitstream buffer failed\n");
+			err_msg("writing bitstream buffer failed\n");
 			goto err2;
 		}
 #endif
@@ -382,7 +384,7 @@ encoder_start(struct encode *enc)
 			virt_bsbuf_end, phy_bsbuf_start, 0);
 #endif
 
-	printf("Finished encoding: %d frames\n", frame_id);
+	info_msg("Finished encoding: %d frames\n", frame_id);
 err2:
 	if (src_scheme == PATH_V4L2) {
 		v4l_stop_capturing();
@@ -420,7 +422,7 @@ encoder_configure(struct encode *enc)
 	lock(enc->cmdl);
 	ret = vpu_EncGiveCommand(handle, ENC_SET_SEARCHRAM_PARAM, &search_pa);
 	if (ret != RETCODE_SUCCESS) {
-		printf("Encoder SET_SEARCHRAM_PARAM failed\n");
+		err_msg("Encoder SET_SEARCHRAM_PARAM failed\n");
 		unlock(enc->cmdl);
 		return -1;
 	}
@@ -437,7 +439,7 @@ encoder_configure(struct encode *enc)
 	ret = vpu_EncGetInitialInfo(handle, &initinfo);
 	unlock(enc->cmdl);
 	if (ret != RETCODE_SUCCESS) {
-		printf("Encoder GetInitialInfo failed\n");
+		err_msg("Encoder GetInitialInfo failed\n");
 		return -1;
 	}
 
@@ -545,7 +547,7 @@ encoder_open(struct encode *enc)
 
 	ret = vpu_EncOpen(&handle, &encop);
 	if (ret != RETCODE_SUCCESS) {
-		printf("Encoder open failed %d\n", ret);
+		err_msg("Encoder open failed %d\n", ret);
 		return -1;
 	}
 
@@ -569,7 +571,7 @@ encode_test(void *arg)
 	/* allocate memory for must remember stuff */
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
 	if (enc == NULL) {
-		printf("Failed to allocate encode structure\n");
+		err_msg("Failed to allocate encode structure\n");
 		return -1;
 	}
 
@@ -577,7 +579,7 @@ encode_test(void *arg)
 	mem_desc.size = STREAM_BUF_SIZE;
 	ret = IOGetPhyMem(&mem_desc);
 	if (ret) {
-		printf("Unable to obtain physical memory\n");
+		err_msg("Unable to obtain physical memory\n");
 		free(enc);
 		return -1;
 	}
@@ -585,7 +587,7 @@ encode_test(void *arg)
 	/* mmap that physical buffer */
 	enc->virt_bsbuf_addr = IOGetVirtMem(&mem_desc);
 	if (enc->virt_bsbuf_addr <= 0) {
-		printf("Unable to map physical memory\n");
+		err_msg("Unable to map physical memory\n");
 		IOFreePhyMem(&mem_desc);
 		free(enc);
 		return -1;
