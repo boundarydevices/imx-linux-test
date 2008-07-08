@@ -381,8 +381,8 @@ open_files(struct cmd_line *cmd)
 	}
 	
 	if (cmd->dst_scheme == PATH_FILE) {
-		cmd->dst_fd = open(cmd->output, O_CREAT | O_RDWR, S_IRWXU |
-					S_IRWXG | S_IRWXO);
+		cmd->dst_fd = open(cmd->output, O_CREAT | O_RDWR | O_TRUNC,
+					S_IRWXU | S_IRWXG | S_IRWXO);
 		if (cmd->dst_fd < 0) {
 			perror("file open");
 
