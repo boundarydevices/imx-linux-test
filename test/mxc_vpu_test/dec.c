@@ -457,8 +457,54 @@ decoder_start(struct decode *dec)
 			if (cpu_is_mxc30031()) {
 				write_to_file(dec, (u8 *)yuv_addr);
 			} else {
-				fwriten(dec->cmdl->dst_fd, (u8 *)yuv_addr,
-						img_size);
+
+				if (dec->chromaInterleave == 0)
+					fwriten(dec->cmdl->dst_fd,
+						(u8 *)yuv_addr, img_size);
+				else {
+					/*
+					 * Convert framebuffer from interleaved
+					 * Cb/Cr mode to non-interleaved Cb/Cr
+					 * mode.
+					 */
+					img_size = dec->stride * dec->picheight;
+					fwriten(dec->cmdl->dst_fd,
+						(u8 *)yuv_addr, img_size);
+
+					u8 *cb_addr0 = (u8*)(yuv_addr +
+								img_size);
+
+					u8 *cb_addr = malloc(img_size >> 2);
+					if (cb_addr == NULL)
+						return -1;
+
+					u8 *cr_addr = malloc(img_size >> 2);
+					if (cr_addr == NULL) {
+						free(cb_addr);
+						return -1;
+					}
+					u8 *buf1 = cb_addr;
+					u8 *buf2 = cr_addr;
+
+					int y,x;
+					for (y = 0; y < (dec->picheight / 2);
+					  y++) {
+						u8 *tmp = (u8*)(cb_addr0 +
+							dec->picwidth * y);
+						for (x = 0; x < dec->picwidth;
+						  x += 2) {
+							*cb_addr++ = tmp[x];
+							*cr_addr++ = tmp[x + 1];
+						}
+					}
+
+					fwriten(dec->cmdl->dst_fd, (u8 *)buf1,
+							img_size >> 2);
+					fwriten(dec->cmdl->dst_fd, (u8 *)buf2,
+							img_size >> 2);
+					free(buf1);
+					free(buf2);
+				}
 			}
 
 			err = vpu_DecClrDispFlag(handle,
@@ -750,15 +796,17 @@ decoder_open(struct decode *dec)
 	RetCode ret;
 	DecHandle handle = {0};
 	DecOpenParam oparam = {0};
-	
+
 	oparam.bitstreamFormat = dec->cmdl->format;
 	oparam.bitstreamBuffer = dec->phy_bsbuf_addr;
 	oparam.bitstreamBufferSize = STREAM_BUF_SIZE;
 	oparam.mp4DeblkEnable = dec->cmdl->mp4dblk_en;
-	oparam.reorderEnable = 0; // FIXME
+	oparam.reorderEnable = dec->reorderEnable;
 
 	oparam.psSaveBuffer = dec->phy_ps_buf;
 	oparam.psSaveBufferSize = PS_SAVE_SIZE;
+
+	oparam.chromaInterleave = dec->chromaInterleave;
 
 	ret = vpu_DecOpen(&handle, &oparam);
 	if (ret != RETCODE_SUCCESS) {
@@ -802,6 +850,9 @@ decode_test(void *arg)
 
 	dec->phy_bsbuf_addr = mem_desc.phy_addr;
 	dec->virt_bsbuf_addr = mem_desc.virt_uaddr;
+
+	dec->chromaInterleave = 0;
+	dec->reorderEnable = 0;
 	dec->cmdl = cmdl;
 
 	if (cmdl->format == STD_AVC) {
