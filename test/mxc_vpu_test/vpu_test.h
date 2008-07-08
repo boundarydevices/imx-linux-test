@@ -153,6 +153,8 @@ struct decode {
 	struct frame_buf **pfbpool;
 	struct vpu_display *disp;
 	vpu_mem_desc *mvcol_memdesc;
+	int reorderEnable;
+	int chromaInterleave;
 	struct cmd_line *cmdl;
 };
 
