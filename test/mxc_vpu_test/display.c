@@ -36,6 +36,11 @@
 #define V4L2_MXC_ROTATE_90_RIGHT_HFLIP          6
 #define V4L2_MXC_ROTATE_90_LEFT                 7
 
+struct v4l2_mxc_offset {
+	unsigned long u_offset;
+	unsigned long v_offset;
+};
+
 void v4l_free_bufs(int n, struct vpu_display *disp)
 {
 	int i;
@@ -80,9 +85,14 @@ calculate_ratio(int width, int height, int maxwidth, int maxheight)
 }
 
 struct vpu_display *
-v4l_display_open(int width, int height, int nframes, struct rot rotation,
-							int stride)
+v4l_display_open(struct decode *dec, int nframes, struct rot rotation)
 {
+	int width = dec->picwidth;
+	int height = dec->picheight;
+	int left = dec->picCropRect.left;
+	int top = dec->picCropRect.top;
+	int right = dec->picCropRect.right;
+	int bottom = dec->picCropRect.bottom;
 	int fd, err, out, i;
 	char v4l_device[32] = "/dev/video16";
 	struct v4l2_cropcap cropcap = {0};
@@ -90,9 +100,10 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	struct v4l2_framebuffer fb = {0};
 	struct v4l2_format fmt = {0};
 	struct v4l2_requestbuffers reqbuf = {0};
+	struct v4l2_mxc_offset off = {0};
 	struct vpu_display *disp;
 	int ratio = 1;
-	
+
 	if (cpu_is_mx27()) {
 		out = 0;
 	} else {
@@ -116,6 +127,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 			width = height;
 			height = i;
 		}
+		dprintf(3, "VPU rot: width = %d; height = %d\n", width, height);
 	}
 
 	disp = (struct vpu_display *)calloc(1, sizeof(struct vpu_display));
@@ -127,7 +139,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	fd = open(v4l_device, O_RDWR, 0);
 	if (fd < 0) {
 		err_msg("unable to open %s\n", v4l_device);
-		return NULL;
+		goto err;
 	}
 
 	err = ioctl(fd, VIDIOC_S_OUTPUT, &out);
@@ -150,6 +162,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	if (rotation.ipu_rot_en == 0) {
 		ratio = calculate_ratio(width, height, cropcap.bounds.width,
 				cropcap.bounds.height);
+		dprintf(3, "VPU rot: ratio = %d\n", ratio);
 	}
 
 	crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -157,7 +170,7 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	crop.c.left = 0;
 	crop.c.width = width / ratio;
 	crop.c.height = height / ratio;
-	
+
 	if (cpu_is_mx37()) {
 		crop.c.width = cropcap.bounds.width;
 		crop.c.height = cropcap.bounds.height;
@@ -208,15 +221,36 @@ v4l_display_open(int width, int height, int nframes, struct rot rotation,
 	}
 
 	fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	fmt.fmt.pix.width = width;
-	fmt.fmt.pix.height = height;
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-	dprintf(1, "stride %d , width %d, height %d\n", stride, width, height);
-	if (rotation.ipu_rot_en) {
-		fmt.fmt.pix.bytesperline = height;
+
+	/*
+	 * Just consider one case:
+	 * (top,left) = (0,0)
+	 */
+	if (top || left) {
+		err_msg("This case is not covered in this demo for simplicity:\n"
+			"croping rectangle (top, left) != (0, 0); "
+			"top/left = %d/%d\n", top, left);
+		goto err;
+	} else if (right || bottom) {
+		fmt.fmt.pix.width = right - left;
+		fmt.fmt.pix.height = bottom - top;
+		fmt.fmt.pix.bytesperline = fmt.fmt.pix.width;
+		off.u_offset = width * height;
+		off.v_offset = off.u_offset + width * height / 4;
+		fmt.fmt.pix.priv = (unsigned long) &off;
+		fmt.fmt.pix.sizeimage = width * height * 3 / 2;
 	} else {
+		fmt.fmt.pix.width = width;
+		fmt.fmt.pix.height = height;
 		fmt.fmt.pix.bytesperline = width;
 	}
+	dprintf(1, "fmt.fmt.pix.width = %d\n\tfmt.fmt.pix.height = %d\n",
+				fmt.fmt.pix.width, fmt.fmt.pix.height);
+
+	if (dec->chromaInterleave == 0)
+		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+	else
+		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
 
 	err = ioctl(fd, VIDIOC_S_FMT, &fmt);
 	if (err < 0) {
