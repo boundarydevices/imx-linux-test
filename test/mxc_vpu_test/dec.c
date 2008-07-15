@@ -25,8 +25,8 @@
 
 extern int quitflag;
 
-/* Fill the bitstream ring buffer
- *
+/*
+ * Fill the bitstream ring buffer
  */
 int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 		u32 bs_va_startaddr, u32 bs_va_endaddr,
@@ -173,12 +173,362 @@ write_to_file(struct decode *dec, u8 *buf)
 	}
 }
 
+
+/*
+ * This function is to convert framebuffer from interleaved Cb/Cr mode
+ * to non-interleaved Cb/Cr mode.
+ *
+ * Note: This function does _NOT_ really store this framebuffer into file.
+ */
+static void
+saveNV12ImageHelper(u8 *pYuv, struct decode *dec, u8 *buf)
+{
+	int Y, Cb;
+	u8 *Y1, *Cb1, *Cr1;
+	int img_size;
+	int y, x;
+	u8 *tmp;
+	int height = dec->picheight;
+	int stride = dec->stride;
+
+	if (!pYuv || !buf) {
+		err_msg("pYuv or buf should not be NULL.\n");
+		return;
+	}
+
+	img_size = stride * height;
+
+	Y = (int)buf;
+	Cb = Y + img_size;
+
+	Y1 = pYuv;
+	Cb1 = Y1 + img_size;
+	Cr1 = Cb1 + (img_size >> 2);
+
+	memcpy(Y1, (u8 *)Y, img_size);
+
+	for (y = 0; y < (dec->picheight / 2); y++) {
+		tmp = (u8*)(Cb + dec->picwidth * y);
+		for (x = 0; x < dec->picwidth; x += 2) {
+			*Cb1++ = tmp[x];
+			*Cr1++ = tmp[x + 1];
+		}
+	}
+}
+
+/*
+ * This function is to store the framebuffer with Cropping size.
+ *
+ * Note: The output of picture width or height from VPU is always
+ * 4-bit aligned. For example, the Cropping information in one
+ * bit stream is crop.left/crop.top/crop.right/crop.bottom = 0/0/320/136
+ * VPU output is picWidth = 320, picHeight = (136 + 15) & ~15 = 144;
+ * whereas, this function will use crop information to save the framebuffer
+ * with picWidth = 320, picHeight = 136. Kindly remind that all this calculation
+ * is under the case without Rotation or Mirror.
+ */
+static void
+saveCropYuvImageHelper(struct decode *dec, u8 *buf, Rect cropRect)
+{
+	u8 *pCropYuv;
+	int cropWidth, cropHeight;
+	int i;
+
+	int width = dec->picwidth;
+	int height = dec->picheight;
+	int rot_en = dec->cmdl->rot_en;
+	int rot_angle = dec->cmdl->rot_angle;
+
+	if (!buf) {
+		err_msg("buffer point should not be NULL.\n");
+		return;
+	}
+
+	if (rot_en && (rot_angle == 90 || rot_angle == 270)) {
+		i = width;
+		width = height;
+		height = i;
+	}
+
+	dprintf(3, "left/top/right/bottom = %lu/%lu/%lu/%lu\n", cropRect.left,
+			cropRect.top, cropRect.right, cropRect.bottom);
+
+	pCropYuv = buf;
+	cropWidth = cropRect.right - cropRect.left;
+	cropHeight = cropRect.bottom - cropRect.top;
+
+	pCropYuv += width * cropRect.top;
+	pCropYuv += cropRect.left;
+
+	for (i = 0; i < cropHeight; i++) {
+		fwriten(dec->cmdl->dst_fd, pCropYuv, cropWidth);
+		pCropYuv += width;
+	}
+
+	cropWidth /= 2;
+	cropHeight /= 2;
+	pCropYuv = buf + (width * height);
+	pCropYuv += (width / 2) * (cropRect.top / 2);
+	pCropYuv += cropRect.left / 2;
+
+	for (i = 0; i < cropHeight; i++) {
+		fwriten(dec->cmdl->dst_fd, pCropYuv, cropWidth);
+		pCropYuv += width / 2;
+	}
+
+	pCropYuv = buf + (width * height) * 5 / 4;
+	pCropYuv += (width / 2) * (cropRect.top / 2);
+	pCropYuv += cropRect.left / 2;
+
+	for (i = 0; i < cropHeight; i++) {
+		fwriten(dec->cmdl->dst_fd, pCropYuv, cropWidth);
+		pCropYuv += width / 2;
+	}
+}
+
+/*
+ * This function is to swap the cropping left/top/right/bottom
+ * when there's cropping information, under rotation case.
+ *
+ * Note: If there's no cropping information in bit stream, just
+ *	set rotCrop as no cropping info. And hence, the calling
+ *	function after this will handle this case.
+ */
+static void
+swapCropRect(struct decode *dec, Rect *rotCrop)
+{
+	int mode = 0;
+	int rot_en = dec->cmdl->rot_en;
+	int rotAngle = dec->cmdl->rot_angle;
+	int framebufWidth = dec->picwidth;
+	int framebufHeight = dec->picheight;
+	int mirDir = dec->cmdl->mirror;
+	int crop;
+
+	if (!rot_en)
+		err_msg("VPU Rotation disabled. No need to call this func.\n");
+
+	Rect *norCrop = &(dec->picCropRect);
+	dprintf(3, "left/top/right/bottom = %lu/%lu/%lu/%lu\n", norCrop->left,
+			norCrop->top, norCrop->right, norCrop->bottom);
+
+	/*
+	 * If no cropping info in bitstream, we just set rotCrop as it is.
+	 */
+	crop = norCrop->left | norCrop->top | norCrop->right | norCrop->bottom;
+	if (!crop) {
+		memcpy(rotCrop, norCrop, sizeof(*norCrop));
+		return;
+	}
+
+	switch (rotAngle) {
+		case 0:
+			switch (mirDir) {
+				case MIRDIR_NONE:
+					mode = 0;
+					break;
+				case MIRDIR_VER:
+					mode = 5;
+					break;
+				case MIRDIR_HOR:
+					mode = 4;
+					break;
+				case MIRDIR_HOR_VER:
+					mode = 2;
+					break;
+			}
+			break;
+		/*
+		 * Remember? VPU sets the rotation angle by counter-clockwise.
+		 * We convert it to clockwise, in order to make it consistent
+		 * with V4L2 rotation angle strategy. (refer to decoder_start)
+		 *
+		 * Note: if you wanna leave VPU rotation angle as it originally
+		 *	is, bear in mind you need exchange the codes for
+		 *	"case 90" and "case 270".
+		 */
+		case 90:
+			switch (mirDir) {
+				case MIRDIR_NONE:
+					mode = 3;
+					break;
+				case MIRDIR_VER:
+					mode = 7;
+					break;
+				case MIRDIR_HOR:
+					mode = 6;
+					break;
+				case MIRDIR_HOR_VER:
+					mode = 1;
+					break;
+			}
+			break;
+		case 180:
+			switch (mirDir) {
+				case MIRDIR_NONE:
+					mode = 2;
+					break;
+				case MIRDIR_VER:
+					mode = 4;
+					break;
+				case MIRDIR_HOR:
+					mode = 5;
+					break;
+				case MIRDIR_HOR_VER:
+					mode = 0;
+					break;
+			}
+			break;
+		/*
+		 * Ditto. As the rot angle 90.
+		 */
+		case 270:
+			switch (mirDir) {
+				case MIRDIR_NONE:
+					mode = 1;
+					break;
+				case MIRDIR_VER:
+					mode = 6;
+					break;
+				case MIRDIR_HOR:
+					mode = 7;
+					break;
+				case MIRDIR_HOR_VER:
+					mode = 3;
+					break;
+			}
+			break;
+	}
+
+	switch (mode) {
+		case 0:
+			rotCrop->bottom = norCrop->bottom;
+			rotCrop->left = norCrop->left;
+			rotCrop->right = norCrop->right;
+			rotCrop->top = norCrop->top;
+			break;
+		case 1:
+			rotCrop->bottom = framebufWidth - norCrop->left;
+			rotCrop->left = norCrop->top;
+			rotCrop->right = norCrop->bottom;
+			rotCrop->top = framebufWidth - norCrop->right;
+			break;
+		case 2:
+			rotCrop->bottom = framebufHeight - norCrop->top;
+			rotCrop->left = framebufWidth - norCrop->right;
+			rotCrop->right = framebufWidth - norCrop->left;
+			rotCrop->top = framebufHeight - norCrop->bottom;
+			break;
+		case 3:
+			rotCrop->bottom = norCrop->right;
+			rotCrop->left = framebufHeight - norCrop->bottom;
+			rotCrop->right = framebufHeight - norCrop->top;
+			rotCrop->top = norCrop->left;
+			break;
+		case 4:
+			rotCrop->bottom = norCrop->bottom;
+			rotCrop->left = framebufWidth - norCrop->right;
+			rotCrop->right = framebufWidth - norCrop->left;
+			rotCrop->top = norCrop->top;
+			break;
+		case 5:
+			rotCrop->bottom = framebufHeight - norCrop->top;
+			rotCrop->left = norCrop->left;
+			rotCrop->right = norCrop->right;
+			rotCrop->top = framebufHeight - norCrop->bottom;
+			break;
+		case 6:
+			rotCrop->bottom = norCrop->right;
+			rotCrop->left = norCrop->top;
+			rotCrop->right = norCrop->bottom;
+			rotCrop->top = norCrop->left;
+			break;
+		case 7:
+			rotCrop->bottom = framebufWidth - norCrop->left;
+			rotCrop->left = framebufHeight - norCrop->bottom;
+			rotCrop->right = framebufHeight - norCrop->top;
+			rotCrop->top = framebufWidth - norCrop->right;
+			break;
+	}
+
+	return;
+}
+
+/*
+ * This function is to store the framebuffer into file.
+ * It will handle the cases of chromaInterleave, or cropping,
+ * or both.
+ */
+static void
+write_to_file2(struct decode *dec, u8 *buf, Rect cropRect)
+{
+	int height = dec->picheight;
+	int stride = dec->stride;
+	int chromaInterleave = dec->chromaInterleave;
+	int img_size;
+	u8 *pYuv = NULL, *pYuv0 = NULL;
+	int cropping;
+
+	dprintf(3, "left/top/right/bottom = %lu/%lu/%lu/%lu\n", cropRect.left,
+			cropRect.top, cropRect.right, cropRect.bottom);
+	cropping = cropRect.left | cropRect.top | cropRect.bottom | cropRect.right;
+
+	img_size = stride * height * 3 / 2;
+
+	if (chromaInterleave == 0 && cropping == 0) {
+		fwriten(dec->cmdl->dst_fd, (u8 *)buf, img_size);
+		goto out;
+	}
+
+	/*
+	 * There could be these three cases:
+	 * interleave == 0, cropping == 1
+	 * interleave == 1, cropping == 0
+	 * interleave == 1, cropping == 1
+	 */
+	if (chromaInterleave) {
+		if (!pYuv) {
+			pYuv0 = pYuv = malloc(img_size);
+			if (!pYuv)
+				err_msg("malloc error\n");
+		}
+
+		saveNV12ImageHelper(pYuv, dec, buf);
+	}
+
+	if (cropping) {
+		if (!pYuv0) {
+			pYuv0 = pYuv = malloc(img_size);
+			if (!pYuv)
+				err_msg("malloc error\n");
+
+			saveCropYuvImageHelper(dec, buf, cropRect);
+		} else {/* process the buf beginning at pYuv0 again for Crop. */
+			pYuv = pYuv0;
+			saveCropYuvImageHelper(dec, pYuv, cropRect);
+		}
+
+	} else {
+		fwriten(dec->cmdl->dst_fd, (u8 *)pYuv0, img_size);
+	}
+
+out:
+	if (pYuv0) {
+		free(pYuv0);
+		pYuv0 = NULL;
+		pYuv = NULL;
+	}
+
+	return;
+}
+
 int
 decoder_start(struct decode *dec)
 {
 	DecHandle handle = dec->handle;
 	DecOutputInfo outinfo = {0};
 	DecParam decparam = {0};
+	int dst_scheme = dec->cmdl->dst_scheme;
 	int rot_en = dec->cmdl->rot_en, rot_stride, fwidth, fheight;
 	int rot_angle = dec->cmdl->rot_angle;
 	int mp4dblk_en = dec->cmdl->mp4dblk_en;
@@ -200,7 +550,7 @@ decoder_start(struct decode *dec)
 	int totalNumofErrMbs = 0;
 
 #ifdef USE_IPU_ROTATION
-	if (cpu_is_mx37() && rot_en) {
+	if (cpu_is_mx37() && rot_en && (dst_scheme != PATH_FILE)) {
 		rot_en = 0;
 	}
 #endif
@@ -417,7 +767,9 @@ decoder_start(struct decode *dec)
 		/* BIT don't have picture to be displayed */
 		if ((outinfo.indexFrameDisplay == -3) ||
 				(outinfo.indexFrameDisplay == -2)) {
-			warn_msg("VPU doesn't have picture to be displayed.\n");
+			warn_msg("VPU doesn't have picture to be displayed.\n"
+				"\toutinfo.indexFrameDisplay = %d\n",
+						outinfo.indexFrameDisplay);
 			continue;
 		}
 
@@ -457,53 +809,14 @@ decoder_start(struct decode *dec)
 			if (cpu_is_mxc30031()) {
 				write_to_file(dec, (u8 *)yuv_addr);
 			} else {
-
-				if (dec->chromaInterleave == 0)
-					fwriten(dec->cmdl->dst_fd,
-						(u8 *)yuv_addr, img_size);
-				else {
-					/*
-					 * Convert framebuffer from interleaved
-					 * Cb/Cr mode to non-interleaved Cb/Cr
-					 * mode.
-					 */
-					img_size = dec->stride * dec->picheight;
-					fwriten(dec->cmdl->dst_fd,
-						(u8 *)yuv_addr, img_size);
-
-					u8 *cb_addr0 = (u8*)(yuv_addr +
-								img_size);
-
-					u8 *cb_addr = malloc(img_size >> 2);
-					if (cb_addr == NULL)
-						return -1;
-
-					u8 *cr_addr = malloc(img_size >> 2);
-					if (cr_addr == NULL) {
-						free(cb_addr);
-						return -1;
-					}
-					u8 *buf1 = cb_addr;
-					u8 *buf2 = cr_addr;
-
-					int y,x;
-					for (y = 0; y < (dec->picheight / 2);
-					  y++) {
-						u8 *tmp = (u8*)(cb_addr0 +
-							dec->picwidth * y);
-						for (x = 0; x < dec->picwidth;
-						  x += 2) {
-							*cb_addr++ = tmp[x];
-							*cr_addr++ = tmp[x + 1];
-						}
-					}
-
-					fwriten(dec->cmdl->dst_fd, (u8 *)buf1,
-							img_size >> 2);
-					fwriten(dec->cmdl->dst_fd, (u8 *)buf2,
-							img_size >> 2);
-					free(buf1);
-					free(buf2);
+				if (rot_en) {
+					Rect rotCrop;
+					swapCropRect(dec, &rotCrop);
+					write_to_file2(dec, (u8 *)yuv_addr,
+								rotCrop);
+				} else {
+					write_to_file2(dec, (u8 *)yuv_addr,
+							dec->picCropRect);
 				}
 			}
 
@@ -598,7 +911,7 @@ decoder_allocate_framebuffer(struct decode *dec)
        	int dst_scheme = dec->cmdl->dst_scheme, rot_en = dec->cmdl->rot_en;
 	int mp4dblk_en = dec->cmdl->mp4dblk_en;
 	int dering_en = dec->cmdl->dering_en;
-	struct rot rotation;
+	struct rot rotation = {0};
 	RetCode ret;
 	DecHandle handle = dec->handle;
 	FrameBuffer *fb;
@@ -608,7 +921,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	vpu_mem_desc *mvcol_md = NULL;
 
 #ifdef USE_IPU_ROTATION
-	if (cpu_is_mx37() && rot_en) {
+	if (cpu_is_mx37() && rot_en && (dst_scheme != PATH_FILE)) {
 		rot_en = 0;
 	}
 #endif
@@ -672,8 +985,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		}
 #endif
 
-		disp = v4l_display_open(dec->picwidth, dec->picheight,
-					fbcount, rotation, dec->stride);
+		disp = v4l_display_open(dec, fbcount, rotation);
 		if (disp == NULL) {
 			goto err;
 		}
@@ -780,11 +1092,32 @@ decoder_parse(struct decode *dec)
 			initinfo.frameRateInfo,
 			initinfo.minFrameBufferCount);
 
+	/*
+	 * Information about H.264 decoder picture cropping rectangle which
+	 * presents the offset of top-left point and bottom-right point from
+	 * the origin of frame buffer.
+	 *
+	 * By using these four offset values, host application can easily
+	 * detect the position of target output window. When display cropping
+	 * is off, the cropping window size will be 0.
+	 *
+	 * This structure for cropping rectangles is only valid for H.264
+	 * decoder case.
+	 */
+	info_msg("CROP left/top/right/bottom %lu %lu %lu %lu\n",
+					initinfo.picCropRect.left,
+					initinfo.picCropRect.top,
+					initinfo.picCropRect.right,
+					initinfo.picCropRect.bottom);
+
 	dec->fbcount = initinfo.minFrameBufferCount;
 	dec->picwidth = ((initinfo.picWidth + 15) & ~15);
 	dec->picheight = ((initinfo.picHeight + 15) & ~15);
 	if ((dec->picwidth == 0) || (dec->picheight == 0))
 		return -1;
+
+	memcpy(&(dec->picCropRect), &(initinfo.picCropRect),
+					sizeof(initinfo.picCropRect));
 
 	calculate_stride(dec);
 	return 0;
