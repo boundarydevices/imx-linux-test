@@ -153,6 +153,7 @@ struct decode {
 	struct frame_buf **pfbpool;
 	struct vpu_display *disp;
 	vpu_mem_desc *mvcol_memdesc;
+	Rect picCropRect;
 	int reorderEnable;
 	int chromaInterleave;
 	struct cmd_line *cmdl;
@@ -183,8 +184,8 @@ int check_params(struct cmd_line *cmd, int op);
 char*skip_unwanted(char *ptr);
 int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
-struct vpu_display *v4l_display_open(int width, int height, int nframes,
-					struct rot rotation, int stride);
+struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
+					struct rot rotation);
 int v4l_put_data(struct vpu_display *disp);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int strideY, int height);
