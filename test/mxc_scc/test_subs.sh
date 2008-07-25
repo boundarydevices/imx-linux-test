@@ -90,8 +90,6 @@ pos_test()
     else
         echo "Test Failed"
     fi
-    # sleep a little to allow logging to catch up
-    sleep 2
 }
 
 
@@ -114,8 +112,6 @@ neg_test()
     else
         echo "Test Failed"
     fi
-    # sleep a little to allow logging to catch up
-    sleep 2
 }
 
 
@@ -131,8 +127,6 @@ record_failure()
 {
     echo $*
     echo "Test Failed"
-    # sleep a little to allow logging to catch up
-    sleep 2
 }
 
 
@@ -148,9 +142,7 @@ record_success()
 {
     echo $*
     echo "Test Passed"
-    test_pass_count=$(($test_pass_count+1))    
-    # sleep a little to allow logging to catch up
-    sleep 2
+    test_pass_count=$(($test_pass_count+1))
 }
 
 
