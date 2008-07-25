@@ -31,7 +31,7 @@
 #include <stdarg.h>
 
 #include <inttypes.h>
-#include "../include/scc_test_driver.h"
+#include "../../include/scc_test_driver.h"
 
 
 /* test routines */
@@ -145,7 +145,7 @@ scc_configuration_access *get_scc_configuration(int);
 int
 main(int arg_count,             /* # command-line arguments */
      char *arg_list[])            /* pointers to command-line arguments */
-{
+{ 
     /* Declare and initialize variables */
     int scc_fd;                 /* The SCC device */
     char *scc_device_path = "/dev/scc_test";
@@ -154,21 +154,8 @@ main(int arg_count,             /* # command-line arguments */
     uint32_t timer_value = 0x5f0000;
     char *test_to_run = "Cres"; /* default list of tests to be run in order */
     int test_status = 0;
-
-#if 0
-    int one = 1;                /* little-endian test vector */
-#endif
-
+       
     init_plaintext();
-
-#if 0
-    if (*(char *)&one == 1) {
-        printf("This CPU is little-endian\n");
-    }
-    else {
-        printf("This CPU is big-endian\n");
-    }
-#endif
 
     /* Open up the SCC device */
     /* Yes, I know, there is a command option to change the device path. */
@@ -179,8 +166,8 @@ main(int arg_count,             /* # command-line arguments */
     }
 
     /* Process command line arguments - until we come up empty */
-    while ((argument_switch = getopt(arg_count, arg_list, "K:L:MP:R:S:T:W:"))
-            != EOF) {
+    while ( (argument_switch = getopt(arg_count, arg_list, "K:L:MP:R:S:T:W:"))
+            != EOF ) {
         switch (argument_switch) {
         case 'K':               /* Key slot functions */
             test_status |= do_slot_function(scc_fd, optarg);
@@ -416,7 +403,7 @@ main(int arg_count,             /* # command-line arguments */
         default:
             fprintf(stderr, "Test switch %c unknown\n", test_switch);
         }
-
+        
     }
 
     close(scc_fd);
@@ -429,7 +416,7 @@ main(int arg_count,             /* # command-line arguments */
 void
 display_configuration(int scc_fd) {
     scc_configuration_access *config;
-
+    
     config = get_scc_configuration(scc_fd);
     if (config == NULL) {
         perror("\nCannot display SCC Configuration");
@@ -842,7 +829,7 @@ run_cipher_tests(int scc_fd)
             read_scc_register(scc_fd, SMN_STATUS, &value);
             printf("SMN Status                  (0x%08x): ", value);
             print_smn_status_register(value);
-
+  
             read_scc_register(scc_fd, SCM_ERROR_STATUS, &value);
             printf("SCM Error Register          (0x%08x):", value);
             print_scc_error_status_register(value);
@@ -861,7 +848,7 @@ run_cipher_tests(int scc_fd)
             cipher_control.data_out = new_plaintext;
             cipher_control.data_out_length = plaintext_length +
                 decrypt_padding_allowance;
-
+        
             if (inject_crc_error) {
                 ciphertext[rand()%cipher_control.data_in_length] ^= 1;
             }
@@ -913,7 +900,7 @@ run_cipher_tests(int scc_fd)
                     printf("SCM Error Register          (0x%08x):", value);
                     print_scc_error_status_register(value);
                 }
-
+ 
                 if (cipher_control.data_out_length != plaintext_length) {
                     printf("Error:  input plaintext length (%d) and output "
                            "plaintext length (%ld) do not match.\n",
@@ -1001,7 +988,7 @@ run_aic_tests(int scc_fd) {
     printf("SMN Status: ");
     print_smn_status_register(value);
 
-
+    
     return 0;
 }
 
@@ -1147,12 +1134,6 @@ run_mmap_tests(int fd)
     else {
         printf("SMN appears at %08x\n", (unsigned)smn);
         printf("SMN_SEQUENCE_CHECK: %08x\n", *(smn+SMN_SEQUENCE_CHECK));
-#if 0 /* this is a write-only register */
-        printf("SMN_BITBANK_DECREMENT: %08x\n", *(smn+SMN_BITBANK_DECREMENT));
-#endif
-#if 0  /* this is killing the process */
-        *(smn+SMN_PLAINTEXT_CHECK) = 42;
-#endif
         printf("SMN_PLAINTEXT_CHECK: %08x\n", *(smn+SMN_PLAINTEXT_CHECK));
         printf("SMN_CIPHERTEXT_CHECK: %08x\n", *(smn+SMN_CIPHERTEXT_CHECK));
     }
@@ -1175,7 +1156,7 @@ run_wrap_tests (int scc_fd)
     scc_get_slot_info_access info_acc;
     scc_encrypt_slot_access unload_acc;
     int slot_allocated = 0;
-
+    
     strcpy((char *)key,"abcdefgh");
 
     alloc_acc.owner_id = owner1;
@@ -1249,7 +1230,7 @@ run_wrap_tests (int scc_fd)
             }
         }
     }
-
+                            
     /* Now unload the key */
     if (status == 0) {
         unload_acc.slot = alloc_acc.slot;
@@ -1269,7 +1250,7 @@ run_wrap_tests (int scc_fd)
             }
         }
     }
-
+    
     /* Reacquire a slot */
     if ((status == 0) && !slot_allocated) {
         status = ioctl(scc_fd, SCC_TEST_ALLOC_SLOT, &alloc_acc);
@@ -1456,7 +1437,7 @@ do_slot_function(int scc_fd, char *arg)
             }
             else {
                 scc_load_slot_access acc;
-                int i;
+                uint32_t i;
 
                 status = 0;
                 for (i = 0; i < strlen(hex_value); i+= 2) {
@@ -1591,7 +1572,7 @@ print_smn_status_register(uint32_t status)
 {
     int version_id;
     uint8_t state;
-
+          
     version_id = (status&SMN_STATUS_VERSION_ID_MASK)
         >> SMN_STATUS_VERSION_ID_SHIFT;
     state = (status&SMN_STATUS_STATE_MASK) >> SMN_STATUS_STATE_SHIFT;
@@ -1666,7 +1647,7 @@ print_scm_status_register(uint32_t status)
            (status&SCM_STATUS_CIPHERING) ? ", CIPHERING" : "",
            (status&SCM_STATUS_ZEROIZING) ? ", ZEROIZING" : "",
            (status&SCM_STATUS_BUSY) ? ", BUSY" : "");
-
+           
 
 }
 
@@ -1703,7 +1684,7 @@ print_scc_error_status_register(uint32_t error)
            (error&SCM_ERR_CIPHERING) ? ", CIPHERING" : "",
            (error&SCM_ERR_ZEROIZING) ? ", ZEROIZING" : "",
            (error&SCM_ERR_BUSY) ? ", BUSY" : "");
-
+           
 }
 
 
