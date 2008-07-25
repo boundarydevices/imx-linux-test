@@ -3,7 +3,7 @@
 ## This command should be checked for error status.  It has numerous side
 ## effects relating to exportation of symbols
 ##
-## The command 'scc_test.out' must be in its PATH
+## The command 'scc_test' must be in its PATH
 
 
 ############################################################################
@@ -95,7 +95,7 @@ determine_offsets()
     # Try to read the SCM Configuration register.  The SCC driver will cause
     # this to generate an error on one platform, succeed on another, since the
     # SCM and SMN base addresses are swapped on some platforms.
-    config=`scc_test.out -S+Q -R1c`
+    config=`scc_test -S+Q -R1c`
 
     # See whether command executed successful
     if [ $? -eq 0 ]; then
@@ -106,9 +106,9 @@ determine_offsets()
         fi
     else
         # Try again with same register, but in the other bank
-        config=`scc_test.out -S+Q -R101c`
+        config=`scc_test -S+Q -R101c`
         if [ $? -eq 0 ]; then
-        # No errors.  Good.  Check its value. 
+        # No errors.  Good.  Check its value.
             if [ $config = 09004008 ]; then
                 platform=2              # SMN First
             fi
