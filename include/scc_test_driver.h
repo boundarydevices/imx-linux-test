@@ -16,6 +16,7 @@
 
 #ifdef __KERNEL__
 
+#include <portable_os.h>
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -27,11 +28,18 @@
 #include <asm/memory.h>
 
 #include <linux/mm.h>           /* for io_remap_page_range() */
-#include <linux/fs.h>
-#include <asm/hardware.h>
+
+#ifdef TAHITI
+#include <asm/arch/mx2.h>           /* MX21 board memory map*/
+#define SCC_BASE SMN_BASE_ADDR
+#elif defined(MXC)
+#include <asm/arch/hardware.h>
+
+#else
+DO_NOT_KNOW_TARGET_ARCH;
+#endif
 
 #endif /* kernel */
-
 
 #include <asm/arch/mxc_scc_driver.h>
 
@@ -39,11 +47,10 @@
 
 static int scc_test_init(void);
 static void scc_test_cleanup(void);
-static int scc_test_open(struct inode *inode, struct file *file);
-static int scc_test_release(struct inode *inode, struct file *file);
-static int scc_test_ioctl(struct inode *inode, struct file *file,
-                          unsigned int cmd, unsigned long scc_data);
-static int scc_test_mmap(struct file *filep, struct vm_area_struct *vma);
+OS_DEV_IOCTL(scc_test_ioctl);
+OS_DEV_OPEN(scc_test_open);
+OS_DEV_CLOSE(scc_test_release);
+OS_DEV_MMAP(scc_test_mmap);
 
 static int scc_test_get_configuration(unsigned long scc_data);
 static int scc_test_read_register(unsigned long scc_data);
@@ -69,7 +76,7 @@ extern int scc_test_major_node;
 
 #ifndef SCC_TEST_MAJOR_NODE
 /** Linux major node value for the device special file (/dev/scc_test) */
-#define SCC_TEST_MAJOR_NODE  206
+#define SCC_TEST_MAJOR_NODE  240
 #endif
 
 #endif /* kernel */

@@ -5,7 +5,7 @@
 #****************************************************************************/
 
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS IMX35_3STACK"
+EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS"
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = apitest rng_test move
@@ -31,11 +31,15 @@ endif
 ifeq ("$(PLATFORM)", "IMX37_3STACK")
 TARGET_ARCH=-DCONFIG_ARCH_MX37
 endif
+ifeq ("$(PLATFORM)", "IMX35_3STACK")
+TARGET_ARCH=-DCONFIG_ARCH_MX35
+endif
+
 
 # Location of local headers and API "common" sources
 INCLUDEDIR= -I. -I../../include -I../mxc_sahara_test $(INC)
 
-AR = ar -crv
+AR = $(CROSS_COMPILE)ar -crv
 RM = rm -f
 
 # Add compilation checks
