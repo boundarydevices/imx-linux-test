@@ -23,13 +23,13 @@ fi
 
 
 # Dump all registers
-pos_test scc_test.out -Lr
+pos_test scc_test -Lr
 
 
 # Verify that a register can be written and does change
 start_test Changing SCM_LENGTH register to 4
-scc_test.out -W${SCM_LENGTH}:4
-length_value=`scc_test.out -S+Q -R${SCM_LENGTH}`
+scc_test -W${SCM_LENGTH}:4
+length_value=`scc_test -S+Q -R${SCM_LENGTH}`
 if [  -z $length_value ]; then
     record_failure Reading result of changed SCM_LENGTH failed.
 else
@@ -42,8 +42,8 @@ fi
 
 # Verify it can changed to something else
 start_test Changing SCM_LENGTH register to 8
-scc_test.out -W${SCM_LENGTH}:8
-length_value=`scc_test.out -S+Q -R${SCM_LENGTH}`
+scc_test -W${SCM_LENGTH}:8
+length_value=`scc_test -S+Q -R${SCM_LENGTH}`
 if [  -z $length_value ]; then
     record_failure Reading result of changed SCM_LENGTH failed.
 else
@@ -56,11 +56,11 @@ fi
 
 
 # This will invoke the Software Alarm and put the SMN into FAIL mode
-pos_test scc_test.out -La
+pos_test scc_test -La
 
 
 # Read all 'safe' registers when SCC has gone to alarm/FAILED state
-pos_test scc_test.out -Ls
+pos_test scc_test -Ls
 
 
 echo
@@ -68,8 +68,8 @@ echo
 echo "The rest of tests should have errors (but pass)"
 
 # Test SCM Length and SMN Sequence Start
-neg_test scc_test.out -R${SCM_LENGTH}
-neg_test scc_test.out -R${SMN_SEQUENCE_START}
+neg_test scc_test -R${SCM_LENGTH}
+neg_test scc_test -R${SMN_SEQUENCE_START}
 
 # Let the world know how things went
 print_test_results
