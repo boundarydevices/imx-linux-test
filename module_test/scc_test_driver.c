@@ -46,7 +46,7 @@
  *
  */
 
-#include <linux/device.h>
+//#include <linux/device.h>
 #include "../include/scc_test_driver.h"
 
 /*
@@ -65,10 +65,13 @@ MODULE_DESCRIPTION("Test Device Driver for SCC (SMN/SCM) Driver");
 
 
 /** Allow user to configure major node value at insmod */
-//MODULE_PARM(scc_test_major_node, "i");
+#if  LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11)
+MODULE_PARM(scc_test_major_node, "i");
+#else
+module_param(scc_test_major_node, int, SCC_TEST_MAJOR_NODE);
+#endif
 MODULE_PARM_DESC(scc_test_major_node, "Device Major Node number");
 
-/** look into module_param()  in 2.6*/
 
 /** Create a place to track/notify sleeping processes */
 DECLARE_WAIT_QUEUE_HEAD(waitQueue);
@@ -76,26 +79,11 @@ DECLARE_WAIT_QUEUE_HEAD(waitQueue);
 /** The /dev/node value for user-kernel interaction */
 int scc_test_major_node = SCC_TEST_MAJOR_NODE;
 
-static struct class *scc_tm_class;
+static os_driver_reg_t reg_handle;
 
 
 /** saved-off pointer of configuration information */
 scc_config_t* scc_cfg;
-
-/**
- * Interface jump vector for calls into the device driver.
- *
- * This struct changes frequently in Linux kernel versions.  By initializing
- * elements by name, we can avoid structure mismatches.  Other elements get
- * NULL/0 by default (after all, this is a global initializer).
- */
-static struct file_operations scc_test_fops = {
-    .owner = THIS_MODULE,
-    .open = scc_test_open,
-    .ioctl = scc_test_ioctl,
-    .mmap = scc_test_mmap,
-    .release = scc_test_release
-};
 
 
 /***********************************************************************
@@ -118,6 +106,8 @@ static int scc_test_init (void)
 {
     int      error_code = 0;
     uint32_t smn_status;
+    printk("SCC: Loading test interface, availabe at /dev/%s\n",
+           SCC_TEST_DRIVER_NAME);
 
     /* call the real driver here */
     scc_cfg = scc_get_configuration();
@@ -171,8 +161,7 @@ static int scc_test_init (void)
  *
  * @return 0 if successful, error code if not
  */
-static int
-scc_test_open(struct inode *inode, struct file *file)
+OS_DEV_OPEN(scc_test_open)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
     try_module_get(THIS_MODULE);
@@ -201,8 +190,7 @@ scc_test_open(struct inode *inode, struct file *file)
  *
  * @return 0 (always - errors are ignored)
  */
-static int
-scc_test_release(struct inode *inode, struct file *file)
+OS_DEV_CLOSE(scc_test_release)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
     module_put(THIS_MODULE);
@@ -238,8 +226,6 @@ scc_test_cleanup (void)
 {
     /* turn off the mapping to the device special file */
     if (scc_test_major_node) {
-	class_device_destroy(scc_tm_class, MKDEV(scc_test_major_node, 0));
-	class_destroy(scc_tm_class);
 	unregister_chrdev(scc_test_major_node, SCC_TEST_DRIVER_NAME);
         scc_test_major_node = 0;
     }
@@ -284,11 +270,11 @@ scc_test_cleanup (void)
  *
  * @return 0 or an error code (IOCTL_SCC_xxx)
  */
-static int
-scc_test_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
-               unsigned long scc_data)
+OS_DEV_IOCTL(scc_test_ioctl)
 {
-    int   error_code = IOCTL_SCC_OK;
+    os_error_code error_code = OS_ERROR_OK_S;
+    unsigned cmd = os_dev_get_ioctl_op();
+    unsigned long scc_data = os_dev_get_ioctl_arg();
 
     switch (cmd) {
     case SCC_TEST_GET_CONFIGURATION:
@@ -350,7 +336,7 @@ scc_test_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 
     } /* End switch */
 
-    return error_code;
+    os_dev_ioctl_return(error_code);
 }
 
 
@@ -365,35 +351,19 @@ scc_test_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
  * This is some test code for a) allowing user access to ASC/AIC features,
  * and b) experiments for how SCC2 would work.
  */
-static int
-scc_test_mmap(struct file *filep, struct vm_area_struct *vma)
+OS_DEV_MMAP(scc_test_mmap)
 {
 
-#if 0
-    /*
-     * Disable this system call.  This feature is not available in the driver.
-     */
-    return -EFAULT;
-#else
     /* This version is allowing the User App to touch the SCC, but the SMN
      * is turning on its CACHEABLE_ACCESS and USER_ACCESS bits and giving
      * zero on reads (and killing processes which write??)
      */
     printk("Mapping SCC at %p for user\n", (void*)SCC_BASE_ADDR);
-#if 1
-    vma->vm_pgoff = SCC_BASE_ADDR >> PAGE_SHIFT;
-    vma->vm_flags |= VM_IO;
-    return remap_pfn_range(vma, vma->vm_start,
+    vma_->vm_pgoff = SCC_BASE_ADDR >> PAGE_SHIFT;
+    vma_->vm_flags |= VM_IO;
+    return remap_pfn_range(vma_, vma_->vm_start,
                            SCC_BASE_ADDR >> PAGE_SHIFT,
-                           8192, vma->vm_page_prot);
-#elif 0
-    return io_remap_page_range(vma, vma->vm_start,
-                               SCC_BASE_ADDR,
-                               8192,
-                               vma->vm_page_prot);
-#endif
-
-#endif
+                           8192, vma_->vm_page_prot);
 }
 
 
@@ -452,6 +422,7 @@ scc_test_read_register(unsigned long scc_data)
 {
     scc_reg_access reg_struct;
     scc_return_t   scc_return = -1;
+    unsigned long  copy_code;
     int            error_code = IOCTL_SCC_OK;
 
     if (copy_from_user(&reg_struct, (void *)scc_data, sizeof(reg_struct))) {
@@ -471,7 +442,11 @@ scc_test_read_register(unsigned long scc_data)
     }
 
     reg_struct.function_return_code = scc_return;
-    copy_to_user((void *)scc_data, &reg_struct, sizeof(reg_struct));
+    copy_code = copy_to_user((void *)scc_data, &reg_struct,
+                             sizeof(reg_struct));
+    if (copy_code != 0) {
+        error_code = IOCTL_SCC_FAILURE;
+    }
     return error_code;
 }
 
@@ -491,6 +466,7 @@ static int
 scc_test_write_register(unsigned long scc_data) {
     scc_reg_access reg_struct;
     scc_return_t   scc_return = -1;
+    unsigned long  copy_code;
     int            error_code = IOCTL_SCC_OK;
 
     /* Try to copy user's reg_struct */
@@ -511,7 +487,12 @@ scc_test_write_register(unsigned long scc_data) {
     }
 
     reg_struct.function_return_code = scc_return;
-    copy_to_user((void *)scc_data, &reg_struct, sizeof(reg_struct));
+    copy_code = copy_to_user((void *)scc_data, &reg_struct,
+                             sizeof(reg_struct));
+
+    if (copy_code != 0) {
+        error_code = IOCTL_SCC_FAILURE;
+    }
     return error_code;
 }
 
@@ -543,6 +524,7 @@ scc_test_cipher (uint32_t cmd, unsigned long scc_data)
     char* input;
     char* output;
     scc_return_t return_code = -1;
+    unsigned long copy_code = 0;
 
     int error_code = IOCTL_SCC_OK;
 
@@ -567,7 +549,6 @@ scc_test_cipher (uint32_t cmd, unsigned long scc_data)
             error_code = -IOCTL_SCC_NO_MEMORY;
         }
         else {
-            int copy_code = 0;
 
             /* For testing, set up internal pointers to reflect the block/word
                offset of user memory. */
@@ -621,7 +602,7 @@ scc_test_cipher (uint32_t cmd, unsigned long scc_data)
 #ifdef SCC_DEBUG
                     if (copy_code) {
                         printk("SCC TEST: copy_to_user returned %d\n",
-                               copy_code);
+                               (int)copy_code);
                     }
 #endif
                     error_code = ENOMEM;
@@ -633,7 +614,11 @@ scc_test_cipher (uint32_t cmd, unsigned long scc_data)
     } /* else copy of user struct succeeded */
 
     cipher_struct.function_return_code = return_code;
-    copy_to_user((void *)scc_data, &cipher_struct, sizeof(cipher_struct));
+    copy_code = copy_to_user((void *)scc_data, &cipher_struct,
+                             sizeof(cipher_struct));
+    if (copy_code != 0) {
+        error_code = IOCTL_SCC_FAILURE;
+    }
 
 
     /* clean up */
@@ -837,55 +822,43 @@ scc_test_get_slot_info(unsigned long cmd, unsigned long scc_data)
  *
  * @return 0 on success, -errno on failure.
  */
-static int
+static os_error_code
 setup_user_driver_interaction(void)
 {
-    struct class_device *temp_class;
-    int result;
-    int error_code = 0;
+    os_error_code code = OS_ERROR_OK_S;
 
-    /* Tell Linux kernel the user interface to the driver looks like */
-    result = register_chrdev(scc_test_major_node, SCC_TEST_DRIVER_NAME,
-                             &scc_test_fops);
-    if (result < 0) {
+    os_driver_init_registration(reg_handle);
+    os_driver_add_registration(reg_handle, OS_FN_OPEN,
+                               OS_DEV_OPEN_REF(scc_test_open));
+    os_driver_add_registration(reg_handle, OS_FN_IOCTL,
+                               OS_DEV_IOCTL_REF(scc_test_ioctl));
+    os_driver_add_registration(reg_handle, OS_FN_CLOSE,
+                               OS_DEV_CLOSE_REF(scc_test_release));
+    os_driver_add_registration(reg_handle, OS_FN_MMAP,
+                               OS_DEV_MMAP_REF(scc_test_release));
+    code = os_driver_complete_registration(reg_handle, scc_test_major_node,
+                                               SCC_TEST_DRIVER_NAME);
+
+    if (code != OS_ERROR_OK_S) {
         /* failure ! */
 #ifdef SCC_DEBUG
         printk ("SCC TEST Driver: register device driver failed: %d\n",
-                result);
+                code);
 #endif
-        return result;
+        return code;
     }
 
     /* Save the major node value */
     if (scc_test_major_node == 0) {
         /* We passed in a zero value, then one was assigned to us.  */
-        scc_test_major_node = result;
+        scc_test_major_node = code;
     }
-
-	scc_tm_class = class_create(THIS_MODULE, SCC_TEST_DRIVER_NAME);
-	if (IS_ERR(scc_tm_class)) {
-		printk(KERN_ERR "Error creating scc test module class.\n");
-		unregister_chrdev(scc_test_major_node, SCC_TEST_DRIVER_NAME);
-		class_device_destroy(scc_tm_class, MKDEV(scc_test_major_node, 0));
-		return PTR_ERR(scc_tm_class);
-	}
- 
-	temp_class = class_device_create(scc_tm_class, NULL,
-					     MKDEV(scc_test_major_node, 0), NULL,
-					     SCC_TEST_DRIVER_NAME);
-	if (IS_ERR(temp_class)) {
-		printk(KERN_ERR "Error creating scc test module class device.\n");
-		class_device_destroy(scc_tm_class, MKDEV(scc_test_major_node, 0));
-		class_destroy(scc_tm_class);
-		unregister_chrdev(scc_test_major_node, SCC_TEST_DRIVER_NAME);
-		return -1;
-	}
 
 #ifdef SCC_DEBUG
     printk("SCC TEST Driver:  Major node is %d\n", scc_test_major_node);
 #endif
 
-    return error_code;
+    return code;
 }
 
 
