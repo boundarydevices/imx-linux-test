@@ -51,9 +51,6 @@ TEST_SOURCES = apitest.c  run_tests.c  sym.c  hash.c  gen_encrypt.c         \
                callback.c  auth_decrypt.c  rand.c  hmac1.c  hmac2.c  cap.c  \
                wrap.c  results.c apihelp.c
 
-LIBS_DIR=$(TOPDIR)/lib/rng
-LIBS=$(LIBS_DIR)/libfsl_shw.a
-
 OPTFLAGS = -O2
 CFLAGS += $(OPTFLAGS) -DARM_LINUX -Wall $(INCLUDEDIR)
 
@@ -68,13 +65,10 @@ LD=$(CROSS_COMPILE)ld
 all: $(OBJS)
 
 rng_test: rng_test.o apihelp.o $(LIBS)
-	$(CC) -g -o $@ $^
+	$(CC) -lfsl_shw -g -o $@ $^
 
 apitest:  $(TEST_SOURCES:.c=.o) $(LIBS)
-	$(CC) -g -o $@ $^
-
-$(LIBS):
-	$(MAKE) -C $(LIBS_DIR)
+	$(CC) -lfsl_shw -g -o $@ $^
 
 move:
 	mkdir -p $(OBJDIR)
