@@ -11,7 +11,8 @@ OBJS =
 endif
 
 CFLAGS+= -Wall -I../include
-CFLAGS+= $(INC) -D__CVS_TEST
+CFLAGS+= $(INC) -I$(LINUXPATH)/include/ -D__CVS_TEST
+CFLAGS+= -Dbool=int -Dtrue=1 -Dfalse=0
 
 ifeq "$(PLATFORM)" "MXC91131EVB"
 CFLAGS+= -DCONFIG_MXC_PMIC_SC55112
