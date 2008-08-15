@@ -63,7 +63,7 @@ void put_framebuf(struct frame_buf *fb)
 	fbarray[fb_index] = fb;
 }
 
-struct frame_buf *framebuf_alloc(int strideY, int height)
+struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height)
 {
 	struct frame_buf *fb;
 	int err;
@@ -74,7 +74,7 @@ struct frame_buf *framebuf_alloc(int strideY, int height)
 
 	memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
 	fb->desc.size = (strideY * height * 3 / 2);
-	if (cpu_is_mx37())
+	if (cpu_is_mx37() || cpu_is_mx51())
 		fb->desc.size += strideY * height / 4;
 	
 	err = IOGetPhyMem(&fb->desc);
@@ -87,8 +87,11 @@ struct frame_buf *framebuf_alloc(int strideY, int height)
 	fb->addrY = fb->desc.phy_addr;
 	fb->addrCb = fb->addrY + strideY * height;
 	fb->addrCr = fb->addrCb + strideY / 2 * height / 2;
-	if (cpu_is_mx37()) {
-		fb->mvColBuf = fb->addrCr + strideY / 2 * height / 2;
+	if (cpu_is_mx37() || cpu_is_mx51()) {
+		if (stdMode==STD_MJPG)
+			fb->mvColBuf = fb->addrCr;
+		else
+			fb->mvColBuf = fb->addrCr + strideY / 2 * height / 2;
 	}
 	fb->desc.virt_uaddr = IOGetVirtMem(&(fb->desc));
 	if (fb->desc.virt_uaddr <= 0) {

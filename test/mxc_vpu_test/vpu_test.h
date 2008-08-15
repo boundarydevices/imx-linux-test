@@ -42,7 +42,6 @@
 
 /*#define TVOUT_ENABLE*/
 /* Available on MX37. If not defined, then use VPU rotation.  */
-#define USE_IPU_ROTATION
 
 typedef unsigned long u32;
 typedef unsigned short u16;
@@ -51,9 +50,9 @@ typedef signed int s32;
 typedef signed short s16;
 typedef signed char s8;
 
-#define STREAM_BUF_SIZE		0x40000
-#define STREAM_FILL_SIZE	0x8000
-#define STREAM_READ_SIZE	(512 * 4)
+#define STREAM_BUF_SIZE		0x80000
+#define STREAM_FILL_SIZE	0x10000
+#define STREAM_READ_SIZE	(512 * 8)
 #define STREAM_END_SIZE		0
 #define PS_SAVE_SIZE		0x028000
 #define SLICE_SAVE_SIZE		0x02D800
@@ -91,6 +90,7 @@ struct vpu_display {
 	int nframes;
 	int ncount;
 	time_t sec;
+	int queued_count;
 	suseconds_t usec;
 	struct v4l2_buffer buf;
 	struct v4l_buf *buffers[32];
@@ -118,7 +118,7 @@ struct cmd_line {
 	int width;
 	int height;
 	int format;
-	int mp4dblk_en;
+	int deblock_en;
 	int dering_en;
 	int rot_en;
 	int ipu_rot_en;
@@ -186,9 +186,9 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
 struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 					struct rot rotation);
-int v4l_put_data(struct vpu_display *disp);
+int v4l_put_data(struct vpu_display *disp, int index);
 void v4l_display_close(struct vpu_display *disp);
-struct frame_buf *framebuf_alloc(int strideY, int height);
+struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height);
 void framebuf_free(struct frame_buf *fb);
 
 int v4l_start_capturing(void);
