@@ -93,6 +93,8 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation)
 	int top = dec->picCropRect.top;
 	int right = dec->picCropRect.right;
 	int bottom = dec->picCropRect.bottom;
+	int disp_width = dec->cmdl->width;
+	int disp_height = dec->cmdl->height;
 	int fd, err, out, i;
 	char v4l_device[32] = "/dev/video16";
 	struct v4l2_cropcap cropcap = {0};
@@ -171,10 +173,14 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation)
 	crop.c.width = width / ratio;
 	crop.c.height = height / ratio;
 
-	if (cpu_is_mx37()) {
+	if ((disp_width != 0) && (disp_height!= 0 )) {
+		crop.c.width = disp_width;
+		crop.c.height = disp_height;
+	} else if (cpu_is_mx37() || cpu_is_mx51()) {
 		crop.c.width = cropcap.bounds.width;
 		crop.c.height = cropcap.bounds.height;
-	}
+         }
+
 	dprintf(1, "crop.c.width/height: %d/%d\n", crop.c.width, crop.c.height);
 
 	err = ioctl(fd, VIDIOC_S_CROP, &crop);
@@ -183,7 +189,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation)
 		goto err;
 	}
 
-	if (rotation.ipu_rot_en) {
+	if (rotation.ipu_rot_en && (rotation.rot_angle != 0)) {
 		/* Set rotation via V4L2 i/f */
 		struct v4l2_control ctrl;
 		ctrl.id = V4L2_CID_PRIVATE_BASE;
@@ -336,7 +342,7 @@ void v4l_display_close(struct vpu_display *disp)
 	free(disp);
 }
 
-int v4l_put_data(struct vpu_display *disp)
+int v4l_put_data(struct vpu_display *disp, int index)
 {
 	struct timeval tv;
 	int err, type;
@@ -348,25 +354,17 @@ int v4l_put_data(struct vpu_display *disp)
 
 		disp->sec = tv.tv_sec;
 		disp->usec = tv.tv_usec;
-	}
+       }
 
 	disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	disp->buf.memory = V4L2_MEMORY_MMAP;
-	if (disp->ncount < disp->nframes) {
-		disp->buf.index = disp->ncount;
-		err = ioctl(disp->fd, VIDIOC_QUERYBUF, &disp->buf);
-		if (err < 0) {
-			err_msg("VIDIOC_QUERYBUF failed\n");
-			goto err;
-		}
-	} else {
-		disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-		disp->buf.memory = V4L2_MEMORY_MMAP;
-		err = ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf);
-		if (err < 0) {
-			err_msg("VIDIOC_DQBUF failed\n");
-			goto err;
-		}
+
+	/* query buffer info */
+	disp->buf.index = index;
+	err = ioctl(disp->fd, VIDIOC_QUERYBUF, &disp->buf);
+	if (err < 0) {
+		err_msg("VIDIOC_QUERYBUF failed\n");
+		goto err;
 	}
 
 	if (disp->ncount > 0) {
@@ -381,11 +379,13 @@ int v4l_put_data(struct vpu_display *disp)
 
 	}
 
+	disp->buf.index = index;
 	err = ioctl(disp->fd, VIDIOC_QBUF, &disp->buf);
 	if (err < 0) {
 		err_msg("VIDIOC_QBUF failed\n");
 		goto err;
 	}
+	disp->queued_count++;
 
 	if (disp->ncount == 1) {
 		type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -397,6 +397,20 @@ int v4l_put_data(struct vpu_display *disp)
 	}
 
 	disp->ncount++;
+
+	if (disp->queued_count > 1) {
+		disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		disp->buf.memory = V4L2_MEMORY_MMAP;
+		err = ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf);
+		if (err < 0) {
+			err_msg("VIDIOC_DQBUF failed\n");
+			goto err;
+		}
+		disp->queued_count--;
+	}
+	else
+		disp->buf.index = -1;
+
 	return 0;
 
 err:
