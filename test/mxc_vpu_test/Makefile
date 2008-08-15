@@ -11,7 +11,7 @@ OBJ = main.o \
       loopback.o
 
 # list of platforms which want this test case
-INCLUDE_LIST:=IMX27ADS IMX31ADS IMX37_3STACK
+INCLUDE_LIST:=IMX27ADS IMX31ADS IMX37_3STACK IMX51_3STACK
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 TARGET = mxc_vpu_test.out
