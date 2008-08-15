@@ -77,7 +77,7 @@ decode()
 		goto out;
 	}
 
-	ret = v4l_put_data(disp);
+	ret = v4l_put_data(disp, outinfo.indexFrameDisplay);
 	if (ret)
 		return -1;
 	

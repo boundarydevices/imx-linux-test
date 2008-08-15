@@ -11,10 +11,16 @@ input=akiyo.mp4
 output=
 
 # format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 4 - MPEG2, 5 - DIV3
+# 6 - RV, 7 - MJPG
 format=0
 
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
+# Default is VPU rotation.
 rotation=
+
+# ipu_rot, 1 - Enable IPU rotation and disable VPU rotation when output
+# to LCD for display
+ipu_rot=
 
 # count, number of frames to encode or decode
 count=
@@ -28,10 +34,10 @@ dering=
 # mirroring (0, 1, 2 , 3)
 mirror=
 
-# width for encoding. This will be the capture/yuv image width
+# width, display width for decoding or capture/yuv image width for encoding
 width=
 
-# height for encoding. This will be the capture/yuv image height
+# height, display height for decoding or capture/yuv image height for encoding
 height=
 
 # bitrate. default is auto
