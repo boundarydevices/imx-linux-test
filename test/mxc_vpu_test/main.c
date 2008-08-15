@@ -36,7 +36,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -o <output file> Write output to file \n "\
 	       "	If no output is specified, default is LCD \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, \n "\
-	       "	4 - MPEG2, 5 - DIVX, \n "\
+	       "	4 - MPEG2, 5 - DIVX, 6 - RV, 7 - MJPG, \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
 	       "  -p <port number> UDP port number to bind \n "\
 	       "	If no port number is secified, 5555 is used \n "\
@@ -49,6 +49,13 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default rotation is disabled (0) \n "\
 	       "  -m <mirror direction> 0, 1, 2, 3 \n "\
 	       "	default no mirroring (0) \n "\
+	       "  -u <ipu rotation> Using IPU rotation for display - 1. IPU rotation \n "\
+	       "        default is VPU rotation(0).\n "\
+	       "        This flag is effective when 'r' flag is specified.\n "\
+	       "  -w <width> display picture width \n "\
+	       "	default is source picture width. \n "\
+	       "  -h <height> disiplay picture height \n "\
+	       "	default is source picture height \n "\
 	       "\n"\
 	       "encode options \n "\
 	       "  -i <input file> Read input from file (yuv) \n "\
@@ -108,7 +115,7 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:";
+static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:";
 
 int
 parse_config_file(char *file_name)
@@ -131,7 +138,6 @@ parse_config_file(char *file_name)
 		}
 
 		ptr = skip_unwanted(line);
-
 		end = parse_options(ptr, &input_arg[instance].cmd,
 					&input_arg[instance].mode);
 		if (end == 100) {
@@ -235,6 +241,10 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.rot_en = 1;
 			input_arg[i].cmd.rot_angle = atoi(optarg);
 			break;
+		case 'u':
+			input_arg[i].cmd.ipu_rot_en = 1;
+			input_arg[i].cmd.rot_en = 0;
+			break;
 		case 'f':
 			input_arg[i].cmd.format = atoi(optarg);
 			break;
@@ -254,7 +264,7 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.bitrate = atoi(optarg);
 			break;
 		case 'd':
-			input_arg[i].cmd.mp4dblk_en = 1;
+			input_arg[i].cmd.deblock_en = 1;
 			break;
 		case 'e':
 			input_arg[i].cmd.dering_en = 1;

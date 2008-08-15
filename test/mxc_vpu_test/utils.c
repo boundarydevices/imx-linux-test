@@ -447,6 +447,12 @@ check_params(struct cmd_line *cmd, int op)
 	case STD_DIV3:
 		info_msg("Format: STD_DIV3\n");
 		break;
+	case STD_RV:
+		info_msg("Format: STD_RV\n");
+		break;
+	case STD_MJPG:
+		info_msg("Format: STD_MJPG\n");
+		break;
 	default:
 		err_msg("Unsupported Format!\n");
 		break;
@@ -519,9 +525,9 @@ check_params(struct cmd_line *cmd, int op)
 
 	if (!(cmd->format == STD_MPEG4 || cmd->format == STD_H263 ||
 	    cmd->format == STD_MPEG2 || cmd->format == STD_DIV3) &&
-	    cmd->mp4dblk_en) {
-		warn_msg("Deblocking only for MPEG4. Disabled!\n");
-		cmd->mp4dblk_en = 0;
+	    cmd->deblock_en) {
+		warn_msg("Deblocking only for MPEG4 and MPEG2. Disabled!\n");
+		cmd->deblock_en = 0;
 	}
 
 	return 0;
@@ -599,20 +605,6 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		return 0;
 	}
 
-	str = strstr(buf, "ip");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				strncpy(cmd->output, str, 64);
-				cmd->dst_scheme = PATH_NET;
-			}
-		}
-		
-		return 0;
-	}
-
 	str = strstr(buf, "port");
 	if (str != NULL) {
 		str = index(buf, '=');
@@ -653,6 +645,34 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		return 0;
 	}
 
+	str = strstr(buf, "ipu_rot");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				cmd->rot_en = 0;
+				cmd->ipu_rot_en = 1;
+			}
+		}
+		
+		return 0;
+	}
+
+        str = strstr(buf, "ip");
+        if (str != NULL) {
+                str = index(buf, '=');
+                if (str != NULL) {
+                        str++;
+                        if (*str != '\0') {
+                                strncpy(cmd->output, str, 64);
+                                cmd->dst_scheme = PATH_NET;
+                        }
+                }
+
+                return 0;
+        }
+
 	str = strstr(buf, "count");
 	if (str != NULL) {
 		str = index(buf, '=');
@@ -672,7 +692,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				cmd->mp4dblk_en = strtol(str, NULL, 10);
+				cmd->deblock_en = strtol(str, NULL, 10);
 			}
 		}
 		

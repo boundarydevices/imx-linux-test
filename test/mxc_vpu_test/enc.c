@@ -197,7 +197,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	for (i = 0; i < fbcount; i++) {
-		pfbpool[i] = framebuf_alloc(enc->picwidth, enc->picheight);
+		pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->picwidth, enc->picheight);
 		if (pfbpool[i] == NULL) {
 			fbcount = i;
 			goto err1;
@@ -226,7 +226,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		}
 	} else {
 		/* Allocate a single frame buffer for source frame */
-		pfbpool[src_fbid] = framebuf_alloc(enc->picwidth,
+		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, enc->picwidth,
 						   enc->picheight);
 		if (pfbpool[src_fbid] == NULL) {
 			err_msg("failed to allocate single framebuf\n");
