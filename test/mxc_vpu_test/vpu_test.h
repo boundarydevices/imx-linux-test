@@ -41,7 +41,6 @@
 	} while (0)
 
 /*#define TVOUT_ENABLE*/
-/* Available on MX37. If not defined, then use VPU rotation.  */
 
 typedef unsigned long u32;
 typedef unsigned short u16;
