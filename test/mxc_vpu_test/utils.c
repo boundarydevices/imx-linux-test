@@ -370,6 +370,7 @@ open_files(struct cmd_line *cmd)
 			perror("file open");
 			return -1;
 		}
+		info_msg("Input file \"%s\" opened.\n", cmd->input);
 	} else if (cmd->src_scheme == PATH_NET) {
 		/* open udp port for receive */
 		cmd->src_fd = udp_open(cmd);
@@ -391,6 +392,7 @@ open_files(struct cmd_line *cmd)
 
 			return -1;
 		}
+		info_msg("Output file \"%s\" opened.\n", cmd->output);
 	} else if (cmd->dst_scheme == PATH_NET) {
 		/* open udp port for send path */
 		cmd->dst_fd = udp_open(cmd);
