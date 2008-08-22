@@ -769,6 +769,13 @@ decoder_start(struct decode *dec)
 			warn_msg("VPU doesn't have picture to be displayed.\n"
 				"\toutinfo.indexFrameDisplay = %d\n",
 						outinfo.indexFrameDisplay);
+			if (disp_clr_index >= 0) {
+				err = vpu_DecClrDispFlag(handle, disp_clr_index);
+				if (err)
+					err_msg("vpu_DecClrDispFlag failed Error code"
+							" %d\n", err);
+			}
+			disp_clr_index = outinfo.indexFrameDisplay;
 			continue;
 		}
 
@@ -791,13 +798,13 @@ decoder_start(struct decode *dec)
 			if (err)
 				return -1;
 
-			if (disp_clr_index != -1) {
+			if (disp_clr_index >= 0) {
 				err = vpu_DecClrDispFlag(handle, disp_clr_index);
 				if (err)
 					err_msg("vpu_DecClrDispFlag failed Error code"
 							" %d\n", err);
-                        }
-                        disp_clr_index = disp->buf.index;
+			}
+			disp_clr_index = disp->buf.index;
 		} else {
 			pfb = pfbpool[outinfo.indexFrameDisplay];
 
@@ -819,7 +826,7 @@ decoder_start(struct decode *dec)
 				}
 			}
 
-			if (disp_clr_index != -1) {
+			if (disp_clr_index >= 0) {
 				err = vpu_DecClrDispFlag(handle,disp_clr_index);
 				if (err)
 					err_msg("vpu_DecClrDispFlag failed Error code"
@@ -1119,12 +1126,11 @@ decoder_parse(struct decode *dec)
 	 * used for decoder again. One framebuffer dequeue from IPU is delayed
 	 * for performance improvement and one framebuffer is delayed for
 	 * display flag clear.
-
+	 *
 	 * Performance is better when more buffers are used if IPU performance
 	 * is bottleneck.
 	 */
-
-	dec->fbcount = initinfo.minFrameBufferCount+2;
+	dec->fbcount = initinfo.minFrameBufferCount + 2;
 	dec->picwidth = ((initinfo.picWidth + 15) & ~15);
 	dec->picheight = ((initinfo.picHeight + 15) & ~15);
 	if ((dec->picwidth == 0) || (dec->picheight == 0))
