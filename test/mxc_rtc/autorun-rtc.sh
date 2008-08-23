@@ -8,7 +8,7 @@ source /unit_tests/test-utils.sh
 STATUS=0
 
 echo "$(platform)"
-if [ "$(platform)" == IMX37_3STACK ]; then
+if [ "$(platform)" == IMX37_3STACK ] || [ "$(platform)" == IMX51_3STACK ]; then
 	rtc_test_param=--no-periodic
 	RTC_IRQS_EXPECTED=1
 else
