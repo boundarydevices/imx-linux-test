@@ -413,10 +413,6 @@ encoder_configure(struct encode *enc)
 
 	if (cpu_is_mx27()) {
 		search_pa.searchRamAddr = 0xFFFF4C00;
-	} else if (cpu_is_mxc30031()) {
-		search_pa.searchRamAddr = 0xD0000000;
-		search_pa.SearchRamSize =
-			((enc->picwidth + 15) & ~15) * 36 + 2048;
 	}
 
 	lock(enc->cmdl);
