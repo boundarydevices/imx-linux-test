@@ -1,5 +1,5 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX37_3STACK IMX35_3STACK"
+EXCLUDE_LIST:="IMX37_3STACK IMX35_3STACK IMX51_3STACK"
 
 # list of platforms that have hacc
 HACC_LIST:=MXC91131EVB
