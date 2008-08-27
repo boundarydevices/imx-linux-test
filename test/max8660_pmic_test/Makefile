@@ -1,11 +1,15 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX37_3STACK IMX31_3STACK IMX31_ADS IMX27_3STACK IMX27_ADS"
+EXCLUDE_LIST:="IMX51_3STACK IMX37_3STACK IMX31_3STACK IMX31ADS IMX27_3STACK IMX27ADS"
 
 
 LTP_DIR = $(TOPDIR)/test/mxc_pmic_test/
 LOADLIBES+= -L$(LTP_DIR)lib -lltp
 
+ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = autorun-mcu_pmic.sh libltp.a
+else
+OBJS =
+endif
 
 CFLAGS+= -Wall -I$(LTP_DIR)/include
 CFLAGS+= $(INC) -I$(LINUXPATH)/include/ -D__CVS_TEST
