@@ -142,39 +142,6 @@ update:
 }
 
 /*
- * Take into account a different stride when writing to file
- */
-static void
-write_to_file(struct decode *dec, u8 *buf)
-{
-	int i;
-	int Y, Cb, Cr;
-	int width = dec->picwidth;
-	int height = dec->picheight;
-	int stride = dec->stride;
-
-	Y = (int)buf;
-	Cb = Y + (stride * height);
-	Cr = Cb +  (stride / 2  * height / 2);
-
-	for (i = 0; i < height; i++) {
-		fwriten(dec->cmdl->dst_fd, (u8 *)Y, width);
-		Y += stride;
-	}
-
-	for (i = 0; i < height / 2; i++) {
-		fwriten(dec->cmdl->dst_fd, (u8 *)Cb, width / 2);
-		Cb += stride / 2;
-	}
-
-	for (i = 0; i < height / 2; i++) {
-		fwriten(dec->cmdl->dst_fd, (u8 *)Cr, width / 2);
-		Cr += stride / 2;
-	}
-}
-
-
-/*
  * This function is to convert framebuffer from interleaved Cb/Cr mode
  * to non-interleaved Cb/Cr mode.
  *
@@ -460,7 +427,7 @@ swapCropRect(struct decode *dec, Rect *rotCrop)
  * or both.
  */
 static void
-write_to_file2(struct decode *dec, u8 *buf, Rect cropRect)
+write_to_file(struct decode *dec, u8 *buf, Rect cropRect)
 {
 	int height = dec->picheight;
 	int stride = dec->stride;
@@ -811,19 +778,13 @@ decoder_start(struct decode *dec)
 			yuv_addr = pfb->addrY + pfb->desc.virt_uaddr -
 					pfb->desc.phy_addr;
 
-
-			if (cpu_is_mxc30031()) {
-				write_to_file(dec, (u8 *)yuv_addr);
+			if (rot_en) {
+				Rect rotCrop;
+				swapCropRect(dec, &rotCrop);
+				write_to_file(dec, (u8 *)yuv_addr, rotCrop);
 			} else {
-				if (rot_en) {
-					Rect rotCrop;
-					swapCropRect(dec, &rotCrop);
-					write_to_file2(dec, (u8 *)yuv_addr,
-							rotCrop);
-				} else {
-					write_to_file2(dec, (u8 *)yuv_addr,
+				write_to_file(dec, (u8 *)yuv_addr,
 							dec->picCropRect);
-				}
 			}
 
 			if (disp_clr_index >= 0) {
@@ -1060,24 +1021,6 @@ err:
 	return -1;
 }
 
-static void
-calculate_stride(struct decode *dec)
-{
-	if (cpu_is_mxc30031()) {
-		if (dec->picwidth <= 128) {
-			dec->stride = 128;
-		} else if (dec->picwidth <= 256) {
-			dec->stride = 256;
-		} else if (dec->picwidth <= 512) {
-			dec->stride = 512;
-		} else if (dec->picwidth <= 1024) {
-			dec->stride = 1024;
-		}
-	} else {
-		dec->stride = dec->picwidth;
-	}
-}
-
 int
 decoder_parse(struct decode *dec)
 {
@@ -1139,7 +1082,7 @@ decoder_parse(struct decode *dec)
 	memcpy(&(dec->picCropRect), &(initinfo.picCropRect),
 					sizeof(initinfo.picCropRect));
 
-	calculate_stride(dec);
+	dec->stride = dec->picwidth;
 	return 0;
 }
 
