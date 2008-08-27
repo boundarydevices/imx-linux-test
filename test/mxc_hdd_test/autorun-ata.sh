@@ -49,7 +49,7 @@ then
 	modprobe ide_disk
 	sleep 1
 else
-	echo "IMX35_3STACK"
+	echo "$(platform)"
 	modprobe pata_fsl
 	sleep 5
 fi
