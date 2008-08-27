@@ -115,6 +115,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation)
 			rotation.rot_angle, rotation.ipu_rot_en);
 
 #ifdef	TVOUT_ENABLE
+	/* NTSC mode */
 	err = system("/bin/echo U:720x480i-60 > /sys/class/graphics/fb1/mode");
 	if (err == -1) {
 		warn_msg("set tv mode error\n");
