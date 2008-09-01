@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "vpu_test.h"
+#include "vpu_jpegtable.h"
 
 
 /* V4L2 capture buffers are obtained from here */
@@ -97,29 +98,31 @@ encoder_fill_headers(struct encode *enc)
 
 	/* Must put encode header before encoding */
 	if (enc->cmdl->format == STD_MPEG4) {
-		enchdr_param.headerType = VOS_HEADER;
-		lock(enc->cmdl);
-		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
-		unlock(enc->cmdl);
+		if (!cpu_is_mx51()) {
+			enchdr_param.headerType = VOS_HEADER;
+			lock(enc->cmdl);
+			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
+			unlock(enc->cmdl);
 
 #if STREAM_ENC_PIC_RESET == 1
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
+			vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
+			ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
 #endif
 
-		enchdr_param.headerType = VIS_HEADER;
-		lock(enc->cmdl);
-		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
-		unlock(enc->cmdl);
+			enchdr_param.headerType = VIS_HEADER;
+			lock(enc->cmdl);
+			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
+			unlock(enc->cmdl);
 
 #if STREAM_ENC_PIC_RESET == 1
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
+			vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
+			ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
 #endif
+		}
 
 		enchdr_param.headerType = VOL_HEADER;
 		lock(enc->cmdl);
@@ -155,6 +158,11 @@ encoder_fill_headers(struct encode *enc)
 		if (ret < 0)
 			return -1;
 #endif
+	} else if (enc->cmdl->format == STD_MJPG) {
+		if (enc->huffTable)
+			free(enc->huffTable);
+		if (enc->qMatTable)
+			free(enc->qMatTable);
 	}
 
 	return 0;
@@ -267,6 +275,9 @@ encoder_start(struct encode *enc)
 	int src_fd = enc->cmdl->src_fd;
 	int src_scheme = enc->cmdl->src_scheme;
 	int count = enc->cmdl->count;
+	struct timeval tenc_begin,tenc_end, total_start, total_end;
+	int sec, usec;
+	float tenc_time = 0, total_time=0;
 
 #if STREAM_ENC_PIC_RESET == 0
 	PhysicalAddress phy_bsbuf_start = enc->phy_bsbuf_addr;
@@ -284,7 +295,7 @@ encoder_start(struct encode *enc)
 	}
 
 	enc_param.sourceFrame = &enc->fb[src_fbid];
-	enc_param.quantParam = 30;
+	enc_param.quantParam = 23;
 	enc_param.forceIPicture = 0;
 	enc_param.skipPicture = 0;
 
@@ -298,6 +309,8 @@ encoder_start(struct encode *enc)
 	} else {
 		img_size = enc->picwidth * enc->picheight * 3 / 2;
 	}
+
+	gettimeofday(&total_start, NULL);
 
 	/* The main encoding loop */
 	while (1) {
@@ -329,6 +342,8 @@ encoder_start(struct encode *enc)
 		}
 
 		lock(enc->cmdl);
+
+		gettimeofday(&tenc_begin, NULL);
 		ret = vpu_EncStartOneFrame(handle, &enc_param);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("vpu_EncStartOneFrame failed Err code:%d\n",
@@ -349,6 +364,17 @@ encoder_start(struct encode *enc)
 #endif
 			vpu_WaitForInt(200);
 		}
+
+		gettimeofday(&tenc_end, NULL);
+		sec = tenc_end.tv_sec - tenc_begin.tv_sec;
+		usec = tenc_end.tv_usec - tenc_begin.tv_usec;
+
+		if (usec < 0) {
+			sec--;
+			usec = usec + 1000000;
+		}
+
+		tenc_time += (sec * 1000000) + usec;
 
 		ret = vpu_EncGetOutputInfo(handle, &outinfo);
 		unlock(enc->cmdl);
@@ -384,7 +410,19 @@ encoder_start(struct encode *enc)
 			virt_bsbuf_end, phy_bsbuf_start, 0);
 #endif
 
+	gettimeofday(&total_end, NULL);
+	sec = total_end.tv_sec - total_start.tv_sec;
+	usec = total_end.tv_usec - total_start.tv_usec;
+	if (usec < 0) {
+		sec--;
+		usec = usec + 1000000;
+	}
+	total_time = (sec * 1000000) + usec;
+
 	info_msg("Finished encoding: %d frames\n", frame_id);
+	info_msg("enc fps = %.2f\n", (frame_id / (tenc_time / 1000000)));
+	info_msg("total fps= %.2f \n",(frame_id / (total_time / 1000000)));
+
 err2:
 	if (src_scheme == PATH_V4L2) {
 		v4l_stop_capturing();
@@ -410,9 +448,19 @@ encoder_configure(struct encode *enc)
 	EncInitialInfo initinfo = {0};
 	RetCode ret;
 	MirrorDirection mirror;
+	iram_t iram;
+	int ram_size;
 
 	if (cpu_is_mx27()) {
 		search_pa.searchRamAddr = 0xFFFF4C00;
+	} else if (cpu_is_mx51()) {
+		memset(&iram, 0, sizeof(iram_t));
+		ram_size = ((enc->picwidth + 15) & ~15) * 36 + 2048;
+		IOGetIramBase(&iram);
+		if ((iram.end - iram.start) < ram_size)
+			ram_size = iram.end - iram.start;
+		search_pa.searchRamAddr = iram.start;
+		search_pa.SearchRamSize = ram_size;
 	}
 
 	lock(enc->cmdl);
@@ -480,6 +528,9 @@ encoder_open(struct encode *enc)
 {
 	EncHandle handle = {0};
 	EncOpenParam encop = {0};
+	Uint8 *huffTable = enc->huffTable;
+	Uint8 *qMatTable = enc->qMatTable;
+	int i;
 	RetCode ret;
 
 	/* Fill up parameters for encoding */
@@ -504,7 +555,7 @@ encoder_open(struct encode *enc)
 	encop.frameRateInfo = 30;
 	encop.bitRate = enc->cmdl->bitrate;
 	encop.gopSize = enc->cmdl->gop;
-	encop.slicemode.sliceMode = 1;
+	encop.slicemode.sliceMode = 0;	/* 0: 1 slice per picture; 1: Multiple slices per picture */
 	encop.slicemode.sliceSizeMode = 0;
 	encop.slicemode.sliceSize = 4000;
 
@@ -519,6 +570,103 @@ encoder_open(struct encode *enc)
 	encop.ringBufferEnable = 0;
 	encop.dynamicAllocEnable = 0;
 
+	if( enc->cmdl->format == STD_MJPG )
+	{
+		qMatTable = calloc(192,1);
+		if (qMatTable == NULL) {
+			err_msg("Failed to allocate qMatTable\n");
+			return -1;
+		}
+		huffTable = calloc(432,1);
+		if (huffTable == NULL) {
+			free(qMatTable);
+			err_msg("Failed to allocate huffTable\n");
+			return -1;
+		}
+
+		/* Don't consider user defined hufftable this time */
+		/* Rearrange and insert pre-defined Huffman table to deticated variable. */
+		for(i = 0; i < 16; i += 4)
+		{
+			huffTable[i] = lumaDcBits[i + 3];
+			huffTable[i + 1] = lumaDcBits[i + 2];
+			huffTable[i + 2] = lumaDcBits[i + 1];
+			huffTable[i + 3] = lumaDcBits[i];
+		}
+		for(i = 16; i < 32 ; i += 4)
+		{
+			huffTable[i] = lumaDcValue[i + 3 - 16];
+			huffTable[i + 1] = lumaDcValue[i + 2 - 16];
+			huffTable[i + 2] = lumaDcValue[i + 1 - 16];
+			huffTable[i + 3] = lumaDcValue[i - 16];
+		}
+		for(i = 32; i < 48; i += 4)
+		{
+			huffTable[i] = lumaAcBits[i + 3 - 32];
+			huffTable[i + 1] = lumaAcBits[i + 2 - 32];
+			huffTable[i + 2] = lumaAcBits[i + 1 - 32];
+			huffTable[i + 3] = lumaAcBits[i - 32];
+		}
+		for(i = 48; i < 216; i += 4)
+		{
+			huffTable[i] = lumaAcValue[i + 3 - 48];
+			huffTable[i + 1] = lumaAcValue[i + 2 - 48];
+			huffTable[i + 2] = lumaAcValue[i + 1 - 48];
+			huffTable[i + 3] = lumaAcValue[i - 48];
+		}
+		for(i = 216; i < 232; i += 4)
+		{
+			huffTable[i] = chromaDcBits[i + 3 - 216];
+			huffTable[i + 1] = chromaDcBits[i + 2 - 216];
+			huffTable[i + 2] = chromaDcBits[i + 1 - 216];
+			huffTable[i + 3] = chromaDcBits[i - 216];
+		}
+		for(i = 232; i < 248; i += 4)
+		{
+			huffTable[i] = chromaDcValue[i + 3 - 232];
+			huffTable[i + 1] = chromaDcValue[i + 2 - 232];
+			huffTable[i + 2] = chromaDcValue[i + 1 - 232];
+			huffTable[i + 3] = chromaDcValue[i - 232];
+		}
+		for(i = 248; i < 264; i += 4)
+		{
+			huffTable[i] = chromaAcBits[i + 3 - 248];
+			huffTable[i + 1] = chromaAcBits[i + 2 - 248];
+			huffTable[i + 2] = chromaAcBits[i + 1 - 248];
+			huffTable[i + 3] = chromaAcBits[i - 248];
+		}
+		for(i = 264; i < 432; i += 4)
+		{
+			huffTable[i] = chromaAcValue[i + 3 - 264];
+			huffTable[i + 1] = chromaAcValue[i + 2 - 264];
+			huffTable[i + 2] = chromaAcValue[i + 1 - 264];
+			huffTable[i + 3] = chromaAcValue[i - 264];
+		}
+
+		/* Rearrange and insert pre-defined Q-matrix to deticated variable. */
+		for(i = 0; i < 64; i += 4)
+		{
+			qMatTable[i] = lumaQ2[i + 3];
+			qMatTable[i + 1] = lumaQ2[i + 2];
+			qMatTable[i + 2] = lumaQ2[i + 1];
+			qMatTable[i + 3] = lumaQ2[i];
+		}
+		for(i = 64; i < 128; i += 4)
+		{
+			qMatTable[i] = chromaBQ2[i + 3 - 64];
+			qMatTable[i + 1] = chromaBQ2[i + 2 - 64];
+			qMatTable[i + 2] = chromaBQ2[i + 1 - 64];
+			qMatTable[i + 3] = chromaBQ2[i - 64];
+		}
+		for(i = 128; i < 192; i += 4)
+		{
+			qMatTable[i] = chromaRQ2[i + 3 - 128];
+			qMatTable[i + 1] = chromaRQ2[i + 2 - 128];
+			qMatTable[i + 2] = chromaRQ2[i + 1 - 128];
+			qMatTable[i + 3] = chromaRQ2[i - 128];
+		}
+	}
+
 	if (enc->cmdl->format == STD_MPEG4) {
 		encop.EncStdParam.mp4Param.mp4_dataPartitionEnable = 0;
 		encop.EncStdParam.mp4Param.mp4_reversibleVlcEnable = 0;
@@ -531,18 +679,31 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.h263Param.h263_annexTEnable = 0;
 	} else if (enc->cmdl->format == STD_AVC) {
 		encop.EncStdParam.avcParam.avc_constrainedIntraPredFlag = 0;
-		encop.EncStdParam.avcParam.avc_disableDeblk = 0;
-		encop.EncStdParam.avcParam.avc_deblkFilterOffsetAlpha = 0;
+		encop.EncStdParam.avcParam.avc_disableDeblk = 1;
+		encop.EncStdParam.avcParam.avc_deblkFilterOffsetAlpha = 6;
 		encop.EncStdParam.avcParam.avc_deblkFilterOffsetBeta = 0;
-		encop.EncStdParam.avcParam.avc_chromaQpOffset = 0;
+		encop.EncStdParam.avcParam.avc_chromaQpOffset = 10;
 		encop.EncStdParam.avcParam.avc_audEnable = 0;
 		encop.EncStdParam.avcParam.avc_fmoEnable = 0;
 		encop.EncStdParam.avcParam.avc_fmoType = 0;
-		encop.EncStdParam.avcParam.avc_fmoSliceNum = 0;
+		encop.EncStdParam.avcParam.avc_fmoSliceNum = 1;
+		encop.EncStdParam.avcParam.avc_fmoSliceSaveBufSize = 32; /* FMO_SLICE_SAVE_BUF_SIZE */
+	} else if (enc->cmdl->format == STD_MJPG) {
+		encop.EncStdParam.mjpgParam.mjpg_sourceFormat = 0; /* encConfig.mjpgChromaFormat */
+		encop.EncStdParam.mjpgParam.mjpg_restartInterval = 60;
+		encop.EncStdParam.mjpgParam.mjpg_thumbNailEnable = 0;
+		encop.EncStdParam.mjpgParam.mjpg_thumbNailWidth = 0;
+		encop.EncStdParam.mjpgParam.mjpg_thumbNailHeight = 0;
+		encop.EncStdParam.mjpgParam.mjpg_hufTable = huffTable;
+		encop.EncStdParam.mjpgParam.mjpg_qMatTable = qMatTable;
 	}
 
 	ret = vpu_EncOpen(&handle, &encop);
 	if (ret != RETCODE_SUCCESS) {
+		if (enc->cmdl->format == STD_MJPG) {
+			free(qMatTable);
+			free(huffTable);
+		}
 		err_msg("Encoder open failed %d\n", ret);
 		return -1;
 	}
