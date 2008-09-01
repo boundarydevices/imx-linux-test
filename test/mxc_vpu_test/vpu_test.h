@@ -169,6 +169,8 @@ struct encode {
 	FrameBuffer *fb; /* frame buffer base given to encoder */
 	struct frame_buf **pfbpool; /* allocated fb pointers are stored here */
 	struct cmd_line *cmdl; /* command line */
+	u8 * huffTable;
+	u8 * qMatTable;
 };
 
 void framebuf_init();
