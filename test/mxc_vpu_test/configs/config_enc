@@ -10,7 +10,7 @@ input=
 # write output to file. For decode, if not specified, then default is LCD
 output=test.264
 
-# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 7 - MJPG
 format=2
 
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
@@ -28,10 +28,10 @@ dering=
 # mirroring (0, 1, 2 , 3)
 mirror=
 
-# width for encoding. This will be the capture/yuv image width
+# width, display width for decoding or capture/yuv image width for encoding
 width=240
 
-# height for encoding. This will be the capture/yuv image height
+# height, display height for decoding or capture/yuv image width for encoding
 height=320
 
 # bitrate. default is auto
