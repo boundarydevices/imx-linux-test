@@ -10,11 +10,17 @@ input=/usr/vectors/h264/Corvette.264
 # write output to file. For decode, if not specified, then default is LCD
 output=
 
-# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 4 - MPEG2, 5 - DIV3
+# 6 - RV, 7 - MJPG
 format=2
 
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
+# Default is VPU rotation.
 rotation=
+
+# ipu_rot, 1 - Enable IPU rotation and disable VPU rotation when output
+# to LCD for display
+ipu_rot=
 
 # count, number of frames to encode or decode
 count=
@@ -25,10 +31,10 @@ deblock=
 # mirroring (0, 1, 2 , 3)
 mirror=
 
-# width for encoding. This will be the capture/yuv image width
+# width, display width for decoding or capture/yuv image width for encoding
 width=
 
-# height for encoding. This will be the capture/yuv image height
+# height, display height for decoding or capture/yuv image width for encoding
 height=
 
 # bitrate. default is auto
@@ -52,7 +58,7 @@ input=
 # write output to file. For decode, if not specified, then default is LCD
 output=test.264
 
-# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 7 - MJPG
 format=2
 
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
@@ -67,10 +73,10 @@ deblock=
 # mirroring (0, 1, 2 , 3)
 mirror=
 
-# width for encoding. This will be the capture/yuv image width
+# width, display width for decoding or capture/yuv image width for encoding
 width=240
 
-# height for encoding. This will be the capture/yuv image height
+# height, display height for decoding or capture/yuv image width for encoding
 height=320
 
 # bitrate. default is auto
