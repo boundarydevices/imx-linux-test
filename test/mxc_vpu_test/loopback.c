@@ -38,7 +38,7 @@ decode()
 	struct vpu_display *disp = dec->disp;
 	RetCode ret;
 	
-	decparam.prescanEnable = 1;
+	decparam.prescanEnable = 0;
 
 	ret = vpu_DecStartOneFrame(handle, &decparam);
 	if (ret != RETCODE_SUCCESS) {
