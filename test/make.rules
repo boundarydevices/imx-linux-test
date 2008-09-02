@@ -74,3 +74,9 @@ $(OBJDIR)/%.sh : %.sh
 	$(VERBOSE)echo "     Copying $< to $@"
 	$(VERBOSE)cp -af $< $@
 	$(VERBOSE)chmod u+x $@
+
+$(OBJDIR)/%.rgb : %.rgb
+	$(VERBOSE)mkdir -p `dirname $@`
+	$(VERBOSE)echo "     Copying $< to $@"
+	$(VERBOSE)cp -af $< $@
+
