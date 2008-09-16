@@ -14,11 +14,7 @@ CFLAGS+= -Wall -I../include
 CFLAGS+= $(INC) -I$(LINUXPATH)/include/ -D__CVS_TEST
 CFLAGS+= -Dbool=char -Dtrue=1 -Dfalse=0
 
-ifeq "$(PLATFORM)" "MXC91131EVB"
-CFLAGS+= -DCONFIG_MXC_PMIC_SC55112
-else
 CFLAGS+= -DCONFIG_MXC_PMIC_MC13783
-endif
 
 export CFLAGS LTP_DIR LOADLIBES
 
@@ -26,7 +22,6 @@ SUBDIRS =       protocol_tests \
 		pmic_testapp_adc \
 		pmic_testapp_light \
 		pmic_testapp_battery \
-		pmic_testapp_power \
 		pmic_testapp_rtc
 
 all: $(OBJS)
