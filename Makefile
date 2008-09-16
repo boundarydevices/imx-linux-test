@@ -31,7 +31,7 @@ endif
 #
 export INC CROSS_COMPILE LINUXPATH PLATFORM TOPDIR OBJDIR
 
-.PHONY: test module_test clean pkg install
+.PHONY: test module_test clean distclean pkg install
 
 all : test module_test
 
@@ -58,7 +58,9 @@ install_actual:
 	cp -rf $(OBJDIR)/* $(DESTDIR)
 	cp autorun.sh test-utils.sh autorun-suite.txt $(DESTDIR)
 
-clean :
+distclean: clean
+
+clean:
 	$(MAKE) -C $(TOPDIR)/test $@
 	$(MAKE) -C $(TOPDIR)/module_test $@
 	-rm -rf platform
