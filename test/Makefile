@@ -4,9 +4,10 @@ export INC = -I$(TOPDIR)/include $(INCLUDE)
 TMP_DIRS := $(foreach dir, $(wildcard *), $(wildcard $(dir)/Makefile))
 DIRS := $(patsubst %/Makefile,%,$(TMP_DIRS))
 
-.PHONY: all
+.PHONY: all clean
 .PHONY: $(DIRS)
-all: $(DIRS)
+
+all clean: $(DIRS)
 
 $(DIRS):
-	-$(MAKE) -C $< $@
+	-$(MAKE) -C $@ $(MAKECMDGOALS)

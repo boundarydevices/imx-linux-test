@@ -1,14 +1,13 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:= 
+EXCLUDE_LIST:=
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = \
-	$(OBJDIR)/wdog_test.out \
 	$(OBJDIR)/wdt_driver_test.out \
 	$(OBJDIR)/autorun-wdog.sh
 
 else
-OBJS = 
+OBJS =
 endif
 
 all : $(OBJS)
