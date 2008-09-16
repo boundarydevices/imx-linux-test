@@ -1,4 +1,4 @@
-/* 
+/*
  * Memalloc, encoder memory allocation driver (kernel module)
  *
  * Copyright (C) 2005  Hantro Products Oy.
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software Foundation, 
+ * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  */
@@ -84,11 +84,11 @@ static void memalloc_free_buffers(void)
  * The device's mmap method. The VFS has kindly prepared the process's
  * vm_area_struct for us, so we examine this to see what was requested.
  *
- * @param   filp	pointer to struct file 
+ * @param   filp	pointer to struct file
  * @param   vma		pointer to struct vma_area_struct
  *
  * @return  This function returns 0 if successful or -ve value on error.
- * 
+ *
  */
 static s32 memalloc_mmap(struct file *filp, struct vm_area_struct *vma)
 {
@@ -102,7 +102,7 @@ static s32 memalloc_mmap(struct file *filp, struct vm_area_struct *vma)
 }
 
 /*!
- * This funtion is called to handle ioctls. 
+ * This funtion is called to handle ioctls.
  *
  * @param   inode	pointer to struct inode
  * @param   filp	pointer to struct file
@@ -163,10 +163,10 @@ static s32 memalloc_ioctl(struct inode *inode, struct file *filp,
 }
 
 /*!
- * This funtion is called when the device is opened. 
+ * This funtion is called when the device is opened.
  *
  * @param   inode	pointer to struct inode
- * @param   filp	pointer to struct file 
+ * @param   filp	pointer to struct file
  *
  * @return  This function returns 0.
  *
@@ -179,10 +179,10 @@ static s32 memalloc_open(struct inode *inode, struct file *filp)
 }
 
 /*!
- * This funtion is called when the device is closed. 
+ * This funtion is called when the device is closed.
  *
  * @param   inode	pointer to struct inode
- * @param   filp	pointer to struct file 
+ * @param   filp	pointer to struct file
  *
  * @return  This function returns 0.
  *
@@ -207,7 +207,7 @@ static struct file_operations memalloc_fops = {
 };
 
 /*!
- * This funtion allocates physical contigous memory. 
+ * This funtion allocates physical contigous memory.
  *
  * @param   phys_addr 	physical address
  * @param   size 	size of memory to be allocated
@@ -277,7 +277,7 @@ static s32 FreeMemory(u32 phys_addr)
 }
 
 /*!
- * This function maps the shared buffer in memory 
+ * This function maps the shared buffer in memory
  *
  * @param   filp 	pointer to struct file
  * @param   vma		pointer to struct vm_area_struct
@@ -343,14 +343,18 @@ struct allocation *FindEntryByBus(u32 phys_addr)
 
 /*!
  * This function is called when the module is loaded. It creates the
- * device entry. 
+ * device entry.
  *
  * @return  The function returns 0 if successful.
  */
 s32 __init memalloc_init(void)
 {
 	s32 result;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
+	struct device *temp_class;
+#else
 	struct class_device *temp_class;
+#endif
 
 	result = register_chrdev(memalloc_major, "memalloc", &memalloc_fops);
 	if (result <= 0) {
@@ -365,10 +369,14 @@ s32 __init memalloc_init(void)
 		pr_debug("memalloc: error creating memalloc class\n");
 		goto error1;
 	}
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
+	temp_class = device_create(memalloc_class, NULL,
+				   MKDEV(memalloc_major, 0), "memalloc");
+#else
 	temp_class = class_device_create(memalloc_class, NULL,
 					 MKDEV(memalloc_major, 0), NULL,
 					 "memalloc");
+#endif
 	if (IS_ERR(temp_class)) {
 		pr_debug("memalloc: Error creating class device\n");
 		goto error2;
@@ -393,7 +401,11 @@ s32 __init memalloc_init(void)
  */
 void __exit memalloc_cleanup(void)
 {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
+	device_destroy(memalloc_class, MKDEV(memalloc_major, 0));
+#else
 	class_device_destroy(memalloc_class, MKDEV(memalloc_major, 0));
+#endif
 	class_destroy(memalloc_class);
 	unregister_chrdev(memalloc_major, "memalloc");
 	memalloc_free_buffers();
