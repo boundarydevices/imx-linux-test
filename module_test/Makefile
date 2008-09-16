@@ -4,21 +4,14 @@ ifneq ($(KERNELRELEASE),)
 
 # When adding modules, either add to the 'module_list' for all platfoms or add
 # below to the 'module_list +=...' list for each platform that needs it.
-module_list-y := mxc_rtic_test.o
-module_list-$(CONFIG_MXC_PMIC_MC13783) += mxc_pm_test.o mxc_pmic_power_testmod.o
-module_list-$(CONFIG_MXC_IPC) += ipctestmod.o
 module_list-$(CONFIG_MXC_SECURITY_SCC) += scc_test_driver.o
 module_list-$(CONFIG_MXC_SECURITY_SCC2) += scc2_test_driver.o
 module_list-$(CONFIG_MXC_SECURITY_RNG) += rng_test_driver.o
-module_list-$(CONFIG_MXC_SECURITY_HAC) += mxc_HAC_test.o
 module_list-$(CONFIG_MXC_SAHARA) += sahara_test_driver.o
 module_list-$(CONFIG_MXC_HMP4E) += memalloc.o
-module_list-$(CONFIG_WATCHDOG) += mxc_wdog_tm.o
 
 ifeq ($(CONFIG_MXC_SDMA_API),y)
 module_list-y += mxc_sdma_mem_test.o
-else
-module_list-y += mxc_udma_testdriver.o
 endif
 
 # sahara uses common files for both test application and test module
@@ -39,7 +32,6 @@ sahara_test_driver-objs := km_test.o $(SAHARA_TEST_SOURCE)run_tests.o \
 
 
 obj-m += $(module_list-y)
-obj-y := pmic_convity_test/
 
 EXTRA_CFLAGS := -DLINUX_KERNEL
 

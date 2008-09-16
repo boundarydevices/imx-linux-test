@@ -3,18 +3,15 @@
 #
 
 # list of platforms which did not want this test case
-EXCLUDE_LIST:= "IMX35_3STACK IMX51_3STACK"
+INCLUDE_LIST:= "IMX27ADS"
 
-ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
-CONFIG_DEMO_DPTCHI=y
-CONFIG_DEMO_DVFS_DPTCHI=y
-else
+ifeq (,$(findstring $(PLATFORM), $(INCLUDE_LIST)))
 CONFIG_DEMO_DPTCHI=n
-CONFIG_DEMO_DVFS_DPTCHI=n
+else
+CONFIG_DEMO_DPTCHI=y
 endif
 
 subdir-$(CONFIG_DEMO_DPTCHI)		+=	dptc_hi_demo
-subdir-$(CONFIG_DEMO_DVFS_DPTCHI)	+=	dvfs_dptc_hi_demo
 
 all :
 	@for X in $(subdir-y); \
