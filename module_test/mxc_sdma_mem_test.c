@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2006-2008 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -17,6 +17,8 @@
 #include <linux/mman.h>
 #include <linux/init.h>
 #include <linux/dma-mapping.h>
+#include <linux/fs.h>
+#include <linux/version.h>
 #include <asm/dma.h>
 #include <asm/mach/dma.h>
 #include <asm/delay.h>
@@ -209,7 +211,11 @@ struct file_operations dma_fops = {
 
 int __init sdma_init_module(void)
 {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
+	struct device *temp_class;
+#else
 	struct class_device *temp_class;
+#endif
 	int error;
 
 	/* register a character device */
@@ -228,9 +234,14 @@ int __init sdma_init_module(void)
 		return PTR_ERR(dma_tm_class);
 	}
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
+	temp_class = device_create(dma_tm_class, NULL,
+				   MKDEV(gMajor, 0), "sdma_test");
+#else
 	temp_class = class_device_create(dma_tm_class, NULL,
 					     MKDEV(gMajor, 0), NULL,
 					     "sdma_test");
+#endif
 	if (IS_ERR(temp_class)) {
 		printk(KERN_ERR "Error creating sdma test class device.\n");
 		class_destroy(dma_tm_class);
@@ -245,7 +256,11 @@ int __init sdma_init_module(void)
 static void sdma_cleanup_module(void)
 {
 	unregister_chrdev(gMajor, "sdma_test");
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
+	device_destroy(dma_tm_class, MKDEV(gMajor, 0));
+#else
 	class_device_destroy(dma_tm_class, MKDEV(gMajor, 0));
+#endif
 	class_destroy(dma_tm_class);
 
 	printk("SDMA test Driver Module Unloaded\n");
