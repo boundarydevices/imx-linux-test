@@ -61,8 +61,8 @@ fwriten(int fd, void *vptr, size_t n)
 int	/* Read n bytes from a file descriptor */
 freadn(int fd, void *vptr, size_t n)
 {
-	int nleft;
-	int nread;
+	int nleft = 0;
+	int nread = 0;
 	char  *ptr;
 
 	ptr = vptr;
@@ -80,7 +80,7 @@ freadn(int fd, void *vptr, size_t n)
 		ptr   += nread;
 	}
 
-	return (n);
+	return (nread);
 }
 
 /* Receive data from udp socket */
