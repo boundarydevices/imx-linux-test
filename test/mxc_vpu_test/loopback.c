@@ -28,6 +28,8 @@ struct encode *enc;
 struct decode *dec;
 extern int quitflag;
 extern struct capture_testbuffer cap_buffers[];
+static int disp_clr_index = -1;
+static int frame_id = 0;
 
 static int
 decode()
@@ -72,14 +74,34 @@ decode()
 			(outinfo.indexFrameDisplay > dec->fbcount))
 		return -1;
 
-	if ( (outinfo.prescanresult == 0) && (decparam.dispReorderBuf == 0)) {
+	if ((outinfo.prescanresult == 0) && (decparam.dispReorderBuf == 0)) {
 		warn_msg("Prescan Enable: not enough bs data\n");
+		goto out;
+	}
+
+	if ((outinfo.indexFrameDisplay == -3) ||
+	    (outinfo.indexFrameDisplay == -2)) {
+		if (disp_clr_index >= 0) {
+			ret = vpu_DecClrDispFlag(handle, disp_clr_index);
+			if (ret)
+				err_msg("vpu_DecClrDispFlag failed Error code"
+				    " %d\n", ret);
+		}
+		disp_clr_index = outinfo.indexFrameDisplay;
 		goto out;
 	}
 
 	ret = v4l_put_data(disp, outinfo.indexFrameDisplay);
 	if (ret)
 		return -1;
+
+	if (disp_clr_index >= 0) {
+		ret = vpu_DecClrDispFlag(handle, disp_clr_index);
+		if (ret)
+			err_msg("vpu_DecClrDispFlag failed Error code"
+			     " %d\n", ret);
+	}
+	disp_clr_index = disp->buf.index;
 	
 out:
 	return 0;
@@ -96,7 +118,7 @@ dec_fill_bsbuffer(char *buf, int size)
 	u32 target_addr, space;
 	RetCode ret;
 	int room;
-	
+
 	ret = vpu_DecGetBitstreamBuffer(handle, &pa_read_ptr, &pa_write_ptr,
 					&space);
 	if (ret != RETCODE_SUCCESS) {
@@ -143,21 +165,23 @@ encoder_fill_headers()
 
 	/* Must put encode header before encoding */
 	if (enc->cmdl->format == STD_MPEG4) {
-		enchdr_param.headerType = VOS_HEADER;
-		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
+		if (!cpu_is_mx51()) {
+			enchdr_param.headerType = VOS_HEADER;
+			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
 
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = dec_fill_bsbuffer((void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
+			vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
+			ret = dec_fill_bsbuffer((void *)vbuf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
 
-		enchdr_param.headerType = VIS_HEADER;
-		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
+			enchdr_param.headerType = VIS_HEADER;
+			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
 
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = dec_fill_bsbuffer((void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
+			vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
+			ret = dec_fill_bsbuffer((void *)vbuf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
+		}
 
 		enchdr_param.headerType = VOL_HEADER;
 		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
@@ -181,6 +205,11 @@ encoder_fill_headers()
 		ret = dec_fill_bsbuffer((void *)vbuf, enchdr_param.size);
 		if (ret < 0)
 			return -1;
+	} else if (enc->cmdl->format == STD_MJPG) {
+		if (enc->huffTable)
+			free(enc->huffTable);
+		if (enc->qMatTable)
+			free(enc->qMatTable);
 	}
 
 	return 0;
@@ -210,8 +239,12 @@ encode()
 
 	enc_param.sourceFrame = &enc->fb[src_fbid];
 	enc_param.quantParam = 30;
-	enc_param.forceIPicture = 0;
 	enc_param.skipPicture = 0;
+
+	if ((frame_id % 10) == 0)
+		enc_param.forceIPicture = 1;
+	else
+		enc_param.forceIPicture = 0;
 
 	ret = vpu_EncStartOneFrame(handle, &enc_param);
 	if (ret != RETCODE_SUCCESS) {
@@ -229,6 +262,7 @@ encode()
 		return -1;
 	}
 
+	frame_id++;
 	v4l_put_capture_data(&v4l2_buf);
 	vbuf = (enc->virt_bsbuf_addr + outinfo.bitstreamBuffer
 				- enc->phy_bsbuf_addr);
@@ -349,6 +383,8 @@ encdec_test(void *arg)
 	if (ret)
 		goto err2;
 
+	dec->reorderEnable = 1;
+
 	/* open decoder */
 	ret = decoder_open(dec);
 	if (ret)
@@ -420,7 +456,10 @@ err2:
 err1:
 	if (cmdl->format == STD_AVC) {
 		IOFreeVirtMem(&ps_mem_desc);
+		IOFreePhyMem(&ps_mem_desc);
+		IOFreeVirtMem(&slice_mem_desc);
 		IOFreePhyMem(&slice_mem_desc);
+		
 	}
 
 	IOFreeVirtMem(&dec_mem_desc);

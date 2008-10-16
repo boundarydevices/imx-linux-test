@@ -66,7 +66,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -n <ip address> Send output to this IP address \n "\
 	       "  -p <port number> UDP port number at server \n "\
 	       "	If no port number is secified, 5555 is used \n "\
-	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1 \n "\
+	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
 	       "  -c <count> Number of frames to encode \n "\
 	       "  -r <rotation angle> 0, 90, 180, 270 \n "\
@@ -83,7 +83,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is 0 \n"
 	       "\n"\
 	       "loopback options \n "\
-	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1 \n "\
+	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
 	       "  -w <width> capture image width \n "\
 	       "	default is 176. \n "\
