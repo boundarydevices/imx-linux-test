@@ -539,7 +539,7 @@ char*
 skip_unwanted(char *ptr)
 {
 	int i = 0;
-	static char buf[64];
+	static char buf[MAX_PATH];
 	while (*ptr != '\0') {
 		if (*ptr == ' ' || *ptr == '\t' || *ptr == '\n') {
 			ptr++;
@@ -585,7 +585,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				strncpy(cmd->input, str, 64);
+				strncpy(cmd->input, str, MAX_PATH);
 				cmd->src_scheme = PATH_FILE;
 			}
 		}
@@ -599,7 +599,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				strncpy(cmd->output, str, 64);
+				strncpy(cmd->output, str, MAX_PATH);
 				cmd->dst_scheme = PATH_FILE;
 			}
 		}
