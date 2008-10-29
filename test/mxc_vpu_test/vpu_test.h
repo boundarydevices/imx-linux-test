@@ -106,7 +106,7 @@ struct rot {
 	int rot_angle;
 };
 
-#define MAX_PATH	64
+#define MAX_PATH	128
 struct cmd_line {
 	char input[MAX_PATH];	/* Input file name */
 	char output[MAX_PATH];  /* Output file name */
