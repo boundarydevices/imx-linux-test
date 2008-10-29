@@ -131,7 +131,7 @@ parse_config_file(char *file_name)
 		return -1;
 	}
 
-	while (fgets(line, 64, fp) != NULL) {
+	while (fgets(line, MAX_PATH, fp) != NULL) {
 		if (instance > 3) {
 			err_msg("No more instances!!\n");
 			break;
@@ -162,21 +162,21 @@ parse_main_args(int argc, char *argv[])
 			input_arg[instance].mode = DECODE;
 			strncpy(input_arg[instance].line, argv[0], 26);
 			strncat(input_arg[instance].line, " ", 2);
-			strncat(input_arg[instance].line, optarg, 100);
+			strncat(input_arg[instance].line, optarg, 200);
 			instance++;
 			break;
 		case 'E':
 			input_arg[instance].mode = ENCODE;
 			strncpy(input_arg[instance].line, argv[0], 26);
 			strncat(input_arg[instance].line, " ", 2);
-			strncat(input_arg[instance].line, optarg, 100);
+			strncat(input_arg[instance].line, optarg, 200);
 			instance++;
 			break;
 		case 'L':
 			input_arg[instance].mode = LOOPBACK;
 			strncpy(input_arg[instance].line, argv[0], 26);
 			strncat(input_arg[instance].line, " ", 2);
-			strncat(input_arg[instance].line, optarg, 100);
+			strncat(input_arg[instance].line, optarg, 200);
 			instance++;
 			break;
 		case 'C':
@@ -214,7 +214,7 @@ parse_args(int argc, char *argv[], int i)
 		switch (opt)
 		{
 		case 'i':
-			strncpy(input_arg[i].cmd.input, optarg, 64);
+			strncpy(input_arg[i].cmd.input, optarg, MAX_PATH);
 			input_arg[i].cmd.src_scheme = PATH_FILE;
 			break;
 		case 'o':
@@ -222,7 +222,7 @@ parse_args(int argc, char *argv[], int i)
 				warn_msg("-o ignored because of -n\n");
 				break;
 			}
-			strncpy(input_arg[i].cmd.output, optarg, 64);
+			strncpy(input_arg[i].cmd.output, optarg, MAX_PATH);
 			input_arg[i].cmd.dst_scheme = PATH_FILE;
 			break;
 		case 'n':
