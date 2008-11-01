@@ -1,21 +1,14 @@
-###################################################################
-#Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
-###################################################################
-
 # list of platforms which did not want this test case
-EXCLUDE_LIST:= IMX21ADS IMX31ADS IMX31_3STACK IMX35_3STACK
+EXCLUDE_LIST:= IMX21ADS IMX31ADS IMX31_3STACK IMX35_3STACK IMX37_3STACK
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
-OBJS = apitest
-else
-OBJS =
-endif
+ OBJS= apitest
 
-ifeq ("$(PLATFORM)", "IMX37_3STACK")
-TARGET_ARCH=-DCONFIG_ARCH_MX37
-endif
 ifeq ("$(PLATFORM)", "IMX27ADS")
 TARGET_ARCH=-DCONFIG_ARCH_MX27
+endif
+ifeq ("$(PLATFORM)", "IMX51_3STACK")
+TARGET_ARCH=-DCONFIG_ARCH_MX51
 endif
 
 # Add compilation checks
@@ -50,6 +43,7 @@ obj/%.o : %.c
 clean:
 	@rm -f $(EXAMPLE_OBJECTS) apitest .*.cmd
 
+
 # Should build these from the source/object list
 apitest.o: apitest.c $(HDRS)
 apihelp.o: apihelp.c $(HDRS)
@@ -66,4 +60,10 @@ results.o: results.c $(HDRS)
 sym.o: sym.c  $(HDRS)
 wrap.o: wrap.c $(HDRS)
 
+else
+all :
+
+endif
+
 include ../make.rules
+
