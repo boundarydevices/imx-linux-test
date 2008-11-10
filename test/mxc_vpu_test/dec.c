@@ -547,7 +547,6 @@ decoder_start(struct decode *dec)
 	if (rot_en || dering_en) {
 		rot_fb = &fb[rotid];
 
-		lock(dec->cmdl);
 		/*
 		 * VPU is setting the rotation angle by counter-clockwise.
 		 * We convert it to clockwise, which is consistent with V4L2
@@ -566,7 +565,6 @@ decoder_start(struct decode *dec)
 					fheight : fwidth;
 
 		vpu_DecGiveCommand(handle, SET_ROTATOR_STRIDE, &rot_stride);
-		unlock(dec->cmdl);
 	}
 
 	if (deblock_en) {
@@ -593,7 +591,6 @@ decoder_start(struct decode *dec)
 	gettimeofday(&total_start, NULL);
 
 	while (1) {
-		lock(dec->cmdl);
 		
 		if (rot_en || dering_en) {
 			vpu_DecGiveCommand(handle, SET_ROTATOR_OUTPUT,
@@ -617,7 +614,6 @@ decoder_start(struct decode *dec)
 						(void *)deblock_fb);
 			if (ret != RETCODE_SUCCESS) {
 				err_msg("Failed to set deblocking output\n");
-				unlock(dec->cmdl);
 				return -1;
 			}
 		}
@@ -626,7 +622,6 @@ decoder_start(struct decode *dec)
 		ret = vpu_DecStartOneFrame(handle, &decparam);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("DecStartOneFrame failed\n");
-			unlock(dec->cmdl);
 			return -1;
 		}
 
@@ -639,7 +634,6 @@ decoder_start(struct decode *dec)
 			
 			if (err < 0) {
 				err_msg("dec_fill_bsbuffer failed\n");
-				unlock(dec->cmdl);
 				return -1;
 			}
 
@@ -660,7 +654,6 @@ decoder_start(struct decode *dec)
 		tdec_time += (sec * 1000000) + usec;
 
 		ret = vpu_DecGetOutputInfo(handle, &outinfo);
-		unlock(dec->cmdl);
 		dprintf(4, "frame_id = %d\n", (int)frame_id);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("vpu_DecGetOutputInfo failed Err code is %d\n"
@@ -991,9 +984,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	bufinfo.avcSliceBufInfo.sliceSaveBuffer = dec->phy_slice_buf;
 	bufinfo.avcSliceBufInfo.sliceSaveBufferSize = SLICE_SAVE_SIZE;
 	
-	lock(dec->cmdl);
 	ret = vpu_DecRegisterFrameBuffer(handle, fb, fbcount, stride, &bufinfo);
-	unlock(dec->cmdl);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
 		goto err1;
@@ -1029,11 +1020,9 @@ decoder_parse(struct decode *dec)
 	RetCode ret;
 
 	/* Parse bitstream and get width/height/framerate etc */
-	lock(dec->cmdl);
 	vpu_DecSetEscSeqInit(handle, 1);
 	ret = vpu_DecGetInitialInfo(handle, &initinfo);
 	vpu_DecSetEscSeqInit(handle, 0);
-	unlock(dec->cmdl);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("vpu_DecGetInitialInfo failed %d\n", ret);
 		return -1;
@@ -1213,9 +1202,7 @@ err1:
 		IOFreePhyMem(&ps_mem_desc);
 	}
 
-	lock(cmdl);
 	vpu_DecClose(dec->handle);
-	unlock(cmdl);
 err:
 	IOFreeVirtMem(&mem_desc);
 	IOFreePhyMem(&mem_desc);
