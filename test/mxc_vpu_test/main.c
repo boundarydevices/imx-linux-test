@@ -105,7 +105,6 @@ int quitflag;
 static struct input_argument input_arg[4];
 static int instance;
 static int using_config_file;
-static pthread_mutex_t fastmutex = PTHREAD_MUTEX_INITIALIZER;
 
 int decode_test(void *arg);
 int encode_test(void *arg);
@@ -348,8 +347,6 @@ main(int argc, char *argv[])
 						ver.lib_release);
 
 	if (instance > 1) {
-		pthread_mutex_init(&fastmutex, NULL);
-		
 		for (i = 0; i < instance; i++) {
 			if (using_config_file == 0) {
 				get_arg(input_arg[i].line, &nargc, pargv);
@@ -363,7 +360,6 @@ main(int argc, char *argv[])
 			if (check_params(&input_arg[i].cmd,
 						input_arg[i].mode) == 0) {
 				if (open_files(&input_arg[i].cmd) == 0) {
-					input_arg[i].cmd.mutex = &fastmutex;
 					if (input_arg[i].mode == DECODE) {
 					     pthread_create(&input_arg[i].tid,
 						   NULL,
@@ -418,8 +414,6 @@ main(int argc, char *argv[])
 				close_files(&input_arg[i].cmd);
 			}
 		}
-
-		pthread_mutex_destroy(&fastmutex);
 	}
 
 	IOSystemShutdown();
