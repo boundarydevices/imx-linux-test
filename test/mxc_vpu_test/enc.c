@@ -100,9 +100,7 @@ encoder_fill_headers(struct encode *enc)
 	if (enc->cmdl->format == STD_MPEG4) {
 		if (!cpu_is_mx51()) {
 			enchdr_param.headerType = VOS_HEADER;
-			lock(enc->cmdl);
 			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
-			unlock(enc->cmdl);
 
 #if STREAM_ENC_PIC_RESET == 1
 			vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
@@ -112,9 +110,7 @@ encoder_fill_headers(struct encode *enc)
 #endif
 
 			enchdr_param.headerType = VIS_HEADER;
-			lock(enc->cmdl);
 			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
-			unlock(enc->cmdl);
 
 #if STREAM_ENC_PIC_RESET == 1
 			vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
@@ -125,9 +121,7 @@ encoder_fill_headers(struct encode *enc)
 		}
 
 		enchdr_param.headerType = VOL_HEADER;
-		lock(enc->cmdl);
 		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
-		unlock(enc->cmdl);
 
 #if STREAM_ENC_PIC_RESET == 1
 		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
@@ -137,9 +131,7 @@ encoder_fill_headers(struct encode *enc)
 #endif
 	} else if (enc->cmdl->format == STD_AVC) {
 		enchdr_param.headerType = SPS_RBSP;
-		lock(enc->cmdl);
 		vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
-		unlock(enc->cmdl);
 
 #if STREAM_ENC_PIC_RESET == 1
 		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
@@ -148,9 +140,7 @@ encoder_fill_headers(struct encode *enc)
 			return -1;
 #endif
 		enchdr_param.headerType = PPS_RBSP;
-		lock(enc->cmdl);
 		vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
-		unlock(enc->cmdl);
 
 #if STREAM_ENC_PIC_RESET == 1
 		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
@@ -219,9 +209,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	/* Must be a multiple of 16 */
 	stride = (enc->picwidth + 15) & ~15;
 
-	lock(enc->cmdl);
 	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, stride);
-	unlock(enc->cmdl);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
 		goto err1;
@@ -341,14 +329,11 @@ encoder_start(struct encode *enc)
 			enc->cmdl->iframe = 0;
 		}
 
-		lock(enc->cmdl);
-
 		gettimeofday(&tenc_begin, NULL);
 		ret = vpu_EncStartOneFrame(handle, &enc_param);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("vpu_EncStartOneFrame failed Err code:%d\n",
 									ret);
-			unlock(enc->cmdl);
 			goto err2;
 		}
 		
@@ -358,7 +343,6 @@ encoder_start(struct encode *enc)
 					virt_bsbuf_start, virt_bsbuf_end,
 					phy_bsbuf_start, STREAM_READ_SIZE);
 			if (ret < 0) {
-				unlock(enc->cmdl);
 				goto err2;
 			}
 #endif
@@ -377,7 +361,6 @@ encoder_start(struct encode *enc)
 		tenc_time += (sec * 1000000) + usec;
 
 		ret = vpu_EncGetOutputInfo(handle, &outinfo);
-		unlock(enc->cmdl);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("vpu_EncGetOutputInfo failed Err code: %d\n",
 									ret);
@@ -463,11 +446,9 @@ encoder_configure(struct encode *enc)
 		search_pa.SearchRamSize = ram_size;
 	}
 
-	lock(enc->cmdl);
 	ret = vpu_EncGiveCommand(handle, ENC_SET_SEARCHRAM_PARAM, &search_pa);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Encoder SET_SEARCHRAM_PARAM failed\n");
-		unlock(enc->cmdl);
 		return -1;
 	}
 
@@ -481,7 +462,6 @@ encoder_configure(struct encode *enc)
 	}
 
 	ret = vpu_EncGetInitialInfo(handle, &initinfo);
-	unlock(enc->cmdl);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Encoder GetInitialInfo failed\n");
 		return -1;
@@ -514,13 +494,11 @@ encoder_close(struct encode *enc)
 	EncOutputInfo outinfo = {0};
 	RetCode ret;
 
-	lock(enc->cmdl);
 	ret = vpu_EncClose(enc->handle);
 	if (ret == RETCODE_FRAME_NOT_COMPLETE) {
 		vpu_EncGetOutputInfo(enc->handle, &outinfo);
 		vpu_EncClose(enc->handle);
 	}
-	unlock(enc->cmdl);
 }
 
 int
