@@ -134,7 +134,6 @@ struct cmd_line {
 	u16 port; /* udp port number */
 	u16 complete; /* wait for the requested buf to be filled completely */
 	int iframe;
-	pthread_mutex_t *mutex;
 };
 
 struct decode {
@@ -209,21 +208,5 @@ int decoder_open(struct decode *dec);
 int decoder_parse(struct decode *dec);
 int decoder_allocate_framebuffer(struct decode *dec);
 void decoder_free_framebuffer(struct decode *dec);
-
-static inline void
-lock(struct cmd_line *cmdl)
-{
-	if (cmdl->mutex)
-		pthread_mutex_lock(cmdl->mutex);
-}
-
-static inline void
-unlock(struct cmd_line *cmdl)
-{
-	if (cmdl->mutex) {
-		pthread_mutex_unlock(cmdl->mutex);
-		usleep(1);
-	}
-}
 
 #endif
