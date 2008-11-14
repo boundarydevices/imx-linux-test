@@ -337,10 +337,12 @@ err:
 void v4l_display_close(struct vpu_display *disp)
 {
 	int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	ioctl(disp->fd, VIDIOC_STREAMOFF, &type);
-	v4l_free_bufs(disp->nframes, disp);
-	close(disp->fd);
-	free(disp);
+	if (disp) {
+		ioctl(disp->fd, VIDIOC_STREAMOFF, &type);
+		v4l_free_bufs(disp->nframes, disp);
+		close(disp->fd);
+		free(disp);
+	}
 }
 
 int v4l_put_data(struct vpu_display *disp, int index)
