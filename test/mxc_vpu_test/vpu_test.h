@@ -205,6 +205,7 @@ int encoder_allocate_framebuffer(struct encode *enc);
 void encoder_free_framebuffer(struct encode *enc);
 
 int decoder_open(struct decode *dec);
+void decoder_close(struct decode *dec);
 int decoder_parse(struct decode *dec);
 int decoder_allocate_framebuffer(struct decode *dec);
 void decoder_free_framebuffer(struct decode *dec);
