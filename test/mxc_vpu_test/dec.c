@@ -846,13 +846,18 @@ decoder_free_framebuffer(struct decode *dec)
 
 	if (dec->cmdl->dst_scheme == PATH_V4L2) {
 		v4l_display_close(dec->disp);
+		dec->disp = NULL;
 
 		if ((rot_en == 0) && (deblock_en == 0) && (dering_en == 0)) {
 			if (cpu_is_mx37() || cpu_is_mx51()) {
 				for (i = 0; i < dec->fbcount; i++) {
-					IOFreePhyMem(&mvcol_md[i]);
+					if (mvcol_md[i].phy_addr)
+						IOFreePhyMem(&mvcol_md[i]);
 				}
-				free(mvcol_md);
+				if (dec->mvcol_memdesc) {
+					free(dec->mvcol_memdesc);
+					dec->mvcol_memdesc = NULL;
+				}
 			}
 		}
 	}
@@ -867,8 +872,14 @@ decoder_free_framebuffer(struct decode *dec)
 		}
 	}
 
-	free(dec->fb);
-	free(dec->pfbpool);
+	if (dec->fb) {
+		free(dec->fb);
+		dec->fb = NULL;
+	}
+	if (dec->pfbpool) {
+		free(dec->pfbpool);
+		dec->pfbpool = NULL;
+	}
 	return;
 }
 
@@ -996,6 +1007,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 err1:
 	if (dst_scheme == PATH_V4L2) {
 		v4l_display_close(disp);
+		dec->disp = NULL;
 	}
 
 err:
@@ -1103,6 +1115,20 @@ decoder_open(struct decode *dec)
 	return 0;
 }
 
+void decoder_close(struct decode *dec)
+{
+	DecOutputInfo outinfo = {0};
+	RetCode ret;
+
+	ret = vpu_DecClose(dec->handle);
+	if (ret == RETCODE_FRAME_NOT_COMPLETE) {
+		vpu_DecGetOutputInfo(dec->handle, &outinfo);
+		ret = vpu_DecClose(dec->handle);
+		if (ret != RETCODE_SUCCESS)
+			err_msg("vpu_DecClose failed\n");
+	}
+}		
+
 int
 decode_test(void *arg)
 {
@@ -1152,7 +1178,6 @@ decode_test(void *arg)
 		ret = IOGetPhyMem(&slice_mem_desc);
 		if (ret) {
 			err_msg("Unable to obtain physical slice save mem\n");
-			IOFreePhyMem(&ps_mem_desc);
 			goto err;
 		}
 
@@ -1190,20 +1215,17 @@ decode_test(void *arg)
 
 	/* start decoding */
 	ret = decoder_start(dec);
+err1:
+	decoder_close(dec);
 
 	/* free the frame buffers */
 	decoder_free_framebuffer(dec);
-
-err1:
+err:
 	if (cmdl->format == STD_AVC) {
-		IOFreeVirtMem(&slice_mem_desc);
 		IOFreePhyMem(&slice_mem_desc);
-		IOFreeVirtMem(&ps_mem_desc);
 		IOFreePhyMem(&ps_mem_desc);
 	}
 
-	vpu_DecClose(dec->handle);
-err:
 	IOFreeVirtMem(&mem_desc);
 	IOFreePhyMem(&mem_desc);
 	free(dec);
