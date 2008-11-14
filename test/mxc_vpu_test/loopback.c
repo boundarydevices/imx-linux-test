@@ -441,12 +441,13 @@ encdec_test(void *arg)
 
 	}
 
-	/* free the frame buffers */
-	decoder_free_framebuffer(dec);
 err5:
 	v4l_stop_capturing();
 err4:
-	vpu_DecClose(dec->handle);
+	decoder_close(dec);
+
+	/* free the frame buffers */
+	decoder_free_framebuffer(dec);
 err3:
 	/* free the allocated framebuffers */
 	encoder_free_framebuffer(enc);
@@ -455,11 +456,8 @@ err2:
 	encoder_close(enc);
 err1:
 	if (cmdl->format == STD_AVC) {
-		IOFreeVirtMem(&ps_mem_desc);
 		IOFreePhyMem(&ps_mem_desc);
-		IOFreeVirtMem(&slice_mem_desc);
 		IOFreePhyMem(&slice_mem_desc);
-		
 	}
 
 	IOFreeVirtMem(&dec_mem_desc);
