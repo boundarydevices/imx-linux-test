@@ -1,11 +1,11 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX37_3STACK IMX35_3STACK IMX51_3STACK IMX25_3STACK"
+EXCLUDE_LIST:="IMX37_3STACK IMX35_3STACK IMX51_3STACK"
 
 LTP_DIR = ../
 LOADLIBES+= -L$(LTP_DIR)lib -lltp -lpthread -lm
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
-OBJS = libltp.a $(OBJDIR)/autorun-pmic.sh
+OBJS = libltp.a $(OBJDIR)/autorun-pmic.sh $(OBJDIR)/autorun-mc34704.sh
 else
 OBJS =
 endif
