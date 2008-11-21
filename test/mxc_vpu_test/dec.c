@@ -993,7 +993,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 
 	stride = ((dec->stride + 15) & ~15);
 	bufinfo.avcSliceBufInfo.sliceSaveBuffer = dec->phy_slice_buf;
-	bufinfo.avcSliceBufInfo.sliceSaveBufferSize = SLICE_SAVE_SIZE;
+	bufinfo.avcSliceBufInfo.sliceSaveBufferSize = dec->phy_slicebuf_size;
 	
 	ret = vpu_DecRegisterFrameBuffer(handle, fb, fbcount, stride, &bufinfo);
 	if (ret != RETCODE_SUCCESS) {
@@ -1083,6 +1083,8 @@ decoder_parse(struct decode *dec)
 	memcpy(&(dec->picCropRect), &(initinfo.picCropRect),
 					sizeof(initinfo.picCropRect));
 
+	/* worstSliceSize is in kilo-byte unit */
+	dec->phy_slicebuf_size = initinfo.worstSliceSize * 1024;
 	dec->stride = dec->picwidth;
 	return 0;
 }
@@ -1173,16 +1175,8 @@ decode_test(void *arg)
 			err_msg("Unable to obtain physical ps save mem\n");
 			goto err;
 		}
-
-		slice_mem_desc.size = SLICE_SAVE_SIZE;
-		ret = IOGetPhyMem(&slice_mem_desc);
-		if (ret) {
-			err_msg("Unable to obtain physical slice save mem\n");
-			goto err;
-		}
-
 		dec->phy_ps_buf = ps_mem_desc.phy_addr;
-		dec->phy_slice_buf = slice_mem_desc.phy_addr;
+
 	}
 
 	/* open decoder */
@@ -1206,6 +1200,18 @@ decode_test(void *arg)
 	if (ret) {
 		err_msg("decoder parse failed\n");
 		goto err1;
+	}
+
+	/* allocate slice buf */
+	if (cmdl->format == STD_AVC) {
+		slice_mem_desc.size = dec->phy_slicebuf_size;
+		ret = IOGetPhyMem(&slice_mem_desc);
+		if (ret) {
+			err_msg("Unable to obtain physical slice save mem\n");
+			goto err1;
+		}
+
+		dec->phy_slice_buf = slice_mem_desc.phy_addr;
 	}
 
 	/* allocate frame buffers */
