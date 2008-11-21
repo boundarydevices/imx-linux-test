@@ -356,16 +356,7 @@ encdec_test(void *arg)
 			goto err;
 		}
 
-		slice_mem_desc.size = SLICE_SAVE_SIZE;
-		ret = IOGetPhyMem(&slice_mem_desc);
-		if (ret) {
-			err_msg("Unable to obtain physical slice save mem\n");
-			IOFreePhyMem(&ps_mem_desc);
-			goto err;
-		}
-
 		dec->phy_ps_buf = ps_mem_desc.phy_addr;
-		dec->phy_slice_buf = slice_mem_desc.phy_addr;
 	}
 
 	/* open the encoder */
@@ -415,6 +406,18 @@ encdec_test(void *arg)
 	if (ret) {
 		err_msg("decoder parse failed\n");
 		goto err5;
+	}
+
+	/* allocate slice buf */
+	if (cmdl->format == STD_AVC) {
+		slice_mem_desc.size = dec->phy_slicebuf_size;
+		ret = IOGetPhyMem(&slice_mem_desc);
+		if (ret) {
+			err_msg("Unable to obtain physical slice save mem\n");
+			goto err5;
+		}
+
+		dec->phy_slice_buf = slice_mem_desc.phy_addr;
 	}
 
 	/* allocate frame buffers */
