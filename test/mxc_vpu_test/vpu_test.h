@@ -53,8 +53,7 @@ typedef signed char s8;
 #define STREAM_FILL_SIZE	0x10000
 #define STREAM_READ_SIZE	(512 * 8)
 #define STREAM_END_SIZE		0
-#define PS_SAVE_SIZE		0x028000
-#define SLICE_SAVE_SIZE		0x02D800
+#define PS_SAVE_SIZE		0x080000
 
 #define STREAM_ENC_PIC_RESET 	1
 
@@ -141,6 +140,7 @@ struct decode {
 	PhysicalAddress phy_bsbuf_addr;
 	PhysicalAddress phy_ps_buf;
 	PhysicalAddress phy_slice_buf;
+	int phy_slicebuf_size;
 	u32 virt_bsbuf_addr;
 	int picwidth;
 	int picheight;
