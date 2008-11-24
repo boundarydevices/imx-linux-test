@@ -1099,8 +1099,27 @@ decoder_open(struct decode *dec)
 	oparam.bitstreamFormat = dec->cmdl->format;
 	oparam.bitstreamBuffer = dec->phy_bsbuf_addr;
 	oparam.bitstreamBufferSize = STREAM_BUF_SIZE;
-	oparam.mp4DeblkEnable = dec->cmdl->deblock_en;
 	oparam.reorderEnable = dec->reorderEnable;
+	oparam.mp4DeblkEnable = dec->cmdl->deblock_en;
+
+	/*
+	 * mp4 deblocking filtering is optional out-loop filtering for image
+	 * quality. In other words, mpeg4 deblocking is post processing.
+	 * So, host application need to allocate new frame buffer.
+	 * - On MX27, VPU doesn't support mpeg4 out loop deblocking filtering.
+	 * - On MX37 and MX51, VPU control the buffer internally and return one
+	 *   more buffer after vpu_DecGetInitialInfo().
+	 * - On MX32, host application need to set frame buffer externally via
+	 *   the command DEC_SET_DEBLOCK_OUTPUT.
+	 */
+	if (oparam.mp4DeblkEnable == 1) {
+		if (cpu_is_mx27()) {
+			warn_msg("MP4 deblocking NOT supported on MX27 VPU.\n");
+			oparam.mp4DeblkEnable = dec->cmdl->deblock_en = 0;
+		} else if (!cpu_is_mx32()) {	/* do not need extra framebuf */
+			dec->cmdl->deblock_en = 0;
+		}
+	}
 
 	oparam.psSaveBuffer = dec->phy_ps_buf;
 	oparam.psSaveBufferSize = PS_SAVE_SIZE;
