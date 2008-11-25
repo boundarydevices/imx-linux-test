@@ -30,7 +30,7 @@ check_devnode "/dev/video16"
 # Turn off fb blanking
 echo -e "\033[9;0]" > /dev/tty0
 
-if [ "$(platform)" = IMX27ADS ]; then
+if [ "$(platform)" = IMX27ADS -o "$(platform)" = IMX25_3STACK ]; then
 DISPLAY=0;
 else
 DISPLAY=3;
@@ -54,7 +54,7 @@ for ROT in 0 1 2 3 4 5 6 7; do
 done
 
 # SDC max input size test case
-if [ "$(platform)" = IMX27ADS ]; then
+if [ "$(platform)" = IMX27ADS -o "$(platform)" = IMX25_3STACK ]; then
 	run_testcase "./mxc_v4l2_output.out -iw 640 -ih 512 -ow 240 -oh 320 -d $DISPLAY -fr 60 -r 4"
 else
 	run_testcase "./mxc_v4l2_output.out -iw 480 -ih 640 -ow 240 -oh 320 -d 4 -fr 60"
