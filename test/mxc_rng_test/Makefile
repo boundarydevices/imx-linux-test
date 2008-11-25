@@ -5,7 +5,7 @@
 #****************************************************************************/
 
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS IMX51_3STACK"
+EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS IMX51_3STACK IMX25_3STACK"
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = apitest rng_test move
@@ -57,8 +57,6 @@ CFLAGS += $(OPTFLAGS) -DARM_LINUX -Wall $(INCLUDEDIR)
 # In absence of kernel CONFIG flags, set API library to build on
 # 'unknown' platform which has an RNGA.
 CFLAGS += $(TARGET_ARCH)
- 
-
 CC=$(CROSS_COMPILE)gcc
 LD=$(CROSS_COMPILE)ld
 
