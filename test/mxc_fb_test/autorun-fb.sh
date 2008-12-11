@@ -24,14 +24,10 @@ echo -n 0 > /sys/class/graphics/fb0/blank
 
 # Color tests
 echo FB Color test
-if [ "$(platform)" = IMX31_3STACK ] || [ "$(platform)" = IMX35_3STACK ]; then
+if [ "$(platform)" = IMX31_3STACK ] || [ "$(platform)" = IMX35_3STACK ] || [ "$(platform)" = IMX25_3STACK ]; then
 	bpp_list="16"
 else
-if [ "$(platform)" = MXC27530EVB ]; then
-	bpp_list="16 24"
-else
 	bpp_list="16 24 32"
-fi
 fi
 
 for bpp in $bpp_list;
@@ -61,24 +57,20 @@ done
 # Pan test
 #
 echo FB panning test
-if [ ! "$(platform)" = IMX35_3STACK ]; then
-echo 240,640 > /sys/class/graphics/fb0/virtual_size
-if ! grep -sq 240,640 /sys/class/graphics/fb0/virtual_size;
+xres=$(fbset | awk '/geometry/ {print $2}')
+yres=$(fbset | awk '/geometry/ {print $3}')
+yvirt=$(expr $yres '*' 2)
+echo $xres,$yvirt > /sys/class/graphics/fb0/virtual_size
+if ! grep -sq $xres,$yvirt /sys/class/graphics/fb0/virtual_size;
 then
-	# MXC27530 Uses IRAM and can't support panning
-	if [ "$(platform)" = MXC27530EVB ]; then
-		print_status
-		exit $STATUS
-	fi
 	echo FAIL - Unable to set virtual size
 	STATUS=1
-fi
 fi
 
 for i in $(seq 1 50); do
 	echo This is line $i. > /dev/tty0
 done
-for i in $(seq 1 320); do
+for i in $(seq 1 $yres); do
 	echo 0,$i > /sys/class/graphics/fb0/pan
 	if ! grep -sq $i /sys/class/graphics/fb0/pan;
 	then
