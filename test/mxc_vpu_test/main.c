@@ -321,6 +321,7 @@ main(int argc, char *argv[])
 		goto usage;
 	}
 
+	info_msg("VPU test program built on %s %s\n", __DATE__, __TIME__);
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
@@ -328,16 +329,16 @@ main(int argc, char *argv[])
 
 	framebuf_init();
 
-	err = IOSystemInit(NULL);
+	err = vpu_Init(NULL);
 	if (err) {
-		err_msg("IOSystemInit failure\n");
+		err_msg("VPU Init Failure.\n");
 		return -1;
 	}
 
 	err = vpu_GetVersionInfo(&ver);
 	if (err) {
 		err_msg("Cannot get version info\n");
-		IOSystemShutdown();
+		vpu_UnInit();
 		return -1;
 	}
 
@@ -352,7 +353,7 @@ main(int argc, char *argv[])
 				get_arg(input_arg[i].line, &nargc, pargv);
 				err = parse_args(nargc, pargv, i);
 				if (err) {
-					IOSystemShutdown();
+					vpu_UnInit();
 					goto usage;
 				}
 			}
@@ -381,7 +382,7 @@ main(int argc, char *argv[])
 			get_arg(input_arg[0].line, &nargc, pargv);
 			err = parse_args(nargc, pargv, 0);
 			if (err) {
-				IOSystemShutdown();
+				vpu_UnInit();
 				goto usage;
 			}
 		}
@@ -416,7 +417,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	IOSystemShutdown();
+	vpu_UnInit();
 	return ret;
 
 usage:
