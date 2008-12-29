@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <malloc.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <linux/videodev.h>
@@ -268,7 +269,7 @@ static int ipu_ic_mem_alloc(ipu_ic_param *i_para, ipu_ic_param *o_para,
                         goto err;
                 }
 
-		if (pp_mode | ROT_MODE){
+		if (pp_mode & ROT_MODE){
 			owidth = o_para->height;
 			oheight = o_para->width;
 		} else {
@@ -603,6 +604,12 @@ static void ipu_ic_task_disable(pp_mode_t pp_mode)
 	}
 }
 
+static int ctrl_c_rev = 0;
+void ctrl_c_handler(int signum, siginfo_t *info, void *myact)
+{
+	ctrl_c_rev = 1;
+}
+
 int ipu_ic_task(int fd_ipu, FILE *file_in, FILE *file_out,
 		ipu_ic_param *i_para, ipu_ic_param *o_para, int fcount)
 {
@@ -617,10 +624,22 @@ int ipu_ic_task(int fd_ipu, FILE *file_in, FILE *file_out,
 	pp_mode_t pp_mode = NULL_MODE;
 	ipu_event_info einfo;
 	int ret = 0, i, bufcnt = 1;
+	struct sigaction act;
 
 	pp_mode = ipu_ic_task_check(i_para, o_para);
 	if (pp_mode == NULL_MODE){
 		printf("Dont want do any IC processing!\n");
+		goto done;
+	}
+
+	/*for ctrl-c*/
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_SIGINFO;
+	act.sa_sigaction = ctrl_c_handler;
+
+	if(sigaction(SIGINT, &act, NULL) < 0)
+	{
+		printf("install sigal error\n");
 		goto done;
 	}
 
@@ -650,11 +669,11 @@ int ipu_ic_task(int fd_ipu, FILE *file_in, FILE *file_out,
 		static int pingpang = 0;
 
 		/*wait for IPU task finish*/
+		einfo.irq = 0;
 		do {
 			ipu_get_interrupt_event(&einfo);
-		} while (einfo.irq != irq);
+		} while ((einfo.irq != irq) && !ctrl_c_rev);
 		
-
 		if (!show_to_fb)
 			if(fwrite(outbuf_start[pingpang], 1, o_minfo[pingpang].size, file_out) < o_minfo[pingpang].size) {
 				ret = -1;
@@ -673,6 +692,12 @@ int ipu_ic_task(int fd_ipu, FILE *file_in, FILE *file_out,
 			ipu_select_buffer(begin_chan, IPU_INPUT_BUFFER, pingpang);
 		}
 		pingpang = (pingpang == 0) ? 1 : 0;
+
+		if (ctrl_c_rev) {
+			if (einfo.irq == irq)
+				i++;
+			break;
+		}
 	}
 
 	printf("Frame %d done!\n",i);
@@ -680,7 +705,7 @@ int ipu_ic_task(int fd_ipu, FILE *file_in, FILE *file_out,
 	ipu_ic_task_disable(pp_mode);
 
 	/*make sure buffer1 still at fbmem base*/
-	if (show_to_fb && (fcount % 2)) {
+	if (show_to_fb && (i % 2)) {
 		memcpy(fb_mem, fb_mem + screen_size, screen_size);
 		ipu_select_buffer(fb_chan, IPU_INPUT_BUFFER, 1);
 	}
