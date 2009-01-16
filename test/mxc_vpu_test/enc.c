@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -195,7 +195,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	for (i = 0; i < fbcount; i++) {
-		pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->picwidth, enc->picheight);
+		pfbpool[i] = framebuf_alloc(enc->cmdl->format, (enc->picwidth + 15) & ~15,  (enc->picheight + 15) & ~15);
 		if (pfbpool[i] == NULL) {
 			fbcount = i;
 			goto err1;
@@ -207,7 +207,10 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 	
 	/* Must be a multiple of 16 */
-	stride = (enc->picwidth + 15) & ~15;
+	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270)
+		stride = (enc->picheight + 15 ) & ~15;
+	else
+		stride = (enc->picwidth + 15) & ~15;
 
 	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, stride);
 	if (ret != RETCODE_SUCCESS) {
@@ -216,7 +219,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 	
 	if (enc->cmdl->src_scheme == PATH_V4L2) {
-		ret = v4l_capture_setup(enc->picwidth, enc->picheight, 30);
+		ret = v4l_capture_setup(enc, enc->picwidth, enc->picheight, 30);
 		if (ret < 0) {
 			goto err1;
 		}
@@ -438,7 +441,10 @@ encoder_configure(struct encode *enc)
 		search_pa.searchRamAddr = 0xFFFF4C00;
 	} else if (cpu_is_mx51()) {
 		memset(&iram, 0, sizeof(iram_t));
-		ram_size = ((enc->picwidth + 15) & ~15) * 36 + 2048;
+		if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270)
+			ram_size = ((enc->picheight + 15) & ~15) * 36 + 2048;
+		else
+			ram_size = ((enc->picwidth + 15) & ~15) * 36 + 2048;
 		IOGetIramBase(&iram);
 		if ((iram.end - iram.start) < ram_size)
 			ram_size = iram.end - iram.start;
@@ -547,6 +553,7 @@ encoder_open(struct encode *enc)
 	encop.rcIntraQp = -1;
 	encop.ringBufferEnable = 0;
 	encop.dynamicAllocEnable = 0;
+	encop.chromaInterleave = enc->cmdl->chromaInterleave;
 
 	if( enc->cmdl->format == STD_MJPG )
 	{
