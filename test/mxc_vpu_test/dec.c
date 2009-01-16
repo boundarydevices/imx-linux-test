@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -532,7 +532,7 @@ write_to_file(struct decode *dec, u8 *buf, Rect cropRect)
 {
 	int height = dec->picheight;
 	int stride = dec->stride;
-	int chromaInterleave = dec->chromaInterleave;
+	int chromaInterleave = dec->cmdl->chromaInterleave;
 	int img_size;
 	u8 *pYuv = NULL, *pYuv0 = NULL;
 	int cropping;
@@ -1334,6 +1334,7 @@ decoder_open(struct decode *dec)
 	oparam.bitstreamBufferSize = STREAM_BUF_SIZE;
 	oparam.reorderEnable = dec->reorderEnable;
 	oparam.mp4DeblkEnable = dec->cmdl->deblock_en;
+	oparam.chromaInterleave = dec->cmdl->chromaInterleave;
 
 	/*
 	 * mp4 deblocking filtering is optional out-loop filtering for image
@@ -1356,8 +1357,6 @@ decoder_open(struct decode *dec)
 
 	oparam.psSaveBuffer = dec->phy_ps_buf;
 	oparam.psSaveBufferSize = PS_SAVE_SIZE;
-
-	oparam.chromaInterleave = dec->chromaInterleave;
 
 	ret = vpu_DecOpen(&handle, &oparam);
 	if (ret != RETCODE_SUCCESS) {
@@ -1416,7 +1415,6 @@ decode_test(void *arg)
 	dec->phy_bsbuf_addr = mem_desc.phy_addr;
 	dec->virt_bsbuf_addr = mem_desc.virt_uaddr;
 
-	dec->chromaInterleave = 0;
 	dec->reorderEnable = 1;
 	dec->cmdl = cmdl;
 
