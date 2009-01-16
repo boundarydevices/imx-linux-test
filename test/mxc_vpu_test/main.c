@@ -58,6 +58,8 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is source picture height \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
 	       "        default is none-interleave(0). \n "\
+	       "  -s <prescan> Enable prescan in decoding - 1. enabled \n "\
+	       "        default is disabled. \n "\
 	       "\n"\
 	       "encode options \n "\
 	       "  -i <input file> Read input from file (yuv) \n "\
@@ -120,7 +122,7 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:t:";
+static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:";
 
 int
 parse_config_file(char *file_name)
@@ -247,8 +249,10 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.rot_angle = atoi(optarg);
 			break;
 		case 'u':
-			input_arg[i].cmd.ipu_rot_en = 1;
-			input_arg[i].cmd.rot_en = 0;
+			input_arg[i].cmd.ipu_rot_en = atoi(optarg);
+			/* ipu rotation will override vpu rotation */
+			if (input_arg[i].cmd.ipu_rot_en)
+				input_arg[i].cmd.rot_en = 0;
 			break;
 		case 'f':
 			input_arg[i].cmd.format = atoi(optarg);
@@ -265,14 +269,17 @@ parse_args(int argc, char *argv[], int i)
 		case 'g':
 			input_arg[i].cmd.gop = atoi(optarg);
 			break;
+		case 's':
+			input_arg[i].cmd.prescan = atoi(optarg);
+			break;
 		case 'b':
 			input_arg[i].cmd.bitrate = atoi(optarg);
 			break;
 		case 'd':
-			input_arg[i].cmd.deblock_en = 1;
+			input_arg[i].cmd.deblock_en = atoi(optarg);
 			break;
 		case 'e':
-			input_arg[i].cmd.dering_en = 1;
+			input_arg[i].cmd.dering_en = atoi(optarg);
 			break;
 		case 'm':
 			input_arg[i].cmd.mirror = atoi(optarg);
