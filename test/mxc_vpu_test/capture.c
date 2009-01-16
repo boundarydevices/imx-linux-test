@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -81,7 +81,7 @@ v4l_stop_capturing(void)
 }
 
 int
-v4l_capture_setup(int width, int height, int fps)
+v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 {
 	char v4l_device[32] = "/dev/video0";
 	struct v4l2_format fmt = {0};
@@ -99,12 +99,16 @@ v4l_capture_setup(int width, int height, int fps)
 	}
 
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
 	fmt.fmt.pix.width = width;
 	fmt.fmt.pix.height = height;
 	fmt.fmt.pix.bytesperline = width;
 	fmt.fmt.pix.priv = 0;
 	fmt.fmt.pix.sizeimage = 0;
+
+	if (enc->cmdl->chromaInterleave == 0)
+		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+	else
+		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
 
 	if (ioctl(cap_fd, VIDIOC_S_FMT, &fmt) < 0) {
 		err_msg("set format failed\n");

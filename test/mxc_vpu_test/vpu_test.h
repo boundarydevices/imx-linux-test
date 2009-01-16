@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -122,6 +122,7 @@ struct cmd_line {
 	int ipu_rot_en;
 	int rot_angle;
 	int mirror;
+	int chromaInterleave;
 	int bitrate;
 	int gop;
 	int save_enc_hdr;
@@ -153,7 +154,6 @@ struct decode {
 	vpu_mem_desc *mvcol_memdesc;
 	Rect picCropRect;
 	int reorderEnable;
-	int chromaInterleave;
 	struct cmd_line *cmdl;
 };
 
@@ -193,7 +193,7 @@ void framebuf_free(struct frame_buf *fb);
 
 int v4l_start_capturing(void);
 void v4l_stop_capturing(void);
-int v4l_capture_setup(int width, int height, int fps);
+int v4l_capture_setup(struct encode *enc, int width, int height, int fps);
 int v4l_get_capture_data(struct v4l2_buffer *buf);
 void v4l_put_capture_data(struct v4l2_buffer *buf);
 
