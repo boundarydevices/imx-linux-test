@@ -67,7 +67,7 @@ typedef signed char s8;
 #define LOOPBACK	3
 
 #define DEFAULT_PORT		5555
-#define DEFAULT_PKT_SIZE	40960
+#define DEFAULT_PKT_SIZE	0x28000
 
 struct frame_buf {
 	int addrY;
@@ -127,6 +127,7 @@ struct cmd_line {
 	int gop;
 	int save_enc_hdr;
 	int count;
+	int prescan;
 	char *nbuf; /* network buffer */
 	int nlen; /* remaining data in network buffer */
 	int noffset; /* offset into network buffer */
@@ -147,6 +148,7 @@ struct decode {
 	int picheight;
 	int stride;
 	int fbcount;
+	int rot_buf_count;
 	int extrafb;
 	FrameBuffer *fb;
 	struct frame_buf **pfbpool;
@@ -185,7 +187,7 @@ char*skip_unwanted(char *ptr);
 int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
 struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
-					struct rot rotation);
+					struct rot rotation, Rect rotCrop);
 int v4l_put_data(struct vpu_display *disp, int index);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height);
