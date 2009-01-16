@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
@@ -211,6 +210,7 @@ udp_send(struct cmd_line *cmd, int sd, char *buf, int n)
 	struct nethdr net_h;
 	struct sockaddr_in addr;
 
+	bzero(&addr, sizeof(addr));
 	hdrlen = sizeof(net_h);
 	if ((n + hdrlen) > DEFAULT_PKT_SIZE) {
 		err_msg("panic: increase default udp pkt size! %d\n", n);
@@ -344,6 +344,7 @@ udp_open(struct cmd_line *cmd)
 
 	/* If server, then bind */
 	if (cmd->src_scheme == PATH_NET) {
+		bzero(&addr, sizeof(addr));
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(cmd->port);
 		addr.sin_addr.s_addr = INADDR_ANY;
@@ -652,8 +653,9 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				cmd->rot_en = 0;
-				cmd->ipu_rot_en = 1;
+				cmd->ipu_rot_en = strtol(str, NULL, 10);
+				if (cmd->ipu_rot_en == 1)
+					cmd->rot_en = 0;
 			}
 		}
 		
@@ -775,6 +777,19 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 			}
 		}
 		
+		return 0;
+	}
+
+	str = strstr(buf, "prescan");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				cmd->prescan = strtol(str, NULL, 10);
+			}
+		}
+
 		return 0;
 	}
 

@@ -1,3 +1,7 @@
+# This configure is for encoding captured data from camera and sending to
+# another side for decoding, then display on LCD with full screen.
+# You can change any setting according to your needs.
+
 # Write your options here!
 
 # Type of operation encode or decode; encode = 1, decode = 2
@@ -13,11 +17,24 @@ output=
 # port number for server to listen. If none specified, default is 5555
 port=
 
-# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1
+# format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG
 format=2
 
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
-rotation=
+rotation=90
+
+# ipu_rot, 1 - Enable IPU rotation and disable VPU rotation when output
+# to LCD for display
+ipu_rot=
+
+# chromaInterleave, 1 - CbCr is interleaved.
+# Suggest to enable this option since performance is better.
+chromaInterleave=1
+
+# prescan, 1 - Enable prescan
+# Suggest to enable this option since decoder performs scanning stream buffers
+# to check whether data is enough to preventing decoder hanging.
+prescan=1
 
 # count, number of frames to encode or decode
 count=
@@ -28,10 +45,10 @@ deblock=
 # mirroring (0, 1, 2 , 3)
 mirror=
 
-# width for encoding. This will be the capture/yuv image width
+# width, display width for decoding
 width=
 
-# height for encoding. This will be the capture/yuv image height
+# height, display height for decoding
 height=
 
 # bitrate. default is auto
@@ -56,7 +73,7 @@ input=
 output=
 
 # send encoded data to server. specify server ip address
-ip=10.0.0.1
+ip=127.0.0.1
 
 # port number of server. If none specified, default is 5555.
 port=
@@ -66,6 +83,10 @@ format=2
 
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
 rotation=
+
+# chromaInterleave, 1 - CbCr is interleaved
+# Suggest to enable this option since performance is better.
+chromaInterleave=1
 
 # count, number of frames to encode or decode
 count=500
