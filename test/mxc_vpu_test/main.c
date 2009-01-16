@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -54,8 +54,10 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "        This flag is effective when 'r' flag is specified.\n "\
 	       "  -w <width> display picture width \n "\
 	       "	default is source picture width. \n "\
-	       "  -h <height> disiplay picture height \n "\
+	       "  -h <height> display picture height \n "\
 	       "	default is source picture height \n "\
+	       "  -t <chromaInterleave> CbCr interleaved \n "\
+	       "        default is none-interleave(0). \n "\
 	       "\n"\
 	       "encode options \n "\
 	       "  -i <input file> Read input from file (yuv) \n "\
@@ -80,7 +82,9 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -b <bitrate in kbps> \n "\
 	       "	default is auto (0) \n "\
 	       "  -g <gop size> \n "\
-	       "	default is 0 \n"
+	       "	default is 0 \n "\
+	       "  -t <chromaInterleave> CbCr interleaved \n "\
+	       "        default is none-interleave(0). \n "\
 	       "\n"\
 	       "loopback options \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG \n "\
@@ -89,6 +93,8 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is 176. \n "\
 	       "  -h <height>capture image height \n "\
 	       "	default is 144 \n "\
+	       "  -t <chromaInterleave> CbCr interleaved \n "\
+               "        default is none-interleave(0). \n "\
 	       "\n"\
 	       "config file - Use config file for specifying options \n";
 
@@ -114,7 +120,7 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:";
+static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:t:";
 
 int
 parse_config_file(char *file_name)
@@ -270,6 +276,9 @@ parse_args(int argc, char *argv[], int i)
 			break;
 		case 'm':
 			input_arg[i].cmd.mirror = atoi(optarg);
+			break;
+		case 't':
+			input_arg[i].cmd.chromaInterleave = atoi(optarg);
 			break;
 		case -1:
 			break;
