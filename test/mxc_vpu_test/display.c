@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -254,11 +253,12 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation)
 	dprintf(1, "fmt.fmt.pix.width = %d\n\tfmt.fmt.pix.height = %d\n",
 				fmt.fmt.pix.width, fmt.fmt.pix.height);
 
-	if (dec->chromaInterleave == 0)
+	if (dec->cmdl->chromaInterleave == 0)
 		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-	else
+	else {
+		info_msg("Display: NV12\n");
 		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
-
+	}
 	err = ioctl(fd, VIDIOC_S_FMT, &fmt);
 	if (err < 0) {
 		err_msg("VIDIOC_S_FMT failed\n");

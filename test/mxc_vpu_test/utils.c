@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -469,8 +469,7 @@ check_params(struct cmd_line *cmd, int op)
 	}
 	
 	if (cmd->src_scheme == PATH_FILE && op == ENCODE) {
-		if ((cmd->width == 0) || (cmd->width % 16 != 0) ||
-			(cmd->height == 0) || (cmd->height % 16 != 0)) {
+		if (cmd->width == 0 || cmd->height == 0) {
 			warn_msg("Enter width and height for YUV file\n");
 			return -1;
 		}
@@ -685,6 +684,19 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 			}
 		}
 		
+		return 0;
+	}
+
+	str = strstr(buf, "chromaInterleave");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				cmd->chromaInterleave = strtol(str, NULL, 10);
+			}
+		}
+
 		return 0;
 	}
 
