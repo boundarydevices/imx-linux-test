@@ -13,6 +13,9 @@ output=test.264
 # format; 0 - MPEG4, 1 - H.263, 2 - H.264, 7 - MJPG
 format=2
 
+# chromaInterleave, 1 - CbCr is interleaved
+chromaInterleave=
+
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
 rotation=
 

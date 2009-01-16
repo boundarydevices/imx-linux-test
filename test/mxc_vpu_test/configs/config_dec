@@ -14,6 +14,9 @@ output=
 # 6 - RV, 7 - MJPG
 format=0
 
+# chromaInterleave, 1 - CbCr is interleaved
+chromaInterleave=
+
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
 # Default is VPU rotation.
 rotation=
