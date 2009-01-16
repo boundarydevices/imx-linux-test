@@ -84,14 +84,14 @@ calculate_ratio(int width, int height, int maxwidth, int maxheight)
 }
 
 struct vpu_display *
-v4l_display_open(struct decode *dec, int nframes, struct rot rotation)
+v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect cropRect)
 {
 	int width = dec->picwidth;
 	int height = dec->picheight;
-	int left = dec->picCropRect.left;
-	int top = dec->picCropRect.top;
-	int right = dec->picCropRect.right;
-	int bottom = dec->picCropRect.bottom;
+	int left = cropRect.left;
+	int top = cropRect.top;
+	int right = cropRect.right;
+	int bottom = cropRect.bottom;
 	int disp_width = dec->cmdl->width;
 	int disp_height = dec->cmdl->height;
 	int fd, err, out, i;
@@ -240,7 +240,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation)
 	} else if (right || bottom) {
 		fmt.fmt.pix.width = right - left;
 		fmt.fmt.pix.height = bottom - top;
-		fmt.fmt.pix.bytesperline = fmt.fmt.pix.width;
+		fmt.fmt.pix.bytesperline = width;
 		off.u_offset = width * height;
 		off.v_offset = off.u_offset + width * height / 4;
 		fmt.fmt.pix.priv = (unsigned long) &off;

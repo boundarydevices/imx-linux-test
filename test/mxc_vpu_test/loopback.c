@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -40,7 +39,10 @@ decode()
 	struct vpu_display *disp = dec->disp;
 	RetCode ret;
 	
-	decparam.prescanEnable = 0;
+	/* Suggest to enable prescan in loopback, then decoder performs scanning stream buffers
+	 * to check whether data is enough to prevent decoder hang.
+	 */
+	decparam.prescanEnable = dec->cmdl->prescan;
 
 	ret = vpu_DecStartOneFrame(handle, &decparam);
 	if (ret != RETCODE_SUCCESS) {
@@ -394,7 +396,7 @@ encdec_test(void *arg)
 		goto err4;
 	}
 
-	/* encode 2 frames first */
+	/* encode 10 frames first */
 	for (i = 0; i < 10; i++) {
 		ret = encode();
 		if (ret)
