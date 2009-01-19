@@ -133,7 +133,7 @@ int v4l_capture_setup(void)
 		close(fd_v4l);
 		return -1;
 	}
-	
+
 	memset(&req, 0, sizeof(req));
 	req.count = TEST_BUFFER_NUM;
 	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -161,14 +161,14 @@ int v4l_capture_and_encode_test(void)
 		printf("start capturing failed\n");
 		return -1;
 	}
-	
-	/* Step 3: Assign memory resources */	
+
+	/* Step 3: Assign memory resources */
 	encIn.pOutBuf = outbuf;
 	encIn.outBufSize = outbuf_size;
 	encIn.outBufBusAddress = outbuf_bus_address;
 
 	/* The use of VP size buffer is optional */
-	encIn.pVpSizes = NULL; 
+	encIn.pVpSizes = NULL;
 
 	printf("Output buffer %d bytes\n", encIn.outBufSize);
 
@@ -196,8 +196,8 @@ int v4l_capture_and_encode_test(void)
 	next = 0;
 	last = cmdl.count;
 
-	while ( (next < last) && 
-		(ret == ENC_VOP_READY || ret == ENC_VOP_READY_VBV_FAIL || 
+	while ( (next < last) &&
+		(ret == ENC_VOP_READY || ret == ENC_VOP_READY_VBV_FAIL ||
 		 ret == ENC_OUTPUT_BUFFER_OVERFLOW ))
 	{
 		/* Select VOP type */
@@ -254,7 +254,7 @@ int v4l_capture_and_encode_test(void)
 				break;
 			}
 		} else {
-			printf("buf.index %d	count = %d\n", 
+			printf("buf.index %d	count = %d\n",
 					buf.index, (last - next));
 		}
 	} /* End of main encoding loop */
@@ -294,10 +294,10 @@ void FreeRes(void)
 
     AllocRes
 
-    OS dependent implementation for allocating the physical memories 
+    OS dependent implementation for allocating the physical memories
     used by both SW and HW: output buffer.
 
-    To access the memory HW uses the physical linear address (bus address) 
+    To access the memory HW uses the physical linear address (bus address)
     and SW uses virtual address (user address).
 
     In Linux the physical memories can only be allocated with sizes
@@ -315,11 +315,11 @@ int AllocRes(void)
 
 	outbuf_size = outbuf_bus_address = 64 * sysconf(_SC_PAGESIZE);
 	printf("Output buffer size:\t\t\t%d\n", outbuf_size);
-	
+
 	ioctl(memdev_fd, MEMALLOC_IOCXGETBUFFER, &outbuf_bus_address);
 	printf("Output buffer bus address:\t\t0x%08x\n", outbuf_bus_address);
-	
-	outbuf = (u32 *) mmap(0, outbuf_size, PROT_READ | PROT_WRITE, 
+
+	outbuf = (u32 *) mmap(0, outbuf_size, PROT_READ | PROT_WRITE,
 			MAP_SHARED, memdev_fd, outbuf_bus_address);
 	printf("Output buffer user address:\t\t0x%08x\n", (u32) outbuf);
 	if(outbuf == MAP_FAILED)
@@ -341,7 +341,7 @@ int main(int argc, char **argv)
 
 	/* Command line parameters */
 	if (argc < 6) {
-		fprintf(stdout, 
+		fprintf(stdout,
 			"Usage: cam2mpeg4 [width] [height] [number of frames] [frame rate] [filename]\n");
 		return -1;
 	}
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
     	cfg.frmRateNum = 30;
     	cfg.width = cmdl.width;
     	cfg.height = cmdl.height;
-    	cfg.strmType = MPEG4_PLAIN_STRM; 
+    	cfg.strmType = MPEG4_PLAIN_STRM;
     	cfg.profileAndLevel = MPEG4_ADV_SIMPLE_PROFILE_LEVEL_5;
     	if ((ret = MP4EncInit(&cfg, &encoder)) != ENC_OK)
     	{
@@ -379,7 +379,7 @@ int main(int argc, char **argv)
     	}
 
 	retcode = v4l_capture_and_encode_test();
-	
+
 	/* Free all resources */
 	if ((ret = MP4EncRelease(encoder)) != ENC_OK)
     	{
@@ -387,7 +387,7 @@ int main(int argc, char **argv)
 		retcode = -1;
     	}
 
-error:	
+error:
 	FreeRes();
 	close(fd_v4l);
 	return retcode;

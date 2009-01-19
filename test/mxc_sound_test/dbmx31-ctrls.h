@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -16,17 +16,17 @@
  * History :
  *	04/06/29 : Creation
  */
-  
+
  /*!
   * @defgroup dbmx31_audio common definitions for the dbmx sound driver
   */
- 
+
  /*!
   * @file dbmx31-ctrls.h
   * @brief common definitions for the dbmx sound driver
   * @ingroup dbmx31_audio
   */
-  
+
 #ifndef _MXC_CTRLS_H
 #define _MXC_CTRLS_H
 
@@ -41,8 +41,8 @@ typedef struct _dbmx_cfg {
 	int val;	/*!< The value to write, or returned by read */
 } dbmx_cfg;
 
-/*! 
-* These controls are only debug purposes. 
+/*!
+* These controls are only debug purposes.
 */
 #define SNDCTL_DBMX_HW_SSI_CFG_W	_SIOW('Z', 0, dbmx_cfg)		/*!< debug only*/
 #define SNDCTL_DBMX_HW_SSI_CFG_R	_SIOR('Z', 1, dbmx_cfg)		/*!< debug only*/
@@ -152,8 +152,8 @@ typedef struct _dbmx_cfg {
 /*! Definition for SNDCTL_MC13783_WRITE_CODEC_FILTER and SNDCTL_MC13783_READ_CODEC_FILTER */
 #define MC13783_CODEC_FILTER_DITHERING		4
 
-/*! 
-* These controls are only debug purposes. 
+/*!
+* These controls are only debug purposes.
 */
 #define SNDCTL_DBMX_HW_WRITE_REG		_SIOW('Z', 100, dbmx_cfg)	/*!< debug only*/
 #define SNDCTL_DBMX_HW_READ_REG			_SIOR('Z', 101, dbmx_cfg)	/*!< debug only*/

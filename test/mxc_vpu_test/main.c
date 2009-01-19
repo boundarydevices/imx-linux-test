@@ -215,7 +215,7 @@ int
 parse_args(int argc, char *argv[], int i)
 {
 	int status = 0, opt;
-	
+
 	do {
 		opt = getopt(argc, argv, options);
 		switch (opt)
@@ -391,7 +391,7 @@ main(int argc, char *argv[])
 					}
 				}
 			}
-			
+
 		}
 	} else {
 		if (using_config_file == 0) {
@@ -410,7 +410,7 @@ main(int argc, char *argv[])
 				} else if (input_arg[0].mode == ENCODE) {
 					ret = encode_test(&input_arg[0].cmd);
 				}
-			
+
 				close_files(&input_arg[0].cmd);
 			} else {
 				ret = -1;
@@ -418,7 +418,7 @@ main(int argc, char *argv[])
 		} else {
 			ret = -1;
 		}
-		
+
 		if (input_arg[0].mode == LOOPBACK) {
 			encdec_test(&input_arg[0].cmd);
 		}

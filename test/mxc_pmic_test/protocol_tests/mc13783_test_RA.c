@@ -1,18 +1,18 @@
-/* 
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
- * @file   mc13783_test_RA.c 
+ * @file   mc13783_test_RA.c
  * @brief  Test scenario C source PMIC.
  */
 
@@ -74,7 +74,7 @@ extern "C" {
 @brief  assumes the initial condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -90,7 +90,7 @@ extern "C" {
 @brief  assumes the post-condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 *//*============================================================================*/ int VT_mc13783_RA_cleanup(void) {
@@ -107,7 +107,7 @@ extern "C" {
 @brief  MC13783 test scenario Random Access
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */

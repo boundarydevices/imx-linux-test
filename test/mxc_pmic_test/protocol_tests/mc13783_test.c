@@ -1,14 +1,14 @@
-/* 
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
@@ -77,11 +77,11 @@ extern "C" {
 /**
 @brief  open MC13783, perform operation on it and then close it.
 
-@param  Input :		params - pointer to opt_params structure, 
-                        operation - performing operation 
+@param  Input :		params - pointer to opt_params structure,
+                        operation - performing operation
                         	(CMD_READ, CMD_WRITE, CMD_SUB, CMD_UNSUB)
                         val1 - reg number if operation is CMD_READ or CMD_WRITE,
-                                reg number if operation is CMD_READ 
+                                reg number if operation is CMD_READ
                                 or CMD_WRITE,
                         *val2 - writing reg value in case of CMD_WRITE operation
         Output:         *val2 - return reg value in case of CMD_READ operation

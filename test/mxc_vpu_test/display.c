@@ -218,7 +218,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	if (cpu_is_mx27()) {
 		fb.capability = V4L2_FBUF_CAP_EXTERNOVERLAY;
 		fb.flags = V4L2_FBUF_FLAG_PRIMARY;
-	
+
 		err = ioctl(fd, VIDIOC_S_FBUF, &fb);
 		if (err < 0) {
 			err_msg("VIDIOC_S_FBUF failed\n");
@@ -295,9 +295,9 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 			v4l_free_bufs(i, disp);
 			goto err;
 		}
-	        	
+
 		disp->buffers[i] = buf;
-		
+
 		buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		buffer.memory = V4L2_MEMORY_MMAP;
 		buffer.index = i;
@@ -315,7 +315,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 					(unsigned int)buf->offset, buf->length);
 		buf->start = mmap(NULL, buffer.length, PROT_READ | PROT_WRITE,
 				MAP_SHARED, fd, buffer.m.offset);
-		
+
 		if (buf->start == MAP_FAILED) {
 			err_msg("mmap failed\n");
 			v4l_free_bufs(i, disp);
@@ -376,7 +376,7 @@ int v4l_put_data(struct vpu_display *disp, int index)
 			disp->sec += 1;
 			disp->usec -= 1000000;
 		}
-		
+
 		disp->buf.timestamp.tv_sec = disp->sec;
 		disp->buf.timestamp.tv_usec = disp->usec;
 

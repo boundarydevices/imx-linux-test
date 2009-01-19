@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -82,7 +82,7 @@ struct testbuffer buffers[5];
 int process_cmdline(int argc, char **argv)
 {
         int i;
-        
+
         for (i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-iw") == 0) {
                         g_in_width = atoi(argv[++i]);
@@ -123,7 +123,7 @@ int process_cmdline(int argc, char **argv)
 
         printf("g_in_width = %d, g_in_height = %d\n", g_in_width, g_in_height);
         printf("g_display_width = %d, g_display_height = %d\n", g_display_width, g_display_height);
-        
+
         if ((g_in_width == 0) || (g_display_width == 0) || (g_in_height == 0) ||
             (g_display_height == 0)) {
                 return -1;
@@ -192,7 +192,7 @@ void fb_test_bpp(int fd, unsigned short * fb)
                 fb[i] = 0x07E0;
         sleep(3);
 
-}        
+}
 
 
 void fb_test_gbl_alpha(void)
@@ -326,7 +326,7 @@ main(int argc, char **argv)
         {
                 goto err1;
         }
-	
+
 
         printf("Opened fb0 and fb1\n");
 
@@ -369,7 +369,7 @@ main(int argc, char **argv)
                 goto err3;
         }
         g_fb1_size = screen_info.xres * screen_info.yres_virtual * screen_info.bits_per_pixel / 8;
-        
+
         /* Map the device to memory*/
         fb1 = (unsigned short *)mmap(0, g_fb1_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_fb1, 0);
         if ((int)fb1 <= 0)

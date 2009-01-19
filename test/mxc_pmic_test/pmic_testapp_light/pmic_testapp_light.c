@@ -1,7 +1,7 @@
 
 /*!
  * @file pmic_testapp_light.c
- * @brief This is the main file of PMIC tests for Light and Backlight driver. 
+ * @brief This is the main file of PMIC tests for Light and Backlight driver.
  *
  * @ingroup MC13783_LIGHT
  */

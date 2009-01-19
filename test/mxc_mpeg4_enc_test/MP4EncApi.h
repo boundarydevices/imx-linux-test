@@ -214,13 +214,13 @@ typedef enum
     /* bigger buffer should be used when limit is often reached */
     /* Type of the parameter to be read: u32 */
     MP4API_ENC_PID_TXTR_VLC_BUF_FULL,
-    
+
     /* setup a table where macroblock offsets are returned */
     /* Type of the parameter to be set: (u32*) */
     MP4API_ENC_PID_MB_OFFSET_TABLE,
     /* setup a table where macroblock QP are returned */
     /* Type of the parameter to be set: (u8*) */
-    MP4API_ENC_PID_MB_QP_TABLE    
+    MP4API_ENC_PID_MB_QP_TABLE
 }
 MP4API_EncParamId;
 
