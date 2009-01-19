@@ -8,7 +8,7 @@ source /unit_tests/test-utils.sh
 STATUS=0
 platform=`cat /proc/cpuinfo | grep Hardware |cut -f3 -d' '`
  if  [ $platform = "MXC300-31" ]  || [ $platform = "MXC300-20"  ]
- then 
+ then
  m2ramaddr=10000100
  else
  m2ramaddr=ff002800

@@ -38,7 +38,7 @@ decode()
 	DecOutputInfo outinfo = {0};
 	struct vpu_display *disp = dec->disp;
 	RetCode ret;
-	
+
 	/* Suggest to enable prescan in loopback, then decoder performs scanning stream buffers
 	 * to check whether data is enough to prevent decoder hang.
 	 */
@@ -66,12 +66,12 @@ decode()
 		err_msg("PS Buffer overflow\n");
 		return -1;
 	}
-	
+
 	if (outinfo.notSufficientSliceBuffer) {
 		err_msg("Slice Buffer overflow\n");
 		return -1;
 	}
-			
+
 	if ((outinfo.indexFrameDisplay == -1) ||
 			(outinfo.indexFrameDisplay > dec->fbcount))
 		return -1;
@@ -104,7 +104,7 @@ decode()
 			     " %d\n", ret);
 	}
 	disp_clr_index = disp->buf.index;
-	
+
 out:
 	return 0;
 }
@@ -150,7 +150,7 @@ dec_fill_bsbuffer(char *buf, int size)
 		err_msg("vpu_DecUpdateBitstreamBuffer failed\n");
 		return -1;
 	}
-	
+
 	return size;
 }
 
@@ -434,7 +434,7 @@ encdec_test(void *arg)
 			err_msg("Encode failed\n");
 			break;
 		}
-		
+
 		ret = decode();
 		if (ret) {
 			err_msg("Decode failed\n");

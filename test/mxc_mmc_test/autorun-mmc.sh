@@ -31,7 +31,7 @@ run_mmc_case()
 check_devnode "/dev/mmcblk0"
 
 if [ "$STATUS" = 0 ]; then
-	run_mmc_case 
+	run_mmc_case
 fi
 
 print_status
