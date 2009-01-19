@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -71,21 +71,21 @@ static os_driver_reg_t reg_handle;
 	OS_DEV_INIT(rng_test_init)
 	{
 		os_error_code code;
-	
+
 #ifdef RNG_DEBUG
 		os_printk("%s: Driver Initialization begins\n", RNG_TEST_DRIVER_NAME);
 #endif
 		code = rng_test_setup_user_driver_interaction();
-	
+
 #ifdef RNG_DEBUG
 		os_printk("%s: Driver Completed: %d\n", RNG_TEST_DRIVER_NAME, code);
 #endif
-	
+
 		os_dev_init_return(code);
 	} /* rng_test_init */
-	
-	
-	
+
+
+
 	/***********************************************************************
 	 * rng_test_open()													   *
 	 **********************************************************************/
@@ -98,13 +98,13 @@ static os_driver_reg_t reg_handle;
 	{
 		fsl_shw_uco_t* user_ctx = os_alloc_memory(sizeof(*user_ctx), 0);
 		os_error_code code = OS_ERROR_NO_MEMORY_S;
-	
+
 		if (user_ctx != NULL) {
 			fsl_shw_return_t ret;
-	
+
 			fsl_shw_uco_init(user_ctx, 20);
 			ret = fsl_shw_register_user(user_ctx);
-	
+
 			if (ret != FSL_RETURN_OK_S) {
 				code = OS_ERROR_FAIL_S;
 			} else {
@@ -112,11 +112,11 @@ static os_driver_reg_t reg_handle;
 				code = OS_ERROR_OK_S;
 			}
 		}
-	
+
 		os_dev_open_return(code);
 	}
-	
-	
+
+
 	/***********************************************************************
 	 * rng_test_ioctl() 												   *
 	 **********************************************************************/
@@ -145,7 +145,7 @@ static os_driver_reg_t reg_handle;
 	{
 		os_error_code  code = OS_ERROR_FAIL_S;
 		fsl_shw_uco_t* user_ctx = os_dev_get_user_private();
-	
+
 		switch (os_dev_get_ioctl_op()) {
 		case RNG_TEST_GET_RANDOM:
 			if (user_ctx != NULL) {
@@ -153,30 +153,30 @@ static os_driver_reg_t reg_handle;
 										   os_dev_get_ioctl_arg());
 			}
 			break;
-	
+
 		case RNG_TEST_ADD_ENTROPY:
 			if (user_ctx != NULL) {
 				code = rng_test_add_entropy(user_ctx,
 											os_dev_get_ioctl_arg());
 			}
 			break;
-	
+
 		case RNG_TEST_READ_REG:
 			code = rng_test_read_register(os_dev_get_ioctl_arg());
 			break;
-	
+
 		case RNG_TEST_WRITE_REG:
 			code = rng_test_write_register(os_dev_get_ioctl_arg());
 			break;
-	
+
 		default:
 			code = OS_ERROR_FAIL_S;
 		}
-	
+
 		os_dev_ioctl_return(code);
 	}
-	
-	
+
+
 	/***********************************************************************
 	 * rng_test_release()												   *
 	 **********************************************************************/
@@ -188,23 +188,23 @@ static os_driver_reg_t reg_handle;
 	OS_DEV_CLOSE(rng_test_release)
 	{
 		fsl_shw_uco_t* user_ctx = os_dev_get_user_private();
-	
+
 		if (user_ctx != NULL) {
 			fsl_shw_deregister_user(user_ctx);
 			os_free_memory(user_ctx);
 			os_dev_set_user_private(NULL);
 		}
-	
+
 		os_dev_close_return(OS_ERROR_OK_S);
 	}
-	
-	
+
+
 	/******************************************************************************
 	 *
 	 *	Function Implementations - IOCTL support
 	 *
 	 *****************************************************************************/
-	
+
 	/*****************************************************************************/
 	/* fn rng_test_get_random() 												 */
 	/*****************************************************************************/
@@ -224,7 +224,7 @@ static os_driver_reg_t reg_handle;
 		os_error_code	 code = OS_ERROR_BAD_ADDRESS_S;
 		uint32_t*		 data_buffer = NULL;
 		int 			 count_words;
-	
+
 		if (os_copy_from_user(&get_struct, (void *)rng_data, sizeof(get_struct))) {
 #ifdef RNG_DEBUG
 			os_printk("RNG TEST: Error reading get struct from user\n");
@@ -234,29 +234,29 @@ static os_driver_reg_t reg_handle;
 			count_words = (get_struct.count_bytes+sizeof(uint32_t)-1)/4;
 			rng_return = fsl_shw_get_random(user_ctx, sizeof(uint32_t)*count_words,
 											(uint8_t*) data_buffer);
-	
+
 			get_struct.function_return_code = rng_return;
-	
+
 			/* Copy return code back (by copying whole request structure. */
 			code = os_copy_to_user((void*)rng_data, &get_struct,
 								   sizeof(get_struct));
-	
+
 			/* If appropriate, copy back data. */
 			if (rng_return == RNG_RET_OK) {
 				code = os_copy_to_user(get_struct.random, data_buffer,
 									   get_struct.count_bytes);
 			}
-	
+
 			if (data_buffer != NULL) {
 				os_free_memory(data_buffer);
 			}
 		}
-	
-	
+
+
 		return code;
 	} /* rng_test_get_random */
-	
-	
+
+
 	/*****************************************************************************/
 	/* fn rng_test_add_entropy()												*/
 	/*****************************************************************************/
@@ -273,7 +273,7 @@ static os_driver_reg_t reg_handle;
 		rng_test_add_entropy_t add_struct;
 		uint8_t*			   entropy = NULL;
 		os_error_code		   code;
-	
+
 		code = os_copy_from_user(&add_struct, (void *)rng_data,
 								 sizeof(add_struct));
 		if (code != 0) {
@@ -297,11 +297,11 @@ static os_driver_reg_t reg_handle;
 				code = OS_ERROR_NO_MEMORY_S;
 			}
 		}
-	
+
 		return code;
 	} /* rng_test_add_entropy */
-	
-	
+
+
 	/*****************************************************************************/
 	/* fn rng_test_read_register()												*/
 	/*****************************************************************************/
@@ -325,7 +325,7 @@ static os_driver_reg_t reg_handle;
 		rng_test_reg_access_t reg_struct;
 		rng_return_t	 rng_return = -1;
 		os_error_code	 code;
-	
+
 		code = os_copy_from_user(&reg_struct, (void *)rng_data,
 								 sizeof(reg_struct));
 		if (code != OS_ERROR_OK_S) {
@@ -337,15 +337,15 @@ static os_driver_reg_t reg_handle;
 			rng_return = rng_read_register(reg_struct.reg_offset,
 										   &reg_struct.reg_data);
 			reg_struct.function_return_code = rng_return;
-	
+
 			code = os_copy_to_user((void *)rng_data, &reg_struct,
 								   sizeof(reg_struct));
 		}
-	
+
 		return code;
 	} /* rng_test_read_register */
-	
-	
+
+
 	/*****************************************************************************/
 	/* fn rng_test_write_register() 											*/
 	/*****************************************************************************/
@@ -369,7 +369,7 @@ static os_driver_reg_t reg_handle;
 		rng_test_reg_access_t reg_struct;
 		rng_return_t	 rng_return = -1;
 		os_error_code	 code;
-	
+
 		/* Try to copy user's reg_struct */
 		code = os_copy_from_user(&reg_struct, (void *)rng_data,
 								 sizeof(reg_struct));
@@ -385,19 +385,19 @@ static os_driver_reg_t reg_handle;
 			code = os_copy_to_user((void *)rng_data, &reg_struct,
 								   sizeof(reg_struct));
 		}
-	
+
 		return code;
 	} /* rng_test_write_register */
-	
-	
-	
+
+
+
 	/******************************************************************************
 	 *
 	 *	Function Implementations - Strictly Internal
 	 *
 	 *****************************************************************************/
-	
-	
+
+
 	/*****************************************************************************/
 	/* fn setup_user_driver_interaction()										 */
 	/*****************************************************************************/
@@ -411,7 +411,7 @@ static os_driver_reg_t reg_handle;
 	rng_test_setup_user_driver_interaction(void)
 	{
 		os_error_code code = OS_ERROR_FAIL_S;
-	
+
 		os_driver_init_registration(reg_handle);
 		os_driver_add_registration(reg_handle, OS_FN_OPEN,
 								   OS_DEV_IOCTL_REF(rng_test_open));
@@ -422,7 +422,7 @@ static os_driver_reg_t reg_handle;
 		code = os_driver_complete_registration(reg_handle,
 											   rng_test_major_node,
 											   RNG_TEST_DRIVER_NAME);
-	
+
 		if (code != OS_ERROR_OK_S) {
 			/* failure ! */
 #ifdef RNG_DEBUG
@@ -435,11 +435,11 @@ static os_driver_reg_t reg_handle;
 					  os_dev_driver_major_node(reg_handle));
 #endif
 		} /* else success */
-	
+
 		return code;
 	} /* rng_test_setup_user_driver_interaction */
-	
-	
+
+
 	/*****************************************************************************/
 	/* fn rng_test_cleanup()													*/
 	/*****************************************************************************/
@@ -455,17 +455,17 @@ static os_driver_reg_t reg_handle;
 	OS_DEV_SHUTDOWN(rng_test_cleanup)
 	{
 		os_error_code code = OS_ERROR_OK_S;
-	
+
 		if (rng_device_registered) {
 			/* turn off the mapping to the device special file */
 			code = os_driver_remove_registration(reg_handle);
 			rng_device_registered = 0;
 		}
-	
+
 #ifdef RNG_DEBUG
 		os_printk ("RNG Test: Cleaned up\n");
 #endif
-	
+
 		os_dev_shutdown_return(code);
 	} /* rng_test_cleanup */
 

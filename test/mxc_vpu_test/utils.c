@@ -108,7 +108,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 			cmd->noffset += n;
 			return n;
 		}
-		
+
 		memcpy(buf, (cmd->nbuf + cmd->noffset), cmd->nlen);
 		ptr = buf + cmd->nlen;
 		nleft = n - cmd->nlen;
@@ -122,7 +122,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 	while (nleft > 0) {
 		tv.tv_sec = 0;
 		tv.tv_usec = 3000;
-		
+
 		FD_ZERO(&rfds);
 		FD_SET(sd, &rfds);
 
@@ -143,7 +143,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 			if (cmd->complete) {
 				continue;
 			}
-		
+
 			if (ntotal == 0) {
 			       return -EAGAIN;
 			}
@@ -172,7 +172,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 		if (net_h->len != nactual) {
 			warn_msg("length mismatch\n");
 		}
-		
+
 		if (cmd->seq_no++ != net_h->seqno) {
 			/* read till we get an I frame */
 			if (net_h->iframe == 1) {
@@ -192,7 +192,7 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 		} else {
 			nremain = nactual;
 		}
-		
+
 		memcpy(ptr, (cmd->nbuf + hdrlen), nremain);
 		ntotal += nremain;
 		nleft -= nremain;
@@ -216,7 +216,7 @@ udp_send(struct cmd_line *cmd, int sd, char *buf, int n)
 		err_msg("panic: increase default udp pkt size! %d\n", n);
 		while (1);
 	}
-	
+
 	if (n == 0) {
 		net_h.seqno = -1;
 		net_h.len = 0;
@@ -233,7 +233,7 @@ udp_send(struct cmd_line *cmd, int sd, char *buf, int n)
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(cmd->port);
 	addr.sin_addr.s_addr = inet_addr(cmd->output);
-	
+
 	nwrite = sendto(sd, cmd->nbuf, n, 0, (struct sockaddr *)&addr,
 				sizeof(addr));
 	if (nwrite != n) {
@@ -259,7 +259,7 @@ int
 vpu_write(struct cmd_line *cmd, char *buf, int n)
 {
 	int fd = cmd->dst_fd;
-	
+
 	if (cmd->dst_scheme == PATH_NET) {
 		return udp_send(cmd, fd, buf, n);
 	}
@@ -295,11 +295,11 @@ skip(char *ptr)
 		}
 		break;
 	}
-	
+
 	while ((*ptr == ' ') || (*ptr == '\t') || (*ptr == '\n')) {
 		ptr++;
 	}
-	
+
 	return (ptr);
 }
 
@@ -333,7 +333,7 @@ udp_open(struct cmd_line *cmd)
 		err_msg("failed to malloc udp buffer\n");
 		return -1;
 	}
-	
+
 	sd = socket(PF_INET, SOCK_DGRAM, 0);
 	if (sd < 0) {
 		err_msg("failed to open udp socket\n");
@@ -378,10 +378,10 @@ open_files(struct cmd_line *cmd)
 		if (cmd->src_fd < 0) {
 			return -1;
 		}
-		
+
 		info_msg("decoder listening on port %d\n", cmd->port);
 	}
-	
+
 	if (cmd->dst_scheme == PATH_FILE) {
 		cmd->dst_fd = open(cmd->output, O_CREAT | O_RDWR | O_TRUNC,
 					S_IRWXU | S_IRWXG | S_IRWXO);
@@ -402,7 +402,7 @@ open_files(struct cmd_line *cmd)
 				close(cmd->src_fd);
 			return -1;
 		}
-		
+
 		info_msg("encoder sending on port %d\n", cmd->port);
 	}
 
@@ -421,7 +421,7 @@ close_files(struct cmd_line *cmd)
 		close(cmd->dst_fd);
 		cmd->dst_fd = -1;
 	}
-	
+
 	if (cmd->nbuf) {
 		free(cmd->nbuf);
 		cmd->nbuf = 0;
@@ -468,7 +468,7 @@ check_params(struct cmd_line *cmd, int op)
 	if (cmd->src_scheme != PATH_FILE && op == DECODE) {
 		cmd->src_scheme = PATH_NET;
 	}
-	
+
 	if (cmd->src_scheme == PATH_FILE && op == ENCODE) {
 		if (cmd->width == 0 || cmd->height == 0) {
 			warn_msg("Enter width and height for YUV file\n");
@@ -488,7 +488,7 @@ check_params(struct cmd_line *cmd, int op)
 			warn_msg("width not divisible by 16, adjusted %d\n",
 					cmd->width);
 		}
-	
+
 		if (cmd->height % 16 != 0) {
 			cmd->height -= cmd->height % 16;
 			warn_msg("height not divisible by 16, adjusted %d\n",
@@ -548,7 +548,7 @@ skip_unwanted(char *ptr)
 
 		if (*ptr == '#')
 			break;
-		
+
 		buf[i++] = *ptr;
 		ptr++;
 	}
@@ -565,7 +565,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 	if (str != NULL) {
 		return 100;
 	}
-	
+
 	str = strstr(buf, "operation");
 	if (str != NULL) {
 		str = index(buf, '=');
@@ -575,7 +575,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				*mode = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -589,7 +589,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->src_scheme = PATH_FILE;
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -603,7 +603,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->dst_scheme = PATH_FILE;
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -616,7 +616,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->port = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -629,7 +629,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->format = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -643,7 +643,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->rot_angle = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -658,7 +658,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 					cmd->rot_en = 0;
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -685,7 +685,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->count = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -711,7 +711,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->deblock_en = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -724,7 +724,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->dering_en = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -737,7 +737,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->mirror = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -750,7 +750,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->width = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -763,7 +763,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->height = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -776,7 +776,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->bitrate = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -802,7 +802,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 				cmd->gop = strtol(str, NULL, 10);
 			}
 		}
-		
+
 		return 0;
 	}
 

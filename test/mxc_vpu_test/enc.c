@@ -52,11 +52,11 @@ enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
 	/* No space in ring buffer */
 	if (size <= 0)
 		return 0;
-	
+
 	if (defaultsize > 0) {
 		if (size < defaultsize)
 			return 0;
-		
+
 		space = defaultsize;
 	} else {
 		space = size;
@@ -78,7 +78,7 @@ enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
 			return -1;
 		}
 	}
-			
+
 	return space;
 }
 #endif
@@ -185,7 +185,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		err_msg("Failed to allocate enc->fb\n");
 		return -1;
 	}
-	
+
 	pfbpool = enc->pfbpool = calloc(fbcount + 1,
 					sizeof(struct frame_buf *));
 	if (pfbpool == NULL) {
@@ -200,12 +200,12 @@ encoder_allocate_framebuffer(struct encode *enc)
 			fbcount = i;
 			goto err1;
 		}
-		
+
 		fb[i].bufY = pfbpool[i]->addrY;
 		fb[i].bufCb = pfbpool[i]->addrCb;
 		fb[i].bufCr = pfbpool[i]->addrCr;
 	}
-	
+
 	/* Must be a multiple of 16 */
 	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270)
 		stride = (enc->picheight + 15 ) & ~15;
@@ -217,7 +217,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		err_msg("Register frame buffer failed\n");
 		goto err1;
 	}
-	
+
 	if (enc->cmdl->src_scheme == PATH_V4L2) {
 		ret = v4l_capture_setup(enc, enc->picwidth, enc->picheight, 30);
 		if (ret < 0) {
@@ -231,7 +231,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 			err_msg("failed to allocate single framebuf\n");
 			goto err1;
 		}
-		
+
 		fb[src_fbid].bufY = pfbpool[src_fbid]->addrY;
 		fb[src_fbid].bufCb = pfbpool[src_fbid]->addrCb;
 		fb[src_fbid].bufCr = pfbpool[src_fbid]->addrCr;
@@ -310,7 +310,7 @@ encoder_start(struct encode *enc)
 			if (ret < 0) {
 				goto err2;
 			}
-			
+
 			fb[src_fbid].bufY = cap_buffers[v4l2_buf.index].offset;
 			fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
 			fb[src_fbid].bufCr = fb[src_fbid].bufCb +
@@ -339,7 +339,7 @@ encoder_start(struct encode *enc)
 									ret);
 			goto err2;
 		}
-		
+
 		while (vpu_IsBusy()) {
 #if STREAM_ENC_PIC_RESET == 0
 			ret = enc_readbs_ring_buffer(handle, enc->cmdl,
@@ -422,7 +422,7 @@ err2:
 	/* For automation of test case */
 	if (ret > 0)
 		ret = 0;
-	
+
 	return ret;
 }
 
@@ -526,7 +526,7 @@ encoder_open(struct encode *enc)
 		enc->picwidth = enc->cmdl->width;
 		enc->picheight = enc->cmdl->height;
 	}
-	
+
 	/* If rotation angle is 90 or 270, pic width and height are swapped */
 	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270) {
 		encop.picWidth = enc->picheight;
@@ -755,7 +755,7 @@ encode_test(void *arg)
 
 	/* start encoding */
 	ret = encoder_start(enc);
-	
+
 	/* free the allocated framebuffers */
 	encoder_free_framebuffer(enc);
 err1:

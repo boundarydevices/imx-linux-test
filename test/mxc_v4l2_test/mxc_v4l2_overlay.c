@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -13,9 +13,9 @@
 
 /*
  * @file mxc_v4l2_overlay.c
- * 
+ *
  * @brief Mxc Video For Linux 2 driver test application
- * 
+ *
  */
 
 #ifdef __cplusplus
@@ -29,13 +29,13 @@ extern "C"{
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-    
+
 /* Verification Test Environment Include Files */
-#include <sys/types.h>	
-#include <sys/stat.h>	
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <unistd.h>    
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <asm/types.h>
@@ -84,7 +84,7 @@ int g_overlay = 0;
 int g_camera_color = 0;
 int g_camera_framerate = 0;
 
-int 
+int
 mxc_v4l_overlay_test(int timeout)
 {
         int i;
@@ -95,9 +95,9 @@ mxc_v4l_overlay_test(int timeout)
         {
                 printf("VIDIOC_OVERLAY start failed\n");
 		return TFAIL;
-        } 
+        }
 
-        for (i = 0; i < 3 ; i++) { 
+        for (i = 0; i < 3 ; i++) {
                 // flash a frame
                 ctl.id = V4L2_CID_PRIVATE_BASE + 1;
                 if (ioctl(fd_v4l, VIDIOC_S_CTRL, &ctl) < 0)
@@ -115,7 +115,7 @@ mxc_v4l_overlay_test(int timeout)
                 	printf("change the brightness %d\n", i);
                     ioctl(fd_v4l, VIDIOC_S_CTRL, &ctl);
 		            sleep(1);
-                } 
+                }
 		}
 		else if (g_camera_color == 2) {
                 ctl.id = V4L2_CID_SATURATION;
@@ -124,7 +124,7 @@ mxc_v4l_overlay_test(int timeout)
 	                printf("change the color saturation %d\n", i);
                     ioctl(fd_v4l, VIDIOC_S_CTRL, &ctl);
 		            sleep(5);
-                } 
+                }
 		}
 		else if (g_camera_color == 3) {
                 ctl.id = V4L2_CID_RED_BALANCE;
@@ -133,7 +133,7 @@ mxc_v4l_overlay_test(int timeout)
 	                printf("change the red balance %d\n", i);
                     ioctl(fd_v4l, VIDIOC_S_CTRL, &ctl);
 		            sleep(1);
-                } 
+                }
 		}
 		else if (g_camera_color == 4) {
                 ctl.id = V4L2_CID_BLUE_BALANCE;
@@ -142,7 +142,7 @@ mxc_v4l_overlay_test(int timeout)
                 	printf("change the blue balance %d\n", i);
                     ioctl(fd_v4l, VIDIOC_S_CTRL, &ctl);
 		            sleep(1);
-                } 
+                }
 		}
 		else if (g_camera_color == 5) {
                 ctl.id = V4L2_CID_BLACK_LEVEL;
@@ -151,8 +151,8 @@ mxc_v4l_overlay_test(int timeout)
                 	printf("change the black balance %d\n", i);
                     ioctl(fd_v4l, VIDIOC_S_CTRL, &ctl);
 		            sleep(5);
-                } 
-        } 
+                }
+        }
         else {
 		        sleep(timeout);
         }
@@ -162,11 +162,11 @@ mxc_v4l_overlay_test(int timeout)
         {
                 printf("VIDIOC_OVERLAY stop failed\n");
 		return TFAIL;
-        } 
+        }
 	return 0;
 }
 
-int 
+int
 mxc_v4l_overlay_setup(struct v4l2_format *fmt)
 {
         struct v4l2_streamparm parm;
@@ -178,7 +178,7 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
         {
                 printf("VIDIOC_S_OUTPUT failed\n");
                 return TFAIL;
-        } 
+        }
 
         ctl.id = V4L2_CID_PRIVATE_BASE;
 		ctl.value = g_rotate;
@@ -186,7 +186,7 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
         {
                 printf("set control failed\n");
                 return TFAIL;
-        } 
+        }
 
         crop.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
         crop.c.left = g_sensor_left;
@@ -197,36 +197,36 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
         {
                 printf("set cropping failed\n");
                 return TFAIL;
-        } 
+        }
 
         if (ioctl(fd_v4l, VIDIOC_S_FMT, fmt) < 0)
         {
                 printf("set format failed\n");
                 return TFAIL;
-        } 
+        }
 
         if (ioctl(fd_v4l, VIDIOC_G_FMT, fmt) < 0)
         {
                 printf("get format failed\n");
                 return TFAIL;
-        } 
+        }
 
         if (ioctl(fd_v4l, VIDIOC_G_STD, &id) < 0)
         {
                 printf("VIDIOC_G_STD failed\n");
                 return TFAIL;
-        } 
+        }
 
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
         parm.parm.capture.timeperframe.denominator = g_camera_framerate;
         parm.parm.capture.capturemode = 0;
-         
+
         if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
         {
                 printf("VIDIOC_S_PARM failed\n");
                 return TFAIL;
-        } 
+        }
 
         parm.parm.capture.timeperframe.numerator = 0;
         parm.parm.capture.timeperframe.denominator = 0;
@@ -235,7 +235,7 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
         {
                 printf("get frame rate failed\n");
                 return TFAIL;
-        } 
+        }
 
         printf("frame_rate is %d\n", parm.parm.capture.timeperframe.denominator);
         return TPASS;
@@ -244,7 +244,7 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
 int process_cmdline(int argc, char **argv)
 {
         int i;
-        
+
         for (i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-iw") == 0) {
                         g_sensor_width = atoi(argv[++i]);
@@ -299,7 +299,7 @@ int process_cmdline(int argc, char **argv)
                                " -v <camera color> 1-brightness 2-saturation"
                                " 3-red 4-blue 5-black balance\n"\
                                " -fr <frame rate 0-Auto> \n"	\
-                               " -fg foreground mode when -fg specified," 
+                               " -fg foreground mode when -fg specified,"
                                " otherwise go to frame buffer\n");
                         return -1;
                 }
@@ -307,14 +307,14 @@ int process_cmdline(int argc, char **argv)
 
         printf("g_display_width = %d, g_display_height = %d\n", g_display_width, g_display_height);
         printf("g_display_top = %d, g_display_left = %d\n", g_display_top, g_display_left);
-        
+
         if ((g_display_width == 0) || (g_display_height == 0)) {
                 return -1;
         }
         return 0;
 }
 
-int 
+int
 main(int argc, char **argv)
 {
         struct v4l2_format fmt;
@@ -353,7 +353,7 @@ main(int argc, char **argv)
                 return TFAIL;
 		}
 
-        memset(&fb_v4l2, 0, sizeof(fb_v4l2)); 
+        memset(&fb_v4l2, 0, sizeof(fb_v4l2));
 
         if ((fd_fb = open(fb_device, O_RDWR )) < 0)	{
                 printf("Unable to open frame buffer\n");
@@ -374,21 +374,21 @@ main(int argc, char **argv)
                 fb_v4l2.fmt.height = var.yres;
                 if (var.bits_per_pixel == 32) {
                         fb_v4l2.fmt.pixelformat = IPU_PIX_FMT_BGR32;
-                        fb_v4l2.fmt.bytesperline = 4 * fb_v4l2.fmt.width; 
+                        fb_v4l2.fmt.bytesperline = 4 * fb_v4l2.fmt.width;
                 }
                 else if (var.bits_per_pixel == 24) {
                         fb_v4l2.fmt.pixelformat = IPU_PIX_FMT_BGR24;
-                        fb_v4l2.fmt.bytesperline = 3 * fb_v4l2.fmt.width; 
+                        fb_v4l2.fmt.bytesperline = 3 * fb_v4l2.fmt.width;
                 }
                 else if (var.bits_per_pixel == 16) {
                         fb_v4l2.fmt.pixelformat = IPU_PIX_FMT_RGB565;
-                        fb_v4l2.fmt.bytesperline = 2 * fb_v4l2.fmt.width; 
+                        fb_v4l2.fmt.bytesperline = 2 * fb_v4l2.fmt.width;
                 }
 
                 fb_v4l2.flags = V4L2_FBUF_FLAG_PRIMARY;
                 fb_v4l2.base = (void *) fix.smem_start;
         } else {
-        
+
 	        alpha.alpha = 255;
 	        alpha.enable = 1;
 	        if ( ioctl(fd_fb, MXCFB_SET_GBL_ALPHA, &alpha) < 0) {
@@ -414,7 +414,7 @@ main(int argc, char **argv)
                         return TFAIL;
 	        }
 
-	        
+
 	        if (var.bits_per_pixel == 16) {
 	                for (h = g_display_top; h < (g_display_height + g_display_top); h++) {
 	                        cur_fb16 = (unsigned short *)((__u32)fb0 + h*fix.line_length);
@@ -454,14 +454,14 @@ main(int argc, char **argv)
         {
                 printf("set framebuffer failed\n");
                 return TFAIL;
-        } 
+        }
 
         if (ioctl(fd_v4l, VIDIOC_G_FBUF, &fb_v4l2) < 0) {
                 printf("set framebuffer failed\n");
                 return TFAIL;
-        } 
+        }
 
-        printf("\n frame buffer width %d, height %d, bytesperline %d\n", 
+        printf("\n frame buffer width %d, height %d, bytesperline %d\n",
                 fb_v4l2.fmt.width, fb_v4l2.fmt.height, fb_v4l2.fmt.bytesperline);
         ret = mxc_v4l_overlay_test(g_timeout);
 

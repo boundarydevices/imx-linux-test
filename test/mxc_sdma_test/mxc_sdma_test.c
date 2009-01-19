@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -27,13 +27,13 @@ int test() {
 
   fd = open("/dev/sdma_test",O_RDWR);
 
- 
+
   if(fd < 0){
     printf("Failed open\n");
     exit(-1);
   }
 
-  
+
   write(fd, buf, 0);
 
   sleep(1);
@@ -48,6 +48,6 @@ int test() {
 int main(int argc,char **argv) {
   test();
 
-  return 0;  
+  return 0;
 }
 
