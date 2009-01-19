@@ -1,18 +1,18 @@
-/* 
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
- * @file   mc13783_test_common.c 
+ * @file   mc13783_test_common.c
  * @brief  Test scenario C source PMIC.
  */
 
@@ -70,7 +70,7 @@ extern "C" {
 @brief  assumes the initial condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -85,7 +85,7 @@ extern "C" {
 @brief  assumes the post-condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 *//*============================================================================*/ int VT_mc13783_cleanup(void) {
@@ -104,7 +104,7 @@ extern "C" {
 @param  Input :                fd - file descriptor assigned to the mc13783
                                reg - reg number
                                *val - return read value
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -242,7 +242,7 @@ extern "C" {
 /*============================================================================*/
 /*===== VT_mc13783_opt =====*/
 /**
-@brief  perform operations (read reg, write reg, subscribe event, Unsubscribe 
+@brief  perform operations (read reg, write reg, subscribe event, Unsubscribe
         event) on already opened MC13783 file
 
 @param  Input : fd - file descriptor assigned to the mc13783

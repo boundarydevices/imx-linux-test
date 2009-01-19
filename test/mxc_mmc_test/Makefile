@@ -1,10 +1,10 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:= 
+EXCLUDE_LIST:=
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = $(OBJDIR)/autorun-mmc.sh
 else
-OBJS = 
+OBJS =
 endif
 
 all : $(OBJS)

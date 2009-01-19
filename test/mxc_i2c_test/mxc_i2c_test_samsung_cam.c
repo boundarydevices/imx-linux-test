@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2006-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -38,14 +38,14 @@ int main(int argc, char **argv)
         /* Enable the CSI clock */
         ioctl(i2c_file, MXCTEST_I2C_CSICLKENB, &i2c_test);
 
-        i2c_test.bus = 0;         
+        i2c_test.bus = 0;
         i2c_test.slave_addr = 0x2d; // Camera slave address
 
         printf("Slave address=%x\n", i2c_test.slave_addr);
-        
+
         /* Change to CIS register map page 02 */
         reg[0] = 0xEC;
-        buf[0] = 0x2; 
+        buf[0] = 0x2;
         i2c_test.reg = reg;
         i2c_test.reg_size = 1;
         i2c_test.buf = buf;
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
         /* Write the min H-Blank */
         reg[0] = 0x1E;
-        buf[0] = 142; 
+        buf[0] = 142;
         i2c_test.reg = reg;
         i2c_test.reg_size = 1;
         i2c_test.buf = buf;
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
         } else {
                 printf("\nI2C TEST PASSED\n\n");
         }
-        
+
         /* Disable the CSI clock */
         ioctl(i2c_file, MXCTEST_I2C_CSICLKDIS, &i2c_test);
 

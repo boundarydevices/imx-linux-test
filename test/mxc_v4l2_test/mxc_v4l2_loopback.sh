@@ -30,7 +30,7 @@ do
     height=`expr $width \* 480`
     height=`expr $height / 640`
     remainder=`expr $height % 8`
-    if test $remainder -le 3 
+    if test $remainder -le 3
     then
         height=`expr $height - $remainder`
     else
@@ -54,7 +54,7 @@ do
     height=`expr $width \* 480`
     height=`expr $height / 640`
     remainder=`expr $height % 8`
-    if test $remainder -le 3 
+    if test $remainder -le 3
     then
         height=`expr $height - $remainder`
     else

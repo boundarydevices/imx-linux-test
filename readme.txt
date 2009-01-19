@@ -2,15 +2,15 @@
 	Misc Stuff for Linux
 	====================
 
-This "misc" folder contains the source code and necessary build files for Linux 
-utility programs such as tests, demos, etc. All the non-Linux BSP source should 
+This "misc" folder contains the source code and necessary build files for Linux
+utility programs such as tests, demos, etc. All the non-Linux BSP source should
 go into this directory.
 
 
 1. Directory structure
 ======================
 
-Currently the "misc" directory is organized as follows to cover three types of 
+Currently the "misc" directory is organized as follows to cover three types of
 programs: bootloader, test and demo.
 
 misc
@@ -22,16 +22,16 @@ misc
   |_ test
        |_ demo
 
-  
+
 misc -> include
 ---------------
-	This directory's path is included in the build system so that generic 
-	header files can be put under this directory and be included by the source 
+	This directory's path is included in the build system so that generic
+	header files can be put under this directory and be included by the source
 	code.
 
 misc -> platform
 ----------------
-	This directory contains the build output files. Once "make" finishes, a 
+	This directory contains the build output files. Once "make" finishes, a
 	platform specific directory will be created.
 
 misc -> test
@@ -71,11 +71,11 @@ the linux tree.
 4. Adding autorun scripts
 =========================
 
-The autorun scripts are used to run the unit tests each night by the nightly build, 
-without human interaction.  After the tests are run, a script parses the output 
-into some emails to let the team know how well testing went that night and which 
-tests are having difficulty.  These scripts can also make it easier for people who 
-are not familiar with the unit tests to run them.  Currently the simplest autorun 
+The autorun scripts are used to run the unit tests each night by the nightly build,
+without human interaction.  After the tests are run, a script parses the output
+into some emails to let the team know how well testing went that night and which
+tests are having difficulty.  These scripts can also make it easier for people who
+are not familiar with the unit tests to run them.  Currently the simplest autorun
 script is misc/test/wdog/autorun-wdog.sh, which is quoted below.
 
       #!/bin/sh
@@ -92,12 +92,12 @@ script is misc/test/wdog/autorun-wdog.sh, which is quoted below.
       print_status
       exit $STATUS
 
-All scripts should have this form and contain basically everything that this test 
-have except for the "check_devnode" line.  Any tests deviating from this may break 
+All scripts should have this form and contain basically everything that this test
+have except for the "check_devnode" line.  Any tests deviating from this may break
 the autorun or have output that can't properly be parsed by the nightly build scripts.
 
-Tests must initialize STATUS=0 early on and can never set it to 0 again later in 
-the script as that might clear a failure code.  
+Tests must initialize STATUS=0 early on and can never set it to 0 again later in
+the script as that might clear a failure code.
 
 There are three files that you should be aware of, autorun.sh which runs the
 autorun scripts, autorun-suite.txt which lists the which autoruns to run (and
@@ -106,11 +106,11 @@ script uses.  All these are checked in to LINUX2.6/misc/.
 
 Any tests that require a specialized kernel build of course can not be run during
 the nightly run so they are not listed in autorun-suite.txt.  Still, these can
-be useful for humans running tests as they can run the test by hand without 
+be useful for humans running tests as they can run the test by hand without
 having to be familiar with the unit test.
 
 Also check the misc/test/wdog/Makefile for how the test gets copied.  The script
-just has to be added to the the OBJ list since there is a rule for .sh files in 
+just has to be added to the the OBJ list since there is a rule for .sh files in
 misc/tests/make.rules.
 
 If there are platforms that a test should not be built for or run on, add that

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -13,9 +13,9 @@
 
 /*
  * @file mxc_v4l2_capture.c
- * 
+ *
  * @brief Mxc Video For Linux 2 driver test application
- * 
+ *
  */
 
 #ifdef __cplusplus
@@ -27,13 +27,13 @@ extern "C"{
 =======================================================================*/
 /* Standard Include Files */
 #include <errno.h>
-    
+
 /* Verification Test Environment Include Files */
-#include <sys/types.h>	
-#include <sys/stat.h>	
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <unistd.h>    
+#include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,8 +87,8 @@ int start_capturing(int fd_v4l)
 
                 buffers[i].length = buf.length;
                 buffers[i].offset = (size_t) buf.m.offset;
-                buffers[i].start = mmap (NULL, buffers[i].length, 
-                    PROT_READ | PROT_WRITE, MAP_SHARED, 
+                buffers[i].start = mmap (NULL, buffers[i].length,
+                    PROT_READ | PROT_WRITE, MAP_SHARED,
                     fd_v4l, buffers[i].offset);
 				memset(buffers[i].start, 0xFF, buffers[i].length);
         }
@@ -99,9 +99,9 @@ int start_capturing(int fd_v4l)
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 buf.memory = V4L2_MEMORY_MMAP;
                 buf.index = i;
-				buf.m.offset = buffers[i].offset; 
+				buf.m.offset = buffers[i].offset;
 				if (g_extra_pixel){
-	                buf.m.offset += g_extra_pixel * 
+	                buf.m.offset += g_extra_pixel *
 	                	(g_width + 2 * g_extra_pixel) + g_extra_pixel;
 				}
 
@@ -148,13 +148,13 @@ int v4l_capture_setup(void)
         fmt.fmt.pix.height = g_height;
         if (g_extra_pixel){
 			off.u_offset = (2 * g_extra_pixel + g_width) * (g_height + g_extra_pixel)
-				 - g_extra_pixel + (g_extra_pixel / 2) * ((g_width / 2) 
-				 + g_extra_pixel) + g_extra_pixel / 2;  
-			off.v_offset = off.u_offset + (g_extra_pixel + g_width / 2) * 
-				((g_height / 2) + g_extra_pixel);  
+				 - g_extra_pixel + (g_extra_pixel / 2) * ((g_width / 2)
+				 + g_extra_pixel) + g_extra_pixel / 2;
+			off.v_offset = off.u_offset + (g_extra_pixel + g_width / 2) *
+				((g_height / 2) + g_extra_pixel);
         	fmt.fmt.pix.bytesperline = g_width + g_extra_pixel * 2;
 			fmt.fmt.pix.priv = (uint32_t) &off;
-        	fmt.fmt.pix.sizeimage = (g_width + g_extra_pixel * 2 ) 
+        	fmt.fmt.pix.sizeimage = (g_width + g_extra_pixel * 2 )
         		* (g_height + g_extra_pixel * 2) * 3 / 2;
 		} else {
 	        fmt.fmt.pix.bytesperline = g_width;
@@ -166,18 +166,18 @@ int v4l_capture_setup(void)
         {
                 printf("set format failed\n");
                 return 0;
-        } 
+        }
 
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
         parm.parm.capture.timeperframe.denominator = g_camera_framerate;
         parm.parm.capture.capturemode = 0;
-         
+
         if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
         {
                 printf("VIDIOC_S_PARM failed\n");
                 return -1;
-        } 
+        }
 
         // Set rotation
         ctrl.id = V4L2_CID_PRIVATE_BASE + 0;
@@ -212,7 +212,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
         struct v4l2_format fmt;
         FILE * fd_y_file = 0;
         int count = g_capture_count;
-   
+
         if ((fd_y_file = fopen(file, "wb")) < 0)
         {
                 printf("Unable to create y frame recording file\n");
@@ -224,7 +224,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
         {
                 printf("get format failed\n");
                 return -1;
-        } 
+        }
         else
         {
                 printf("\t Width = %d", fmt.fmt.pix.width);
@@ -237,7 +237,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
         {
                 printf("start_capturing failed\n");
                 return -1;
-        } 
+        }
 
         while (count-- > 0) {
                 memset(&buf, 0, sizeof (buf));
@@ -247,7 +247,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
                         printf("VIDIOC_DQBUF failed.\n");
                 }
 
-                fwrite(buffers[buf.index].start, fmt.fmt.pix.sizeimage, 1, fd_y_file); 
+                fwrite(buffers[buf.index].start, fmt.fmt.pix.sizeimage, 1, fd_y_file);
 
 #if TEST_OUTSYNC_ENQUE
 				/* Testing out of order enque */
@@ -264,7 +264,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
                         }
 				}
 #endif
-                if (count >= TEST_BUFFER_NUM) { 
+                if (count >= TEST_BUFFER_NUM) {
                         if (ioctl (fd_v4l, VIDIOC_QBUF, &buf) < 0) {
                                 printf("VIDIOC_QBUF failed\n");
                         		break;
@@ -278,7 +278,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
         {
                 printf("stop_capturing failed\n");
                 return -1;
-        } 
+        }
 
         fclose(fd_y_file);
 
@@ -290,7 +290,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
 int process_cmdline(int argc, char **argv)
 {
         int i;
-        
+
         for (i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-w") == 0) {
                         g_width = atoi(argv[++i]);
@@ -314,7 +314,7 @@ int process_cmdline(int argc, char **argv)
                         i++;
                         g_cap_fmt = v4l2_fourcc(argv[i][0], argv[i][1],argv[i][2],argv[i][3]);
 
-                        if ( (g_cap_fmt != V4L2_PIX_FMT_BGR24) && 
+                        if ( (g_cap_fmt != V4L2_PIX_FMT_BGR24) &&
                              (g_cap_fmt != V4L2_PIX_FMT_BGR32) &&
                              (g_cap_fmt != V4L2_PIX_FMT_RGB565) &&
                              (g_cap_fmt != V4L2_PIX_FMT_YUV420) )
@@ -334,7 +334,7 @@ int process_cmdline(int argc, char **argv)
         }
 
         printf("g_width = %d, g_height = %d\n", g_width, g_height);
-        
+
         if ((g_width == 0) || (g_height == 0)) {
                 return -1;
         }
