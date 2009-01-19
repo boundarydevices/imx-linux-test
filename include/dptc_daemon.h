@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -14,10 +14,10 @@
 /*!
  * @file include/dptc_daemon.h
  *
- * @brief DPTC daemon program header file. 
- * 
+ * @brief DPTC daemon program header file.
+ *
  * @ingroup DPTC
- */ 
+ */
 
 #ifndef __DAEMON_H__
 #define __DAEMON_H__
@@ -44,7 +44,7 @@ typedef struct
 	int dptc_fd;
 
 	/*!
-	 * File descriptor number of DPTC proc file system file 
+	 * File descriptor number of DPTC proc file system file
 	 * used for reading the DPTC log buffer.
 	 */
 	int log_fd;
@@ -135,9 +135,9 @@ typedef struct
 } command_msg_s;
 
 /*!
- * This structure is used in the daemon functions to indicate to the 
+ * This structure is used in the daemon functions to indicate to the
  * do_connection function (the communication thread main function) what
- * return message to send to the human interface and what is the data 
+ * return message to send to the human interface and what is the data
  * associated with the responce message.
  */
 typedef struct

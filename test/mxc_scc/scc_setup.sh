@@ -136,7 +136,7 @@ determine_offsets()
         SMN_TIMER=1038
 	do_exports
         return_value=0
-        
+
     elif [ $platform -eq 2 ]; then
 
         # must bump SCM offsets

@@ -1,18 +1,18 @@
-/* 
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
- * @file   mc13783_test_common.h 
+ * @file   mc13783_test_common.h
  * @brief  Test scenario C header PMIC.
  */
 
@@ -69,7 +69,7 @@ extern "C" {
 #define MAX_REG                50
 
 	typedef struct {
-		// operation - performing operation (CMD_READ, CMD_WRITE, CMD_SUB, 
+		// operation - performing operation (CMD_READ, CMD_WRITE, CMD_SUB,
 		//             CMD_UNSUB)
 		int operation;
 		// val1 - reg number if operation is CMD_READ or CMD_WRITE,

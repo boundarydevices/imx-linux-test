@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2006-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -19,7 +19,7 @@
 
 void help_info(void);
 
-int main(int argc, const char *argv[]) 
+int main(int argc, const char *argv[])
 {
 	int fd, timeout, sleep_sec, test;
 	if (argc < 2) {
@@ -57,10 +57,10 @@ int main(int argc, const char *argv[])
 	return 0;
 }
 
-void help_info(void) 
+void help_info(void)
 {
 	printf("Usage: wdt_driver_test <timeout> <sleep> <test>\n");
 	printf("    timeout: value in seconds to cause wdt timeout/reset\n");
 	printf("    sleep: value in seconds to service the wdt\n");
 	printf("    test: 0 - Service wdt with ioctl(), 1 - with write()\n");
-} 
+}

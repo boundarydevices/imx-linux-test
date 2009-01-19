@@ -1,7 +1,7 @@
 /*
- * Copyright 2005-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
+
 /*
  * The code contained herein is licensed under the GNU General Public
  * License. You may obtain a copy of the GNU General Public License
@@ -67,7 +67,7 @@ extern "C" {
 @brief  This function assumes the post-condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -87,7 +87,7 @@ extern "C" {
 @brief  This function assumes the setup condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -112,7 +112,7 @@ extern "C" {
 @param  Input :      argc - number of command line parameters.
         Output:      **argv - pointer to the array of the command
         		      line parameters.
-  
+
 @return On failure - Exits by calling cleanup().
         On success - exits with 0 exit value.
 */

@@ -1,14 +1,14 @@
-/* 
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
@@ -25,7 +25,7 @@ extern "C"{
 ==============================================================================*/
 /* Standard Include Files */
 #include <errno.h>
-    
+
 /* Harness Specific Include Files. */
 #include "test.h"
 
@@ -46,7 +46,7 @@ extern int fd_adc;
 @brief  assumes the initial condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -64,7 +64,7 @@ int VT_pmic_adc_convert_setup(void)
 @brief  assumes the post-condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -82,7 +82,7 @@ int VT_pmic_adc_convert_cleanup(void)
 @brief  PMIC test scenario convert function
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -113,7 +113,7 @@ int VT_pmic_adc_test_convert(void)
                 printf(("Convert 8x channel %d - %d: %d\n"),option,i,
         		adc_convert_param.result[i]);
         }
-        if (ioctl(fd_adc, PMIC_ADC_CONVERT_MULTICHANNEL, 
+        if (ioctl(fd_adc, PMIC_ADC_CONVERT_MULTICHANNEL,
         		&adc_convert_param) != 0) {
                 printf(("Error in ADC convert_multichannel test\n"));
                 return TFAIL;

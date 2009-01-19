@@ -16,9 +16,9 @@
  *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
- 
+
 /*
- * 
+ *
  *    AUTHOR
  *    	Paul Larson <plars@linuxtestproject.org>
  *
@@ -41,7 +41,7 @@ void get_kver(int *k1, int *k2, int *k3)
 	struct utsname uval;
 	char *kver;
 	char *r1, *r2, *r3;
-	
+
 	uname(&uval);
 	kver = uval.release;
 	r1 = strsep(&kver, ".");
