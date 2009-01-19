@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -14,11 +14,11 @@
 /*!
  * @file test/demo/dptc_hi_demo/dptc_hi.c
  *
- * @brief Human Interface program for the Freescale Semiconductor MXC DPTC module.  
- * 
+ * @brief Human Interface program for the Freescale Semiconductor MXC DPTC module.
+ *
  * The DPTC driver Human Interface program \n
- * This program communicates with the DPTC (Dynamic Process Temperature 
- * Compensation) daemon and allows the user to change parameters and control 
+ * This program communicates with the DPTC (Dynamic Process Temperature
+ * Compensation) daemon and allows the user to change parameters and control
  * the DPTC module. \n
  * This program allows the user to: \n
  *	1) Enable/Disable the DPTC module. \n
@@ -36,8 +36,8 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-#include <unistd.h> 
-#include <termios.h> 
+#include <unistd.h>
+#include <termios.h>
 
 #include <asm-arm/arch-mxc/pm_api.h>
 
@@ -53,7 +53,7 @@
 typedef struct
 {
 	/*!
-	 * Points to the position in the buffer the next formatted log 
+	 * Points to the position in the buffer the next formatted log
 	 * entry will be written to.
 	 */
 	unsigned int	head;
@@ -94,43 +94,43 @@ void init_log_table(void)
  * @return    the character read from the terminal.
  *
  */
-char getch(void) 
-{ 
-	int rv; 
-	char ch; 
+char getch(void)
+{
+	int rv;
+	char ch;
 	/* force to stdin */
-	int fd = 0; 
-	struct termios oldflags, newflags; 
+	int fd = 0;
+	struct termios oldflags, newflags;
 
 	tcdrain(fd);
 
 	/*
-	 * Reset the terminal to accept unbuffered input 
+	 * Reset the terminal to accept unbuffered input
 	 */
 
 	/*
-	 * Get the current oldflags 
-	 */ 
-	tcgetattr(fd, &oldflags); 
-	/* Make a copy of the flags so we can easily restore them */ 
-	newflags = oldflags; 
-	/* Set raw input */ 
-	newflags.c_cflag |= (CLOCAL | CREAD); 
-	newflags.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
+	 * Get the current oldflags
+	 */
+	tcgetattr(fd, &oldflags);
+	/* Make a copy of the flags so we can easily restore them */
+	newflags = oldflags;
+	/* Set raw input */
+	newflags.c_cflag |= (CLOCAL | CREAD);
+	newflags.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 
 
-	/* Set the newflags */ 
-	tcsetattr(fd, TCSANOW, &newflags); 
-	rv = read(fd, &ch, 1); 
+	/* Set the newflags */
+	tcsetattr(fd, TCSANOW, &newflags);
+	rv = read(fd, &ch, 1);
 
-	/* 
-	 * Restore the oldflags -- This is important otherwise 
-	 * your terminal will no longer echo characters 
-	 */ 
-	tcflush(fd, TCIFLUSH); 
-	tcsetattr(fd, TCSANOW, &oldflags); 
-	return ch; 
-} 
+	/*
+	 * Restore the oldflags -- This is important otherwise
+	 * your terminal will no longer echo characters
+	 */
+	tcflush(fd, TCIFLUSH);
+	tcsetattr(fd, TCSANOW, &oldflags);
+	return ch;
+}
 
 /*!
  * This function reads a single character from the terminal and echoes it
@@ -139,46 +139,46 @@ char getch(void)
  * @return    the character read from the terminal.
  *
  */
-char getche(void) 
-{ 
-	int rv; 
-	char ch; 
+char getche(void)
+{
+	int rv;
+	char ch;
 	int fd = 0; /* force to stdin */
-	struct termios oldflags, newflags; 
+	struct termios oldflags, newflags;
 
 	tcdrain(fd);
 	/*
-	 * Reset the terminal to accept unbuffered input 
+	 * Reset the terminal to accept unbuffered input
 	 */
 
 	/*
-	 * Get the current oldflags 
-	 */ 
-	tcgetattr(fd, &oldflags); 
+	 * Get the current oldflags
+	 */
+	tcgetattr(fd, &oldflags);
 
-	/* Make a copy of the flags so we can easily restore them */ 
-	newflags = oldflags; 
+	/* Make a copy of the flags so we can easily restore them */
+	newflags = oldflags;
 
-	/* Set raw input */ 
-	newflags.c_cflag |= (CLOCAL | CREAD); 
-	newflags.c_lflag &= ~(ICANON | ECHOE | ISIG); 
+	/* Set raw input */
+	newflags.c_cflag |= (CLOCAL | CREAD);
+	newflags.c_lflag &= ~(ICANON | ECHOE | ISIG);
 
 
-	/* Set the newflags */ 
-	tcsetattr(fd, TCSANOW, &newflags); 
+	/* Set the newflags */
+	tcsetattr(fd, TCSANOW, &newflags);
 
 	/* Read character from terminal */
-	rv = read(fd, &ch, 1); 
+	rv = read(fd, &ch, 1);
 
 	/* Flush received characters */
-	tcflush(fd, TCIFLUSH); 
+	tcflush(fd, TCIFLUSH);
 
-	/* 
+	/*
 	 * Restore the oldflags
-	 */ 
-	tcsetattr(fd, TCSANOW, &oldflags); 
-	return ch; 
-} 
+	 */
+	tcsetattr(fd, TCSANOW, &oldflags);
+	return ch;
+}
 
 /*!
  * This function check if a key was pressed on the terminal keyboard.
@@ -190,35 +190,35 @@ int kbhit(void)
 {
 	unsigned char ch;
 	int nread;
-	struct termios oldflags, newflags; 
+	struct termios oldflags, newflags;
 
-	tcgetattr(0, &oldflags); 
-	/* Make a copy of the flags so we can easily restore them */ 
-	newflags = oldflags; 
+	tcgetattr(0, &oldflags);
+	/* Make a copy of the flags so we can easily restore them */
+	newflags = oldflags;
 
-	/* Set raw input */ 
-	newflags.c_cflag |= (CLOCAL | CREAD); 
-	newflags.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
+	/* Set raw input */
+	newflags.c_cflag |= (CLOCAL | CREAD);
+	newflags.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 
 	/* Set mimimal characters read to 0 */
 	newflags.c_cc[VMIN]=0;
 	newflags.c_cc[VTIME] = 0;
 
-	/* Set the newflags */ 
+	/* Set the newflags */
 	tcsetattr(0, TCSANOW, &newflags);
 
 	nread = read(0,&ch,1);
 
-	/* Restore the oldflags */ 
+	/* Restore the oldflags */
 	tcsetattr(0, TCSANOW, &oldflags);
-	if (nread == 1) 
+	if (nread == 1)
 		return 1;
 
 	return 0;
 }
 
 /*!
- * This function sends an DPTC module enable command to the DPTC daemon and 
+ * This function sends an DPTC module enable command to the DPTC daemon and
  * waits for an ack message.
  *
  * @param     sock	the communication socket file descriptor number.
@@ -231,7 +231,7 @@ void enable_dptc(int dptc_fh)
 }
 
 /*!
- * This function sends an DPTC module Disable command to the DPTC daemon and 
+ * This function sends an DPTC module Disable command to the DPTC daemon and
  * waits for an ack message.
  *
  * @param     sock	the communication socket file descriptor number.
@@ -250,7 +250,7 @@ void disable_dptc(int dptc_fh)
  *
  * @param     sock	the communication socket file descriptor number.
  *
- * @return    1 if the DPTC module is enabled, 0 if the DPTC is disabled and 
+ * @return    1 if the DPTC module is enabled, 0 if the DPTC is disabled and
  *	      -1 if an error occured while receiving the ack message.
  *
  */
@@ -260,14 +260,14 @@ int dptc_is_active(int dptc_fh)
 }
 
 /*!
- * This function checks the value of the frequency index used by 
+ * This function checks the value of the frequency index used by
  * the DPTC module.\n
  * The function sends a GET_FREQ command to the DPTC daemon and waits for an
  * ack message that contains the frequency index used in the message parameter.
  *
  * @param     sock	the communication socket file descriptor number.
  *
- * @return    the value of the frequency index used. returns -1 if an error 
+ * @return    the value of the frequency index used. returns -1 if an error
  *	      occured while receiving the ack message.
  *
  */
@@ -278,16 +278,16 @@ int get_current_freq_index(int dptc_fh)
 }
 */
 /*!
- * This function sets the value of the frequency index used by 
+ * This function sets the value of the frequency index used by
  * the DPTC module.\n
- * The function sends a SET_FREQ command to the DPTC daemon and waits 
- * for an ack message. if an ack message is not received the function 
+ * The function sends a SET_FREQ command to the DPTC daemon and waits
+ * for an ack message. if an ack message is not received the function
  * prints an error message.
  *
  * @param     sock	   the communication socket file descriptor number.
  * @param     freq_index   new frequency index value to be set.
  *
- * @return    the value of the frequency index used. returns -1 if an error 
+ * @return    the value of the frequency index used. returns -1 if an error
  *	      occured while receiving the ack message.
  *
  */
@@ -322,7 +322,7 @@ void set_wp(int wp,int dptc_fh)
  * @param     buffer	pointer to the new DPTC translation table.
  * @param     size	size of new DPTC translation table.
  *
- * @return    TRUE if ack message was received from the DPTC daemon else 
+ * @return    TRUE if ack message was received from the DPTC daemon else
  *	      returns FALSE.
  *
  */
@@ -332,7 +332,7 @@ int send_table(int dptc_fh, void *buffer, int size)
 }
 
 /*!
- * This function reads a new DPTC translation table from a file and 
+ * This function reads a new DPTC translation table from a file and
  * updates the DPTC driver to the new table through the DPTC daemon.\n
  * The function gets from the user the file name of the new translation table
  * opens and reads it and updates the driver by using the send_table function.
@@ -354,12 +354,12 @@ int write_table(int dptc_fh)
         count =0;
 
         memset(in_buffer,0,4096);
-        
+
 	/* Get table file name from user */
 	printf("\nInput file name: ");
 	scanf("%80s",file_name);
 
-	/* 
+	/*
 	 * Open table file for reading.
 	 * If error occured while opening file print error message and return -1
 	 */
@@ -370,15 +370,15 @@ int write_table(int dptc_fh)
 
         while (! feof(table_file)){
                 fgets(line,256,table_file);
-                
+
                 count += strlen(line);
-                
+
                 if(count > 4096){
                         free(in_buffer);
                         ret_val = -1;
                         break;
                 }
-                
+
                 strcat(in_buffer,line);
         }
 
@@ -386,8 +386,8 @@ int write_table(int dptc_fh)
                 printf("Failed reading table file\n");
         }
         else if (send_table(dptc_fh, (void*)in_buffer, count) < 0) {
-                /* 
-                 * Error updating the driver DPTC table 
+                /*
+                 * Error updating the driver DPTC table
                  * (ack not received from the DPTC daemon)
                  */
                 printf("Error updating DPTC table\n");
@@ -401,10 +401,10 @@ int write_table(int dptc_fh)
 }
 
 /*!
- * This function reads the DPTC translation table used by the DPTC driver via 
+ * This function reads the DPTC translation table used by the DPTC driver via
  * the DPTC daemon and writes it to an output file.\n
  * The function sends a READ_TABLE command to the DPTC daemon and waits
- * for the returned data containing the DPTC taranslation table currently used 
+ * for the returned data containing the DPTC taranslation table currently used
  * by the DPTC driver.\n
  *
  * @param     sock	the communication socket file descriptor number.
@@ -423,16 +423,16 @@ int read_table(int dptc_fh)
 	printf("\nOutput file name: ");
 	scanf("%80s",file_name);
 
-        in_buffer = malloc(4096);        
-		
+        in_buffer = malloc(4096);
+
         /* Check if memory was allocated */
         if (in_buffer) {
 
                 memset(in_buffer,0,4096);
-                
+
                 /* Wait and read message from daemon containing table data */
                 if (ioctl(dptc_fh,PM_IOCGTABLE,in_buffer) >= 0) {
-                        
+
                         /* Open output file for writing */
                         if ((table_file = open(file_name, O_WRONLY | O_CREAT)) < 0) {
                                 /* Unable to open output file */
@@ -441,7 +441,7 @@ int read_table(int dptc_fh)
                         } else {
                                 /* Write table data to output file */
                                 write(table_file, in_buffer, strlen(in_buffer)+1);
-                                
+
                                 /* Close output file */
                                 close(table_file);
                         }
@@ -450,18 +450,18 @@ int read_table(int dptc_fh)
                         printf("Error receiving message\n");
                         ret_val = -1;
                 }
-                
+
                 /* Free allocated memory */
                 free(in_buffer);
         } else {
-                /* 
-                 * Unable to allocate memory for table 
+                /*
+                 * Unable to allocate memory for table
                  * Print error message, close input file and return -1
                  */
                 printf("Error allocating memory\n");
                 ret_val = -1;
         }
-        
+
 	return ret_val;
 }
 
@@ -471,19 +471,19 @@ int read_table(int dptc_fh)
  *
  * @param     sock		the communication socket file descriptor number.
  * @param     num_of_entries	number of log entries to read.
- * @param     log_entries	pointer to the buffer where the log entries 
+ * @param     log_entries	pointer to the buffer where the log entries
  *				should be placed.
  *
- * @return    if read succeeded returns the number of bytes written to the 
+ * @return    if read succeeded returns the number of bytes written to the
  *	      log_entries buffer, else returns -1.
  *
  */
 int get_log_entries(int dptc_proc_fh, int num_of_entries, dptc_log_entry_s *log_entries)
 {
         int read_size;
-        
-        read_size = num_of_entries * sizeof(dptc_log_entry_s);        
-        
+
+        read_size = num_of_entries * sizeof(dptc_log_entry_s);
+
 	/* Wait for ack message from the daemon */
 	if ((read_size = read(dptc_proc_fh, log_entries, read_size)) >= 0) {
                 return read_size;
@@ -495,7 +495,7 @@ int get_log_entries(int dptc_proc_fh, int num_of_entries, dptc_log_entry_s *log_
 }
 
 /*!
- * This function displays the last LOG_NUM_OF_ROWS DPTC log entries as a 
+ * This function displays the last LOG_NUM_OF_ROWS DPTC log entries as a
  * formatted text table.
  *
  * @param     sock		the communication socket file descriptor number.
@@ -510,9 +510,9 @@ void show_dptc_log(int dptc_proc_fh)
 	while (!kbhit()) {
 		/* Clear screen */
 		system("clear");
-		/* 
+		/*
 		 * Read all the log entries from the DPTC driver.
-		 * Entries are read one by one, formatted as a text line and added 
+		 * Entries are read one by one, formatted as a text line and added
 		 * to the buffer to be displayed.
 		 */
 		while (get_log_entries(dptc_proc_fh, 1, &log_entry) > 0) {
@@ -553,7 +553,7 @@ void process_cmd(char cmd,int dptc_fh,int dptc_proc_fh)
 
 	switch (cmd) {
 	/* Enable DPTC module command */
-	case '1':		
+	case '1':
 		enable_dptc(dptc_fh);
 		break;
 	/* Disable DPTC module command */
@@ -578,12 +578,12 @@ void process_cmd(char cmd,int dptc_fh,int dptc_proc_fh)
 	case '6':
 		show_dptc_log(dptc_proc_fh);
 		break;
-        /* Set working point */        
+        /* Set working point */
         case '7':
                 printf("\nNew working point: ");
 		scanf("%d",&wp);
 		set_wp(wp,dptc_fh);
-		break;        
+		break;
 	/* Quit */
 	case '8':
 		send_quit(dptc_fh,dptc_proc_fh);
@@ -642,13 +642,13 @@ void human_interface(int dptc_fh,int dptc_proc_fh)
  * @param     argv	array of strings containing the program arguments.
  *
  * @return    0 if program exited with no error. else returns -1.
- * 
+ *
  */
 int main(int argc, char *argv[])
 {
 
         int dptc_fh,dptc_proc_fh;
-        
+
 	printf("DPTC Daemon Human Interface Program Ver 2.0\n");
 
 #ifdef DPTC_KKP_DEBUG
@@ -656,19 +656,19 @@ int main(int argc, char *argv[])
                 printf("Error openning //dev//mxckpd");
                 return -1;
         }
-#endif        
+#endif
 
         if((dptc_fh = open("/dev/dptc",O_RDWR))<0){
                 printf("Failed open /dev/dptc\n");
                 return -1;
         }
-        
-        
+
+
         if((dptc_proc_fh = open("/proc/dptc",O_RDONLY))<0){
                  printf("Failed open /proc/dptc\n");
                 return -1;
         }
-        
+
         init_log_table();
 
         /* Start human interface */

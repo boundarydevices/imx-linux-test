@@ -174,10 +174,10 @@ int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 			if (nread < 0) {
 				if (nread == -EAGAIN)
 					return 0;
-				
+
 				return -1;
 			}
-			
+
 			*eos = 1;
 		} else {
 			/* unable to fill the requested size, so back off! */
@@ -193,7 +193,7 @@ int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 				if (nread < 0) {
 					if (nread == -EAGAIN)
 						return 0;
-					
+
 					return -1;
 				}
 
@@ -212,7 +212,7 @@ int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 
 				return -1;
 			}
-			
+
 			*eos = 1;
 		}
 	}
@@ -676,7 +676,7 @@ decoder_start(struct decode *dec)
 	if (deblock_en) {
 		deblock_fb = &fb[dblkid];
 	}
-	
+
 	if (dec->cmdl->dst_scheme == PATH_V4L2) {
 		img_size = dec->stride * dec->picheight;
 	} else {
@@ -692,7 +692,7 @@ decoder_start(struct decode *dec)
 	gettimeofday(&total_start, NULL);
 
 	while (1) {
-		
+
 		if (rot_en || dering_en) {
 			vpu_DecGiveCommand(handle, SET_ROTATOR_OUTPUT,
 						(void *)&fb[rotid]);
@@ -709,7 +709,7 @@ decoder_start(struct decode *dec)
 				}
 			}
 		}
-		
+
 		if (deblock_en) {
 			ret = vpu_DecGiveCommand(handle, DEC_SET_DEBLOCK_OUTPUT,
 						(void *)deblock_fb);
@@ -1093,7 +1093,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		dec->fb = NULL;
 		return -1;
 	}
-	
+
 	if ((dst_scheme != PATH_V4L2) ||
 	    ((dst_scheme == PATH_V4L2) && deblock_en)) {
 
@@ -1113,7 +1113,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 			}
 		}
 	}
-	
+
 	if (dst_scheme == PATH_V4L2) {
 		rotation.rot_en = dec->cmdl->rot_en;
 		rotation.rot_angle = dec->cmdl->rot_angle;
@@ -1162,7 +1162,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	stride = ((dec->stride + 15) & ~15);
 	bufinfo.avcSliceBufInfo.sliceSaveBuffer = dec->phy_slice_buf;
 	bufinfo.avcSliceBufInfo.sliceSaveBufferSize = dec->phy_slicebuf_size;
-	
+
 	ret = vpu_DecRegisterFrameBuffer(handle, fb, fbcount, stride, &bufinfo);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");

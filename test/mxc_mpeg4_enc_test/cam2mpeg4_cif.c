@@ -172,8 +172,8 @@ int v4l_capture_test(int fd_v4l, unsigned int *pStrm, void *encInst,
 		printf("get format failed\n");
 		close(fid_mpeg4);
 		return -1;
-	} 
-	
+	}
+
 	printf("\t Width = %d", fmt.fmt.pix.width);
 	printf("\t Height = %d", fmt.fmt.pix.height);
 	printf("\t Image size = %d\n", fmt.fmt.pix.sizeimage);
@@ -184,7 +184,7 @@ int v4l_capture_test(int fd_v4l, unsigned int *pStrm, void *encInst,
 	encInp.u32_TimeIncrement = 0;
 	encInp.pu32_OutputBuffer = pStrm;
 	encInp.u32_OutBufSize = 1.5 * 384 * 1024 / 8 * VOPS;
-	
+
 	/* 1st = intra */
 	encInp.VopCodingType = MP4API_ENC_VOP_CODING_TYPE_INTRA;
 	ret = MP4API_EncoderStartStream(encInst, &encInp, &encOut);
@@ -341,7 +341,7 @@ int main(int argc, char **argv)
 			goto error2;
 		}
 	}
-	
+
 	{
 		MP4API_EncParam_PictureSize pic_param;
 		pic_param.u16_Height = g_height;

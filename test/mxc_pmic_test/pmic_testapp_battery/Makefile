@@ -8,7 +8,7 @@ OBJS=$(patsubst %.c,%.o,$(SRCS))
 all : $(TARGET)
 	mkdir -p $(OBJDIR)
 	cp -f $(TARGET) $(OBJDIR)
-        
+
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LOADLIBES) -o $@
 

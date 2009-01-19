@@ -1,10 +1,10 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:= 
+EXCLUDE_LIST:=
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = 	$(OBJDIR)/mxc_uart_test.out  $(OBJDIR)/autorun-mxc_uart.sh
 else
-OBJS = 
+OBJS =
 endif
 
 all : $(OBJS)

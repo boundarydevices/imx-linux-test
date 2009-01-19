@@ -1,4 +1,4 @@
-/* 
+/*
  * Memalloc, encoder memory allocation driver (kernel module)
  *
  * Copyright (C) 2005  Hantro Products Oy.

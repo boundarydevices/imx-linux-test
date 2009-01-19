@@ -1,14 +1,14 @@
-/* 
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
@@ -25,7 +25,7 @@ extern "C"{
 ==============================================================================*/
 /* Standard Include Files */
 #include <errno.h>
-    
+
 /* Harness Specific Include Files. */
 #include "test.h"
 
@@ -74,7 +74,7 @@ extern int fd_adc;
 @brief  assumes the initial condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -82,9 +82,9 @@ extern int fd_adc;
 int VT_pmic_adc_TS_setup(void)
 {
     int rv = TFAIL;
-    
+
     rv=TPASS;
-    
+
     return rv;
 }
 
@@ -94,7 +94,7 @@ int VT_pmic_adc_TS_setup(void)
 @brief  assumes the post-condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -102,9 +102,9 @@ int VT_pmic_adc_TS_setup(void)
 int VT_pmic_adc_TS_cleanup(void)
 {
     int rv = TFAIL;
-    
+
     rv=TPASS;
-    
+
     return rv;
 }
 
@@ -114,7 +114,7 @@ int VT_pmic_adc_TS_cleanup(void)
 @brief  PMIC test scenario TS function
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -130,9 +130,9 @@ int VT_pmic_adc_test_TS(void)
         }
         printf(("Value of X position is %d\n"), (int) ts_value.x_position);
         printf(("Value of Y position is %d\n"), (int) ts_value.y_position);
-        printf(("Value of contact resistance is %d\n"), 
+        printf(("Value of contact resistance is %d\n"),
                 (int) ts_value.contact_resistance);
-        
+
         if ((ts_value.x_position < 0) | (ts_value.x_position > 1000) |
                 (ts_value.y_position < 0) | (ts_value.y_position > 1000))
         {

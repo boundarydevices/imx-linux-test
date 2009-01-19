@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -86,7 +86,7 @@ int play_file(int fd_audio, FILE * file)
 		while (nleft) {
 			value = *p;
 			ioctl(fd_audio, SNDCTL_DBMX_HW_WRITE_SSI_STX0, &value)
-		
+
 			nleft -= 1;
 			p += 1;
 		}
