@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -20,7 +20,7 @@
 
 #include "soundcard.h"
 #include "audio_controls.h"
- int main(int argc, char **argv) 
+ int main(int argc, char **argv)
 {
 	int fd_mixer = -1;
 	int balance = 0;

@@ -1,14 +1,14 @@
-/* 
- * Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
@@ -99,7 +99,7 @@ extern "C" {
 
 @param  Input :      None.
         Output:      None.
-  
+
 @return Nothing
 */
 /*============================================================================*/
@@ -133,7 +133,7 @@ extern "C" {
 
 @param  Input :      None.
         Output:      None.
-  
+
 @return On failure - Exits by calling cleanup().
         On success - returns 0.
 */
@@ -221,7 +221,7 @@ extern "C" {
 			{"U:", &uflag, &ch_event_num},	/* Unsubscribe event opt */
 			{"T:", &tflag, &ch_test_case},	/* Execute test case */
 			{"v", &verbose_flag, NULL},	/* Verbose flag */
-			{NULL, NULL, NULL}	/* NULL required to 
+			{NULL, NULL, NULL}	/* NULL required to
 						   end array */
 		};
 
@@ -251,7 +251,7 @@ extern "C" {
 		/* Test Case Body. */
 
 		if (tflag) {
-			/* Print test Assertion using tst_resm() function 
+			/* Print test Assertion using tst_resm() function
 			   with argument TINFO. */
 			func = &VT_mc13783_exec_test_case;
 			params = (void *)ch_test_case;

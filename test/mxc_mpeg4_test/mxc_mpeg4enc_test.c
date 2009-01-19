@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, Freescale Semiconductor, Inc. All Rights Reserved
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  * THIS SOURCE CODE IS CONFIDENTIAL AND PROPRIETARY AND MAY NOT
  * BE USED OR DISTRIBUTED WITHOUT THE WRITTEN PERMISSION OF
  * FREESCALE SEMICONDUCTOR, INC.
@@ -23,7 +23,7 @@ int g_frame_rate = 30;
 int process_cmdline(int argc, char **argv)
 {
         int i;
-        
+
         for (i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-w") == 0) {
                         g_width = atoi(argv[++i]);
@@ -65,7 +65,7 @@ void EncoderLoop (sMpeg4EncoderConfig  *psMpeg4EncPtr, FILE * in_file, FILE * ou
                 //psMpeg4EncPtr->pu8OutputBufferPtr = outbuf;
 
 //                printf("loop %d\n", loop_count++);
-                
+
                 /* Encode one frame.*/
                 retval =  eMpeg4EncoderEncode(psMpeg4EncPtr);
 
@@ -142,10 +142,10 @@ int main(int argc, char **argv)
         eMpeg4EncoderQueryMemory(&sMpeg4EncPtr);
 
         /* Give memory to the encoder for the size, type and alignment returned */
-      
+
       	for(i=0; i< MemInfo->s32NumReqs ;i++)
         {
-                // Allocate memory according to this request. This example does not consider alignment, 
+                // Allocate memory according to this request. This example does not consider alignment,
                 // user should take care of this using any available routines
                 if (MemInfo->asMemBlks[i].s32Size <= 0)
                     continue;
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
                     }
 
                     pvUnalignedMem = (void*)malloc (MemInfo->asMemBlks[i].s32Size + s32Extra);
-                    MemInfo->asMemBlks[i].pvBuffer = (void*)(((int)pvUnalignedMem + s32Extra) & 
+                    MemInfo->asMemBlks[i].pvBuffer = (void*)(((int)pvUnalignedMem + s32Extra) &
                                          (s32Mask));
                 }
         }
@@ -184,8 +184,8 @@ int main(int argc, char **argv)
         {
                 fwrite(sMpeg4EncPtr.pu8OutputBufferPtr, 1, sMpeg4EncPtr.s32BitstreamSize, out_file);
         }
-        
-         	/* Encode the bit stream and produce the outputs */	
+
+         	/* Encode the bit stream and produce the outputs */
         EncoderLoop (&sMpeg4EncPtr, in_file, out_file); // sub function to call the main encoding API
 
         /*Free memory resources*/

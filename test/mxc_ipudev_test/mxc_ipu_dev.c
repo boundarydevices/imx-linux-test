@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -145,7 +145,7 @@ static cs_t colorspaceofpixel(int fmt)
 }
 
 static int need_csc(int ifmt, int ofmt)
-{	
+{
 	cs_t ics,ocs;
 
 	ics = colorspaceofpixel(ifmt);
@@ -188,7 +188,7 @@ static pp_mode_t ipu_ic_task_check(ipu_ic_param *i_para, ipu_ic_param *o_para)
 	/*need IDMAC do format(same color space)?*/
 	if((pp_mode == NULL_MODE) && (i_para->fmt != o_para->fmt))
 		pp_mode |= IC_MODE;
-	
+
 	return pp_mode;
 }
 
@@ -199,7 +199,7 @@ static int ipu_ic_mem_alloc(ipu_ic_param *i_para, ipu_ic_param *o_para,
 		int bufcnt, int fd_ipu)
 {
 	int i, ret = 0;
-	
+
 	for (i=0;i<bufcnt;i++) {
 		i_minfo[i].size = i_para->width/8*i_para->height*fmt_to_bpp(i_para->fmt);
 		if (ioctl(fd_ipu, IPU_ALOC_MEM, &(i_minfo[i])) < 0) {
@@ -215,7 +215,7 @@ static int ipu_ic_mem_alloc(ipu_ic_param *i_para, ipu_ic_param *o_para,
 			ret = -1;
 			goto err;
 		}
-		
+
 		if (show_to_fb == 0) {
 			o_minfo[i].size = o_para->width/8*o_para->height*fmt_to_bpp(o_para->fmt);
 			if (ioctl(fd_ipu, IPU_ALOC_MEM, &(o_minfo[i])) < 0) {
@@ -242,7 +242,7 @@ static int ipu_ic_mem_alloc(ipu_ic_param *i_para, ipu_ic_param *o_para,
 			}
 		}
 	}
-	
+
 	/*for the case output direct to framebuffer*/
 	if (show_to_fb) {
 		int owidth, oheight;
@@ -276,7 +276,7 @@ static int ipu_ic_mem_alloc(ipu_ic_param *i_para, ipu_ic_param *o_para,
 			owidth = o_para->width;
 			oheight = o_para->height;
 		}
-		
+
 		if ((owidth > fb_var.xres) || (oheight > fb_var.yres)
 			|| (colorspaceofpixel(o_para->fmt) != RGB_CS)
 			|| (fmt_to_bpp(o_para->fmt) != fb_var.bits_per_pixel)) {
@@ -345,7 +345,7 @@ static int ipu_ic_task_setup(ipu_ic_param *i_para, ipu_ic_param *o_para,
 	ipu_channel_params_t params;
 	int tmp, ret = 0, out_stride;
 
-	
+
 	printf("Enabling:");
 
 	/*Setup ipu channel*/
@@ -518,7 +518,7 @@ static int ipu_ic_task_setup(ipu_ic_param *i_para, ipu_ic_param *o_para,
 
 	if (show_to_fb)
 		ipu_link_channels(end_chan, fb_chan);
-	
+
 	return ret;
 }
 
@@ -531,7 +531,7 @@ static int ipu_ic_task_enable(pp_mode_t pp_mode, int bufcnt)
 		irq = rot_out_eof_irq;
 	else
 		irq = ic_out_eof_irq;
-	
+
 	if (show_to_fb) {
 		if (pp_mode == ROT_MODE)
 			irq = rot_in_eof_irq;
@@ -582,7 +582,7 @@ static int ipu_ic_task_enable(pp_mode_t pp_mode, int bufcnt)
 static void ipu_ic_task_disable(pp_mode_t pp_mode)
 {
 	ipu_free_irq(irq, NULL);
-	
+
 	if (show_to_fb)
 		ipu_unlink_channels(end_chan, fb_chan);
 
@@ -660,7 +660,7 @@ int ipu_ic_task(int fd_ipu, FILE *file_in, FILE *file_out,
 			goto done;
 		}
 	}
-	
+
 	if ((ret = ipu_ic_task_enable(pp_mode, bufcnt)) < 0)
 		goto done;
 
@@ -673,13 +673,13 @@ int ipu_ic_task(int fd_ipu, FILE *file_in, FILE *file_out,
 		do {
 			ipu_get_interrupt_event(&einfo);
 		} while ((einfo.irq != irq) && !ctrl_c_rev);
-		
+
 		if (!show_to_fb)
 			if(fwrite(outbuf_start[pingpang], 1, o_minfo[pingpang].size, file_out) < o_minfo[pingpang].size) {
 				ret = -1;
 				printf("Can not write enough data into output file!\n");
 			}
-		
+
 		/*need fill in more data?*/
 		if ((fcount > 2) && (i < (fcount-2))) {
 			if (fread(inbuf_start[pingpang], 1, i_minfo[pingpang].size, file_in) < i_minfo[pingpang].size) {
@@ -840,7 +840,7 @@ int main(int argc, char *argv[])
 		ipu_close();
 		return -1;
 	}
-	
+
 	if (outfile)
 		file_out = fopen(outfile, "wb");
 

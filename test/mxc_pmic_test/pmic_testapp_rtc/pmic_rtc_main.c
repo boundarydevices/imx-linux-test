@@ -1,18 +1,18 @@
-/* 
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
- * @file   pmic_rtc_main.c 
+ * @file   pmic_rtc_main.c
  * @brief  PMIC RTC test main source file.
  */
 
@@ -36,7 +36,7 @@ extern "C"{
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-    
+
 /* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
@@ -106,7 +106,7 @@ void cleanup(void);
                 -l - Number of iteration
                 -v - Prints verbose output
                 -V - Prints the version number
-  
+
 @return On failure - Exits by calling cleanup().
         On success - exits with 0 exit value.
 */
@@ -121,41 +121,41 @@ void cleanup(void)
 int main(int argc, char **argv)
 {
         int VT_rv = TFAIL;
-        
+
         /* parse options. */
         int tflag=0;                 /* binary flags: opt or not */
         char *ch_test_case;  /* option arguments */
         char *msg;
-        
+
         option_t options[] = {
                 { "T:", &tflag, &ch_test_case  },       /* argument required */
                 { NULL, NULL, NULL }           /* NULL required to end array */
         };
-        
+
         if ( (msg=parse_opts(argc, argv, options, &help)) != NULL ) {
-                tst_brkm(TBROK , cleanup, 
+                tst_brkm(TBROK , cleanup,
                         "%s test case did NOT work as expected\n", VT_rv);
         }
-        
+
         /* Test Case Body. */
         if(tflag) {
-                /* Print test Assertion using tst_resm() function with 
+                /* Print test Assertion using tst_resm() function with
                    argument TINFO. */
                 tst_resm(TINFO, "Testing if %s_%s test case is OK\n", TCID,
                         ch_test_case);
-        
+
                 if(!strcmp(ch_test_case,TEST_CASE1)) {
-                        VT_rv = VT_pmic_rtc_test(0); 
+                        VT_rv = VT_pmic_rtc_test(0);
                 } else if(!strcmp(ch_test_case,TEST_CASE2)) {
-                        VT_rv = VT_pmic_rtc_test(1); 
+                        VT_rv = VT_pmic_rtc_test(1);
                 } else if(!strcmp(ch_test_case,TEST_CASE3)) {
-                        VT_rv = VT_pmic_rtc_test(2); 
+                        VT_rv = VT_pmic_rtc_test(2);
                 } else if(!strcmp(ch_test_case,TEST_CASE4)) {
-                        VT_rv = VT_pmic_rtc_test(3); 
+                        VT_rv = VT_pmic_rtc_test(3);
                 } else if(!strcmp(ch_test_case,TEST_CASE5)) {
-                        VT_rv = VT_pmic_rtc_test(4); 
+                        VT_rv = VT_pmic_rtc_test(4);
                 }
-                    
+
                 if(VT_rv == TPASS) {
                         tst_resm(TPASS, "%s_%s test case worked as expected\n",
                                 TCID,ch_test_case);
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
                                 "expected\n", TCID,ch_test_case);
                 }
         }
-        
+
         if(tflag==0) {
                 /* VTE : print results and exit test scenario */
                 help();

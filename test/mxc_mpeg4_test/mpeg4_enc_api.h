@@ -3,7 +3,7 @@
 //  Motorola India Electronics Limited
 //
 //
-//  Primary Author  : 
+//  Primary Author  :
 //
 //                  This code is the property of Motorola.
 //          (C) Copyright 2004 Motorola,Inc. All Rights Reserved.
@@ -13,13 +13,13 @@
 //  Date            Author       Version    Description
 //
 //  June,2004      Chandra         0.1        Created
-//  Aug, 2004      Chandra         1.0        RELEASE 1.0 with all review 
+//  Aug, 2004      Chandra         1.0        RELEASE 1.0 with all review
 //                                            comments
 //  Oct 1, 2004    Chandra         1.1        Removed application context
 //                                            from the configuration structure
 //  Oct 14,2004    Chandra         1.2        Removed references to video
 //                                            packet size
-//  
+//
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -72,7 +72,7 @@
 #define IS_SCRATCH_MEMORY(memType) (memType & E_MPEG4D_SCRATCH_MEMORY)
 
 //! Enumeration types
-typedef enum 
+typedef enum
 {
     E_INTRA_CODING = 0,
     E_PREDICTIVE_CODING,
@@ -82,7 +82,7 @@ typedef enum
 typedef enum
 {
     /* Success full completion */
-    E_MPEG4E_SUCCESS = 0, 
+    E_MPEG4E_SUCCESS = 0,
     E_MPEG4E_REACHED_END,
     E_MPEG4E_SKIPPED,
 
@@ -109,7 +109,7 @@ typedef enum
 //! End of Enumuration types
 
 
-//! Structure definitions    
+//! Structure definitions
 typedef struct
 {
     int     s32Seconds;           //!< Number of Seconds
@@ -121,17 +121,17 @@ sMpeg4ETimeStruct;
  *  The size and alignment are must to meet crteria, whereas others
  *  help to achive the performace projected. Usage is provided to help
  *  the application to decide if the memory has to be saved, in case of
- *  memory scarcity. Type of the memory has a direct impact on the 
- *  performance. Priority of the block shall act as a hint, in case not 
- *  all requested FAST memory is available. There is no gurantee that 
+ *  memory scarcity. Type of the memory has a direct impact on the
+ *  performance. Priority of the block shall act as a hint, in case not
+ *  all requested FAST memory is available. There is no gurantee that
  *  the priority will be unique for all the memory blocks.
- */ 
+ */
 typedef struct
  {
      int    s32Size;              //!< Size of the memory to be allocated
-     int    s32Align;             //!< memory MPEG4E_usage -  static/scratch      
-     int    s32Type;              //!< type of the memory slow/fast        
-     int    s32Priority;          //!< how important the block is 
+     int    s32Align;             //!< memory MPEG4E_usage -  static/scratch
+     int    s32Type;              //!< type of the memory slow/fast
+     int    s32Priority;          //!< how important the block is
      int    s32CurrSize;          //!< For encoder internal MPEG4E_usage
      void  *pvBuffer;             //!< Pointer to the memory
 }sMpeg4EMemBlock;
@@ -141,10 +141,10 @@ typedef struct
      int              s32NumReqs;
      sMpeg4EMemBlock  asMemBlks[MPEG4E_MAX_NUM_MEM_REQS];
 }sMpeg4EMemAllocInfo;
-            
+
 typedef struct sMpeg4EncoderStruct
 {
-    unsigned char  *pu8OutputBufferPtr;           //!< Ptr to Output bitstream 
+    unsigned char  *pu8OutputBufferPtr;           //!< Ptr to Output bitstream
                                                   //!< buffer (1 frame)
     int             s32MaxOutputBufferSize;       //!< Size of output buffer
     int             s32SourceWidth;               //!< Width of source sequence
@@ -183,12 +183,12 @@ typedef struct sMpeg4EncoderStruct
 
     // Rate Control Parameters
     int             s32TargetBitRate;              //!< In bits/sec (= 0 for static quant)
-    unsigned char   u8DelayFactor;                 //!< 1  - minimum delay, 
+    unsigned char   u8DelayFactor;                 //!< 1  - minimum delay,
                                                    //!< 31 - max delay
-                                                   //!< 0  - default delay (minimum) 
+                                                   //!< 0  - default delay (minimum)
     unsigned char   u8QualityTradeoff;             //!< 1  - highest spatial quality
                                                    //!< 31 - highest temporal quality
-                                                   //!< 0  - default quality (16) 
+                                                   //!< 0  - default quality (16)
 
     // Rounding Control
     int            s32RoundingControl;             //!< Enable=1, Disable=0
@@ -200,11 +200,11 @@ typedef struct sMpeg4EncoderStruct
     int            s32H263NoShortVideoHeader;     //!< Pure H.263 bitstream
 
     void          *pvData;                        //!< Ptr to Encoder datastructure
-    int            s32NextFrameNumber;            //!< Required next frame number 
+    int            s32NextFrameNumber;            //!< Required next frame number
     int            s32BitstreamSize;              //!< Size of output bitstream buffer
     eMPEG4ECodingType    eFrameType;              //!< Coding type for frame.
 
-    sMpeg4ETimeStruct    s32TotalTimeElapsed;     //!< Time increment 
+    sMpeg4ETimeStruct    s32TotalTimeElapsed;     //!< Time increment
     sMpeg4EMemAllocInfo  sMemInfo;
 }
 sMpeg4EncoderConfig;
@@ -220,9 +220,9 @@ sMpeg4EncoderConfig;
 *  parameters with the desired values. This should be the
 *  first function call.
 *  All important parameters such as source width, source height
-*  source/encoding frame rate, bit rate, level and data partiton 
+*  source/encoding frame rate, bit rate, level and data partiton
 *  requirement are set before calling this function
-*/ 
+*/
 eMPEG4ERetType eMpeg4EncoderSetDefaultParam(sMpeg4EncoderConfig *psMpeg4EncPtr);
 
 
@@ -232,7 +232,7 @@ eMPEG4ERetType eMpeg4EncoderSetDefaultParam(sMpeg4EncoderConfig *psMpeg4EncPtr);
 *   This is a query memory routine that returns the memory
 *   requirement such as size, alignment, type (FAST or SLOW)
 *   to the application.
-*/ 
+*/
 eMPEG4ERetType eMpeg4EncoderQueryMemory(sMpeg4EncoderConfig *psMpeg4EncPtr);
 
 //! Initialize Encoder
@@ -241,7 +241,7 @@ eMPEG4ERetType eMpeg4EncoderQueryMemory(sMpeg4EncoderConfig *psMpeg4EncPtr);
 *   Initialization function that initializes the frame
 *   pointers and other parameters in the encoder so as to
 *   provide the settings and frame work for video encode.
-*/ 
+*/
 eMPEG4ERetType eMpeg4EncoderInit(sMpeg4EncoderConfig *psMpeg4EncPtr);
 
 //! Get next frame information
@@ -252,14 +252,14 @@ eMPEG4ERetType eMpeg4EncoderInit(sMpeg4EncoderConfig *psMpeg4EncPtr);
 *   the encoding frame routine. Information regarding the next
 *   frame number and it's type are the important parameters
 *   that could be observed here.
-*/ 
+*/
 
 eMPEG4ERetType  eMpeg4EncoderGetNextFrameNum(sMpeg4EncoderConfig *psMpeg4EncPtr);
 //! Encode Image
 /*!
 *  \brief
 *   Function call to encode a single frame/VOP.
-*/ 
+*/
 eMPEG4ERetType eMpeg4EncoderEncode(sMpeg4EncoderConfig *psMpeg4EncPtr);
 
 //! Free Encoder
@@ -267,7 +267,7 @@ eMPEG4ERetType eMpeg4EncoderEncode(sMpeg4EncoderConfig *psMpeg4EncPtr);
 *  \brief
 *   Function call to free resources. It is to be called when
 *   encoding for all the frames are completed.
-*/ 
+*/
 eMPEG4ERetType eMpeg4EncoderFree(sMpeg4EncoderConfig *psMpeg4EncPtr);
 
 

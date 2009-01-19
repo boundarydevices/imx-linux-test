@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2006-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -95,7 +95,7 @@
 #define ERASE_TIME		89  /*   - ordinary */
 #define ENH_ERASE_TIME		90  /*   - enhanced */
 #define ADV_PWR			91  /* current advanced power management level
-				       in low byte, 0x40 in high byte. */  
+				       in low byte, 0x40 in high byte. */
 #define PSWD_CODE		92  /* master password revision code	*/
 #define HWRST_RSLT		93  /* hardware reset result */
 #define ACOUSTIC  		94  /* acoustic mgmt values ( >= ATA-6) */
@@ -127,7 +127,7 @@
 #define NOVAL_1			0xffff
 
 /* word 0: gen_config */
-#define NOT_ATA			0x8000	
+#define NOT_ATA			0x8000
 #define NOT_ATAPI		0x4000	/* (check only if bit 15 == 1) */
 #define MEDIA_REMOVABLE		0x0080
 #define DRIVE_NOT_REMOVABLE	0x0040  /* bit obsoleted in ATA 6 */
@@ -200,7 +200,7 @@ const char *ata1_cfg_str[] = {			/* word 0 in ATA-1 mode */
 /* word 1: number of logical cylinders */
 #define LCYLS_MAX		0x3fff /* maximum allowable value */
 
-/* word 2: specific configureation 
+/* word 2: specific configureation
  * (a) require SET FEATURES to spin-up
  * (b) require spin-up to fully reply to IDENTIFY DEVICE
  */
@@ -291,7 +291,7 @@ const char *minor_str[MINOR_MAX+2] = {			/* word 81 value: */
 	"ATA/ATAPI-6 published, ANSI INCITS 361-2002",	/* 0x0022	*/
 	"Reserved"					/* 0x0023-0xfffe*/
 };
-const char actual_ver[MINOR_MAX+2] = { 
+const char actual_ver[MINOR_MAX+2] = {
 			/* word 81 value: */
 	0,		/* 0x0000	WARNING: 	*/
 	1,		/* 0x0001	WARNING: 	*/
@@ -335,14 +335,14 @@ const char actual_ver[MINOR_MAX+2] = {
 #define CMDS_W82		0x77ff  /* word 82: defined command locations*/
 #define CMDS_W83		0x3fff  /* word 83: defined command locations*/
 #define CMDS_W84		0x27ff  /* word 84: defined command locations*/
-#define SUPPORT_48_BIT		0x0400  
+#define SUPPORT_48_BIT		0x0400
 #define NUM_CMD_FEAT_STR	48
 
 static const char unknown[8] = "obsolete";
 //static const char unknown[8] = "unknown";
 #define unknown "unknown-"
 
-static const char *feat_0_str[16] = { 
+static const char *feat_0_str[16] = {
 	"obsolete 82[15]",				/* word 82 bit 15: obsolete  */
 	"NOP cmd",					/* word 82 bit 14 */
 	"READ_BUFFER command",				/* word 82 bit 13 */
@@ -360,7 +360,7 @@ static const char *feat_0_str[16] = {
 	"Security Mode feature set",			/* word 82 bit  1 */
 	"SMART feature set"				/* word 82 bit  0 */
 };
-static const char *feat_1_str[16] = { 
+static const char *feat_1_str[16] = {
 	NULL,						/* word 83 bit 15: !valid bit */
 	NULL,						/* word 83 bit 14:  valid bit */
 	"FLUSH_CACHE_EXT",				/* word 83 bit 13 */
@@ -378,7 +378,7 @@ static const char *feat_1_str[16] = {
 	"READ/WRITE_DMA_QUEUED",			/* word 83 bit  1 */
 	"DOWNLOAD_MICROCODE"				/* word 83 bit  0 */
 };
-static const char *feat_2_str[16] = { 
+static const char *feat_2_str[16] = {
 	NULL,						/* word 84 bit 15: !valid bit */
 	NULL,						/* word 84 bit 14:  valid bit */
 	"IDLE_IMMEDIATE with UNLOAD",			/* word 84 bit 13 */
@@ -396,7 +396,7 @@ static const char *feat_2_str[16] = {
 	"SMART self-test",				/* word 84 bit  1 */
 	"SMART error logging"				/* word 84 bit  0 */
 };
-static const char *feat_3_str[16] = { 
+static const char *feat_3_str[16] = {
 	NULL,						/* word 119 bit 15: !valid bit */
 	NULL,						/* word 119 bit 14:  valid bit */
 	"unknown 119[13]",				/* word 119 bit 13 */
@@ -414,7 +414,7 @@ static const char *feat_3_str[16] = {
 	"Write-Read-Verify feature set",		/* word 119 bit  1 */
 	"unknown 119[0]"				/* word 119 bit  0: reserved for DT2014 */
 };
-static const char *cap_sata0_str[16] = { 
+static const char *cap_sata0_str[16] = {
 	"unknown 76[15]",				/* word 76 bit 15 */
 	"unknown 76[14]",				/* word 76 bit 14 */
 	"unknown 76[13]",				/* word 76 bit 13 */
@@ -453,7 +453,7 @@ static const char *feat_sata0_str[16] = {
 
 /* words 85-87: cmds/feats enabled */
 /* use cmd_feat_str[] to display what commands and features have
- * been enabled with words 85-87 
+ * been enabled with words 85-87
  */
 
 /* words 89, 90, SECU ERASE TIME */
@@ -472,7 +472,7 @@ static const char *feat_sata0_str[16] = {
 /* word 127: removable media status notification feature set support */
 #define RM_STAT_BITS 		0x0003
 #define RM_STAT_SUP		0x0001
-	
+
 /* word 128: security */
 #define SECU_ENABLED		0x0002
 #define SECU_LEVEL		0x0100	/* was 0x0010 */
@@ -606,7 +606,7 @@ void identify (__u16 *id_supplied, const char *devname)
 			val[ii] = (__u16)scratch;
 			chksum += val[ii] + (val[ii] >> 8);
 		}
-		fclose(fl);  
+		fclose(fl);
 		if(ii < (INTEGRITY+1)) {
 			fprintf(stderr,"Input file wrong format or length\n");
 			exit(ii);
@@ -640,7 +640,7 @@ void identify (__u16 *id_supplied, const char *devname)
 
 	/* Info from the specific configuration word says whether or not the
 	 * ID command completed correctly.  It is only defined, however in
-	 * ATA/ATAPI-5 & 6; it is reserved (value theoretically 0) in prior 
+	 * ATA/ATAPI-5 & 6; it is reserved (value theoretically 0) in prior
 	 * standards.  Since the values allowed for this word are extremely
 	 * specific, it should be safe to check it now, even though we don't
 	 * know yet what standard this device is using.
@@ -651,7 +651,7 @@ void identify (__u16 *id_supplied, const char *devname)
 		if((val[CONFIG]==STBY_NID_VAL) || (val[CONFIG]==STBY_ID_VAL))
 			printf("powers-up in standby; SET FEATURES subcmd spins-up.\n");
 		if(((val[CONFIG]==STBY_NID_VAL) || (val[CONFIG]==PWRD_NID_VAL)) &&
-		   (val[GEN_CONFIG] & INCOMPLETE)) 
+		   (val[GEN_CONFIG] & INCOMPLETE))
 			printf("\n\tWARNING: ID response incomplete.\n\tWARNING: Following data may be incorrect.\n\n");
 	}
 
@@ -735,7 +735,7 @@ void identify (__u16 *id_supplied, const char *devname)
 			like_std = 5;
 		}  else if(((std == 3) || (!std && (like_std < 4))) &&
 			   ((((val[CMDS_SUPP_1] & VALID) == VALID_VAL) &&
-			     (((val[CMDS_SUPP_1] & CMDS_W83) > 0x0000) ||  
+			     (((val[CMDS_SUPP_1] & CMDS_W83) > 0x0000) ||
 			      ((val[CMDS_SUPP_0] & CMDS_W82) > 0x000f))) ||
 			    ((val[CAPAB_1] & VALID) == VALID_VAL) ||
 			    ((val[WHATS_VALID] & OK_W88) && val[ULTRA_DMA]) ||
@@ -836,16 +836,16 @@ void identify (__u16 *id_supplied, const char *devname)
 						mm = nn;
 				}
 				printf("\tCHS current addressable sectors:%11u\n",mm);
-			} 
+			}
 		}
 		if (val[CAPAB_0] & LBA_SUP) {
 		/* LBA addressing */
 			printf("\tLBA    user addressable sectors:%11u\n",ll);
 			if( ((val[CMDS_SUPP_1] & VALID) == VALID_VAL) &&
 			     (val[CMDS_SUPP_1] & SUPPORT_48_BIT) ) {
-				bbbig = (__u64)val[LBA_64_MSB] << 48 | 
+				bbbig = (__u64)val[LBA_64_MSB] << 48 |
 				        (__u64)val[LBA_48_MSB] << 32 |
-				        (__u64)val[LBA_MID] << 16 | 
+				        (__u64)val[LBA_MID] << 16 |
 					val[LBA_LSB] ;
 				printf("\tLBA48  user addressable sectors:%11llu\n", (unsigned long long)bbbig);
 			}
@@ -877,7 +877,7 @@ void identify (__u16 *id_supplied, const char *devname)
 		else			     printf("(cannot");
 		printf(" be disabled)");
 	} else {
-		printf("IORDY not likely"); 
+		printf("IORDY not likely");
 	}
 	printf("\n");
 	if((like_std == 1) && val[BUF_TYPE]) {
@@ -992,10 +992,10 @@ void identify (__u16 *id_supplied, const char *devname)
 		}
 		printf("\n");
 
-		if((dev == ATAPI_DEV) && (eqpt != CDROM) && (val[CAPAB_0] & DMA_IL_SUP)) 
+		if((dev == ATAPI_DEV) && (eqpt != CDROM) && (val[CAPAB_0] & DMA_IL_SUP))
 			printf("\t     Interleaved DMA support\n");
 
-		if((val[WHATS_VALID] & OK_W64_70) && 
+		if((val[WHATS_VALID] & OK_W64_70) &&
 		   (val[DMA_TIME_MIN] || val[DMA_TIME_NORM])) {
 			printf("\t     Cycle time:");
 			if(val[DMA_TIME_MIN])
@@ -1053,11 +1053,11 @@ void identify (__u16 *id_supplied, const char *devname)
 		if (transport == 1 || (val[SATA_SUPP_0] && val[SATA_SUPP_0] != 0xffff))
 			print_features(val[SATA_SUPP_0], val[SATA_EN_0], feat_sata0_str);
 	}
-	if((val[RM_STAT] & RM_STAT_BITS) == RM_STAT_SUP) 
+	if((val[RM_STAT] & RM_STAT_BITS) == RM_STAT_SUP)
 		printf("\tRemovable Media Status Notification feature set supported\n");
 
 	/* security */
-	if((eqpt != CDROM) && (like_std > 3) && 
+	if((eqpt != CDROM) && (like_std > 3) &&
 	   (val[SECU_STATUS] || val[ERASE_TIME] || val[ENH_ERASE_TIME])) {
 		printf("Security: \n");
 		if(val[PSWD_CODE] && (val[PSWD_CODE] != NOVAL_1))
@@ -1098,7 +1098,7 @@ void identify (__u16 *id_supplied, const char *devname)
 			printf("\tDevice num = 1");
 			jj = val[HWRST_RSLT] >> 8;
 		}
-		if((jj & DEV_DET) == JUMPER_VAL) 
+		if((jj & DEV_DET) == JUMPER_VAL)
 			printf(" determined by the jumper");
 		else if((jj & DEV_DET) == CSEL_VAL)
 			printf(" determined by CSEL");
@@ -1145,7 +1145,7 @@ __u8 mode_loop(__u16 mode_sup, __u16 mode_sel, int cc, __u8 *have_mode) {
 void print_ascii(__u16 *p, __u8 length) {
 	__u8 ii;
 	char cl;
-	
+
 	/* find first non-space & print it */
 	for(ii = 0; ii< length; ii++) {
 		if(((char) 0x00ff&((*p)>>8)) != ' ') break;
