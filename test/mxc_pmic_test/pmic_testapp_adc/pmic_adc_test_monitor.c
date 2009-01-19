@@ -1,14 +1,14 @@
-/* 
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
@@ -25,7 +25,7 @@ extern "C"{
 ==============================================================================*/
 /* Standard Include Files */
 #include <errno.h>
-    
+
 /* Harness Specific Include Files. */
 #include "test.h"
 
@@ -46,7 +46,7 @@ extern int fd_adc;
 @brief  assumes the initial condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -64,7 +64,7 @@ int VT_pmic_adc_monitor_setup(void)
 @brief  assumes the post-condition of the test case execution
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -88,7 +88,7 @@ static void callback_wcomp(void)
 @brief  PMIC test scenario monitor functionG
 
 @param  None
-  
+
 @return On success - return TPASS
         On failure - return the error code
 */
@@ -96,10 +96,10 @@ static void callback_wcomp(void)
 int VT_pmic_adc_test_monitor(void)
 {
         t_adc_comp_param mon_param;
-        
+
         mon_param.wlow = 3;
         mon_param.whigh = 60;
-        mon_param.channel = BATTERY_CURRENT; 
+        mon_param.channel = BATTERY_CURRENT;
         mon_param.callback = (t_comparator_cb*)callback_wcomp;
 
         printf(("Test monitoring ADC functions\n"));

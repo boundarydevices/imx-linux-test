@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2006-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -35,18 +35,18 @@ int main(int argc, char **argv)
                 exit(-1);
         }
 
-        i2c_test.bus = 0;         
+        i2c_test.bus = 0;
         i2c_test.slave_addr = 0x2d; //USB Slave Address
-        
+
         printf("Slave address=%x\n", i2c_test.slave_addr);
-      
+
         reg[0] = 0x6;
         i2c_test.reg = reg;
         i2c_test.reg_size = 1;
         buf[0] = 0x20;
         i2c_test.buf = (char *)&buf;
         i2c_test.buf_size = 1;
-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]); 
+        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]);
         ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
 
         reg[0] = 0x4;
@@ -55,25 +55,25 @@ int main(int argc, char **argv)
         buf[0] = 0x4;
         i2c_test.buf = (char *)&buf;
         i2c_test.buf_size = 1;
-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]); 
+        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]);
         ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
-        
+
         reg[0] = 0x13;
         i2c_test.reg = reg;
         i2c_test.reg_size = 1;
         buf[0] = 0x4;
         i2c_test.buf = (char *)&buf;
         i2c_test.buf_size = 1;
-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]); 
+        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]);
         ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
-        
+
         reg[0] = 0x12;
         i2c_test.reg = reg;
         i2c_test.reg_size = 1;
         buf[0] = 0x2;
         i2c_test.buf = (char *)&buf;
         i2c_test.buf_size = 1;
-        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]); 
+        printf("Write Data=%x to reg=%x\n", buf[0], reg[0]);
         ioctl(i2c_file, MXCTEST_I2C_WRITE, &i2c_test);
 
         reg[0] = 0x6;

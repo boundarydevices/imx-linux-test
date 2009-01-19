@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2007-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -29,7 +29,7 @@ extern "C"{
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-    
+
 /* Verification Test Environment Include Files */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -73,7 +73,7 @@ mxc_v4l_tvin_test(void)
         int overlay = 1;
 	v4l2_std_id id;
 	struct v4l2_streamparm parm;
-	 
+
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
         parm.parm.capture.timeperframe.denominator = 0;
@@ -108,7 +108,7 @@ mxc_v4l_tvin_test(void)
                     sleep(1);
 		    continue;
 		 }
-		
+
        }
 
     return 0;
@@ -158,12 +158,12 @@ mxc_v4l_tvin_setup(struct v4l2_format *fmt)
                 printf("get format failed\n");
                 return TFAIL;
         }
-		
+
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
         parm.parm.capture.timeperframe.denominator = 0;
         parm.parm.capture.capturemode = 0;
-         
+
         if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
         {
                 printf("VIDIOC_S_PARM failed\n");

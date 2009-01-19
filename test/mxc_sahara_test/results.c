@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -76,7 +76,7 @@ void run_result(fsl_shw_uco_t* my_ctx, uint32_t* total_passed_count,
 	unsigned int received_count = 0;
 	struct rand_test *tests;
 	unsigned passed = 1;	/* boolean */
-	
+
 	printf("\nTest: GET RESULTS\n");
 
 	tests = malloc(NUM_REQUESTS * sizeof(*tests));
@@ -126,8 +126,8 @@ void run_result(fsl_shw_uco_t* my_ctx, uint32_t* total_passed_count,
 			if (actual > 0)
 			{
 				printf("%d results received\n", actual);
-				
-				
+
+
 			 /* and loop over each result received. */
 			 for (i = 0; i < actual; i++) {
 				unsigned testno =
@@ -160,9 +160,9 @@ void run_result(fsl_shw_uco_t* my_ctx, uint32_t* total_passed_count,
 					}
 			    }
 			 }
-			 
+
 			} /* for each result received */
-			 
+
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -204,7 +204,7 @@ void detect_enter(int time_out)
 		do {
 			read(fd_console, &c, 1);
 		}
-		while (c != 10);	// i.e. line-feed 
+		while (c != 10);	// i.e. line-feed
 	}
 }
 

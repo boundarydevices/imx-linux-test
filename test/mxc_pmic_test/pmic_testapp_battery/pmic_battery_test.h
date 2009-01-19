@@ -1,18 +1,18 @@
-/* 
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
- * @file   pmic_battery_test.h 
+ * @file   pmic_battery_test.h
  * @brief  Test scenario C header PMIC.
  */
 
@@ -43,7 +43,7 @@ extern "C"{
 /*==============================================================================
                                        DEFINES AND MACROS
 ==============================================================================*/
-#define	PMIC_BATT_DEV "pmic_battery" 
+#define	PMIC_BATT_DEV "pmic_battery"
 
 #if !defined(TRUE) && !defined(FALSE)
 #define TRUE  1
@@ -59,4 +59,4 @@ int VT_pmic_batt_test(int switch_fct);
 }
 #endif
 
-#endif 
+#endif
