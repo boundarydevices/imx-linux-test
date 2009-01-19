@@ -1,32 +1,32 @@
 /*
  * Copyright (c) 2000 Silicon Graphics, Inc.  All Rights Reserved.
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it would be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * 
+ *
  * Further, this software is distributed without any warranty that it is
  * free of the rightful claim of any third person regarding infringement
  * or the like.  Any license provided herein, whether implied or
  * otherwise, applies only to this software file.  Patent licenses, if
  * any, provided herein do not apply to combinations of this program with
  * other software, or any other product whatsoever.
- * 
+ *
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write the Free Software Foundation, Inc., 59
  * Temple Place - Suite 330, Boston MA 02111-1307, USA.
- * 
+ *
  * Contact information: Silicon Graphics, Inc., 1600 Amphitheatre Pkwy,
  * Mountain View, CA  94043, or:
- * 
- * http://www.sgi.com 
- * 
- * For further information regarding this notice, see: 
- * 
+ *
+ * http://www.sgi.com
+ *
+ * For further information regarding this notice, see:
+ *
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
@@ -130,7 +130,7 @@ tst_tmpdir()
 #  define HAVE_MKDTEMP 0
 	int tfd;
 # endif
-#else 
+#else
 # define HAVE_MKDTEMP 0
 	int tfd;
 #endif
@@ -149,7 +149,7 @@ tst_tmpdir()
 #endif
 	} else {
 		/*
-		 * Create a template for the temporary directory.  Use the 
+		 * Create a template for the temporary directory.  Use the
 		 * environment variable TMPDIR if it is available, otherwise
 		 * use our default TEMPDIR.
 		 */
@@ -158,35 +158,35 @@ tst_tmpdir()
 		} else {
 			snprintf(template, PATH_MAX, "%s/%.3sXXXXXX", TEMPDIR, TCID);
 		}
-		
+
 
 #if HAVE_MKDTEMP
 		/*
 		 * Make the temporary directory in one shot using mkdtemp()
 		 */
 		if (mkdtemp(template) == NULL)
-			tst_brkm(TBROK, tmpdir_cleanup, 
-				"%s: mkdtemp(%s) failed; errno = %d: %s", 
+			tst_brkm(TBROK, tmpdir_cleanup,
+				"%s: mkdtemp(%s) failed; errno = %d: %s",
 				FN_NAME, template, errno, strerror(errno));
 		TESTDIR = strdup(template);
-#else 
+#else
 		/*
 		 * Make the template name, then the directory
 		 */
 		if (tfd = mkstemp(template) == -1)
-			tst_brkm(TBROK, tmpdir_cleanup, 
-				"%s: mkstemp(%s) failed; errno = %d: %s", 
+			tst_brkm(TBROK, tmpdir_cleanup,
+				"%s: mkstemp(%s) failed; errno = %d: %s",
 				FN_NAME, template, errno, strerror(errno));
 		close(tfd);
 		unlink(template);
 		TESTDIR = strdup(template);
 		if (mkdir(TESTDIR, DIR_MODE)) {
-			/* If we start failing with EEXIST, wrap this section in 
+			/* If we start failing with EEXIST, wrap this section in
 			 * a loop so we can try again.
 			 */
-			tst_brkm(TBROK, tmpdir_cleanup, 
-				"%s: mkdir(%s, %#o) failed; errno = %d: %s", 
-				FN_NAME, TESTDIR, DIR_MODE, errno, 
+			tst_brkm(TBROK, tmpdir_cleanup,
+				"%s: mkdir(%s, %#o) failed; errno = %d: %s",
+				FN_NAME, TESTDIR, DIR_MODE, errno,
 				strerror(errno));
 		}
 #endif
@@ -196,8 +196,8 @@ tst_tmpdir()
 		 * gid of the person running the tests.
 		 */
 		if ( chown(TESTDIR, -1, getgid()) == -1 )
-			tst_brkm(TBROK, tmpdir_cleanup, 
-				"chown(%s, -1, %d) failed; errno = %d: %s", 
+			tst_brkm(TBROK, tmpdir_cleanup,
+				"chown(%s, -1, %d) failed; errno = %d: %s",
 				TESTDIR, getgid(), errno, strerror(errno));
  	}
 
@@ -209,7 +209,7 @@ tst_tmpdir()
   	 * Change to the temporary directory.  If the chdir() fails, issue
    	 * TBROK messages for all test cases, attempt to remove the
 	 * directory (if it was created), and exit.  If the removal also
-	 * fails, also issue a TWARN message.   
+	 * fails, also issue a TWARN message.
 	 */
 	if ( chdir(TESTDIR) == -1 ) {
 		tst_brkm(TBROK, NULL, "%s: chdir(%s) failed; errno = %d: %s",
@@ -222,7 +222,7 @@ tst_tmpdir()
 
 		tmpdir_cleanup();
 	}
-	
+
 #if UNIT_TEST
 	printf("CWD is %s\n", getcwd((char *)NULL, PATH_MAX));
 #endif
@@ -241,7 +241,7 @@ tst_tmpdir()
  *               companion to tst_tmpdir().  If the TDIRECTORY
  *               environment variable is set, no cleanup will be
  *               attempted.
- */ 
+ */
 #undef   FN_NAME
 #define  FN_NAME  "tst_rmdir()"
 
@@ -265,7 +265,7 @@ tst_rmdir()
 #endif
       return;
    }
-   
+
    /*
     * Check that TESTDIR is not NULL.
     */
@@ -315,7 +315,7 @@ tst_rmdir()
       tst_resm(TWARN,
                "%s: chdir(%s) failed; errno = %d: %s\nAttempting to remove temp dir anyway",
                FN_NAME, parent_dir, errno, strerror(errno));
-   
+
    /*
     * Attempt to remove the "TESTDIR" directory, using rmobj().
     */

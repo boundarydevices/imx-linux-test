@@ -44,7 +44,7 @@ tool_loopback
 
 
 #
-# tool_player 
+# tool_player
 #
 description:
         Plays the file to /dev/dspX (uncompressed data)
@@ -56,7 +56,7 @@ usage:
 
 
 #
-# tool_listplayer 
+# tool_listplayer
 #
 description:
         Plays the playlist to /dev/dspX (uncompressed data)
@@ -69,7 +69,7 @@ usage:
 
 
 #
-# check_2play_capability 
+# check_2play_capability
 #
 description:
         Plays two file to /dev/dsp and /dev/dsp1 (uncompressed data)
@@ -99,7 +99,7 @@ note:
 # tool_loopback
 #
 description:
-        
+
 usage:
         loopback <source> <type> <bytes> [b f c]. Plays data recorded (loopback at SSI level)
 	source: 1:handset, 2:headset, 3: line in
@@ -143,7 +143,7 @@ usage:
 description:
         This program reconfigures the balance and plays a file
 usage:
-        check_balance <soundfile.wav> <bal> [nb_loops] 
+        check_balance <soundfile.wav> <bal> [nb_loops]
         bal : the new balance setting; 0=full left; 50: none; 100: full right
         nb_loops : number of times the current file is played
 

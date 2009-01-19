@@ -30,7 +30,7 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-#include <unistd.h> 
+#include <unistd.h>
 
 char *
 get_high_address()

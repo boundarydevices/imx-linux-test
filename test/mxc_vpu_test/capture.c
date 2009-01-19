@@ -128,7 +128,7 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 		cap_fd = -1;
 		return -1;
 	}
-	
+
 	memset(&req, 0, sizeof(req));
 	req.count = TEST_BUFFER_NUM;
 	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;

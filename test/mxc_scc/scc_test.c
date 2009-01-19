@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -145,7 +145,7 @@ scc_configuration_access *get_scc_configuration(int);
 int
 main(int arg_count,             /* # command-line arguments */
      char *arg_list[])            /* pointers to command-line arguments */
-{ 
+{
     /* Declare and initialize variables */
     int scc_fd;                 /* The SCC device */
     char *scc_device_path = "/dev/scc_test";
@@ -154,7 +154,7 @@ main(int arg_count,             /* # command-line arguments */
     uint32_t timer_value = 0x5f0000;
     char *test_to_run = "Cres"; /* default list of tests to be run in order */
     int test_status = 0;
-       
+
     init_plaintext();
 
     /* Open up the SCC device */
@@ -403,7 +403,7 @@ main(int arg_count,             /* # command-line arguments */
         default:
             fprintf(stderr, "Test switch %c unknown\n", test_switch);
         }
-        
+
     }
 
     close(scc_fd);
@@ -416,7 +416,7 @@ main(int arg_count,             /* # command-line arguments */
 void
 display_configuration(int scc_fd) {
     scc_configuration_access *config;
-    
+
     config = get_scc_configuration(scc_fd);
     if (config == NULL) {
         perror("\nCannot display SCC Configuration");
@@ -829,7 +829,7 @@ run_cipher_tests(int scc_fd)
             read_scc_register(scc_fd, SMN_STATUS, &value);
             printf("SMN Status                  (0x%08x): ", value);
             print_smn_status_register(value);
-  
+
             read_scc_register(scc_fd, SCM_ERROR_STATUS, &value);
             printf("SCM Error Register          (0x%08x):", value);
             print_scc_error_status_register(value);
@@ -848,7 +848,7 @@ run_cipher_tests(int scc_fd)
             cipher_control.data_out = new_plaintext;
             cipher_control.data_out_length = plaintext_length +
                 decrypt_padding_allowance;
-        
+
             if (inject_crc_error) {
                 ciphertext[rand()%cipher_control.data_in_length] ^= 1;
             }
@@ -900,7 +900,7 @@ run_cipher_tests(int scc_fd)
                     printf("SCM Error Register          (0x%08x):", value);
                     print_scc_error_status_register(value);
                 }
- 
+
                 if (cipher_control.data_out_length != plaintext_length) {
                     printf("Error:  input plaintext length (%d) and output "
                            "plaintext length (%ld) do not match.\n",
@@ -988,7 +988,7 @@ run_aic_tests(int scc_fd) {
     printf("SMN Status: ");
     print_smn_status_register(value);
 
-    
+
     return 0;
 }
 
@@ -1156,7 +1156,7 @@ run_wrap_tests (int scc_fd)
     scc_get_slot_info_access info_acc;
     scc_encrypt_slot_access unload_acc;
     int slot_allocated = 0;
-    
+
     strcpy((char *)key,"abcdefgh");
 
     alloc_acc.owner_id = owner1;
@@ -1230,7 +1230,7 @@ run_wrap_tests (int scc_fd)
             }
         }
     }
-                            
+
     /* Now unload the key */
     if (status == 0) {
         unload_acc.slot = alloc_acc.slot;
@@ -1250,7 +1250,7 @@ run_wrap_tests (int scc_fd)
             }
         }
     }
-    
+
     /* Reacquire a slot */
     if ((status == 0) && !slot_allocated) {
         status = ioctl(scc_fd, SCC_TEST_ALLOC_SLOT, &alloc_acc);
@@ -1572,7 +1572,7 @@ print_smn_status_register(uint32_t status)
 {
     int version_id;
     uint8_t state;
-          
+
     version_id = (status&SMN_STATUS_VERSION_ID_MASK)
         >> SMN_STATUS_VERSION_ID_SHIFT;
     state = (status&SMN_STATUS_STATE_MASK) >> SMN_STATUS_STATE_SHIFT;
@@ -1647,7 +1647,7 @@ print_scm_status_register(uint32_t status)
            (status&SCM_STATUS_CIPHERING) ? ", CIPHERING" : "",
            (status&SCM_STATUS_ZEROIZING) ? ", ZEROIZING" : "",
            (status&SCM_STATUS_BUSY) ? ", BUSY" : "");
-           
+
 
 }
 
@@ -1684,7 +1684,7 @@ print_scc_error_status_register(uint32_t error)
            (error&SCM_ERR_CIPHERING) ? ", CIPHERING" : "",
            (error&SCM_ERR_ZEROIZING) ? ", ZEROIZING" : "",
            (error&SCM_ERR_BUSY) ? ", BUSY" : "");
-           
+
 }
 
 
