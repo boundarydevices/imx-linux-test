@@ -1,14 +1,14 @@
-/* 
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved. 
+/*
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
-/* 
- * The code contained herein is licensed under the GNU General Public 
- * License. You may obtain a copy of the GNU General Public License 
- * Version 2 or later at the following locations: 
- * 
- * http://www.opensource.org/licenses/gpl-license.html 
- * http://www.gnu.org/copyleft/gpl.html 
+
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
  */
 
 /*!
@@ -36,7 +36,7 @@ extern "C"{
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-    
+
 /* Harness Specific Include Files. */
 #include "test.h"
 #include "usctest.h"
@@ -107,7 +107,7 @@ void help(void);
 
 @param  Input :      None.
         Output:      None.
-  
+
 @return Nothing
 */
 /*============================================================================*/
@@ -117,17 +117,17 @@ void cleanup(void)
 
         if(!strcmp(ch_test_case,TEST_CASE_TS))
         {
-                VT_rv = VT_pmic_adc_TS_cleanup(); 
+                VT_rv = VT_pmic_adc_TS_cleanup();
         } else if (!strcmp(ch_test_case,TEST_CASE_R))
         {
-                VT_rv = VT_pmic_adc_read_cleanup(); 
+                VT_rv = VT_pmic_adc_read_cleanup();
         } else if (!strcmp(ch_test_case,TEST_CASE_CONV))
         {
-                VT_rv = VT_pmic_adc_convert_cleanup(); 
+                VT_rv = VT_pmic_adc_convert_cleanup();
         } else if (!strcmp(ch_test_case,TEST_CASE_MON))
         {
-                VT_rv = VT_pmic_adc_monitor_cleanup(); 
-        }  else 
+                VT_rv = VT_pmic_adc_monitor_cleanup();
+        }  else
 
         if ((fd_adc > 0) & (close(fd_adc) < 0))
         {
@@ -138,7 +138,7 @@ void cleanup(void)
 
         if (VT_rv != TPASS)
         {
-                tst_resm(TWARN, "VT_cleanup() Failed : error code = %d\n", 
+                tst_resm(TWARN, "VT_cleanup() Failed : error code = %d\n",
         		VT_rv);
         }
 
@@ -158,7 +158,7 @@ void cleanup(void)
 
 @param  Input :      None.
         Output:      None.
-  
+
 @return On failure - Exits by calling cleanup().
         On success - returns 0.
 */
@@ -174,17 +174,17 @@ void setup(void)
 
         if(!strcmp(ch_test_case,TEST_CASE_TS))
         {
-                VT_rv = VT_pmic_adc_TS_setup(); 
+                VT_rv = VT_pmic_adc_TS_setup();
         } else if (!strcmp(ch_test_case,TEST_CASE_R))
         {
-                VT_rv = VT_pmic_adc_read_setup(); 
+                VT_rv = VT_pmic_adc_read_setup();
         } else if (!strcmp(ch_test_case,TEST_CASE_CONV))
         {
-                VT_rv = VT_pmic_adc_convert_setup(); 
+                VT_rv = VT_pmic_adc_convert_setup();
         } else if (!strcmp(ch_test_case,TEST_CASE_MON))
         {
-                VT_rv = VT_pmic_adc_monitor_setup(); 
-        } else 
+                VT_rv = VT_pmic_adc_monitor_setup();
+        } else
         {
                 tst_brkm(TBROK , tst_exit, "Not correct parametres");
         }
@@ -212,7 +212,7 @@ void setup(void)
                 TS - Test touch screen and convert function
                 read - Test read interface
                 CONV - Test touch screen and convert function correctness
-  
+
 @return On failure - Exits by calling cleanup().
         On success - exits with 0 exit value.
 */
@@ -220,18 +220,18 @@ void setup(void)
 int main(int argc, char **argv)
 {
         int VT_rv = TFAIL;
-        
+
         /* parse options. */
         int tflag=0;                 /* binary flags: opt or not */
         char *msg;
-        
+
         option_t options[] =
         {
                 { "T:", &tflag, &ch_test_case  },/* Test case */
-                { NULL, NULL, NULL }             /* NULL required to 
+                { NULL, NULL, NULL }             /* NULL required to
                                                     end array */
         };
-        
+
         if ( (msg=parse_opts(argc, argv, options, &help)) != NULL )
         {
                 tst_brkm(TBROK, tst_exit, "Not correct params\n", TCID);
@@ -239,28 +239,28 @@ int main(int argc, char **argv)
 
         /* Test Case Body. */
         if(tflag) {
-                /* Print test Assertion using tst_resm() function 
+                /* Print test Assertion using tst_resm() function
                    with argument TINFO. */
-                tst_resm(TINFO, "Testing if %d test case is OK\n", 
+                tst_resm(TINFO, "Testing if %d test case is OK\n",
         		TCID,ch_test_case);
                 setup();
                 if(!strcmp(ch_test_case,TEST_CASE_TS))
                 {
-                        VT_rv = VT_pmic_adc_test_TS(); 
+                        VT_rv = VT_pmic_adc_test_TS();
                 } else if (!strcmp(ch_test_case,TEST_CASE_R))
                 {
-                        VT_rv = VT_pmic_adc_test_read(); 
+                        VT_rv = VT_pmic_adc_test_read();
                 } else if (!strcmp(ch_test_case,TEST_CASE_CONV))
                 {
-                        VT_rv = VT_pmic_adc_test_convert(); 
+                        VT_rv = VT_pmic_adc_test_convert();
                 } else if (!strcmp(ch_test_case,TEST_CASE_MON))
                 {
-                        VT_rv = VT_pmic_adc_test_monitor(); 
+                        VT_rv = VT_pmic_adc_test_monitor();
                 }
 
                 if(VT_rv == TPASS)
                 {
-                        tst_resm(TPASS, "%d test case worked as expected\n", 
+                        tst_resm(TPASS, "%d test case worked as expected\n",
         		TCID,ch_test_case);
                 } else
                 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -10,7 +10,7 @@
  * http://www.opensource.org/licenses/gpl-license.html
  * http://www.gnu.org/copyleft/gpl.html
  */
-    
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -64,7 +64,7 @@ int main(int ac, char *av[])
 	printf("Hi... \n");
 
 	if (ac != 6) {
-		
+
 #ifdef CONFIG_MX21ADS
 		    printf
 		    ("Records an audio file from /dev/sound/dsp (uncompressed data)\n");
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
 #ifdef CONFIG_MX21ADS
 		printf
 		    ("input_dev options: 1 (handphone, for mono/stereo recording)\n\n");
-		
+
 #else
 		printf
 		    ("input_dev options: 1 (handset, J4, for mono/stereo recording)\n");
@@ -87,17 +87,17 @@ int main(int ac, char *av[])
 		    ("                   2 (headset, J3, for mono recording)\n");
 		printf
 		    ("		   3 (line in, J7, for mono recording)\n\n");
-		
+
 #endif
 		    printf("bytes            : Amount of bytes to record\n\n");
 		printf("frequency options: 8000\n");
-		
+
 #ifdef CONFIG_MX21ADS
 		    printf("                   44100\n\n");
-		
+
 #else
 		    printf("                   16000\n\n");
-		
+
 #endif
 		    printf("channels options : 1 (mono)\n");
 		printf
@@ -108,12 +108,12 @@ int main(int ac, char *av[])
 	input_dev = 1;
 #else
 	input_dev = atoi(av[2]);
-	
+
 #endif
 	    bytes = atoi(av[3]);
 	frequency = atoi(av[4]);
 	channels = atoi(av[5]);
-	
+
 #ifdef CONFIG_MX21ADS
 	    if ((fd_audio = open("/dev/sound/dsp", O_RDONLY)) < 0) {
 		printf("Error opening /dev/sound/dsp");
@@ -142,13 +142,13 @@ int main(int ac, char *av[])
 
 	printf("frequency = %d, bytes = %d, input_dev = %d\n", frequency,
 	       bytes, input_dev);
-	
+
 #ifdef CONFIG_MX21ADS
 	    if ((frequency != 44100) && (frequency != 8000)) {
-		
+
 #else
 	    if ((frequency != 16000) && (frequency != 8000)) {
-		
+
 #endif
 		    printf("frequency error: %d\n", frequency);
 		goto error2;
@@ -189,20 +189,20 @@ int main(int ac, char *av[])
 		printf("Unknown input src, using the default one\n");
 		val = SOUND_MASK_MIC;
 	}
-	
+
 #endif
 	    res = ioctl(fd_audio, SOUND_MIXER_WRITE_RECSRC, &val);
 	if (res < 0) {
 		printf("SOUND_MIXER_WRITE_RECSRC error\n");
 		goto error2;
 	}
-	
+
 	    /* write the WAV header, it will be filled in later on */
 	    memset(buf, 0, BUF_SIZE);
 	fwrite(buf, 44, 1, fd_file);
 	bytes_to_read = remaining_bytes = bytes;
 	while (remaining_bytes > 0) {
-		
+
 		    /* read samples */
 		    if (bytes_to_read > BUF_SIZE) {
 			bytes_to_read = BUF_SIZE;
@@ -218,7 +218,7 @@ int main(int ac, char *av[])
 		bytes_to_read = remaining_bytes;
 		total_bytes += bytes_read;
 
-		/* write the samples in file */ 
+		/* write the samples in file */
 		    bytes_written = fwrite(buf, 1, bytes_read, fd_file);
 		if (bytes_written < 0) {
 			perror("/dev/audio\n");
@@ -226,7 +226,7 @@ int main(int ac, char *av[])
 	}
 
 	printf(" total bytes read: (%d)", total_bytes);
-	
+
 	    /* Fill in the wav header */
 	    bits = 16;
 	chan = channels;

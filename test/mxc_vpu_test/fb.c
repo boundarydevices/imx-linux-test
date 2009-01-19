@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -76,7 +76,7 @@ struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height)
 	fb->desc.size = (strideY * height * 3 / 2);
 	if (cpu_is_mx37() || cpu_is_mx51())
 		fb->desc.size += strideY * height / 4;
-	
+
 	err = IOGetPhyMem(&fb->desc);
 	if (err) {
 		printf("Frame buffer allocation failure\n");
@@ -99,7 +99,7 @@ struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height)
 		memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
 		return NULL;
 	}
-	
+
 	return fb;
 }
 

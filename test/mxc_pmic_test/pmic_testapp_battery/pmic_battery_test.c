@@ -1,7 +1,7 @@
 /*
- * Copyright 2005-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
- 
+
 /*
  * The code contained herein is licensed under the GNU General Public
  * License. You may obtain a copy of the GNU General Public License
@@ -46,7 +46,7 @@ extern int fd;
 
 @param  switch_fct
         Number test case.
-  
+
 @return On success - return PMIC_SUCCESS
         On failure - return the error code
 */
@@ -89,7 +89,7 @@ int VT_pmic_batt_test(int switch_fct)
 						 "(main charger). Error code: %d",
 						 status);
 				}
-				
+
 				tset1.c_voltage = 0;
 				tset1.c_current = 0;
 

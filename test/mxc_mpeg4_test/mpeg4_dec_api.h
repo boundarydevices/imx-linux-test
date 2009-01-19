@@ -16,7 +16,7 @@
 //  Jun/23/2004 - Vijay: Review Comments Incorporated.
 //  Jun/28/2004 - Debashis: Memquery implemented, removed RGB format structures
 //  Aug/11/2004 - Anurag: Implemented APIs for skipping frames.
-//  Aug/19/2004 - Anurag: Incorporated Review Comments. 
+//  Aug/19/2004 - Anurag: Incorporated Review Comments.
 //  Aug/24/2004 - Anurag: Exposed VOP_Type to Application.
 //  Aug/10/2004 - Debashis Additional type in memquery
 //  Sep/07/2004 - Debashis Renamed file to mpeg4_dec_api.h
@@ -27,33 +27,33 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /*! \file
- * The interface definitions for the Mpeg4 / H.263 decoder library 
+ * The interface definitions for the Mpeg4 / H.263 decoder library
  */
 
 #define MAX_NUM_MEM_REQS 30         /*! Maximum Number of MEM Requests  */
 #define MAX_VIDEO_OBJECTS 1         /*! Maximum Number of Video Objects */
 #define VOL_INDEX 0                 /*! VOLs per Video Object           */
 
-/*! \def SCP_MASK 
- *  Mask for extracting 24 bit Start Code Prefix from 32 bit MPEG4 Start Codes. 
- *  User should not alter the mask. 
+/*! \def SCP_MASK
+ *  Mask for extracting 24 bit Start Code Prefix from 32 bit MPEG4 Start Codes.
+ *  User should not alter the mask.
  */
 
-/*! \def SVH_MASK 
+/*! \def SVH_MASK
  *  Mask for extracting 24 bit Start Code Prefix for Short Video Header from 32
- *  bits. User should not alter the mask. 
+ *  bits. User should not alter the mask.
  */
 
-/*! \def ZERO_MASK_16 
+/*! \def ZERO_MASK_16
  *  Mask for extracting 16 bit 0 from 32 bits. User should not alter the mask.
  */
 
-/*! \def ZERO_MASK_8 
+/*! \def ZERO_MASK_8
  *  Mask for extracting 8 bit 0 from 32 bits. User should not alter the mask.
  */
 
-#define SCP_MASK       0x00ffffff  
-#define SVH_MASK       0x00ffffff      
+#define SCP_MASK       0x00ffffff
+#define SVH_MASK       0x00ffffff
 #define ZERO_MASK_16   0x0000ffff
 #define ZERO_MASK_8    0x000000ff
 
@@ -86,7 +86,7 @@ typedef enum
     /* Successfull return values */
     E_MPEG4D_SUCCESS = 0,         /*!< Success                             */
     E_MPEG4D_ERROR_CONCEALED,     /*!< Error in the bitstream, but concealed */
-    E_MPEG4D_ENDOF_BITSTREAM,     /*!< End of Bit Stream                   */                                                 
+    E_MPEG4D_ENDOF_BITSTREAM,     /*!< End of Bit Stream                   */
 
     /* Successful return with warning, decoding can continue */
     /* Start with number 11 */
@@ -121,7 +121,7 @@ typedef enum
                                       opposite to PLAY and FF. Current Decoder
                                       doesn't support REW feature */
 } eDecodeState;
- 
+
 /*! \enum Enumeration of possible buffer alignment */
 typedef enum
 {
@@ -160,16 +160,16 @@ typedef struct
  *  The size and alignment are must to meet crteria, whereas others
  *  help to achive the performace projected. MPEG4D_Usage is provided to help
  *  the application to decide if the memory has to be saved, in case of
- *  memory scarcity. Type of the memory has a direct impact on the 
- *  performance. Priority of the block shall act as a hint, in case not 
- *  all requested FAST memory is available. There is no gurantee that 
+ *  memory scarcity. Type of the memory has a direct impact on the
+ *  performance. Priority of the block shall act as a hint, in case not
+ *  all requested FAST memory is available. There is no gurantee that
  *  the priority will be unique for all the memory blocks.
- */ 
+ */
 
 typedef struct
 {
     int 	s32Size;         /*!< size of the memory block            */
-    int 	s32Type;         /*!< type of the memory - slow/fast and 
+    int 	s32Type;         /*!< type of the memory - slow/fast and
                                   static/scratch                      */
     int     s32Priority;     /*!< how important the block is          */
     int 	s32Align;        /*!< alignment of the memory block       */
@@ -178,12 +178,12 @@ typedef struct
 
 
 /*! Structure to hold all the memory requests from the decoder  */
- 
+
 typedef struct
 {
     int               s32NumReqs;                   /*!< Number of blocks  */
     sMpeg4DecMemBlock asMemBlks[MAX_NUM_MEM_REQS];  /*!< array of requests */
-} sMpeg4DecMemAllocInfo;   
+} sMpeg4DecMemAllocInfo;
 
 /*! Structure for Vop Time */
 typedef struct
@@ -200,11 +200,11 @@ typedef struct
     unsigned short int 	 u16FrameWidth;           /*!< FrameWidth         */
     unsigned short int 	 u16FrameHeight;          /*!< FrameHeight        */
     unsigned short int   u16DecodingScheme;       /*!< enable decoding at P */
-    
-    unsigned short int   u16TicksPerSec;          /*!< Time Ticks Per Sec */ 
+
+    unsigned short int   u16TicksPerSec;          /*!< Time Ticks Per Sec */
     sMpeg4DecTime        sTime;                   /*!< Current Decode Time */
-    int                  s32TimeIncrementInTicks; /*!< Time Increment from 
-                                                       prev vop decode time 
+    int                  s32TimeIncrementInTicks; /*!< Time Increment from
+                                                       prev vop decode time
                                                        in ticks */
     unsigned char        u8VopType;               /*!< Current VOP Type */
 } sMpeg4DecoderParams;
@@ -224,7 +224,7 @@ typedef  struct
 /*! This structure defines the decoder context. All the decoder API
  *  needs this structure as one of its argument.
  */
-typedef struct 
+typedef struct
 {
     sMpeg4DecMemAllocInfo   sMemInfo;      /*!< memory requirements info */
     sMpeg4DecoderParams     sDecParam;     /*!< decoder parameters       */
@@ -233,7 +233,7 @@ typedef struct
     void                    *pvAppContext; /*!< Anything app specific    */
     eDecodeState            eState;        /*!< Indicates current Decoder
                                                 State */
-} sMpeg4DecObject; 
+} sMpeg4DecObject;
 
 
 
@@ -259,19 +259,19 @@ eMpeg4DecRetType  eMPEG4DFree (sMpeg4DecObject *psMp4Obj);
  * an I Frame, or start decoding immedeately, depending on the decoding
  * scheme specified in the decoder param.
  */
-eMpeg4DecRetType  eMPEG4DSkipFrames (sMpeg4DecObject *psMp4Obj, 
+eMpeg4DecRetType  eMPEG4DSkipFrames (sMpeg4DecObject *psMp4Obj,
                                      unsigned int u32NumSkipFrames,
                                      unsigned int *pu32NumSkippedFrames);
 
 /*! \brief
- *        Skips to next INTRA frame 
+ *        Skips to next INTRA frame
  */
-eMpeg4DecRetType  eMPEG4DSkip2NextIFrame (sMpeg4DecObject *psMp4Obj, 
+eMpeg4DecRetType  eMPEG4DSkip2NextIFrame (sMpeg4DecObject *psMp4Obj,
                                           unsigned int *pu32NumSkippedFrames);
 
 /*! \brief
  *    Rewinds the given number of frames starting from the current frame.
- * The decoder can later skip all the P frames, till the next I frame, or can 
+ * The decoder can later skip all the P frames, till the next I frame, or can
  * start decoding immedeately, even if it is p frame.
  */
 eMpeg4DecRetType eMPEG4DRewindFrames (sMpeg4DecObject *psMp4Obj,
@@ -283,7 +283,7 @@ eMpeg4DecRetType eMPEG4DRewindFrames (sMpeg4DecObject *psMp4Obj,
  * Call back function for reading the input buffer by the decoder.
  *
  * Whenver the internul buffer inside the decoder is empty, the decoder will
- * call this function, passing the application context also. The application 
+ * call this function, passing the application context also. The application
  * shall implement a function to provide the required portion of the bitstream
  * of the given size, starting at the given offset in the provided buffer.
  */

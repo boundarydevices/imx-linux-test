@@ -82,7 +82,7 @@ run_test()
 ##
 pos_test()
 {
-  
+
     run_test $*
     if [ $? -eq 0 ]; then
         test_pass_count=$(($test_pass_count+1))
@@ -104,7 +104,7 @@ pos_test()
 ## will be stripped.
 ##
 neg_test()
-{  
+{
     run_test $*
     if [ $? -ne 0 ]; then
         test_pass_count=$(($test_pass_count+1))

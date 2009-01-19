@@ -19,7 +19,7 @@ run_hdd_case()
 		dd if=/root/hdd_data of=/dev/hda bs=512 count=10240
 		dd if=/dev/hda of=/root/hdd_data1 bs=512 count=10240
 	else
-	
+
 		dd if=/root/hdd_data of=/dev/sda bs=512 count=10240
 		dd if=/dev/sda of=/root/hdd_data1 bs=512 count=10240
 	fi

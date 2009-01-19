@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2006-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         /* Enable the CSI clock */
         ioctl(i2c_file, MXCTEST_I2C_CSICLKENB, &i2c_test);
 
-        i2c_test.bus = 0;         
+        i2c_test.bus = 0;
         i2c_test.slave_addr = 0x48;
 
         printf("Slave address=0x%x\n\n", i2c_test.slave_addr);

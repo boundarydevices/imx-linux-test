@@ -15,16 +15,16 @@ check_devnode "/dev/mixer"
 
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " arecord -N -M -r 8000 -f S16_LE -c 1 -d 8 test.wav" 
+run_testcase " arecord -N -M -r 8000 -f S16_LE -c 1 -d 8 test.wav"
 fi
 
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " aplay -N -M test.wav" 
+run_testcase " aplay -N -M test.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " aplay -N -M -D hw:0,1 test.wav" 
+run_testcase " aplay -N -M -D hw:0,1 test.wav"
 fi
 
 print_status

@@ -6,7 +6,7 @@ EXCLUDE_LIST:= IMX21ADS IMX27ADS
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = $(OBJDIR)/mxc_sdma_test.out
 else
-OBJS = 
+OBJS =
 endif
 
 all : $(OBJS)

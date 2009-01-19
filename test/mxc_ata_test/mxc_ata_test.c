@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2006-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -233,7 +233,7 @@ static void dump_identity (const struct hd_driveid *id)
 		if (id->major_rev_num != 0x0000 &&  /* NOVAL_0 */
 		    id->major_rev_num != 0xFFFF) {  /* NOVAL_1 */
 			/* through ATA/ATAPI-7 is currently defined--
-			 * increase this value as further specs are 
+			 * increase this value as further specs are
 			 * standardized (though we can guess safely to 15)
 			 */
 			for (i=0; i <= 7; i++) {
@@ -754,7 +754,7 @@ int main(int argc, char **argv)
 	while (argc--) {
 		p = *argv++;
 		if (*p == '-') {
-		
+
 			if (!*++p) usage_error(1);
 
 			while ((c = *p++)) {

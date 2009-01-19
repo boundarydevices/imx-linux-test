@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -13,9 +13,9 @@
 
 /*
  * @file mxc_tvout_test.c
- * 
+ *
  * @brief MXC TVOUT test application
- * 
+ *
  */
 
 #ifdef __cplusplus
@@ -68,9 +68,9 @@ void usage(char *app)
 }
 
 int main(int argc, char **argv)
-{    
+{
 	int fd, err, rt;
-	
+
 	if (argc < 2) {
 		usage(argv[0]);
 		return 0;
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 		printf(MSGHEADER"Can not open %s.\n", TVOUT_DEV);
 		return -1;
 	}
-	
+
 	if (cap.inputs != -1) {
 		err = ioctl(fd, ENCODER_GET_CAPABILITIES, &cap);
 		if (err) {
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 	}
 
 	close(fd);
-	
+
 	return 0;
 }
 

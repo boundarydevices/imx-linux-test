@@ -1,4 +1,4 @@
-/* 
+/*
  * Memalloc, encoder memory allocation driver (kernel module)
  *
  * Copyright (C) 2005  Hantro Products Oy.
@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  */
-    
+
 #ifndef _MEMALLOC_H_
 #define _MEMALLOC_H_
 #include <linux/ioctl.h>    /* needed for the _IOW etc stuff used later */

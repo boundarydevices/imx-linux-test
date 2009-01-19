@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
         char buf[5];
         struct termios mxc, old;
         int retval;
-        
+
         printf("Test: MXC UART!\n");
         printf("Usage: mxc_uart_test <UART device name, opens UART2 if no dev name is specified>\n");
 
@@ -50,20 +50,20 @@ int main(int argc, char **argv)
                         printf("%s opened\n", *argv);
                 }
         }
-                
+
         tcgetattr(uart_file1, &old);
         mxc = old;
         mxc.c_lflag &= ~(ICANON | ECHO | ISIG);
         retval = tcsetattr(uart_file1, TCSANOW, &mxc);
-        printf("Attributes set\n"); 
-        
+        printf("Attributes set\n");
+
         line_val = LOOPBACK;
         ioctl(uart_file1, TIOCMSET, &line_val);
         printf("Test: IOCTL Set\n");
 
         write(uart_file1, "Test\0", 5);
         printf("Data Written= Test\n");
-       
+
         read(uart_file1, buf, 5);
         printf("Data Read back= %s\n", buf);
         sleep(2);

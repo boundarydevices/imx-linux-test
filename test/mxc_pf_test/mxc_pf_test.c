@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -60,7 +60,7 @@ pf_buf g_buf_desc[2];
 int process_cmdline(int argc, char **argv)
 {
         int i;
-        
+
         for (i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-w") == 0) {
                         g_width = atoi(argv[++i]);
@@ -109,7 +109,7 @@ int main (int argc, char *argv[])
 		ret = 1;
 		goto err1;
 	}
-	
+
 	fd_inbuf = fopen(argv[--argc], "r");
 	if (!fd_inbuf) {
 		ret = 1;
@@ -123,7 +123,7 @@ int main (int argc, char *argv[])
 			goto err3;
 		}
 	}
-	
+
         printf("Calling PF init\n");
         pf_init(g_width, g_height, g_width);
 	g_frame_size = (g_width * g_height * 3) / 2;
@@ -134,7 +134,7 @@ int main (int argc, char *argv[])
 		if (fread(g_pf_buf[0], 1, g_frame_size, fd_inbuf) < g_frame_size)
 			break;
 
-		
+
 		if (fread(g_pf_qp_buf[qp_buf], 1, g_pf_qp_size, fd_qpbuf) < g_pf_qp_size)
 			break;
 
@@ -162,7 +162,7 @@ int main (int argc, char *argv[])
 			printf("frames - %d\r", frame_cnt);
 	}
 	printf("frames - %d\n", frame_cnt);
-	
+
         pf_uninit();
 
 	if (fd_outbuf)
@@ -191,7 +191,7 @@ static int pf_init(uint32_t width, uint32_t height, uint32_t stride)
         int retval = 0;
         pf_init_params pf_init;
         pf_reqbufs_params pf_reqbufs;
-        
+
         if ((fd_pf = open("/dev/mxc_ipu_pf", O_RDWR, 0)) < 0)
         {
                 printf("Unable to open pf device\n");
@@ -211,8 +211,8 @@ static int pf_init(uint32_t width, uint32_t height, uint32_t stride)
                 goto err1;
         }
 	g_pf_qp_size = pf_init.qp_size / 2;
-        g_pf_qp_buf[0] = mmap(NULL, pf_init.qp_size, 
-                         PROT_READ | PROT_WRITE, MAP_SHARED, 
+        g_pf_qp_buf[0] = mmap(NULL, pf_init.qp_size,
+                         PROT_READ | PROT_WRITE, MAP_SHARED,
                          fd_pf, pf_init.qp_paddr);
 	g_pf_qp_buf[1] = g_pf_qp_buf[0] + g_pf_qp_size;
         if (g_pf_qp_buf[0] == NULL) {
@@ -220,7 +220,7 @@ static int pf_init(uint32_t width, uint32_t height, uint32_t stride)
                 retval = -1;
                 goto err1;
         }
-        
+
         pf_reqbufs.count = 2;
         pf_reqbufs.req_size = 0;
         if (ioctl(fd_pf, PF_IOCTL_REQBUFS, &pf_reqbufs) < 0)
@@ -239,9 +239,9 @@ static int pf_init(uint32_t width, uint32_t height, uint32_t stride)
                         retval = -1;
                         goto err1;
                 }
-                        
-                g_pf_buf[i] = mmap (NULL, g_buf_desc[i].size, 
-                                 PROT_READ | PROT_WRITE, MAP_SHARED, 
+
+                g_pf_buf[i] = mmap (NULL, g_buf_desc[i].size,
+                                 PROT_READ | PROT_WRITE, MAP_SHARED,
                                  fd_pf, g_buf_desc[i].offset);
                 if (g_pf_buf[i] == NULL) {
                         printf("v4l2_out test: mmap for input buffer failed\n");
@@ -265,7 +265,7 @@ static int pf_uninit(void)
         int retval = 0;
 
         printf("Closing PF driver");
-        
+
         pf_reqbufs.count = 0;   // Zero deallocates buffers
         if (ioctl(fd_pf, PF_IOCTL_REQBUFS, &pf_reqbufs) < 0)
         {
@@ -287,13 +287,13 @@ static int pf_uninit(void)
         printf(" - Done\n");
 err1:
         return retval;
-}        
+}
 
 static int pf_start(int qp_buf)
 {
         int retval = 0;
         pf_start_params pf_st;
-        
+
         memset(&pf_st, 0, sizeof(pf_st));
         pf_st.wait = !g_use_wait;
         pf_st.in = g_buf_desc[0];
@@ -309,7 +309,7 @@ static int pf_start(int qp_buf)
                 printf("PF start failed: %d\n", retval);
                 goto err1;
         }
-	
+
 	if (g_use_wait) {
 		if ((retval = ioctl(fd_pf, PF_IOCTL_WAIT, PF_WAIT_Y)) < 0)
 		{

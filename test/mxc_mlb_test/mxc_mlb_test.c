@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2008-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 			break;
 		case 't':
 			if (strcmp(optarg, "async") == 0) {
-				tcase = 1;		
+				tcase = 1;
 			} else if (strcmp(optarg, "ctrl") == 0) {
 				tcase = 0;
 			} else {
@@ -208,7 +208,7 @@ int do_txrx_test(int fd)
 	char buf[2048];
 	int gotlen = 0;
 
-	/** 
+	/**
 	 * set channel address
 	 * MSB is for tx, LSB is for rx
 	 * the normal address range [0x02, 0x3E]
