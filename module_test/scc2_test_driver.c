@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -463,7 +463,7 @@ do_encrypt_part(scc_part_cipher_access* acc, uint8_t* local_black,
     int status;
     uint32_t IV[4];
     uint32_t* iv_ptr = (uint32_t*)&(acc->iv);
-    
+
     /* Build the IV */
     IV[0] = iv_ptr[0];
     IV[1] = iv_ptr[1];
@@ -491,7 +491,7 @@ do_decrypt_part(scc_part_cipher_access* acc, uint8_t* local_black,
     int status;
     uint32_t IV[4];
     uint32_t* iv_ptr = (uint32_t*)&(acc->iv);
-    
+
     /* Build the IV */
     IV[0] = iv_ptr[0];
     IV[1] = iv_ptr[1];

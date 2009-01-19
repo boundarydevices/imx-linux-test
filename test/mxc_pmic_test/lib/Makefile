@@ -1,12 +1,12 @@
 
-CFLAGS+= -Wall -I../include 
+CFLAGS+= -Wall -I../include
 LDFLAGS+=
 TARGET=libltp.a
 SRCS=$(wildcard *.c)
 OBJS=$(patsubst %.c,%.o,$(SRCS))
 
 $(TARGET): $(OBJS)
-	$(AR) -cr $@ $^    
+	$(AR) -cr $@ $^
 
 .PHONY: clean
 clean:

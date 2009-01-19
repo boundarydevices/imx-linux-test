@@ -14,7 +14,7 @@ device_2=$(cat /proc/devices | grep swcamera | cut -d' ' -f2)
 echo device present is $device_1
 echo device present is $device_2
 
-if [ "$device_1" = clcdc ]; then 
+if [ "$device_1" = clcdc ]; then
 	echo "$script: PASS Device Found $device_1"
 else
 	STATUS=1

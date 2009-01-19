@@ -34,16 +34,16 @@ know the driver's major number.  Look for the driver's name, sahara,
 in /proc/devices.
 
   mknod /dev/sahara c <major-node> 0
-  
+
   Or, after the driver is in operation,  just execute this command:
     mknod /dev/sahara c `grep sahara  /proc/devices | sed -e 's/ .*//'` 0
-    
+
     In order to make the devnode for the kernel tester, you will need to
     know the driver's major number.  Look for the driver's name,
     FSL_API_TEST, in /proc/devices.
-    
+
    mknod /dev/shwtest c <major-node> 0
-      
+
   Or, after the driver is in operation, just execute this command:
     mknod /dev/shwtest c `grep FSL_API_TEST  /proc/devices | sed -e 's/
-      .*//'` 0     
+      .*//'` 0
