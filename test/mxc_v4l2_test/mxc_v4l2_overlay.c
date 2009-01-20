@@ -82,7 +82,8 @@ int g_timeout = 3600;
 int g_display_lcd = 0;
 int g_overlay = 0;
 int g_camera_color = 0;
-int g_camera_framerate = 0;
+int g_camera_framerate = 30;
+int g_capture_mode = 0;
 
 int
 mxc_v4l_overlay_test(int timeout)
@@ -220,7 +221,7 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
         parm.parm.capture.timeperframe.denominator = g_camera_framerate;
-        parm.parm.capture.capturemode = 0;
+	parm.parm.capture.capturemode = g_capture_mode;
 
         if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
         {
@@ -288,6 +289,9 @@ int process_cmdline(int argc, char **argv)
                 else if (strcmp(argv[i], "-fr") == 0) {
                         g_camera_framerate = atoi(argv[++i]);
                 }
+		else if (strcmp(argv[i], "-m") == 0) {
+			g_capture_mode = atoi(argv[++i]);
+		}
                 else if (strcmp(argv[i], "-help") == 0) {
                         printf("MXC Video4Linux overlay Device Test\n\n" \
                                " -iw <input width>\n -ih <input height>\n" \
@@ -298,7 +302,8 @@ int process_cmdline(int argc, char **argv)
                                " -d <output display> \n"	\
                                " -v <camera color> 1-brightness 2-saturation"
                                " 3-red 4-blue 5-black balance\n"\
-                               " -fr <frame rate 0-Auto> \n"	\
+			       " -m <capture mode> 0-low resolution 1-high resolution\n" \
+			       " -fr <frame rate> 30fps by default\n" \
                                " -fg foreground mode when -fg specified,"
                                " otherwise go to frame buffer\n");
                         return -1;

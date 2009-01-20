@@ -67,6 +67,7 @@ int g_rotate = 0;
 int g_cap_fmt = V4L2_PIX_FMT_YUV420;
 int g_camera_framerate = 30;
 int g_extra_pixel = 0;
+int g_capture_mode = 0;
 
 int start_capturing(int fd_v4l)
 {
@@ -143,7 +144,7 @@ int v4l_capture_setup(void)
         }
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+	fmt.fmt.pix.pixelformat = g_cap_fmt;
         fmt.fmt.pix.width = g_width;
         fmt.fmt.pix.height = g_height;
         if (g_extra_pixel){
@@ -171,7 +172,7 @@ int v4l_capture_setup(void)
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
         parm.parm.capture.timeperframe.denominator = g_camera_framerate;
-        parm.parm.capture.capturemode = 0;
+	parm.parm.capture.capturemode = g_capture_mode;
 
         if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
         {
@@ -310,6 +311,9 @@ int process_cmdline(int argc, char **argv)
                 else if (strcmp(argv[i], "-e") == 0) {
                         g_extra_pixel = atoi(argv[++i]);
                 }
+		else if (strcmp(argv[i], "-m") == 0) {
+			g_capture_mode = atoi(argv[++i]);
+		}
                 else if (strcmp(argv[i], "-f") == 0) {
                         i++;
                         g_cap_fmt = v4l2_fourcc(argv[i][0], argv[i][1],argv[i][2],argv[i][3]);
@@ -317,6 +321,7 @@ int process_cmdline(int argc, char **argv)
                         if ( (g_cap_fmt != V4L2_PIX_FMT_BGR24) &&
                              (g_cap_fmt != V4L2_PIX_FMT_BGR32) &&
                              (g_cap_fmt != V4L2_PIX_FMT_RGB565) &&
+			     (g_cap_fmt != V4L2_PIX_FMT_NV12) &&
                              (g_cap_fmt != V4L2_PIX_FMT_YUV420) )
                         {
                                 return -1;
@@ -328,7 +333,8 @@ int process_cmdline(int argc, char **argv)
                                " -h <capture height>\n" \
                                " -r <rotation> -c <capture counter> \n"
                                " -e <destination cropping: extra pixels> \n" \
-                               " -f <format> -fr <frame rate, 0-auto> \n");
+			       " -m <capture mode, 0-low resolution, 1-high resolution> \n" \
+			       " -f <format> -fr <frame rate, 30fps by default> \n");
                         return -1;
                }
         }
