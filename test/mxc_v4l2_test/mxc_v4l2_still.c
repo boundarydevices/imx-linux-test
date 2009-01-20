@@ -46,15 +46,19 @@ static int g_width = 640;
 static int g_height = 480;
 static unsigned long g_pixelformat = V4L2_PIX_FMT_YUYV;
 static int g_bpp = 16;
+static int g_camera_framerate = 30;
+static int g_capture_mode = 0;
 
 void usage(void)
 {
-        printf("Usage: mxc_v4l2_still.out [-w width] [-h height] [-f pixformat] [-c]\n"
+	printf("Usage: mxc_v4l2_still.out [-w width] [-h height] [-f pixformat] [-c] [-m] [-fr]\n"
                 "-w    Image width, 640 by default\n"
                 "-h    Image height, 480 by default\n"
                 "-f    Image pixel format, YUV420, YUV422P, YUYV (default), UYVY or YUV444\n"
                 "-c    Convert to YUV420P. This option is valid for interleaved pixel\n"
                 "      formats only - YUYV, UYVY, YUV444\n"
+		"-m    Capture mode, 0-low resolution(default), 1-high resolution \n"
+		"-fr   Capture frame rate, 30fps by default\n"
                 "The output is saved in ./still.yuv\n"
                 "MX27(eMMA) driver supports YUV420, YUYV and YUV444\n"
                 "MXC(IPU) driver supports UYVY, YUV422P and YUV420\n\n"
@@ -145,11 +149,8 @@ int v4l_capture_setup(void)
 
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
-        parm.parm.capture.timeperframe.denominator = 5;
-        if (g_width > 640 || g_height > 480)
-                parm.parm.capture.capturemode = V4L2_MODE_HIGHQUALITY;
-        else
-                parm.parm.capture.capturemode = 0;
+	parm.parm.capture.timeperframe.denominator = g_camera_framerate;
+	parm.parm.capture.capturemode = g_capture_mode;
 
         if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
         {
@@ -204,8 +205,8 @@ void v4l_capture_test(int fd_v4l)
 
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
-        parm.parm.capture.timeperframe.denominator = 30;
-        parm.parm.capture.capturemode = 0;
+        parm.parm.capture.timeperframe.denominator = g_camera_framerate;
+        parm.parm.capture.capturemode = g_capture_mode;
 
         if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
         {
@@ -244,6 +245,12 @@ int main(int argc, char **argv)
                 else if (strcmp(argv[i], "-c") == 0) {
                         g_convert = 1;
                 }
+		else if (strcmp(argv[i], "-m") == 0) {
+			g_capture_mode = atoi(argv[++i]);
+		}
+		else if (strcmp(argv[i], "-fr") == 0) {
+			g_camera_framerate = atoi(argv[++i]);
+		}
                 else if (strcmp(argv[i], "-f") == 0) {
                         i++;
                         if (strcmp(argv[i], "YUV420") == 0) {
