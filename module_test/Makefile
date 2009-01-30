@@ -10,6 +10,10 @@ module_list-$(CONFIG_MXC_SECURITY_RNG) += rng_test_driver.o
 module_list-$(CONFIG_MXC_SAHARA) += sahara_test_driver.o
 module_list-$(CONFIG_MXC_HMP4E) += memalloc.o
 
+# Build Sahara Kernel Test Module for RNG Kernel Mode Tests
+ifeq ($(CONFIG_MXC_SECURITY_RNG),y)
+module_list-y += sahara_test_driver.o
+endif
 ifeq ($(CONFIG_MXC_SDMA_API),y)
 module_list-y += mxc_sdma_mem_test.o
 endif
@@ -28,7 +32,10 @@ sahara_test_driver-objs := km_test.o $(SAHARA_TEST_SOURCE)run_tests.o \
                            $(SAHARA_TEST_SOURCE)wrap.o \
                            $(SAHARA_TEST_SOURCE)apihelp.o \
                            $(SAHARA_TEST_SOURCE)gen_encrypt.o \
-                           $(SAHARA_TEST_SOURCE)callback.o
+                           $(SAHARA_TEST_SOURCE)callback.o \
+                           $(SAHARA_TEST_SOURCE)dryice.o \
+                           $(SAHARA_TEST_SOURCE)smalloc.o \
+                           $(SAHARA_TEST_SOURCE)user_wrap.o
 
 
 obj-m += $(module_list-y)
