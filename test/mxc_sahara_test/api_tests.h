@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -26,18 +26,20 @@
 #define usleep os_mdelay
 #endif
 
-
-void run_tests(fsl_shw_uco_t*, const char*test_string, uint32_t* passed,
-               uint32_t* failed);
-void run_auth_decrypt(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_gen_encrypt(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_hash(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_hmac1(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_hmac2(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_pkha(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_random(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_result(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void show_capabilities(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_symmetric(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_wrap(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
-void run_callback(fsl_shw_uco_t*, uint32_t* passed, uint32_t* failed);
+void run_tests(fsl_shw_uco_t *, const char *test_string, uint32_t * passed,
+	       uint32_t * failed);
+void run_auth_decrypt(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_gen_encrypt(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_hash(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_hmac1(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_hmac2(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_pkha(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_random(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_result(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void show_capabilities(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_symmetric(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_wrap(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_user_wrap(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_callback(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_smalloc(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
+void run_dryice(fsl_shw_uco_t *, uint32_t * passed, uint32_t * failed);
