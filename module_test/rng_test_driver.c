@@ -89,7 +89,7 @@ static os_driver_reg_t reg_handle;
 	/***********************************************************************
 	 * rng_test_open()													   *
 	 **********************************************************************/
-	/**
+	/*!
 	 * Driver interface function for open() system call.
 	 *
 	 * Register the test user with the FSL SHW API.
@@ -120,7 +120,7 @@ static os_driver_reg_t reg_handle;
 	/***********************************************************************
 	 * rng_test_ioctl() 												   *
 	 **********************************************************************/
-	/**
+	/*!
 	 * Driver interface function for ioctl() system call.
 	 *
 	 * This function serves as a control for the commands being
@@ -180,7 +180,7 @@ static os_driver_reg_t reg_handle;
 	/***********************************************************************
 	 * rng_test_release()												   *
 	 **********************************************************************/
-	/**
+	/*!
 	 * Driver interface function for close() system call.
 	 *
 	 * De-register from the FSL SHW API.  Free associated memory.
@@ -208,7 +208,7 @@ static os_driver_reg_t reg_handle;
 	/*****************************************************************************/
 	/* fn rng_test_get_random() 												 */
 	/*****************************************************************************/
-	/**
+	/*!
 	 * This function will retrieve entropy from the internal buffer of the RNG
 	 * driver.	If not enough entropy is available, it will SLEEP until more is
 	 * available.
@@ -260,7 +260,7 @@ static os_driver_reg_t reg_handle;
 	/*****************************************************************************/
 	/* fn rng_test_add_entropy()												*/
 	/*****************************************************************************/
-	/**
+	/*!
 	 * This function will add @c randomness to the RNG.
 	 *
 	 * @param[in]  randomness		Some 'good' entropy to add to the RNG.
@@ -305,7 +305,7 @@ static os_driver_reg_t reg_handle;
 	/*****************************************************************************/
 	/* fn rng_test_read_register()												*/
 	/*****************************************************************************/
-	/**
+	/*!
 	 * Read value from an RNG register.
 	 * The offset will be checked for validity (range) as well as whether it is
 	 * accessible at the time of the call.
@@ -349,7 +349,7 @@ static os_driver_reg_t reg_handle;
 	/*****************************************************************************/
 	/* fn rng_test_write_register() 											*/
 	/*****************************************************************************/
-	/**
+	/*!
 	 * Write a new value into an RNG register.
 	 *
 	 * The offset will be checked for validity (range) as well as whether it is
@@ -401,7 +401,7 @@ static os_driver_reg_t reg_handle;
 	/*****************************************************************************/
 	/* fn setup_user_driver_interaction()										 */
 	/*****************************************************************************/
-	/**
+	/*!
 	 * Register the driver as the driver for #RNG_TEST_MAJOR_NODE
 	 *
 	 * If RNG_TEST_MAJOR_NODE is zero, then make sure that #rng_test_major_node
@@ -432,7 +432,7 @@ static os_driver_reg_t reg_handle;
 			rng_device_registered = 1;
 #ifdef RNG_DEBUG
 			os_printk("RNG Test:  Major node is %d\n",
-					  os_dev_driver_major_node(reg_handle));
+					  os_driver_get_major(reg_handle));
 #endif
 		} /* else success */
 
@@ -443,7 +443,7 @@ static os_driver_reg_t reg_handle;
 	/*****************************************************************************/
 	/* fn rng_test_cleanup()													*/
 	/*****************************************************************************/
-	/**
+	/*!
 	 * Prepare driver for exit.
 	 *
 	 * This is called during @c rmmod when the driver is unloading.  Try to undo
