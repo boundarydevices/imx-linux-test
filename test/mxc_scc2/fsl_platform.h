@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -40,18 +40,50 @@
 #define FSL_HAVE_RNGA
 #define FSL_HAVE_SCC
 
+#elif defined(CONFIG_ARCH_MX25)
+
+#define FSL_HAVE_SCC
+#define FSL_HAVE_RNGB
+#define FSL_HAVE_RTIC3
+#define FSL_HAVE_DRYICE
+
 #elif defined(CONFIG_ARCH_MX27)
 
 #define FSL_HAVE_SAHARA2
 #define SUBMIT_MULTIPLE_DARS
 #define FSL_HAVE_RTIC
 #define FSL_HAVE_SCC
-#define USE_OLD_PTRS
+#define ALLOW_LLO_DESCRIPTORS
+
+#elif defined(CONFIG_ARCH_MX35)
+
+#define FSL_HAVE_SCC
+#define FSL_HAVE_RNGC
+#define FSL_HAVE_RTIC
+
+#elif defined(CONFIG_ARCH_MX37)
+
+#define FSL_HAVE_SCC2
+#define FSL_HAVE_RNGC
+#define FSL_HAVE_RTIC2
+#define FSL_HAVE_SRTC
+
+#elif defined(CONFIG_ARCH_MX51)
+
+#define FSL_HAVE_SCC2
+#define FSL_HAVE_SAHARA4
+#define FSL_HAVE_RTIC3
+#define FSL_HAVE_SRTC
+#define NO_RESEED_WORKAROUND
+#define NEED_CTR_WORKAROUND
+#define USE_S2_CCM_ENCRYPT_CHAIN
+#define USE_S2_CCM_DECRYPT_CHAIN
+#define ALLOW_LLO_DESCRIPTORS
 
 #elif defined(CONFIG_ARCH_MXC91131)
 
 #define FSL_HAVE_SCC
-#define FSL_HAVE_RNGA
+#define FSL_HAVE_RNGC
 #define FSL_HAVE_HAC
 
 #elif defined(CONFIG_ARCH_MXC91221)
@@ -63,7 +95,6 @@
 #elif defined(CONFIG_ARCH_MXC91231)
 
 #define FSL_HAVE_SAHARA2
-#define USE_OLD_PTRS
 #define FSL_HAVE_RTIC
 #define FSL_HAVE_SCC
 #define NO_OUTPUT_1K_CROSSING
@@ -73,23 +104,38 @@
 #define FSL_HAVE_SCC
 #define FSL_HAVE_RNGC
 
+#elif defined(CONFIG_ARCH_MXC91314)
+
+#define FSL_HAVE_SCC
+#define FSL_HAVE_SAHAR4
+#define FSL_HAVE_RTIC3
+#define NO_RESEED_WORKAROUND
+#define NEED_CTR_WORKAROUND
+#define USE_S2_CCM_ENCRYPT_CHAIN
+#define USE_S2_CCM_DECRYPT_CHAIN
+#define ALLOW_LLO_DESCRIPTORS
+
 #elif defined(CONFIG_ARCH_MXC91321)
 
 #define FSL_HAVE_SAHARA2
 #define FSL_HAVE_RTIC
 #define FSL_HAVE_SCC
+#define SCC_CLOCK_NOT_GATED
 #define NO_OUTPUT_1K_CROSSING
-#define USE_OLD_PTRS
 
 #elif defined(CONFIG_ARCH_MXC92323)
 
 #define FSL_HAVE_SCC2
 #define FSL_HAVE_SAHARA4
+#define FSL_HAVE_PKHA
 #define FSL_HAVE_RTIC2
 #define NO_1K_CROSSING
 #define NO_RESEED_WORKAROUND
 #define NEED_CTR_WORKAROUND
-#define USE_3WORD_BURST
+#define USE_S2_CCM_ENCRYPT_CHAIN
+#define USE_S2_CCM_DECRYPT_CHAIN
+#define ALLOW_LLO_DESCRIPTORS
+
 
 #elif  defined(CONFIG_ARCH_MXC91331)
 
@@ -106,22 +152,9 @@
 
 #define FSL_HAVE_SEC3x
 
-#elif defined(CONFIG_ARCH_MX37)
-
-#define FSL_HAVE_SCC2
-#define FSL_HAVE_RNGC
-#define FSL_HAVE_RTIC2
-#define NO_1K_CROSSING
-#define NO_RESEED_WORKAROUND
-#define NEED_CTR_WORKAROUND
-#define USE_S2_CCM_ENCRYPT_CHAIN
-#define USE_S2_CCM_DECRYPT_CHAIN
-
 #else
 
-/*#error UNKNOWN_PLATFORM*/
-#define UNKNOWN_PLATFORM
-
+#error UNKNOWN_PLATFORM
 
 #endif				/* platform checks */
 
