@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -491,7 +491,7 @@ registerNames_t RNGCStatusNames[] =
 void printRngStatusRegister(const uint32_t status)
 {
     uint32_t i;
-	printf("RNGC Status: 0x%08x: ", status);
+	printf("RNG Status: 0x%08x: ", status);
 
     for (i = 0; i < RNGCSTATUSNAMESLENGTH; i++) {
         if (status & RNGCStatusNames[i].code) {
@@ -524,7 +524,7 @@ registerNames_t RNGCControlNames[] =
 void printRngControlRegister(const uint32_t control)
 {
     uint32_t i;
-	printf("RNGC Control: 0x%08x: ", control);
+	printf("RNG Control: 0x%08x: ", control);
 
     for (i = 0; i < RNGCCONTROLNAMESLENGTH; i++) {
         if (control & RNGCControlNames[i].code) {
