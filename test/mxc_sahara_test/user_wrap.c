@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -12,7 +12,7 @@
  */
 
 /*!
- * @file wrap.c
+ * @file user_wrap.c
  * @brief Test code for Wrapped (Black) Key support in FSL SHW API
  *
  * This file contains vectors and code to test fsl_shw_establish_key(),
@@ -67,13 +67,6 @@ static const unsigned char ARC4_known_ciphertext[] = {
 	0x3a, 0x93, 0x74, 0xb3, 0x5f, 0xdb, 0xd0, 0xdf,
 	0xe2, 0xbc, 0x7c, 0x24, 0xa3, 0xe0, 0xde, 0x78,
 	0x11, 0x08, 0x25, 0x02, 0xae, 0xea, 0x04, 0x17
-};
-
-/*! Key for software keys test */
-static uint8_t software_key_data[] = {
-	0x01, 0x23, 0x45, 0x67, 0x01, 0x23, 0x45, 0x67,
-	0x76, 0x54, 0x32, 0x10, 0x76, 0x54, 0x32, 0x10,
-	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e
 };
 
 #define KEY_OWNER_ID 0x42
@@ -178,6 +171,7 @@ static int create_key(fsl_shw_uco_t * my_ctx, fsl_shw_sko_t * key_info,
  * that the message matches the expected message.
  */
 static int extract_reestablish_key(fsl_shw_uco_t * my_ctx,
+				   fsl_shw_kso_t * my_keystore,
 				   uint32_t ownerid, uint32_t handle,
 				   fsl_shw_scco_t * sym_ctx,
 				   const uint8_t * ciphertext,
@@ -197,14 +191,13 @@ static int extract_reestablish_key(fsl_shw_uco_t * my_ctx,
 	init_key_and_sym_ctx(key_alg, key_len, &old_key_info, sym_ctx);
 
 	fsl_shw_sko_set_established_info(&old_key_info, ownerid, handle);
+	fsl_shw_sko_set_keystore(&old_key_info, my_keystore);
 
 	fsl_shw_sko_calculate_wrapped_size(&old_key_info, &blob_length);
-	blob = malloc(blob_length + 1);
+	blob = malloc(blob_length);
 
 	if (decrypt_output != NULL) {
 		memset(blob, 0, blob_length);
-		blob[blob_length] = 0x42;
-
 		code = fsl_shw_extract_key(my_ctx, &old_key_info, blob);
 		if (code != FSL_RETURN_OK_S) {
 			fsl_shw_return_t err_err;
@@ -218,17 +211,15 @@ static int extract_reestablish_key(fsl_shw_uco_t * my_ctx,
 				     handle, fsl_error_string(err_err));
 			}
 		} else {
-		    if (blob[blob_length] != 0x42) {
-				printf("Wrapped key buffer was overwritten\n");
-				goto out;
-			}
 			init_key_and_sym_ctx(key_alg, key_len, &new_key_info,
 					     sym_ctx);
 
 			fsl_shw_sko_set_user_id(&new_key_info, KEY_OWNER_ID);
+			fsl_shw_sko_set_keystore(&new_key_info, my_keystore);
 
 			code = fsl_shw_establish_key(my_ctx, &new_key_info,
 						     FSL_KEY_WRAP_UNWRAP, blob);
+
 			if (code != FSL_RETURN_OK_S) {
 				printf
 				    ("fsl_shw_establish_key(UNWRAP) returned: %s\n",
@@ -245,7 +236,6 @@ static int extract_reestablish_key(fsl_shw_uco_t * my_ctx,
 							      sym_ctx, len,
 							      ciphertext,
 							      decrypt_output);
-
 				if (code != FSL_RETURN_OK_S) {
 					printf
 					    ("fsl_shw_symmetric_decrypt() returned: %s\n",
@@ -270,7 +260,6 @@ static int extract_reestablish_key(fsl_shw_uco_t * my_ctx,
 		}
 	}
 
-out:
 	/* Clean up any allocated memory */
 	if (decrypt_output) {
 		free(decrypt_output);
@@ -283,147 +272,19 @@ out:
 }
 
 /*!
- * Test that software (user retrievable) key functions work correctly.
- *
- * Establish a known key, read it out to verify that it can be read, wrap and
- * unwrap it, then verify that the unwrapped key can also be read.
- */
-static void test_software_key(fsl_shw_uco_t * my_ctx,
-			      uint32_t * total_passed_count,
-			      uint32_t * total_failed_count)
-{
-	fsl_shw_sko_t software_key;
-	fsl_shw_sko_t unwrap_key;
-	fsl_shw_return_t ret;
-	uint8_t software_key_read[sizeof(software_key_data)];
-	uint8_t unwrap_key_read[sizeof(software_key_data)];
-
-	uint8_t *wrapped_key_data = NULL;
-	int wrapped_key_size;
-
-	int passed = 0;
-	int failed = 0;
-
-	/* Establish a known software key */
-	fsl_shw_sko_init(&software_key, FSL_KEY_ALG_TDES);
-	fsl_shw_sko_set_key_length(&software_key, sizeof(software_key_data));
-	fsl_shw_sko_set_user_id(&software_key, 0x123456);
-	fsl_shw_sko_set_flags(&software_key, FSL_SKO_KEY_SW_KEY);
-
-	ret = fsl_shw_establish_key(my_ctx, &software_key, FSL_KEY_WRAP_ACCEPT,
-				    software_key_data);
-	if (ret != FSL_RETURN_OK_S) {
-		printf("Establish software key from plaintext failed with %s\n",
-		       fsl_error_string(ret));
-		failed++;
-		goto out;
-	}
-
-	/* Read the key value out */
-	ret = fsl_shw_read_key(my_ctx, &software_key, software_key_read);
-	if (ret != FSL_RETURN_OK_S) {
-		printf("Read software key failed with %s\n",
-		       fsl_error_string(ret));
-		failed++;
-		goto out;
-	}
-	if (compare_result(software_key_data, software_key_read,
-			   sizeof(software_key_data), "read key value")) {
-		failed++;
-		goto out;
-	}
-
-	/* Wrap the software key */
-	fsl_shw_sko_calculate_wrapped_size(&software_key, &wrapped_key_size);
-	/* Note: Double the calculated size to work around an error in
-	 *       fsl_shw_sko_calculate_wrapped_size(). */
-	wrapped_key_data = malloc(wrapped_key_size + 1);
-	if (wrapped_key_data == NULL) {
-		printf("Failed to allocate memory to store wrapped key\n");
-		failed++;
-		goto out;
-	}
-
-	wrapped_key_data[wrapped_key_size] = 0x42;
-	fsl_shw_extract_key(my_ctx, &software_key, wrapped_key_data);
-	if (ret != FSL_RETURN_OK_S) {
-		printf("Extract software key failed with %s\n",
-		       fsl_error_string(ret));
-		failed++;
-		goto out;
-	}
-
-	if (wrapped_key_data[wrapped_key_size] != 0x42) {
-		printf("Wrapped key buffer was overwritten\n");
-		failed++;
-		goto out;
-	}
-
-	/* Try to re-establish the software key */
-	fsl_shw_sko_init(&unwrap_key, FSL_KEY_ALG_TDES);
-	fsl_shw_sko_set_key_length(&unwrap_key, sizeof(software_key_data));
-	fsl_shw_sko_set_user_id(&unwrap_key, 0x123456);
-	fsl_shw_sko_set_flags(&unwrap_key, FSL_SKO_KEY_SW_KEY);
-
-	fsl_shw_establish_key(my_ctx, &unwrap_key, FSL_KEY_WRAP_UNWRAP,
-			      wrapped_key_data);
-	if (ret != FSL_RETURN_OK_S) {
-		printf("Unwrap software key failed with %s\n",
-		       fsl_error_string(ret));
-		failed++;
-		goto out;
-	}
-
-	/* Read the key value out */
-	ret = fsl_shw_read_key(my_ctx, &unwrap_key, unwrap_key_read);
-	printf("Read unwrapped software key return value %d\n", ret);
-	if (ret != FSL_RETURN_OK_S) {
-		printf("Read unwrapped software key failed with %s\n",
-		       fsl_error_string(ret));
-		failed++;
-		goto out;
-	}
-	if (compare_result(software_key_data, unwrap_key_read,
-			   sizeof(software_key_data),
-			   "read unwrapped key value")) {
-		failed++;
-		goto out;
-	}
-
-	/* Release the unwrapped software key */
-	fsl_shw_release_key(my_ctx, &unwrap_key);
-	if (ret != FSL_RETURN_OK_S) {
-		printf("Release of unwrapped software key with %s\n",
-		       fsl_error_string(ret));
-		failed++;
-		goto out;
-	}
-
-	passed++;
-	printf("Software key Passed\n");
-out:
-	if (wrapped_key_data != NULL) {
-		free(wrapped_key_data);
-	}
-
-	*total_passed_count += passed;
-	*total_failed_count += failed;
-	return;
-}				/* end fn test_software_key */
-
-/*!
  * Test Key-Wrapping routines.
  */
-void run_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
-	      uint32_t * total_failed_count)
+void run_user_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
+		   uint32_t * total_failed_count)
 {
+	fsl_shw_kso_t keystore;
 	fsl_shw_sko_t key_info;
-	fsl_shw_scco_t *sym_ctx = NULL;
+	fsl_shw_scco_t *sym_ctx = malloc(sizeof(*sym_ctx));
 	fsl_shw_return_t code;
-	uint8_t *encrypt_input = NULL;
-	uint8_t *decrypt_input = NULL;
-	uint8_t *encrypt_output = NULL;
-	uint8_t *decrypt_output = NULL;
+	uint8_t *encrypt_input = malloc(sizeof(known_plaintext));
+	uint8_t *decrypt_input = malloc(sizeof(known_plaintext));
+	uint8_t *encrypt_output = malloc(2 * sizeof(known_plaintext));
+	uint8_t *decrypt_output = malloc(2 * sizeof(known_plaintext));
 	uint8_t *blob = NULL;
 	uint32_t blob_length;
 	int passed_count = 0;
@@ -433,56 +294,37 @@ void run_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
 	int testno = 1;
 	int i;
 	fsl_shw_pco_t *cap = fsl_shw_get_capabilities(my_ctx);
-	uint32_t key_len = SECRET_KEY_SIZE;
-	fsl_shw_key_alg_t key_alg = SECRET_KEY_ALGORITHM;
 
-	if ((cap == NULL) || !fsl_shw_pco_check_black_key_supported(cap)) {
-		printf("Skipping Wrapped / Black Key Tests\n\n");
-		goto out;
-	}
-	
-	if (fsl_shw_pco_check_sw_keys_supported(cap)) {
-		printf("Testing Software Keys.\n\n");
-		test_software_key(my_ctx, total_passed_count,
-					  total_failed_count);
-	} else {
-		printf("Software Keys not supported, skipping.\n\n");
-	}
+	fsl_shw_init_keystore_default(&keystore);
 
-	if (fsl_shw_pco_check_pk_supported(cap)) {
-		/* If the PK (program key) capability is detected, infer that this is
-		 * running on a Dry Ice platform, and skip all the wrapping tests
-		 * except the software key tests. */
-
-		printf
-		    ("Dry Ice platform detected, skipping non-software key Key Tests\n");
-		goto out;
-	}
-
-	/* Allocate memory for temporary objects */
-	sym_ctx = malloc(sizeof(*sym_ctx));
-	encrypt_input = malloc(sizeof(known_plaintext));
-	decrypt_input = malloc(sizeof(known_plaintext));
-	encrypt_output = malloc(2 * sizeof(known_plaintext));
-	decrypt_output = malloc(2 * sizeof(known_plaintext));
-
-	if ((sym_ctx == NULL) ||(encrypt_output == NULL) || (decrypt_output == NULL)
+	if ((cap == NULL) || !fsl_shw_pco_check_black_key_supported(cap)
+	    || !fsl_shw_pco_check_spo_supported(cap)) {
+		printf("Skipping User Keystore Wrapped / Black Key Tests\n\n");
+	} else if ((encrypt_output == NULL) || (decrypt_output == NULL)
 		   || (encrypt_input == NULL) || (decrypt_input == NULL)
 		   || (sym_ctx == NULL)) {
 		printf
-		    ("Memory allocation problems. Skipping wrapped Key Tests\n");
+		    ("Memory allocation problems. Skipping user wrapped Key Tests\n");
 		*total_failed_count += 6;
-		goto out;
-	}
-	
-	memcpy(encrypt_input, known_plaintext, sizeof(known_plaintext));
+	} else if (fsl_shw_establish_keystore(my_ctx, &keystore)
+		   != FSL_RETURN_OK_S) {
+		printf
+		    ("Failed to establish user keystore.  Skipping user wrapped Key"
+		     " Tests.\n");
+		*total_failed_count += 6;
+	} else {
+		uint32_t key_len = SECRET_KEY_SIZE;
+		fsl_shw_key_alg_t key_alg = SECRET_KEY_ALGORITHM;
 
-	/* for test, fill with garbage */
-	memset(&key_info, 0x2d, sizeof(key_info));
-	memset(sym_ctx, 0x51, sizeof(*sym_ctx));
+		memcpy(encrypt_input, known_plaintext, sizeof(known_plaintext));
 
-	init_key_and_sym_ctx(key_alg, key_len, &key_info, sym_ctx);
-	fsl_shw_sko_set_user_id(&key_info, KEY_OWNER_ID);
+		/* for test, fill with garbage */
+		memset(&key_info, 0x2d, sizeof(key_info));
+		memset(sym_ctx, 0x51, sizeof(*sym_ctx));
+
+		init_key_and_sym_ctx(key_alg, key_len, &key_info, sym_ctx);
+		fsl_shw_sko_set_user_id(&key_info, KEY_OWNER_ID);
+		fsl_shw_sko_set_keystore(&key_info, &keystore);
 
 		printf
 		    ("Secret Key Test %d: Generate and use a random %d-byte RED"
@@ -504,10 +346,11 @@ void run_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
 		       testno);
 
 		fsl_shw_sko_get_established_info(&key_info, &handle);
-		passed = extract_reestablish_key(my_ctx, KEY_OWNER_ID, handle,
-						 sym_ctx, encrypt_output,
-						 encrypt_input,
-						 sizeof(known_plaintext));
+		passed =
+		    extract_reestablish_key(my_ctx, &keystore, KEY_OWNER_ID,
+					    handle, sym_ctx, encrypt_output,
+					    encrypt_input,
+					    sizeof(known_plaintext));
 
 		printf("Secret Key Test %d: %s\n\n", testno++,
 		       passed ? "passed" : "failed");
@@ -531,6 +374,7 @@ void run_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
 			init_key_and_sym_ctx(key_alg, key_len, &key_info,
 					     sym_ctx);
 			fsl_shw_sko_set_user_id(&key_info, KEY_OWNER_ID);
+			fsl_shw_sko_set_keystore(&key_info, &keystore);
 
 			if (key_alg == FSL_KEY_ALG_TDES) {
 				memcpy(decrypt_input, TDES_known_ciphertext,
@@ -592,11 +436,11 @@ void run_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
 
 			fsl_shw_sko_calculate_wrapped_size(&key_info,
 							   &blob_length);
-			blob = malloc(blob_length + 1);
+			blob = malloc(blob_length);
 			if (blob == NULL) {
 				printf("Allocation failed; aborting test\n");
 			} else {
-				blob[blob_length] = 0x42;
+
 				code =
 				    fsl_shw_extract_key(my_ctx, &key_info,
 							blob);
@@ -617,12 +461,6 @@ void run_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
 						     fsl_error_string(err_err));
 					}
 				} else {
-
-				    if (blob[blob_length] != 0x42) {
-					   printf
-					    ("Wrapped key buffer was overwritten\n");
-					   goto done;
-				    }
 					if (key_alg == FSL_KEY_ALG_ARC4) {
 						fsl_shw_scco_init(sym_ctx,
 								  key_alg,
@@ -645,6 +483,8 @@ void run_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
 
 					fsl_shw_sko_set_user_id(&key_info,
 								KEY_OWNER_ID);
+					fsl_shw_sko_set_keystore(&key_info,
+								 &keystore);
 
 					code =
 					    fsl_shw_establish_key(my_ctx,
@@ -688,7 +528,7 @@ void run_wrap(fsl_shw_uco_t * my_ctx, uint32_t * total_passed_count,
 					}
 				}
 			}
-done:
+
 			printf("Secret Key Test %d: %s\n\n", testno++,
 			       passed ? "passed" : "failed");
 			if (passed) {
@@ -702,12 +542,15 @@ done:
 			key_alg = KNOWN_TDES_KEY_ALGORITHM;
 		}		/* for i ... */
 
-out:
 		printf("wrap: %d tests passed, %d tests failed\n",
 		       passed_count, failed_count);
 
 		*total_passed_count += passed_count;
 		*total_failed_count += failed_count;
+
+		/* Release the user keystore */
+		fsl_shw_release_keystore(my_ctx, &keystore);
+	}
 
 	/* Clean up any allocated memory */
 	if (encrypt_input) {
