@@ -5,7 +5,7 @@
 #****************************************************************************/
 
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS IMX51_3STACK IMX25_3STACK"
+EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS IMX51_3STACK"
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = apitest rng_test move
@@ -19,14 +19,17 @@ endif
 ifeq ("$(PLATFORM)", "MXC30020EVB")
 TARGET_ARCH=-DCONFIG_ARCH_MXC91311
 endif
+ifeq ("$(PLATFORM)", "MXC91131EVB")
+TARGET_ARCH=-DCONFIG_ARCH_MXC91131
+endif
+ifeq ("$(PLATFORM)", "IMX25_3STACK")
+TARGET_ARCH=-DCONFIG_ARCH_MX25
+endif
 ifeq ("$(PLATFORM)", "IMX31ADS")
 TARGET_ARCH=-DCONFIG_ARCH_MX3
 endif
 ifeq ("$(PLATFORM)", "IMX31_3STACK")
 TARGET_ARCH=-DCONFIG_ARCH_MX3
-endif
-ifeq ("$(PLATFORM)", "MXC91131EVB")
-TARGET_ARCH=-DCONFIG_ARCH_MXC91131
 endif
 ifeq ("$(PLATFORM)", "IMX37_3STACK")
 TARGET_ARCH=-DCONFIG_ARCH_MX37
@@ -49,7 +52,7 @@ CFLAGS += -g -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wdeclaration-aft
 TSDIR=../mxc_sahara_test
 TEST_SOURCES = apitest.c  run_tests.c  sym.c  hash.c  gen_encrypt.c         \
                callback.c  auth_decrypt.c  rand.c  hmac1.c  hmac2.c  cap.c  \
-               wrap.c  results.c apihelp.c
+               wrap.c  results.c apihelp.c smalloc.c user_wrap.c dryice.c
 
 OPTFLAGS = -O2
 CFLAGS += $(OPTFLAGS) -DARM_LINUX -Wall $(INCLUDEDIR)
@@ -83,6 +86,8 @@ apitest.o: $(TSDIR)/apitest.c $(HDRS)
 	$(CC) -c $< $(CFLAGS)
 apihelp.o: $(TSDIR)/apihelp.c $(HDRS)
 	$(CC) -c $< $(CFLAGS)
+dryice.o: $(TSDIR)/dryice.c $(HDRS)
+	$(CC) -c $< $(CFLAGS)
 run_tests.o: $(TSDIR)/run_tests.c $(HDRS)
 	$(CC) -c $< $(CFLAGS)
 auth_decrypt.o: $(TSDIR)/auth_decrypt.c  $(HDRS)
@@ -103,7 +108,11 @@ rand.o: $(TSDIR)/rand.c  $(HDRS)
 	$(CC) -c $< $(CFLAGS)
 results.o: $(TSDIR)/results.c $(HDRS)
 	$(CC) -c $< $(CFLAGS)
+smalloc.o: $(TSDIR)/smalloc.c  $(HDRS)
+	$(CC) -c $< $(CFLAGS)
 sym.o: $(TSDIR)/sym.c  $(HDRS)
+	$(CC) -c $< $(CFLAGS)
+user_wrap.o: $(TSDIR)/user_wrap.c $(HDRS)
 	$(CC) -c $< $(CFLAGS)
 wrap.o: $(TSDIR)/wrap.c $(HDRS)
 	$(CC) -c $< $(CFLAGS)

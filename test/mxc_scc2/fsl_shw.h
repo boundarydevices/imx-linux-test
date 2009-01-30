@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -14,7 +14,7 @@
 /*
  * NOTE TO MAINTAINERS: Although this header file is *the* header file to be
  * #include'd by FSL SHW programs, it does not itself make any definitions for
- * the API.  Instead, it use te fsl_platform.h file and / or compiler
+ * the API.  Instead, it uses the fsl_platform.h file and / or compiler
  * environment variables to determine which actual driver header file to
  * include.  This allows different implementations to contain different
  * implementations of the various objects, macros, etc., or even to change
@@ -51,6 +51,13 @@
  * provide support for other platforms.  The Platform Capabilities Object is
  * intended as a way to allow programs to adapt to different platforms.
  *
+ * The i.MX25 is an example of a platform without a SAHARA but yet has
+ * capabilities supported by this API.  These include #fsl_shw_get_random() and
+ * #fsl_shw_add_entropy(), and the use of Triple-DES (TDEA) cipher algorithm
+ * (with no checking of key parity supported) in ECB and CBC modes with @ref
+ * sym_sec.  See also the @ref di_sec for information on key handling, and @ref
+ * td_sec for detection of Tamper Events.  Only the random functions are
+ * available from user space on this platform.
  *
  * @section usr_ctx The User Context
  *
@@ -59,7 +66,7 @@
  * registration (#fsl_shw_register_user()), and is part of every interaction
  * thereafter.
  *
- * @section pf_sec Platform Capababilities
+ * @section pf_sec Platform Capabilities
  *
  * Since this API is not tied to one specific type of hardware or even one
  * given version of a given type of hardware, the platform capabilities object
@@ -121,7 +128,7 @@
  * Support is available for acquiring random values from a
  * cryptographically-strong random number generator.  See
  * #fsl_shw_get_random().  The function #fsl_shw_add_entropy() may be used to
- * add entropy to the random number generaator.
+ * add entropy to the random number generator.
  *
  *
  * @section cmb_sec Combined Cipher and Authentication
@@ -138,16 +145,85 @@
  * Only AES-CCM is supported.
  *
  *
- * @section Wrapped Keys
+ * @section wrap_sec Wrapped Keys
  *
  * On platforms with a Secure Memory, the function #fsl_shw_establish_key() can
- * be used to place a key into the Secure Memory.  This key then be used
+ * be used to place a key into the System Keystore.  This key then can be used
  * directly by the cryptographic hardware.  It later then be wrapped
  * (cryptographically obscured) by #fsl_shw_extract_key() and stored for later
- * use.
+ * use.  If a software key (#FSL_SKO_KEY_SW_KEY) was established, then its
+ * value can be retrieved with a call to #fsl_shw_read_key().
  *
  * The wrapping and unwrapping functions provide security against unauthorized
  * use and detection of tampering.
+ *
+ * The functions can also be used with a User Keystore.
+ *
+ * @section smalloc_sec Secure Memory Allocation
+ *
+ * On platforms with multiple partitions of Secure Memory, the function
+ * #fsl_shw_smalloc() can be used to acquire a partition for private use.  The
+ * function #fsl_shw_diminish_perms() can then be used to revoke specific
+ * permissions on the partition, and #fsl_shw_sfree() can be used to release the
+ * partition.
+ *
+ * @section keystore_sec User Keystore
+ *
+ * User Keystore functionality is defined in fsl_shw_keystore.h.  See @ref
+ * user_keystore for details.  This is not supported on platforms without SCC2.
+ *
+ * @section di_sec Hardware key-select extensions - DryIce
+ *
+ * Some platforms have a component called DryIce which allows the software to
+ * control which key will be used by the secure memory encryption hardware.
+ * The choices are the secret per-chip Fused (IIM) Key, an unknown, hardware-
+ * generated Random Key, a software-written Programmed Key, or the IIM Key in
+ * combination with one of the others.  #fsl_shw_pco_check_pk_supported() can
+ * be used to determine whether this feature is available on the platform.
+ * The rest of this section will explain the symmetric ciphering and key
+ * operations which are available on such a platform.
+ *
+ * The function #fsl_shw_sko_init_pf_key() will set up a Secret Key Object to
+ * refer to one of the system's platform keys.  All keys which reference a
+ * platform key must use this initialization function, including a user-
+ * provided key value.  Keys which are intended for software encryption must
+ * use #fsl_shw_sko_init().
+ *
+ * To change the setting of the Programmed Key of the DryIce module,
+ * #fsl_shw_establish_key() must be called with a platform key object of type
+ * #FSL_SHW_PF_KEY_PRG or #FSL_SHW_PF_KEY_IIM_PRG.  The key will be go
+ * into the PK register of DryIce and not to the keystore.  Any symmetric
+ * operation which references either #FSL_SHW_PF_KEY_PRG or
+ * #FSL_SHW_PF_KEY_IIM_PRG will use the current PK value (possibly modified by
+ * the secret fused IIM key).  Before the Flatform Key can be changed, a call to
+ * #fsl_shw_release_key() or #fsl_shw_extract_key() must be made.  Neither
+ * function will change the value in the PK registers, and further ciphering
+ * can take place.
+ *
+ * When #fsl_shw_establish_key() is called to change the PK value, a plaintext
+ * key can be passed in with the #FSL_KEY_WRAP_ACCEPT argument or a previously
+ * wrapped key can be passed in with the #FSL_KEY_WRAP_UNWRAP argument.  If
+ * #FSL_KEY_WRAP_CREATE is passed in, then a random value will be loaded into
+ * the PK register.  The PK value can be wrapped by a call to
+ * #fsl_shw_extract_key() for later use with the #FSL_KEY_WRAP_UNWRAP argument.
+ *
+ * As an alternative to using only the fused key for @ref wrap_sec,
+ * #fsl_shw_uco_set_wrap_key() can be used to select either the random key or
+ * the random key with the fused key as the key which will be used to protect
+ * the one-time value used to wrap the key.  This allows for these
+ * wrapped keys to be dependent upon and therefore unrecoverable after a tamper
+ * event causes the erasure of the DryIce Random Key register.
+ *
+ * The software can request that the hardware generate a (new) Random Key for
+ * DryIce by calling #fsl_shw_gen_random_pf_key().
+ *
+ *
+ * @section td_sec Device Tamper-Detection
+ *
+ * Some platforms have a component which can detect certain types of tampering
+ * with the hardware.  #fsl_shw_read_tamper_event() API will allow the
+ * retrieval of the type of event which caused a tamper-detection failure.
+ *
  */
 
 /*! @defgroup glossary Glossary
@@ -167,7 +243,7 @@
  * @li @b DES - Data Encryption Standard - An 8-octet-block cipher.
  * @li @b ECB - Electronic Codebook - A straight encryption/decryption of the
  *        data.
- * @li @b hash - A cryptographically strong one-way function peformed on data.
+ * @li @b hash - A cryptographically strong one-way function performed on data.
  * @li @b HMAC - Hashed Message Authentication Code - A key-dependent one-way
  *        hash result, used to verify authenticity of a message.  The equation
  *        for an HMAC is hash((K + A) || hash((K + B) || msg)), where K is the
@@ -203,8 +279,6 @@
 /* Set FSL_HAVE_* flags */
 
 #include "fsl_platform.h"
-#include "sahara.h"
-
 
 #ifndef API_DOC
 
@@ -214,17 +288,17 @@
 
 #else
 
-#if defined(FSL_HAVE_RNGA) || defined(FSL_HAVE_RNGC)
+#if defined(FSL_HAVE_RNGA) || defined(FSL_HAVE_RNGB) || defined(FSL_HAVE_RNGC)
 
 #include "rng_driver.h"
 
 #else
 
-#define FSL_SHW_API_platform_not_recognized
+#error FSL_SHW_API_platform_not_recognized
 
 #endif
 
-#endif				/* HAVE_SAHARA2 */
+#endif				/* HAVE SAHARA */
 
 #else				/* API_DOC */
 
@@ -239,7 +313,7 @@
  * These objects are used to pass information into and out of the API.  Through
  * flags and other settings, they control the behavior of the @ref opfuns.
  *
- * They are maninpulated and queried by use of the various access functions.
+ * They are manipulated and queried by use of the various access functions.
  * There are different sets defined for each object.  See @ref objman.
  */
 
@@ -294,6 +368,13 @@
  */
 
 /*!
+ * @defgroup ksoops Keystore Object Operations
+ *
+ * These operations should be the only access to the #fsl_shw_kso_t
+ * type/struct, as the internal members of that object are subject to change.
+ */
+
+/*!
  * @defgroup hcops Hash Context Object Operations
  *
  * These operations should be the only access to the #fsl_shw_hco_t
@@ -335,22 +416,46 @@
  * Enumerations
  *****************************************************************************/
 /*! @addtogroup consgrp
-    @} */
+    @{ */
 
 /*!
  * Flags for the state of the User Context Object (#fsl_shw_uco_t).
  *
  * These flags describe how the @ref opfuns will operate.
  */
-typedef enum fsl_shw_user_ctx_flags {
-	FSL_UCO_BLOCKING_MODE,	/*!< API will block the caller until operation
-				   completes.  The result will be available in the
-				   return code.  If this is not set, user will have
-				   to get results using #fsl_shw_get_results(). */
-	FSL_UCO_CALLBACK_MODE,	/*!< User wants callback (at the function specified
-				   with #fsl_shw_uco_set_callback()) when the
-				   operation completes.  This flag is valid only if
-				   #FSL_UCO_BLOCKING_MODE is not set. */
+typedef enum fsl_shw_user_ctx_flags_t {
+	/*!
+	 * API will block the caller until operation completes.  The result will be
+	 * available in the return code.  If this is not set, user will have to get
+	 * results using #fsl_shw_get_results().
+	 */
+	FSL_UCO_BLOCKING_MODE,
+	/*!
+	 * User wants callback (at the function specified with
+	 * #fsl_shw_uco_set_callback()) when the operation completes.  This flag is
+	 * valid only if #FSL_UCO_BLOCKING_MODE is not set.
+	 */
+	FSL_UCO_CALLBACK_MODE,
+	/*! Do not free descriptor chain after driver (adaptor) finishes */
+	FSL_UCO_SAVE_DESC_CHAIN,
+	/*!
+	 * User has made at least one request with callbacks requested, so API is
+	 * ready to handle others.
+	 */
+	FSL_UCO_CALLBACK_SETUP_COMPLETE,
+	/*!
+	 * (virtual) pointer to descriptor chain is completely linked with physical
+	 * (DMA) addresses, ready for the hardware.  This flag should not be used
+	 * by FSL SHW API programs.
+	 */
+	FSL_UCO_CHAIN_PREPHYSICALIZED,
+	/*!
+	 * The user has changed the context but the changes have not been copied to
+	 * the kernel driver.
+	 */
+	FSL_UCO_CONTEXT_CHANGED,
+	/*! Internal Use.  This context belongs to a user-mode API user. */
+	FSL_UCO_USERMODE_USER,
 } fsl_shw_user_ctx_flags_t;
 
 /*!
@@ -359,29 +464,60 @@ typedef enum fsl_shw_user_ctx_flags {
  * These codes may be returned from a function call.  In non-blocking mode,
  * they will appear as the status in a Result Object.
  */
-typedef enum fsl_shw_return {
-	FSL_RETURN_OK_S = 0,	/*!< No error.  As a function return code in
-				   Non-blocking mode, this may simply mean that
-				   the operation was accepted for eventual
-				   execution. */
-	FSL_RETURN_ERROR_S,	/*!< Failure for non-specific reason. */
-	FSL_RETURN_NO_RESOURCE_S,	/*!< Operation failed because some resource was
-					   not able to be allocated. */
-	FSL_RETURN_BAD_ALGORITHM_S,	/*!< Crypto algorithm unrecognized or
-					   improper. */
-	FSL_RETURN_BAD_MODE_S,	/*!< Crypto mode unrecognized or improper. */
-	FSL_RETURN_BAD_FLAG_S,	/*!< Flag setting unrecognized or
-				   inconsistent. */
-	FSL_RETURN_BAD_KEY_LENGTH_S,	/*!< Improper or unsupported key length for
-					   algorithm. */
-	FSL_RETURN_BAD_KEY_PARITY_S,	/*!< Improper parity in a (DES, TDES) key. */
-	FSL_RETURN_BAD_DATA_LENGTH_S,	/*!< Improper or unsupported data length for
-					   algorithm or internal buffer. */
-	FSL_RETURN_AUTH_FAILED_S,	/*!< Authentication failed in
-					   authenticate-decrypt operation. */
-	FSL_RETURN_MEMORY_ERROR_S,	/*!< A memory error occurred. */
-	FSL_RETURN_INTERNAL_ERROR_S	/*!< An error internal to the hardware
-					   occurred. */
+typedef enum fsl_shw_return_t {
+	/*!
+	 * No error.  As a function return code in Non-blocking mode, this may
+	 * simply mean that the operation was accepted for eventual execution.
+	 */
+	FSL_RETURN_OK_S = 0,
+	/*! Failure for non-specific reason. */
+	FSL_RETURN_ERROR_S,
+	/*!
+	 * Operation failed because some resource was not able to be allocated.
+	 */
+	FSL_RETURN_NO_RESOURCE_S,
+	/*! Crypto algorithm unrecognized or improper. */
+	FSL_RETURN_BAD_ALGORITHM_S,
+	/*! Crypto mode unrecognized or improper. */
+	FSL_RETURN_BAD_MODE_S,
+	/*! Flag setting unrecognized or inconsistent. */
+	FSL_RETURN_BAD_FLAG_S,
+	/*! Improper or unsupported key length for algorithm. */
+	FSL_RETURN_BAD_KEY_LENGTH_S,
+	/*! Improper parity in a (DES, TDES) key. */
+	FSL_RETURN_BAD_KEY_PARITY_S,
+	/*!
+	 * Improper or unsupported data length for algorithm or internal buffer.
+	 */
+	FSL_RETURN_BAD_DATA_LENGTH_S,
+	/*! Authentication / Integrity Check code check failed. */
+	FSL_RETURN_AUTH_FAILED_S,
+	/*! A memory error occurred. */
+	FSL_RETURN_MEMORY_ERROR_S,
+	/*! An error internal to the hardware occurred. */
+	FSL_RETURN_INTERNAL_ERROR_S,
+	/*! ECC detected Point at Infinity */
+	FSL_RETURN_POINT_AT_INFINITY_S,
+	/*! ECC detected No Point at Infinity */
+	FSL_RETURN_POINT_NOT_AT_INFINITY_S,
+	/*! GCD is One */
+	FSL_RETURN_GCD_IS_ONE_S,
+	/*! GCD is not One */
+	FSL_RETURN_GCD_IS_NOT_ONE_S,
+	/*! Candidate is Prime */
+	FSL_RETURN_PRIME_S,
+	/*! Candidate is not Prime */
+	FSL_RETURN_NOT_PRIME_S,
+	/*! N register loaded improperly with even value */
+	FSL_RETURN_EVEN_MODULUS_ERROR_S,
+	/*! Divisor is zero. */
+	FSL_RETURN_DIVIDE_BY_ZERO_ERROR_S,
+	/*! Bad Exponent or Scalar value for Point Multiply */
+	FSL_RETURN_BAD_EXPONENT_ERROR_S,
+	/*! RNG hardware problem. */
+	FSL_RETURN_OSCILLATOR_ERROR_S,
+	/*! RNG hardware problem. */
+	FSL_RETURN_STATISTICS_ERROR_S,
 } fsl_shw_return_t;
 
 /*!
@@ -391,7 +527,7 @@ typedef enum fsl_shw_return {
  * algorithm is.   Context size is the same length unless otherwise specified.
  * Selection of algorithm also affects the allowable key length.
  */
-typedef enum fsl_shw_key_alg {
+typedef enum fsl_shw_key_alg_t {
 	FSL_KEY_ALG_HMAC,	/*!< Key will be used to perform an HMAC.  Key
 				   size is 1 to 64 octets.  Block size is 64
 				   octets. */
@@ -427,7 +563,7 @@ typedef enum fsl_shw_key_alg {
  * has a total number of octets which are not a multiple of the block size, the
  * user must perform any necessary padding to get to the correct data length.
  */
-typedef enum fsl_shw_sym_mode {
+typedef enum fsl_shw_sym_mode_t {
 	/*!
 	 * Stream.  There is no associated block size.  Any request to process data
 	 * may be of any length.  This mode is only for ARC4 operations, and is
@@ -465,7 +601,7 @@ typedef enum fsl_shw_sym_mode {
  * Context is the same size as the digest (resulting hash), unless otherwise
  * specified.
  */
-typedef enum fsl_shw_hash_alg {
+typedef enum fsl_shw_hash_alg_t {
 	FSL_HASH_ALG_MD5,	/*!< MD5 algorithm.  Digest is 16 octets. */
 	FSL_HASH_ALG_SHA1,	/*!< SHA-1 (aka SHA or SHA-160) algorithm.
 				   Digest is 20 octets. */
@@ -478,12 +614,18 @@ typedef enum fsl_shw_hash_alg {
 /*!
  * The type of Authentication-Cipher function which will be performed.
  */
-typedef enum fsl_shw_acc_mode {
+typedef enum fsl_shw_acc_mode_t {
 	/*!
 	 * CBC-MAC for Counter.  Requires context and modulus.  Final operation may
 	 * be non-multiple of block size.  This mode may be used for AES.
 	 */
-	FSL_ACC_MODE_CCM
+	FSL_ACC_MODE_CCM,
+	/*!
+	 * SSL mode.  Not supported.  Combines HMAC and encrypt (or decrypt).
+	 * Needs one key object for encryption, another for the HMAC.  The usual
+	 * hashing and symmetric encryption algorithms are supported.
+	 */
+	FSL_ACC_MODE_SSL,
 } fsl_shw_acc_mode_t;
 
 /*!
@@ -491,7 +633,7 @@ typedef enum fsl_shw_acc_mode {
  *
  * These values are passed to #fsl_shw_establish_key().
  */
-typedef enum fsl_shw_key_wrap {
+typedef enum fsl_shw_key_wrap_t {
 	FSL_KEY_WRAP_CREATE,	/*!< Generate a key from random values. */
 	FSL_KEY_WRAP_ACCEPT,	/*!< Use the provided clear key. */
 	FSL_KEY_WRAP_UNWRAP	/*!< Unwrap a previously wrapped key. */
@@ -504,7 +646,7 @@ typedef enum fsl_shw_key_wrap {
  *  These may be combined by ORing them together.  See #fsl_shw_hco_set_flags()
  * and #fsl_shw_hco_clear_flags().
  */
-typedef enum fsl_shw_hash_ctx_flags {
+typedef enum fsl_shw_hash_ctx_flags_t {
 	FSL_HASH_FLAGS_INIT = 1,	/*!< Context is empty.  Hash is started
 					   from scratch, with a message-processed
 					   count of zero. */
@@ -527,7 +669,7 @@ typedef enum fsl_shw_hash_ctx_flags {
  * These may be combined by ORing them together.  See #fsl_shw_hmco_set_flags()
  * and #fsl_shw_hmco_clear_flags().
  */
-typedef enum fsl_shw_hmac_ctx_flags {
+typedef enum fsl_shw_hmac_ctx_flags_t {
 	FSL_HMAC_FLAGS_INIT = 1,	/*!< Message context is empty.  HMAC is
 					   started from scratch (with key) or from
 					   precompute of inner hash, depending on
@@ -554,7 +696,7 @@ typedef enum fsl_shw_hmac_ctx_flags {
  * These may be ORed together to get the desired effect.
  * See #fsl_shw_scco_set_flags() and #fsl_shw_scco_clear_flags()
  */
-typedef enum fsl_shw_sym_ctx_flags {
+typedef enum fsl_shw_sym_ctx_flags_t {
 	/*!
 	 * Context is empty.  In ARC4, this means that the S-Box needs to be
 	 * generated from the key.  In #FSL_SYM_MODE_CBC mode, this allows an IV of
@@ -585,7 +727,7 @@ typedef enum fsl_shw_sym_ctx_flags {
  * These may be ORed together to get the desired effect.
  * See #fsl_shw_sko_set_flags() and #fsl_shw_sko_clear_flags()
  */
-typedef enum fsl_shw_key_flags {
+typedef enum fsl_shw_key_flags_t {
 	FSL_SKO_KEY_IGNORE_PARITY = 1,	/*!< If algorithm is DES or 3DES, do not
 					   validate the key parity bits. */
 	FSL_SKO_KEY_PRESENT = 2,	/*!< Clear key is present in the object. */
@@ -593,6 +735,11 @@ typedef enum fsl_shw_key_flags {
 					   feature is not available for all
 					   platforms, nor for all algorithms and
 					   modes. */
+	FSL_SKO_KEY_SW_KEY = 8,	/*!< This key is for software use, and can
+				   be copied out of a keystore by its owner.
+				   The default is that they key is available
+				   only for hardware (or security driver)
+				   use. */
 } fsl_shw_key_flags_t;
 
 /*!
@@ -606,17 +753,17 @@ typedef uint64_t key_userid_t;
  * The @a FSL_ACCO_CTX_INIT and @a FSL_ACCO_CTX_FINALIZE flags, when used
  * together, provide for a one-shot operation.
  */
-typedef enum fsl_shw_auth_ctx_flags {
+typedef enum fsl_shw_auth_ctx_flags_t {
 	FSL_ACCO_CTX_INIT = 1,	/*!< Initialize Context(s) */
 	FSL_ACCO_CTX_LOAD = 2,	/*!< Load intermediate context(s).
 				   This flag is unsupported. */
 	FSL_ACCO_CTX_SAVE = 4,	/*!< Save intermediate context(s).
 				   This flag is unsupported. */
 	FSL_ACCO_CTX_FINALIZE = 8,	/*!< Create MAC during this operation. */
-	FSL_ACCO_NIST_CCM = 0x10,	/*!< Formatting of CCM input data is
-					   performed by calls to
-					   #fsl_shw_ccm_nist_format_ctr_and_iv() and
-					   #fsl_shw_ccm_nist_update_ctr_and_iv().  */
+	FSL_ACCO_NIST_CCM = 16,	/*!< Formatting of CCM input data is
+				   performed by calls to
+				   #fsl_shw_ccm_nist_format_ctr_and_iv() and
+				   #fsl_shw_ccm_nist_update_ctr_and_iv().  */
 } fsl_shw_auth_ctx_flags_t;
 
 /*!
@@ -625,7 +772,7 @@ typedef enum fsl_shw_auth_ctx_flags {
  * The incrementing of the Counter value may be modified by a modulus.  If no
  * modulus is needed or desired for AES, use #FSL_CTR_MOD_128.
  */
-typedef enum fsl_shw_ctr_mod {
+typedef enum fsl_shw_ctr_mod_t {
 	FSL_CTR_MOD_8,		/*!< Run counter with modulus of 2^8. */
 	FSL_CTR_MOD_16,		/*!< Run counter with modulus of 2^16. */
 	FSL_CTR_MOD_24,		/*!< Run counter with modulus of 2^24. */
@@ -644,7 +791,77 @@ typedef enum fsl_shw_ctr_mod {
 	FSL_CTR_MOD_128		/*!< Run counter with modulus of 2^128. */
 } fsl_shw_ctr_mod_t;
 
-	  /*! @} *//* consgrp */
+/*!
+ * Permissions flags for Secure Partitions
+ *
+ * They currently map directly to the SCC2 hardware values, but this is not
+ * guarinteed behavior.
+ */
+typedef enum fsl_shw_permission_t {
+/*! SCM Access Permission: Do not zeroize/deallocate partition on SMN Fail state */
+	FSL_PERM_NO_ZEROIZE,
+/*! SCM Access Permission: Enforce trusted key read in  */
+	FSL_PERM_TRUSTED_KEY_READ,
+/*! SCM Access Permission: Ignore Supervisor/User mode in permission determination */
+	FSL_PERM_HD_S,
+/*! SCM Access Permission: Allow Read Access to  Host Domain */
+	FSL_PERM_HD_R,
+/*! SCM Access Permission: Allow Write Access to  Host Domain */
+	FSL_PERM_HD_W,
+/*! SCM Access Permission: Allow Execute Access to  Host Domain */
+	FSL_PERM_HD_X,
+/*! SCM Access Permission: Allow Read Access to Trusted Host Domain */
+	FSL_PERM_TH_R,
+/*! SCM Access Permission: Allow Write Access to Trusted Host Domain */
+	FSL_PERM_TH_W,
+/*! SCM Access Permission: Allow Read Access to Other/World Domain */
+	FSL_PERM_OT_R,
+/*! SCM Access Permission: Allow Write Access to Other/World Domain */
+	FSL_PERM_OT_W,
+/*! SCM Access Permission: Allow Execute Access to Other/World Domain */
+	FSL_PERM_OT_X,
+} fsl_shw_permission_t;
+
+/*!
+ * Select the cypher mode to use for partition cover/uncover operations.
+ *
+ * They currently map directly to the values used in the SCC2 driver, but this
+ * is not guarinteed behavior.
+ */
+typedef enum fsl_shw_cypher_mode_t {
+	FSL_SHW_CYPHER_MODE_ECB,	/*!< ECB mode */
+	FSL_SHW_CYPHER_MODE_CBC,	/*!< CBC mode */
+} fsl_shw_cypher_mode_t;
+
+/*!
+ * Which platform key should be presented for cryptographic use.
+ */
+typedef enum fsl_shw_pf_key_t {
+	FSL_SHW_PF_KEY_IIM,	/*!< Present fused IIM key */
+	FSL_SHW_PF_KEY_PRG,	/*!< Present Program key */
+	FSL_SHW_PF_KEY_IIM_PRG,	/*!< Present IIM ^ Program key */
+	FSL_SHW_PF_KEY_IIM_RND,	/*!< Present Random key */
+	FSL_SHW_PF_KEY_RND,	/*!< Present IIM ^ Random key */
+} fsl_shw_pf_key_t;
+
+/*!
+ * The various security tamper events
+ */
+typedef enum fsl_shw_tamper_t {
+	FSL_SHW_TAMPER_NONE,	/*!< No error detected */
+	FSL_SHW_TAMPER_WTD,	/*!< wire-mesh tampering det */
+	FSL_SHW_TAMPER_ETBD,	/*!< ext tampering det: input B */
+	FSL_SHW_TAMPER_ETAD,	/*!< ext tampering det: input A */
+	FSL_SHW_TAMPER_EBD,	/*!< external boot detected */
+	FSL_SHW_TAMPER_SAD,	/*!< security alarm detected */
+	FSL_SHW_TAMPER_TTD,	/*!< temperature tampering det */
+	FSL_SHW_TAMPER_CTD,	/*!< clock tampering det */
+	FSL_SHW_TAMPER_VTD,	/*!< voltage tampering det */
+	FSL_SHW_TAMPER_MCO,	/*!< monotonic counter overflow */
+	FSL_SHW_TAMPER_TCO,	/*!< time counter overflow */
+} fsl_shw_tamper_t;
+
+/*! @} *//* consgrp */
 
 /******************************************************************************
  * Data Structures
@@ -659,7 +876,7 @@ typedef enum fsl_shw_ctr_mod {
  * This object, the operations on it, and its interaction with the driver are
  * TBD.
  */
-typedef struct fsl_sho_ibo {
+typedef struct fsl_sho_ibo_t {
 } fsl_sho_ibo_t;
 
 /* REQ-S2LRD-PINTFC-COA-UCO-001 */
@@ -676,7 +893,7 @@ typedef struct fsl_sho_ibo {
  *
  * See @ref ucoops for further information.
  */
-typedef struct fsl_shw_uco {	/* fsl_shw_user_context_object */
+typedef struct fsl_shw_uco_t {	/* fsl_shw_user_context_object */
 } fsl_shw_uco_t;
 
 /* REQ-S2LRD-PINTFC-API-GEN-006  ??  */
@@ -689,8 +906,23 @@ typedef struct fsl_shw_uco {	/* fsl_shw_user_context_object */
  * No direct access to its members should be made by programs.  Instead, the
  * object should be manipulated using the provided functions.  See @ref rops.
  */
-typedef struct fsl_shw_result {	/* fsl_shw_result */
+typedef struct fsl_shw_result_t {	/* fsl_shw_result */
 } fsl_shw_result_t;
+
+/*!
+ * Keystore Object
+ *
+ * This object holds the context of a user keystore, including the functions
+ * that define the interface and pointers to where the key data is stored.  The
+ * user must supply a set of functions to handle keystore management, including
+ * slot allocation, deallocation, etc.  A default keystore manager is provided
+ * as part of the API.
+ *
+ * No direct access to its members should be made by programs.  Instead, the
+ * object should be manipulated using the provided functions.  See @ref ksoops.
+ */
+typedef struct fsl_shw_kso_t {	/* fsl_shw_keystore_object */
+} fsl_shw_kso_t;
 
 /* REQ-S2LRD-PINTFC-COA-SKO-001 */
 /*!
@@ -704,7 +936,7 @@ typedef struct fsl_shw_result {	/* fsl_shw_result */
  * No direct access to its members should be made by programs.  Instead, the
  * object should be manipulated using the provided functions.  See @ref skoops.
  */
-typedef struct fsl_shw_sko {	/* fsl_shw_secret_key_object */
+typedef struct fsl_shw_sko_t {	/* fsl_shw_secret_key_object */
 } fsl_shw_sko_t;
 
 /* REQ-S2LRD-PINTFC-COA-CO-001 */
@@ -719,7 +951,7 @@ typedef struct fsl_shw_sko {	/* fsl_shw_secret_key_object */
  *
  * See @ref pcoops.
  */
-typedef struct fsl_shw_pco {	/* fsl_shw_platform_capabilities_object */
+typedef struct fsl_shw_pco_t {	/* fsl_shw_platform_capabilities_object */
 } fsl_shw_pco_t;
 
 /* REQ-S2LRD-PINTFC-COA-HCO-001 */
@@ -731,7 +963,7 @@ typedef struct fsl_shw_pco {	/* fsl_shw_platform_capabilities_object */
  * No direct access to its members should be made by programs.  Instead, the
  * object should be manipulated using the provided functions.  See @ref hcops.
  */
-typedef struct fsl_shw_hco {	/* fsl_shw_hash_context_object */
+typedef struct fsl_shw_hco_t {	/* fsl_shw_hash_context_object */
 } fsl_shw_hco_t;
 
 /*!
@@ -742,7 +974,7 @@ typedef struct fsl_shw_hco {	/* fsl_shw_hash_context_object */
  * No direct access to its members should be made by programs.  Instead, the
  * object should be manipulated using the provided functions.  See @ref hmcops.
  */
-typedef struct fsl_shw_hmco {	/* fsl_shw_hmac_context_object */
+typedef struct fsl_shw_hmco_t {	/* fsl_shw_hmac_context_object */
 } fsl_shw_hmco_t;
 
 /* REQ-S2LRD-PINTFC-COA-SCCO-001 */
@@ -758,7 +990,7 @@ typedef struct fsl_shw_hmco {	/* fsl_shw_hmac_context_object */
  * No direct access to its members should be made by programs.  Instead, the
  * object should be manipulated using the provided functions.  See @ref sccops.
  */
-typedef struct fsl_shw_scco {	/* fsl_shw_symmetric_cipher_context_object */
+typedef struct fsl_shw_scco_t {	/* fsl_shw_symmetric_cipher_context_object */
 } fsl_shw_scco_t;
 
 /*!
@@ -772,7 +1004,7 @@ typedef struct fsl_shw_scco {	/* fsl_shw_symmetric_cipher_context_object */
  * object should be manipulated using the provided functions.  See @ref
  * accoops.
  */
-typedef struct fsl_shw_acco {	/* fsl_shw_authenticate_cipher_context_object */
+typedef struct fsl_shw_acco_t {	/* fsl_shw_authenticate_cipher_context_object */
 } fsl_shw_acco_t;
 	  /*! @} *//* strgrp */
 
@@ -785,7 +1017,7 @@ typedef struct fsl_shw_acco {	/* fsl_shw_authenticate_cipher_context_object */
 /*!
  * Get FSL SHW API version
  *
- * @param      pc_info   The Platform Capababilities Object to query.
+ * @param      pc_info   The Platform Capabilities Object to query.
  * @param[out] major     A pointer to where the major version
  *                       of the API is to be stored.
  * @param[out] minor     A pointer to where the minor version
@@ -797,7 +1029,7 @@ void fsl_shw_pco_get_version(const fsl_shw_pco_t * pc_info,
 /*!
  * Get underlying driver version.
  *
- * @param      pc_info   The Platform Capababilities Object to query.
+ * @param      pc_info   The Platform Capabilities Object to query.
  * @param[out] major     A pointer to where the major version
  *                       of the driver is to be stored.
  * @param[out] minor     A pointer to where the minor version
@@ -809,7 +1041,7 @@ void fsl_shw_pco_get_driver_version(const fsl_shw_pco_t * pc_info,
 /*!
  * Get list of symmetric algorithms supported.
  *
- * @param pc_info   The Platform Capababilities Object to query.
+ * @param pc_info   The Platform Capabilities Object to query.
  * @param[out] algorithms A pointer to where to store the location of
  *                        the list of algorithms.
  * @param[out] algorithm_count A pointer to where to store the number of
@@ -822,7 +1054,7 @@ void fsl_shw_pco_get_sym_algorithms(const fsl_shw_pco_t * pc_info,
 /*!
  * Get list of symmetric modes supported.
  *
- * @param pc_info         The Platform Capababilities Object to query.
+ * @param pc_info         The Platform Capabilities Object to query.
  * @param[out] modes      A pointer to where to store the location of
  *                        the list of modes.
  * @param[out] mode_count A pointer to where to store the number of
@@ -835,7 +1067,7 @@ void fsl_shw_pco_get_sym_modes(const fsl_shw_pco_t * pc_info,
 /*!
  * Get list of hash algorithms supported.
  *
- * @param pc_info         The Platform Capababilities Object to query.
+ * @param pc_info         The Platform Capabilities Object to query.
  * @param[out] algorithms A pointer which will be set to the list of
  *                        algorithms.
  * @param[out] algorithm_count The number of algorithms in the list at @a
@@ -849,7 +1081,7 @@ void fsl_shw_pco_get_hash_algorithms(const fsl_shw_pco_t * pc_info,
  * Determine whether the combination of a given symmetric algorithm and a given
  * mode is supported.
  *
- * @param pc_info    The Platform Capababilities Object to query.
+ * @param pc_info    The Platform Capabilities Object to query.
  * @param algorithm  A Symmetric Cipher algorithm.
  * @param mode       A Symmetric Cipher mode.
  *
@@ -862,7 +1094,7 @@ int fsl_shw_pco_check_sym_supported(const fsl_shw_pco_t * pc_info,
 /*!
  * Determine whether a given Encryption-Authentication mode is supported.
  *
- * @param pc_info   The Platform Capababilities Object to query.
+ * @param pc_info   The Platform Capabilities Object to query.
  * @param mode       The Authentication mode.
  *
  * @return 0 if mode is not supported, non-zero if supported.
@@ -873,13 +1105,108 @@ int fsl_shw_pco_check_auth_supported(const fsl_shw_pco_t * pc_info,
 /*!
  * Determine whether Black Keys (key establishment / wrapping) is supported.
  *
- * @param pc_info  The Platform Capababilities Object to query.
+ * @param pc_info  The Platform Capabilities Object to query.
  *
  * @return 0 if wrapping is not supported, non-zero if supported.
  */
 int fsl_shw_pco_check_black_key_supported(const fsl_shw_pco_t * pc_info);
 
-	  /*! @} *//* pcoops */
+/*!
+ * Get FSL SHW SCC driver version
+ *
+ * @param      pc_info   The Platform Capabilities Object to query.
+ * @param[out] major     A pointer to where the major version
+ *                       of the SCC driver is to be stored.
+ * @param[out] minor     A pointer to where the minor version
+ *                       of the SCC driver is to be stored.
+ */
+void fsl_shw_pco_get_scc_driver_version(const fsl_shw_pco_t * pc_info,
+					uint32_t * major, uint32_t * minor);
+
+/*!
+ * Get SCM hardware version
+ *
+ * @param      pc_info   The Platform Capabilities Object to query.
+ * @return               The SCM hardware version
+ */
+uint32_t fsl_shw_pco_get_scm_version(const fsl_shw_pco_t * pc_info);
+
+/*!
+ * Get SMN hardware version
+ *
+ * @param      pc_info   The Platform Capabilities Object to query.
+ * @return               The SMN hardware version
+ */
+uint32_t fsl_shw_pco_get_smn_version(const fsl_shw_pco_t * pc_info);
+
+/*!
+ * Get the size of an SCM block, in bytes
+ *
+ * @param      pc_info   The Platform Capabilities Object to query.
+ * @return               The size of an SCM block, in bytes.
+ */
+uint32_t fsl_shw_pco_get_scm_block_size(const fsl_shw_pco_t * pc_info);
+
+/*!
+ * Get size of Black and Red RAM memory
+ *
+ * @param      pc_info     The Platform Capabilities Object to query.
+ * @param[out] black_size  A pointer to where the size of the Black RAM, in
+ *                         blocks, is to be placed.
+ * @param[out] red_size    A pointer to where the size of the Red RAM, in
+ *                         blocks, is to be placed.
+ */
+void fsl_shw_pco_get_smn_size(const fsl_shw_pco_t * pc_info,
+			      uint32_t * black_size, uint32_t * red_size);
+
+/*!
+ * Determine whether Secure Partitions are supported
+ *
+ * @param pc_info          The Platform Capabilities Object to query.
+ *
+ * @return 0 if secure partitions are not supported, non-zero if supported.
+ */
+int fsl_shw_pco_check_spo_supported(const fsl_shw_pco_t * pc_info);
+
+/*!
+ * Get the size of a Secure Partitions
+ *
+ * @param pc_info          The Platform Capabilities Object to query.
+ *
+ * @return Partition size, in bytes.  0 if Secure Partitions not supported.
+ */
+uint32_t fsl_shw_pco_get_spo_size_bytes(const fsl_shw_pco_t * pc_info);
+
+/*!
+ * Get the number of Secure Partitions on this platform
+ *
+ * @param pc_info          The Platform Capabilities Object to query.
+ *
+ * @return Number of partitions. 0 if Secure Partitions not supported.  Note
+ *         that this returns the total number of partitions, though
+ *         not all may be available to the user.
+ */
+uint32_t fsl_shw_pco_get_spo_count(const fsl_shw_pco_t * pc_info);
+
+/*!
+ * Determine whether Platform Key features are available
+ *
+ * @param pc_info          The Platform Capabilities Object to query.
+ *
+ * @return  1 if Programmed Key features are available, otherwise zero.
+ */
+int fsl_shw_pco_check_pk_supported(const fsl_shw_pco_t * pc_info);
+
+/*!
+  * Determine whether Software Key features are available
+  *
+  * @param pc_info 		 The Platform Capabilities Object to query.
+  *
+  * @return  1 if Software key features are available, otherwise zero.
+  */
+int fsl_shw_pco_check_sw_keys_supported(const fsl_shw_pco_t * pc_info);
+
+/*! @} *//* pcoops */
 
 /*! @addtogroup ucoops
     @{ */
@@ -918,7 +1245,7 @@ void fsl_shw_uco_set_reference(fsl_shw_uco_t * user_ctx, uint32_t reference);
  * Set the callback routine for the User Context.
  *
  * Note that the callback routine may be called when no results are available,
- * and possibly even when no requests are oustanding.
+ * and possibly even when no requests are outstanding.
  *
  *
  * @param user_ctx     The User Context object to operate on.
@@ -947,6 +1274,21 @@ void fsl_shw_uco_set_flags(fsl_shw_uco_t * user_ctx, uint32_t flags);
  * @param flags        ORed values from #fsl_shw_user_ctx_flags_t.
  */
 void fsl_shw_uco_clear_flags(fsl_shw_uco_t * user_ctx, uint32_t flags);
+
+/*!
+ * Select a key for the key-wrap key for key wrapping/unwrapping
+ *
+ * Without a call to this function, default is FSL_SHW_PF_KEY_IIM.  The wrap
+ * key is used to encrypt and decrypt the per-key random secret which is used
+ * to calculate the key which will encrypt/decrypt the user's key.
+ *
+ * @param user_ctx     The User Context object to operate on.
+ * @param pf_key       Which key to use.  Valid choices are
+ *                     #FSL_SHW_PF_KEY_IIM, #FSL_SHW_PF_KEY_RND, and
+ *                     #FSL_SHW_PF_KEY_IIM_RND.
+ */
+void fsl_shw_uco_set_wrap_key(fsl_shw_uco_t * user_ctx,
+			      fsl_shw_pf_key_t pf_key);
 
 	  /*! @} *//* ucoops */
 
@@ -979,8 +1321,8 @@ uint32_t fsl_shw_ro_get_reference(fsl_shw_result_t * result);
 /*!
  * Initialize a Secret Key Object.
  *
- * This function must be called before performing any other operation with
- * the Object.
+ * This function or #fsl_shw_sko_init_pf_key() must be called before performing
+ * any other operation with the Object.
  *
  * @param key_info  The Secret Key Object to be initialized.
  * @param algorithm DES, AES, etc.
@@ -989,10 +1331,35 @@ uint32_t fsl_shw_ro_get_reference(fsl_shw_result_t * result);
 void fsl_shw_sko_init(fsl_shw_sko_t * key_info, fsl_shw_key_alg_t algorithm);
 
 /*!
+ * Initialize a Secret Key Object to use a Platform Key register.
+ *
+ * This function or #fsl_shw_sko_init() must be called before performing any
+ * other operation with the Object.  #fsl_shw_sko_set_key() does not work on
+ * a key object initialized in this way.
+ *
+ * If this function is used to initialize the key object, but no key is
+ * established with the key object, then the object will refer strictly to the
+ * key value specified by the @c pf_key selection.
+ *
+ * If the pf key is #FSL_SHW_PF_KEY_PRG or #FSL_SHW_PF_KEY_IIM_PRG, then the
+ * key object may be used with #fsl_shw_establish_key() to change the Program
+ * Key value.  When the pf key is neither #FSL_SHW_PF_KEY_PRG nor
+ * #FSL_SHW_PF_KEY_IIM_PRG, it is an error to call #fsl_shw_establish_key().
+ *
+ * @param key_info     The Secret Key Object to be initialized.
+ * @param algorithm    DES, AES, etc.
+ * @param pf_key       Which platform key is referenced.
+ */
+void fsl_shw_sko_init_pf_key(fsl_shw_sko_t * key_info,
+			     fsl_shw_key_alg_t algorithm,
+			     fsl_shw_pf_key_t pf_key);
+
+/*!
  * Store a cleartext key in the key object.
  *
- * This has the side effect of setting the #FSL_SKO_KEY_PRESENT flag and
- * resetting the #FSL_SKO_KEY_ESTABLISHED flag.
+ * This has the side effect of setting the #FSL_SKO_KEY_PRESENT flag. It should
+ * not be used if there is a key established with the key object.  If there is,
+ * a call to #fsl_shw_release_key() should be made first.
  *
  * @param key_object   A variable of type #fsl_shw_sko_t.
  * @param key          A pointer to the beginning of the key.
@@ -1028,6 +1395,16 @@ void fsl_shw_sko_set_key_length(fsl_shw_sko_t * key_object,
 void fsl_shw_sko_set_user_id(fsl_shw_sko_t * key_object, key_userid_t userid);
 
 /*!
+ * Set the keystore that the key will be stored in.
+ *
+ * @param key_object    A variable of type #fsl_shw_sko_t.
+ * @param keystore      The keystore to place the key in.  This is a variable of
+ *                      type #fsl_shw_kso_t.
+ */
+void fsl_shw_sko_set_keystore(fsl_shw_sko_t * key_object,
+			      fsl_shw_kso_t * keystore);
+
+/*!
  * Set the establish key handle into a key object.
  *
  * The @a userid field will be used to validate the access to the unwrapped
@@ -1053,6 +1430,16 @@ void fsl_shw_sko_set_established_info(fsl_shw_sko_t * key_object,
  */
 void fsl_shw_sko_get_algorithm(const fsl_shw_sko_t * key_info,
 			       fsl_shw_key_alg_t * algorithm);
+
+/*!
+ * Retrieve the cleartext key from a key object that is stored in a user
+ * keystore.
+ *
+ * @param      skobject     The Key Object to be queried.
+ * @param[out] skkey        A pointer to the location to store the key.  NULL
+ *                          if the key is not stored in a user keystore.
+ */
+void fsl_shw_sko_get_key(const fsl_shw_sko_t * skobject, void *skkey);
 
 /*!
  * Retrieve the established-key handle from a key object.
@@ -1387,7 +1774,7 @@ void fsl_shw_acco_clear_flags(fsl_shw_acco_t * auth_object, uint32_t flags);
  * and @a mac_length.  This function can be called instead of
  * #fsl_shw_acco_init().
  *
- * The paramater @a ctr is Counter Block 0, (counter value 0), which is for the
+ * The parameter @a ctr is Counter Block 0, (counter value 0), which is for the
  * MAC.
  *
  * @param auth_object  Pointer to object to operate on.
@@ -1471,7 +1858,7 @@ extern fsl_shw_pco_t *fsl_shw_get_capabilities(fsl_shw_uco_t * user_ctx);
 
 /* REQ-S2LRD-PINTFC-API-GEN-004 */
 /*!
- * Create an association between the the user and the provider of the API.
+ * Create an association between the user and the provider of the API.
  *
  * @param  user_ctx   The user context which will be used for this association.
  *
@@ -1481,7 +1868,7 @@ extern fsl_shw_return_t fsl_shw_register_user(fsl_shw_uco_t * user_ctx);
 
 /* REQ-S2LRD-PINTFC-API-GEN-005 */
 /*!
- * Destroy the association between the the user and the provider of the API.
+ * Destroy the association between the user and the provider of the API.
  *
  * @param  user_ctx   The user context which is no longer needed.
  *
@@ -1506,6 +1893,92 @@ extern fsl_shw_return_t fsl_shw_get_results(fsl_shw_uco_t * user_ctx,
 					    uint16_t result_size,
 					    fsl_shw_result_t results[],
 					    uint16_t * result_count);
+
+/*!
+ * Allocate a block of secure memory
+ *
+ * @param       user_ctx        User context
+ * @param       size            Memory size (octets).  Note: currently only
+ *                              supports only single-partition sized blocks.
+ * @param       UMID            User Mode ID to use when registering the
+ *                              partition.
+ * @param       permissions     Permissions to initialize the partition with.
+ *                              Can be made by ORing flags from the
+ *                              #fsl_shw_permission_t.
+ *
+ * @return                      Address of the allocated memory.  NULL if the
+ *                              call was not successful.
+ */
+extern void *fsl_shw_smalloc(fsl_shw_uco_t * user_ctx,
+			     uint32_t size,
+			     const uint8_t * UMID, uint32_t permissions);
+
+/*!
+ * Free a block of secure memory that was allocated with #fsl_shw_smalloc
+ *
+ * @param       user_ctx        User context
+ * @param       address         Address of the block of secure memory to be
+ *                              released.
+ *
+ * @return    A return code of type #fsl_shw_return_t.
+ */
+extern fsl_shw_return_t fsl_shw_sfree(fsl_shw_uco_t * user_ctx, void *address);
+
+/*!
+ * Diminish the permissions of a block of secure memory.  Note that permissions
+ * can only be revoked.
+ *
+ * @param       user_ctx        User context
+ * @param       address         Base address of the secure memory to work with
+ * @param       permissions     Permissions to initialize the partition with.
+ *                              Can be made by ORing flags from the
+ *                              #fsl_shw_permission_t.
+ *
+ * @return    A return code of type #fsl_shw_return_t.
+ */
+extern fsl_shw_return_t fsl_shw_diminish_perms(fsl_shw_uco_t * user_ctx,
+					       void *address,
+					       uint32_t permissions);
+
+/*!
+ * @brief   Encrypt a region of secure memory using the hardware secret key
+ *
+ * @param       user_ctx        User context
+ * @param       partition_base  Base address of the partition
+ * @param       offset_bytes    Offset of data from the partition base
+ * @param       byte_count      Length of the data to encrypt
+ * @param       black_data      Location to store the encrypted data
+ * @param       IV              IV to use for the encryption routine
+ * @param       cypher_mode     Cyphering mode to use, specified by type
+ *                              #fsl_shw_cypher_mode_t
+ *
+ * @return    A return code of type #fsl_shw_return_t.
+ */
+extern fsl_shw_return_t
+do_scc_encrypt_region(fsl_shw_uco_t * user_ctx,
+		      void *partition_base, uint32_t offset_bytes,
+		      uint32_t byte_count, uint8_t * black_data,
+		      uint32_t * IV, fsl_shw_cypher_mode_t cypher_mode);
+
+/*!
+ * @brief   Decrypt a region of secure memory using the hardware secret key
+ *
+ * @param       user_ctx        User context
+ * @param       partition_base  Base address of the partition
+ * @param       offset_bytes    Offset of data from the partition base
+ * @param       byte_count      Length of the data to encrypt
+ * @param       black_data      Location to store the encrypted data
+ * @param       IV              IV to use for the encryption routine
+ * @param       cypher_mode     Cyphering mode to use, specified by type
+ *                              #fsl_shw_cypher_mode_t
+ *
+ * @return    A return code of type #fsl_shw_return_t.
+ */
+extern fsl_shw_return_t
+do_scc_decrypt_region(fsl_shw_uco_t * user_ctx,
+		      void *partition_base, uint32_t offset_bytes,
+		      uint32_t byte_count, const uint8_t * black_data,
+		      uint32_t * IV, fsl_shw_cypher_mode_t cypher_mode);
 
 	  /*! @} *//* miscfuns */
 
@@ -1673,7 +2146,7 @@ extern fsl_shw_return_t fsl_shw_hash(fsl_shw_uco_t * user_ctx,
  * After execution of this function, the @a hmac_ctx will contain the
  * precomputed inner and outer contexts, so that they may be used by
  * #fsl_shw_hmac().  The flags of @a hmac_ctx will be updated with
- * #FSL_HMAC_FLAGS_PRECOMPUTES_PRESENT to mark their presence.  In addtion, the
+ * #FSL_HMAC_FLAGS_PRECOMPUTES_PRESENT to mark their presence.  In addition, the
  * #FSL_HMAC_FLAGS_INIT flag will be set.
  *
  * @param      user_ctx  A user context from #fsl_shw_register_user().
@@ -1843,13 +2316,25 @@ extern fsl_shw_return_t fsl_shw_auth_decrypt(fsl_shw_uco_t * user_ctx,
 					     uint8_t * payload);
 
 /*!
- * Place a key into a protected location for use only by cryptographic
- * algorithms.
+ * Establish the key in a protected location, which can be the system keystore,
+ * user keystore, or (on platforms that support it) as a Platform Key.
  *
- * This only needs to be used to a) unwrap a key, or b) set up a key which
- * could be wrapped with a later call to #fsl_shw_extract_key().  Normal
- * cleartext keys can simply be placed into #fsl_shw_sko_t key objects with
- * #fsl_shw_sko_set_key() and used directly.
+ * By default, keys initialized with #fsl_shw_sko_init() will be placed into
+ * the system keystore.  The user can cause the key to be established in a
+ * user keystore by first calling #fsl_shw_sko_set_keystore() on the key.
+ * Normally, keys in the system keystore can only be used for hardware
+ * encrypt or decrypt operations, however if the #FSL_SKO_KEY_SW_KEY flag is
+ * applied using #fsl_shw_sko_set_flags(), the key will be established as a
+ * software key, which can then be read out using #fsl_shw_read_key().
+ *
+ * Keys initialized with #fsl_shw_sko_init_pf_key() are established as a
+ * Platform Key.  Their use is covered in @ref di_sec.
+ *
+ * This function only needs to be used when unwrapping a key, setting up a key
+ * which could be wrapped with a later call to #fsl_shw_extract_key(), or
+ * setting up a key as a Platform Key.  Normal cleartext keys can simply be
+ * placed into #fsl_shw_sko_t key objects with #fsl_shw_sko_set_key() and used
+ * directly.
  *
  * The maximum key size supported for wrapped/unwrapped keys is 32 octets.
  * (This is the maximum reasonable key length on Sahara - 32 octets for an HMAC
@@ -1882,13 +2367,33 @@ extern fsl_shw_return_t fsl_shw_establish_key(fsl_shw_uco_t * user_ctx,
 					      const uint8_t * key);
 
 /*!
+ * Read the key value from a key object.
+ *
+ * Only a key marked as a software key (#FSL_SKO_KEY_SW_KEY) can be read with
+ * this call.  It has no effect on the status of the key store.
+ *
+ * @param      user_ctx         A user context from #fsl_shw_register_user().
+ * @param      key_info         The referenced key.
+ * @param[out] key              The location to store the key value.
+ *
+ * @return    A return code of type #fsl_shw_return_t.
+ */
+extern fsl_shw_return_t fsl_shw_read_key(fsl_shw_uco_t * user_ctx,
+					 fsl_shw_sko_t * key_info,
+					 uint8_t * key);
+
+/*!
  * Wrap a key and retrieve the wrapped value.
  *
  * A wrapped key is a key that has been cryptographically obscured.  It is
- * only able to be used with #fsl_shw_establish_key().
+ * only able to be used with keys that have been established by
+ * #fsl_shw_establish_key().
  *
- * This function will also release the key (see #fsl_shw_release_key()) so
- * that it must be re-established before reuse.
+ * For keys established in the system or user keystore, this function will
+ * also release the key (see #fsl_shw_release_key()) so that it must be re-
+ * established before reuse.  This function will not release keys that are
+ * established as a Platform Key, so a call to #fsl_shw_release_key() is
+ * necessary to release those keys.
  *
  * This feature is not available for all platforms, nor for all algorithms and
  * modes.
@@ -1921,7 +2426,39 @@ extern fsl_shw_return_t fsl_shw_extract_key(fsl_shw_uco_t * user_ctx,
 extern fsl_shw_return_t fsl_shw_release_key(fsl_shw_uco_t * user_ctx,
 					    fsl_shw_sko_t * key_info);
 
-	  /*! @} *//* opfuns */
+/*!
+ * Cause the hardware to create a new random key for use by the secure memory
+ * encryption hardware.
+ *
+ * Have the hardware use the secure hardware random number generator to load a
+ * new secret key into the system's Random Key register.
+ *
+ * @param      user_ctx         A user context from #fsl_shw_register_user().
+ *
+ * @return    A return code of type #fsl_shw_return_t.
+ */
+extern fsl_shw_return_t fsl_shw_gen_random_pf_key(fsl_shw_uco_t * user_ctx);
+
+/*!
+ * Retrieve the detected tamper event.
+ *
+ * Note that if more than one event was detected, this routine will only ever
+ * return one of them.
+ *
+ * @param[in]  user_ctx         A user context from #fsl_shw_register_user().
+ * @param[out] tamperp          Location to store the tamper information.
+ * @param[out] timestampp       Locate to store timestamp from hardwhare when
+ *                              an event was detected.
+ *
+ *
+ * @return    A return code of type #fsl_shw_return_t (for instance, if the platform
+ *            is not in a fail state.
+ */
+extern fsl_shw_return_t fsl_shw_read_tamper_event(fsl_shw_uco_t * user_ctx,
+						  fsl_shw_tamper_t * tamperp,
+						  uint64_t * timestampp);
+
+/*! @} *//* opfuns */
 
 /* Insert example code into the API documentation. */
 
@@ -1959,6 +2496,18 @@ extern fsl_shw_return_t fsl_shw_release_key(fsl_shw_uco_t * user_ctx,
 
 /*!
  * @example wrapped_key.c
+ */
+
+/*!
+ * @example smalloc.c
+ */
+
+/*!
+ * @example user_keystore.c
+ */
+
+/*!
+ * @example dryice.c
  */
 
 #endif				/* API_DOC */
