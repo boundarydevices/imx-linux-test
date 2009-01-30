@@ -16,7 +16,7 @@ CFLAGS += -g -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wdeclaration-aft
 
 EXAMPLE_OBJECTS:= apitest.o run_tests.o sym.o hash.o gen_encrypt.o \
                   callback.o auth_decrypt.o rand.o hmac1.o hmac2.o cap.o \
-                  wrap.o results.o apihelp.o
+                  wrap.o results.o apihelp.o smalloc.o user_wrap.o  dryice.o
 
 EXAMPLE_OBJECTS:= $(addprefix obj/, $(EXAMPLE_OBJECTS))
 
@@ -51,13 +51,16 @@ run_tests.o: run_tests.c $(HDRS)
 auth_decrypt.o: auth_decrypt.c  $(HDRS)
 callback.o: callback.c $(HDRS)
 cap.o: cap.c  $(HDRS)
+dryice.o: dryice.c $(HDRS)
 gen_encrypt.o: gen_encrypt.c  $(HDRS)
 hash.o: hash.c  $(HDRS)
 hmac1.o: hmac1.c  $(HDRS)
 hmac2.o: hmac2.c  $(HDRS)
 rand.o: rand.c  $(HDRS)
 results.o: results.c $(HDRS)
+smalloc.o: smalloc.c  $(HDRS)
 sym.o: sym.c  $(HDRS)
+user_wrap.o: user_wrap.c $(HDRS)
 wrap.o: wrap.c $(HDRS)
 
 else
