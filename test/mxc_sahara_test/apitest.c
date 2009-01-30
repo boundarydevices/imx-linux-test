@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2005-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -46,8 +46,7 @@ fsl_shw_uco_t    my_ctx;
 /** By default, test each suite once */
 static char* test_string = "F";
 
-
-/**
+/*!
  * User program wrapper for run_tests(), to test FSL SHW API.
  *
  * @param argc   The largest index of @c argv.
