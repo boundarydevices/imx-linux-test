@@ -9,6 +9,7 @@ module_list-$(CONFIG_MXC_SECURITY_SCC2) += scc2_test_driver.o
 module_list-$(CONFIG_MXC_SECURITY_RNG) += rng_test_driver.o
 module_list-$(CONFIG_MXC_SAHARA) += sahara_test_driver.o
 module_list-$(CONFIG_MXC_HMP4E) += memalloc.o
+module_list-$(CONFIG_MXC_DRYICE) += dryice_test.o
 
 # Build Sahara Kernel Test Module for RNG Kernel Mode Tests
 ifeq ($(CONFIG_MXC_SECURITY_RNG),y)
@@ -44,7 +45,7 @@ EXTRA_CFLAGS := -DLINUX_KERNEL
 
 ## NOTE: The following should be removed. They are directly requesting kernel
 ##       source.
-EXTRA_CFLAGS += -I$(LINUXPATH)/drivers/mxc/security/rng/include -I$(LINUXPATH)/drivers/mxc/security/sahara2/include
+EXTRA_CFLAGS += -I$(LINUXPATH)/drivers/mxc/security -I$(LINUXPATH)/drivers/mxc/security/rng/include -I$(LINUXPATH)/drivers/mxc/security/sahara2/include
 
 else
 
