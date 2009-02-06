@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2008-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -37,7 +37,7 @@ extern "C"{
 #include <errno.h>
 #include <linux/wait.h>
 
-#include <asm/arch/pmic_rtc.h>
+#include <linux/pmic_rtc.h>
 
 /*==============================================================================
                                        DEFINES AND MACROS

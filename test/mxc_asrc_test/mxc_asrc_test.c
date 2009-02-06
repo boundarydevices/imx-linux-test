@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2008-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -27,7 +27,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <sys/time.h>
-#include <asm/arch/mxc_asrc.h>
+#include <linux/mxc_asrc.h>
 
 #define DMA_BUF_SIZE 4096
 #define BUF_NUM 4

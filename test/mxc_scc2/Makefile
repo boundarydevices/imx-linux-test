@@ -7,6 +7,8 @@ else
 OBJS =
 endif
 
+CFLAGS += -DFSL_PLATFORM_OTHER -DFSL_HAVE_SCC2
+
 all : $(OBJS)
 	cp -r *.sh $(OBJDIR)
 
