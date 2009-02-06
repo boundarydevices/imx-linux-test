@@ -36,7 +36,7 @@ extern "C" {
 #include <stdlib.h>		/* atoi() */
 #include <pthread.h>
 
-#include <asm/arch/pmic_external.h>
+#include <linux/pmic_external.h>
 
 /*==============================================================================
                                            CONSTANTS
