@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -29,19 +29,9 @@
 
 #include <linux/mm.h>           /* for io_remap_page_range() */
 
-#ifdef TAHITI
-#include <asm/arch/mx2.h>           /* MX21 board memory map*/
-#define SCC_BASE SMN_BASE_ADDR
-#elif defined(MXC)
-#include <asm/arch/hardware.h>
-
-#else
-DO_NOT_KNOW_TARGET_ARCH;
-#endif
-
 #endif /* kernel */
 
-#include <asm/arch/mxc_scc_driver.h>
+#include <linux/mxc_scc_driver.h>
 
 #ifdef __KERNEL__
 

@@ -20,7 +20,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <linux/input.h>
-#include <asm/arch/imx_adc.h>
+#include <linux/imx_adc.h>
 
 int main(void)
 {

@@ -23,8 +23,8 @@
 #include <stdio.h>		/* sscanf() & perror() */
 #include <stdlib.h>		/* atoi() */
 
-#include <asm/arch/pmic_external.h>
-#include <asm/arch/pmic_light.h>
+#include <linux/pmic_external.h>
+#include <linux/pmic_light.h>
 
 #include "../include/test.h"
 #include "../include/usctest.h"
