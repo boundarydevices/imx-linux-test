@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2008-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -36,7 +36,7 @@ extern "C" {
 #include <stdlib.h>		/* atoi() */
 #include <pthread.h>
 
-#include <asm/arch/pmic_external.h>
+#include <linux/pmic_external.h>
 
 /*==============================================================================
                                            CONSTANTS
