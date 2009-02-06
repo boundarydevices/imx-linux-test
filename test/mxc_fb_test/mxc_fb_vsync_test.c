@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -29,7 +29,7 @@
 #include <math.h>
 #include <string.h>
 
-#include <asm/arch/mxcfb.h>
+#include <linux/mxcfb.h>
 
 
 int fd_fb = 0;

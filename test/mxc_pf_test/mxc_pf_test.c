@@ -24,7 +24,7 @@
 #include <sys/resource.h>
 #include <linux/types.h>
 
-#include <asm/arch/mxc_pf.h>
+#include <linux/mxc_pf.h>
 
 
 
