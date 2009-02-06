@@ -35,8 +35,8 @@ extern "C"{
 #include <stdio.h>	/* sscanf() & perror() */
 #include <stdlib.h>	/* atoi() */
 
-#include <asm/arch/pmic_external.h>
-#include <asm/arch/pmic_adc.h>
+#include <linux/pmic_external.h>
+#include <linux/pmic_adc.h>
 
 /*==============================================================================
                                            CONSTANTS

@@ -34,7 +34,7 @@ extern "C"{
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <asm/arch/mxcfb.h>
+#include <linux/mxcfb.h>
 #include <sys/mman.h>
 #include <math.h>
 #include <string.h>
