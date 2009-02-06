@@ -37,8 +37,8 @@ extern "C"{
 #include <errno.h>
 #include <linux/wait.h>
 
-#include <asm/arch/pmic_status.h>
-#include <asm/arch/pmic_battery.h>
+#include <linux/pmic_status.h>
+#include <linux/pmic_battery.h>
 
 /*==============================================================================
                                        DEFINES AND MACROS

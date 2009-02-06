@@ -294,7 +294,7 @@
 
 #else
 
-#error FSL_SHW_API_platform_not_recognized
+#include "shw_driver.h"
 
 #endif
 
