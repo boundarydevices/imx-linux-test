@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -24,12 +24,11 @@
 #ifdef __KERNEL__
 
 #include <portable_os.h>
-#include <asm/arch/hardware.h>
 
 #endif /* kernel */
 
 
-#include <asm/arch/mxc_scc2_driver.h>
+#include <linux/mxc_scc2_driver.h>
 
 
 #ifndef SCC2_TEST_DRIVER_NAME

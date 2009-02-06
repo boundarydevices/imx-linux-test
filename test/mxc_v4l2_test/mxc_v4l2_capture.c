@@ -43,7 +43,7 @@ extern "C"{
 #include <sys/mman.h>
 #include <string.h>
 #include <malloc.h>
-//#include <asm/arch/mxc_v4l2.h>
+//#include <linux/mxc_v4l2.h>
 
 struct v4l2_mxc_offset {
 	uint32_t u_offset;

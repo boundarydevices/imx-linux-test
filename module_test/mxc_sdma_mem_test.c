@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2006-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -27,10 +27,6 @@
 
 #include <linux/io.h>
 #include <linux/delay.h>
-
-#include <asm/arch/dma.h>
-
-#include <asm/arch/hardware.h>
 
 static int gMajor; //major number of device
 static struct class *dma_tm_class;
@@ -234,7 +230,10 @@ int __init sdma_init_module(void)
 		return PTR_ERR(dma_tm_class);
 	}
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28))
+	temp_class = device_create(dma_tm_class, NULL,
+				   MKDEV(gMajor, 0), NULL, "sdma_test");
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
 	temp_class = device_create(dma_tm_class, NULL,
 				   MKDEV(gMajor, 0), "sdma_test");
 #else

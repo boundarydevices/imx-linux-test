@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2006 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -42,8 +42,8 @@ extern "C"{
 #include <malloc.h>
 #include <sys/time.h>
 
-#include <asm/arch/mxcfb.h>
-//#include <asm/arch/mxc_v4l2.h>
+#include <linux/mxcfb.h>
+//#include <linux/mxc_v4l2.h>
 
 struct v4l2_mxc_offset {
 	uint32_t u_offset;

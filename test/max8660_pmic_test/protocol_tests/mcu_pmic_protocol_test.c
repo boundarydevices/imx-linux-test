@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2008-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -25,7 +25,7 @@
 #include <fcntl.h>
 
 #include <errno.h>
-#include <asm/arch/pmic_external.h>
+#include <linux/pmic_external.h>
 
 #define TFAIL -1
 #define TPASS 0
