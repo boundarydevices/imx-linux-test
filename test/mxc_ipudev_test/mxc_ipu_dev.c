@@ -33,8 +33,8 @@
 #include <sys/mman.h>
 #include <linux/videodev.h>
 #include <linux/autoconf.h>
-#include <asm/arch/ipu.h>
-#include <asm/arch/mxcfb.h>
+#include <linux/ipu.h>
+#include <linux/mxcfb.h>
 
 #ifdef CONFIG_MXC_IPU_V1
 #define ROT_BEGIN	IPU_ROTATE_90_RIGHT

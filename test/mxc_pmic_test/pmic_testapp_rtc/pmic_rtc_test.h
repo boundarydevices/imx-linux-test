@@ -37,7 +37,7 @@ extern "C"{
 #include <errno.h>
 #include <linux/wait.h>
 
-#include <asm/arch/pmic_rtc.h>
+#include <linux/pmic_rtc.h>
 
 /*==============================================================================
                                        DEFINES AND MACROS
