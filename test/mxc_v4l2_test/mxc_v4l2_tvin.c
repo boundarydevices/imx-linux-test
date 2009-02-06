@@ -48,7 +48,7 @@ extern "C"{
 #include <string.h>
 #include <malloc.h>
 
-#include <asm/arch/mxcfb.h>
+#include <linux/mxcfb.h>
 
 #define TFAIL -1
 #define TPASS 0

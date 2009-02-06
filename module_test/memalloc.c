@@ -369,7 +369,10 @@ s32 __init memalloc_init(void)
 		pr_debug("memalloc: error creating memalloc class\n");
 		goto error1;
 	}
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28))
+	temp_class = device_create(memalloc_class, NULL,
+				   MKDEV(memalloc_major, 0), NULL, "memalloc");
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26))
 	temp_class = device_create(memalloc_class, NULL,
 				   MKDEV(memalloc_major, 0), "memalloc");
 #else
