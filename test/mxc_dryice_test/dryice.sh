@@ -20,7 +20,7 @@ n_total=0
 ##
 run()
 {
-	insmod_test $loc $1 $2
+	insmod $loc $1 $2
 	if [ $? -eq 0 ]; then
 		rmmod $mod
 		n_passed=$(($n_passed+1))
