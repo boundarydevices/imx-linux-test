@@ -31,6 +31,89 @@ extern struct capture_testbuffer cap_buffers[];
 /* When app need to exit */
 extern int quitflag;
 
+#define FN_ENC_QP_DATA "enc_qp.log"
+#define FN_ENC_SLICE_BND_DATA "enc_slice_bnd.log"
+#define FN_ENC_MV_DATA "enc_mv.log"
+#define FN_ENC_SLICE_DATA "enc_slice.log"
+static FILE *fpEncSliceBndInfo = NULL;
+static FILE *fpEncQpInfo = NULL;
+static FILE *fpEncMvInfo = NULL;
+static FILE *fpEncSliceInfo = NULL;
+
+void SaveEncMbInfo(u8 *mbParaBuf, int size, int MbNumX, int EncNum)
+{
+	int i;
+	if(!fpEncQpInfo)
+		fpEncQpInfo = fopen(FN_ENC_QP_DATA, "w+");
+	if(!fpEncQpInfo)
+		return;
+
+	if(!fpEncSliceBndInfo)
+		fpEncSliceBndInfo = fopen(FN_ENC_SLICE_BND_DATA, "w+");
+	if(!fpEncSliceBndInfo)
+		return;
+
+	fprintf(fpEncQpInfo, "FRAME [%1d]\n", EncNum);
+	fprintf(fpEncSliceBndInfo, "FRAME [%1d]\n", EncNum);
+
+	for(i=0; i < size; i++) {
+		fprintf(fpEncQpInfo, "MbAddr[%4d]: MbQs[%2d]\n", i, mbParaBuf[i] & 63);
+		fprintf(fpEncSliceBndInfo, "MbAddr[%4d]: Slice Boundary Flag[%1d]\n",
+			 i, (mbParaBuf[i] >> 6) & 1);
+	}
+
+	fprintf(fpEncQpInfo, "\n");
+	fprintf(fpEncSliceBndInfo, "\n");
+	fflush(fpEncQpInfo);
+	fflush(fpEncSliceBndInfo);
+}
+
+void SaveEncMvInfo(u8 *mvParaBuf, int size, int MbNumX, int EncNum)
+{
+	int i;
+	if(!fpEncMvInfo)
+		fpEncMvInfo = fopen(FN_ENC_MV_DATA, "w+");
+	if(!fpEncMvInfo)
+		return;
+
+	fprintf(fpEncMvInfo, "FRAME [%1d]\n", EncNum);
+	for(i=0; i<size/4; i++) {
+		u16 mvX = (mvParaBuf[0] << 8) | (mvParaBuf[1]);
+		u16 mvY = (mvParaBuf[2] << 8) | (mvParaBuf[3]);
+		if(mvX & 0x8000) {
+			fprintf(fpEncMvInfo, "MbAddr[%4d:For ]: Avail[0] Mv[%5d:%5d]\n", i, 0, 0);
+		} else {
+			mvX = (mvX & 0x7FFF) | ((mvX << 1) & 0x8000);
+			fprintf(fpEncMvInfo, "MbAddr[%4d:For ]: Avail[1] Mv[%5d:%5d]\n", i, mvX, mvY);
+		}
+		mvParaBuf += 4;
+	}
+	fprintf(fpEncMvInfo, "\n");
+	fflush(fpEncMvInfo);
+}
+
+void SaveEncSliceInfo(u8 *SliceParaBuf, int size, int EncNum)
+{
+	int i, nMbAddr, nSliceBits;
+	if(!fpEncSliceInfo)
+		fpEncSliceInfo = fopen(FN_ENC_SLICE_DATA, "w+");
+	if(!fpEncSliceInfo)
+		return;
+
+	fprintf(fpEncSliceInfo, "EncFrmNum[%3d]\n", EncNum);
+
+	for(i=0; i<size / 8; i++) {
+		nMbAddr = (SliceParaBuf[2] << 8) | SliceParaBuf[3];
+		nSliceBits = (int)(SliceParaBuf[4] << 24)|(SliceParaBuf[5] << 16)|
+				(SliceParaBuf[6] << 8)|(SliceParaBuf[7]);
+		fprintf(fpEncSliceInfo, "[%2d] mbAddr.%3d, Bits.%d\n", i, nMbAddr, nSliceBits);
+		SliceParaBuf += 8;
+	}
+
+	fprintf(fpEncSliceInfo, "\n");
+	fflush(fpEncSliceInfo);
+}
+
 #if STREAM_ENC_PIC_RESET == 0
 static int
 enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
@@ -291,6 +374,32 @@ encoder_start(struct encode *enc)
 	enc_param.forceIPicture = 0;
 	enc_param.skipPicture = 0;
 
+	enc->mbInfo.enable = 0;
+	enc->mvInfo.enable = 0;
+	enc->sliceInfo.enable = 0;
+
+	/* Set report info flag */
+	if (enc->mbInfo.enable) {
+		ret = vpu_EncGiveCommand(handle, ENC_SET_REPORT_MBINFO, &enc->mbInfo);
+		if (ret != RETCODE_SUCCESS) {
+			err_msg("Failed to set MbInfo report, ret %d\n", ret);
+			return -1;
+		}
+	}
+	if (enc->mvInfo.enable) {
+		ret = vpu_EncGiveCommand(handle, ENC_SET_REPORT_MVINFO, &enc->mvInfo);
+		if (ret != RETCODE_SUCCESS) {
+			err_msg("Failed to set MvInfo report, ret %d\n", ret);
+			return -1;
+		}
+	}
+	if (enc->sliceInfo.enable) {
+		ret = vpu_EncGiveCommand(handle, ENC_SET_REPORT_SLICEINFO, &enc->sliceInfo);
+		if (ret != RETCODE_SUCCESS) {
+			err_msg("Failed to set slice info report, ret %d\n", ret);
+			return -1;
+		}
+	}
 	if (src_scheme == PATH_V4L2) {
 		ret = v4l_start_capturing();
 		if (ret < 0) {
@@ -371,22 +480,23 @@ encoder_start(struct encode *enc)
 			goto err2;
 		}
 
-		encop = handle->CodecInfo.encInfo.openParam;
-		if (encop.sliceReport == 1) {
-			int i;
-			unsigned int *p = (unsigned int *)outinfo.sliceInfo;
-			info_msg("Num of Slice=%d ", outinfo.numOfSlices);
+		if ((encop.ringBufferEnable == 0) &&
+		    (outinfo.bitstreamWrapAround  == 1))
+			warn_msg("BitStream buffer wrap arounded. Prepare more buffer\n");
 
-			for (i = 0; i < outinfo.numOfSlices; i++) {
-			       info_msg("%x,", *p++);
-			}
-			info_msg("\n");
+		if (outinfo.mbInfo.enable && outinfo.mbInfo.size && outinfo.mbInfo.addr) {
+			SaveEncMbInfo(outinfo.mbInfo.addr, outinfo.mbInfo.size,
+					 encop.picWidth/16, frame_id);
 		}
 
-		if ((encop.bitstreamFormat == STD_MPEG4) &&
-					(encop.mbQpReport == 1)) {
-                        SaveQpReport(outinfo.mbQpInfo, encop.picWidth,
-				encop.picHeight, frame_id, "encqpreport.dat");
+		if (outinfo.mvInfo.enable && outinfo.mvInfo.size && outinfo.mvInfo.addr) {
+			SaveEncMvInfo(outinfo.mvInfo.addr, outinfo.mvInfo.size,
+					 encop.picWidth/16, frame_id);
+		}
+
+		if (outinfo.sliceInfo.enable && outinfo.sliceInfo.size && outinfo.sliceInfo.addr) {
+			SaveEncSliceInfo(outinfo.sliceInfo.addr,
+					     outinfo.sliceInfo.size, frame_id);
 		}
 
 		if (src_scheme == PATH_V4L2) {
@@ -438,6 +548,29 @@ err2:
 		vpu_write(enc->cmdl, NULL, 0);
 	}
 
+	if (enc->mbInfo.addr)
+		free(enc->mbInfo.addr);
+	if (enc->mbInfo.addr)
+		free(enc->mbInfo.addr);
+	if (enc->sliceInfo.addr)
+		free(enc->sliceInfo.addr);
+
+	if (fpEncQpInfo) {
+		fclose(fpEncQpInfo);
+		fpEncQpInfo = NULL;
+	}
+	if (fpEncSliceBndInfo) {
+		fclose(fpEncSliceBndInfo);
+		fpEncSliceBndInfo = NULL;
+	}
+	if (fpEncMvInfo) {
+		fclose(fpEncMvInfo);
+		fpEncMvInfo = NULL;
+	}
+	if (fpEncSliceInfo) {
+		fclose(fpEncSliceInfo);
+		fpEncSliceInfo = NULL;
+	}
 	/* For automation of test case */
 	if (ret > 0)
 		ret = 0;
@@ -508,6 +641,22 @@ encoder_configure(struct encode *enc)
 			SaveGetEncodeHeader(handle, ENC_GET_PPS_RBSP,
 						"avc_pps_header.dat");
 		}
+	}
+
+	if (enc->mbInfo.enable) {
+		enc->mbInfo.addr = malloc(initinfo.reportBufSize.mbInfoBufSize);
+		if (!enc->mbInfo.addr)
+			err_msg("malloc_error\n");
+	}
+	if (enc->mvInfo.enable) {
+		enc->mvInfo.addr = malloc(initinfo.reportBufSize.mvInfoBufSize);
+		if (!enc->mvInfo.addr)
+			err_msg("malloc_error\n");
+	}
+	if (enc->sliceInfo.enable) {
+		enc->sliceInfo.addr = malloc(initinfo.reportBufSize.sliceInfoBufSize);
+		if (!enc->sliceInfo.addr)
+			err_msg("malloc_error\n");
 	}
 
 	return 0;
