@@ -212,4 +212,6 @@ int decoder_parse(struct decode *dec);
 int decoder_allocate_framebuffer(struct decode *dec);
 void decoder_free_framebuffer(struct decode *dec);
 
+void SaveQpReport(Uint32 *qpReportAddr, int picWidth, int picHeight,
+		  int frameIdx, char *fileName);
 #endif
