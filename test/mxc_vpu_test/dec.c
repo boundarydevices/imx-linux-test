@@ -28,7 +28,7 @@ extern int quitflag;
 static FILE *fpFrmStatusLogfile = 0;
 static FILE *fpMbLogfile = 0;
 static FILE *fpMvLogfile = 0;
-/*static FILE *fpUserDataLogfile = 0;*/
+static FILE *fpUserDataLogfile = 0;
 
 #define FN_FRAME_BUFFER_STATUS "log_FrameBufStatus.log"
 #define FN_MB_DATA "log_MB_Para.log"
@@ -124,6 +124,40 @@ void SaveMvPara(u8 *mvParaBuf, int size, int mvNumPerMb, int mbNumX, int DecNum)
 			fprintf(fpMvLogfile, "%%\n");
 	}
 	fflush(fpMvLogfile);
+}
+
+void SaveUserData(u8 *userDataBuf) {
+	int i, UserDataType, UserDataSize, userDataNum, TotalSize;
+	u8 *tmpBuf;
+
+	if(fpUserDataLogfile == 0) {
+		fpUserDataLogfile = fopen(FN_USER_DATA, "w+");
+	}
+
+	tmpBuf = userDataBuf;
+	userDataNum = (short)((tmpBuf[0]<<8) | (tmpBuf[1]<<0));
+	TotalSize = (short)((tmpBuf[2]<<8) | (tmpBuf[3]<<0));
+
+	tmpBuf = userDataBuf + 8;
+
+	for(i=0; i<userDataNum; i++) {
+		UserDataType = (short)((tmpBuf[0]<<8) | (tmpBuf[1]<<0));
+		UserDataSize = (short)((tmpBuf[2]<<8) | (tmpBuf[3]<<0));
+		fprintf(fpUserDataLogfile, "\n[Idx Type Size] : [%4d %4d %4d]",i, UserDataType, UserDataSize);
+
+		tmpBuf += 8;
+	}
+	fprintf(fpUserDataLogfile, "\n");
+
+	tmpBuf = userDataBuf + USER_DATA_INFO_OFFSET;
+	for(i=0; i<TotalSize; i++) {
+		fprintf(fpUserDataLogfile, "%02x", tmpBuf[i]);
+		if ((i&7) == 7)
+			fprintf(fpUserDataLogfile, "\n");
+	}
+	fprintf(fpUserDataLogfile, "\n");
+	fflush(fpUserDataLogfile);
+
 }
 
 /*
@@ -643,12 +677,6 @@ decoder_start(struct decode *dec)
 	 */
 	decparam.iframeSearchEnable = 0;
 
-	decparam.extParam.userDataEnable = 0;
-
-	decparam.extParam.mbParamEnable = 0;
-	decparam.extParam.mvReportEnable = 0;
-	decparam.extParam.frameBufStatEnable = 0;
-
 	fwidth = ((dec->picwidth + 15) & ~15);
 	fheight = ((dec->picheight + 15) & ~15);
 
@@ -719,6 +747,35 @@ decoder_start(struct decode *dec)
 			}
 		}
 
+		if (dec->mbInfo.enable == 1) {
+			ret = vpu_DecGiveCommand(handle,DEC_SET_REPORT_MBINFO, &dec->mbInfo);
+			if (ret != RETCODE_SUCCESS) {
+				err_msg("Failed to set MbInfo report, ret %d\n", ret);
+				return -1;
+			}
+		}
+		if (dec->mvInfo.enable == 1) {
+			ret = vpu_DecGiveCommand(handle,DEC_SET_REPORT_MVINFO, &dec->mvInfo);
+			if (ret != RETCODE_SUCCESS) {
+				err_msg("Failed to set MvInfo report, ret %d\n", ret);
+				return -1;
+			}
+		}
+		if (dec->frameBufStat.enable == 1) {
+			ret = vpu_DecGiveCommand(handle,DEC_SET_REPORT_BUFSTAT, &dec->frameBufStat);
+			if (ret != RETCODE_SUCCESS) {
+				err_msg("Failed to set frame status report, ret %d\n", ret);
+				return -1;
+			}
+		}
+		if (dec->userData.enable == 1) {
+			ret = vpu_DecGiveCommand(handle,DEC_SET_REPORT_USERDATA, &dec->userData);
+			if (ret != RETCODE_SUCCESS) {
+				err_msg("Failed to set user data report, ret %d\n", ret);
+				return -1;
+			}
+		}
+
 		gettimeofday(&tdec_begin, NULL);
 		ret = vpu_DecStartOneFrame(handle, &decparam);
 		if (ret != RETCODE_SUCCESS) {
@@ -779,52 +836,59 @@ decoder_start(struct decode *dec)
 		}
 
 		/* Frame Buffer Status */
-		if (decparam.extParam.frameBufStatEnable &&
-			outinfo.outputExtData.frameBufDataSize) {
-			int size;
-			u8 *frameBufferStatBuf;
-			size = (outinfo.outputExtData.frameBufDataSize+7)*8/8;
-
-			frameBufferStatBuf = malloc(size);
-			memset(frameBufferStatBuf, 0, size);
-			memcpy(frameBufferStatBuf, (void *)outinfo.outputExtData.frameBufStatDataAddr, size);
-			SaveFrameBufStat(frameBufferStatBuf, outinfo.outputExtData.frameBufDataSize);
-			free(frameBufferStatBuf);
+		if (outinfo.frameBufStat.enable && outinfo.frameBufStat.size) {
+			SaveFrameBufStat(outinfo.frameBufStat.addr,
+				   outinfo.frameBufStat.size);
 		}
 
 		/* Mb Param */
-		if (outinfo.indexFrameDecoded >= 0 &&
-			decparam.extParam.mbParamEnable &&
-			outinfo.outputExtData.mbParamDataSize) {
-			int size;
-			u8 *mbDataBuf;
+		if (outinfo.indexFrameDecoded >= 0 && outinfo.mbInfo.enable &&
+			outinfo.mbInfo.size) {
 			int mbNumX = dec->picwidth / 16;
-
-			size = (outinfo.outputExtData.mbParamDataSize + 7) / 8 * 8;
-			mbDataBuf = malloc(size);
-			memset(mbDataBuf, 0, size);
-			memcpy(mbDataBuf, (void *)outinfo.outputExtData.mbParamDataAddr, size);
-			SaveMB_Para(mbDataBuf, outinfo.outputExtData.mbParamDataSize,
-						mbNumX, decIndex);
-			free(mbDataBuf);
+			SaveMB_Para(outinfo.mbInfo.addr,
+			        outinfo.mbInfo.size, mbNumX, decIndex);
 		}
 
 		/* Motion Vector */
-		if (outinfo.indexFrameDecoded >= 0 &&
-			decparam.extParam.mvReportEnable &&
-			outinfo.outputExtData.mvDataSize) {
-			int size;
-			u8 *mvDataBuf;
+		if (outinfo.indexFrameDecoded >= 0 && outinfo.mvInfo.enable &&
+			outinfo.mvInfo.size) {
 			int mbNumX = dec->picwidth / 16;
-			size = (outinfo.outputExtData.mvDataSize+7)/8*8;
-			size = size*outinfo.outputExtData.mvNumPerMb*4;
-			mvDataBuf = malloc(size);
-			memset(mvDataBuf, 0, size);
-			memcpy(mvDataBuf, (void *)outinfo.outputExtData.mvDataAddr, size);
-			SaveMvPara(mvDataBuf, outinfo.outputExtData.mvDataSize,
-				   outinfo.outputExtData.mvNumPerMb,
-				   mbNumX, decIndex);
-			free(mvDataBuf);
+			SaveMvPara(outinfo.mvInfo.addr, outinfo.mvInfo.size,
+			   outinfo.mvInfo.mvNumPerMb, mbNumX, decIndex);
+		}
+
+		/* User Data */
+		if (outinfo.indexFrameDecoded >= 0 &&  (dec->cmdl->format == STD_VC1) &&
+		    outinfo.userData.enable && outinfo.userData.size) {
+			if (outinfo.userData.userDataBufFull)
+				warn_msg("User Data Buffer is Full\n");
+			SaveUserData(dec->userData.addr);
+		}
+
+		if (outinfo.indexFrameDecoded >= 0) {
+			if (dec->cmdl->format == STD_VC1) {
+				if (outinfo.pictureStructure == 2)
+					info_msg("dec_idx %d : FRAME_INTERLACE\n", decIndex);
+				else if (outinfo.pictureStructure == 3)
+					info_msg("dec_idx %d : FIELD_INTERLACE\n", decIndex);
+				if (outinfo.vc1_repeatFrame)
+					info_msg("dec_idx %d : VC1 RPTFRM [%1d]\n", decIndex, outinfo.vc1_repeatFrame);
+			} else if (dec->cmdl->format == STD_AVC) {
+				if (outinfo.interlacedFrame)
+					info_msg("Top Field First flag: %d, dec_idx %d\n",
+						  outinfo.topFieldFirst, decIndex);
+			} else if ((dec->cmdl->format != STD_MPEG4) && (dec->cmdl->format != STD_RV)){
+				if (outinfo.interlacedFrame || !outinfo.progressiveFrame) {
+					if (outinfo.pictureStructure == 1)
+						info_msg("Top Field First flag: %d, dec_idx %d is top field\n",
+							 outinfo.topFieldFirst, decIndex);
+					else if (outinfo.pictureStructure == 2)
+						info_msg("Top Field First flag: %d, dec_idx %d is bottom field\n",
+							  outinfo.topFieldFirst, decIndex);
+				}
+				if (outinfo.repeatFirstField)
+					info_msg("frame_idx %d : Repeat First Field\n", decIndex);
+			}
 		}
 
 		decIndex++;
@@ -949,10 +1013,10 @@ decoder_start(struct decode *dec)
 			disp_clr_index = outinfo.indexFrameDisplay;
 		}
 
-		if (outinfo.numOfErrMBs[0]) {
-			totalNumofErrMbs += outinfo.numOfErrMBs[0];
+		if (outinfo.numOfErrMBs) {
+			totalNumofErrMbs += outinfo.numOfErrMBs;
 			info_msg("Num of Error Mbs : %d, in Frame : %d \n",
-					outinfo.numOfErrMBs[0], (int)frame_id);
+					outinfo.numOfErrMBs, (int)frame_id);
 		}
 
 		frame_id++;
@@ -1035,6 +1099,23 @@ decoder_free_framebuffer(struct decode *dec)
 		free(dec->pfbpool);
 		dec->pfbpool = NULL;
 	}
+
+	if (dec->frameBufStat.addr) {
+		free(dec->frameBufStat.addr);
+	}
+
+	if (dec->mbInfo.addr) {
+		free(dec->mbInfo.addr);
+	}
+
+	if (dec->mvInfo.addr) {
+		free(dec->mvInfo.addr);
+	}
+
+	if (dec->userData.addr) {
+		free(dec->userData.addr);
+	}
+
 	return;
 }
 
@@ -1186,6 +1267,22 @@ err:
 		}
 	}
 
+	if (fpFrmStatusLogfile) {
+		fclose(fpFrmStatusLogfile);
+		fpFrmStatusLogfile = NULL;
+	}
+	if (fpMvLogfile) {
+		fclose(fpMvLogfile);
+		fpMvLogfile = NULL;
+	}
+	if (fpMbLogfile) {
+		fclose(fpMbLogfile);
+		fpMbLogfile = NULL;
+	}
+	if (fpUserDataLogfile) {
+		fclose(fpUserDataLogfile);
+		fpUserDataLogfile = NULL;
+	}
 	free(dec->fb);
 	free(dec->pfbpool);
 	dec->fb = NULL;
@@ -1241,7 +1338,7 @@ decoder_parse(struct decode *dec)
 			else if (initinfo.profile == 2)
 				info_msg("VC1 Profile: Advanced\n");
 
-			info_msg("Level: %d Interlace: %d PSF: %d\n",
+			info_msg("Level: %d Interlace: %d Progressive Segmented Frame: %d\n",
 				initinfo.level, initinfo.interlace, initinfo.vc1_psf);
 
 			if (initinfo.aspectRateInfo)
@@ -1279,6 +1376,21 @@ decoder_parse(struct decode *dec)
 			else
 				info_msg("Aspect Ratio is not present.\n");
 
+			break;
+
+		case STD_RV:
+			info_msg("RV Profile: %d Level: %d\n", initinfo.profile, initinfo.level);
+			break;
+
+		case STD_H263:
+			info_msg("H263 Profile: %d Level: %d\n", initinfo.profile, initinfo.level);
+			break;
+
+		case STD_DIV3:
+			info_msg("DIV3 Profile: %d Level: %d\n", initinfo.profile, initinfo.level);
+			break;
+
+		default:
 			break;
 		}
 	}
@@ -1329,6 +1441,29 @@ decoder_parse(struct decode *dec)
 	/* worstSliceSize is in kilo-byte unit */
 	dec->phy_slicebuf_size = initinfo.worstSliceSize * 1024;
 	dec->stride = dec->picwidth;
+
+	/* Allocate memory for frame status, Mb and Mv report */
+	if (dec->frameBufStat.enable) {
+		dec->frameBufStat.addr = malloc(initinfo.reportBufSize.frameBufStatBufSize);
+		if (!dec->frameBufStat.addr)
+			err_msg("malloc_error\n");
+	}
+	if (dec->mbInfo.enable) {
+		dec->mbInfo.addr = malloc(initinfo.reportBufSize.mbInfoBufSize);
+		if (!dec->mbInfo.addr)
+			err_msg("malloc_error\n");
+	}
+	if (dec->mvInfo.enable) {
+		dec->mvInfo.addr = malloc(initinfo.reportBufSize.mvInfoBufSize);
+		if (!dec->mvInfo.addr)
+			err_msg("malloc_error\n");
+	}
+	if (dec->userData.enable) {
+		dec->userData.size = SIZE_USER_BUF;
+		dec->userData.addr = malloc(SIZE_USER_BUF);
+		if (!dec->userData.addr)
+			err_msg("malloc_error\n");
+	}
 	return 0;
 }
 
@@ -1426,7 +1561,16 @@ decode_test(void *arg)
 	dec->virt_bsbuf_addr = mem_desc.virt_uaddr;
 
 	dec->reorderEnable = 1;
+
+	dec->userData.enable = 0;
+	dec->mbInfo.enable = 0;
+	dec->mvInfo.enable = 0;
+	dec->frameBufStat.enable = 0;
+
 	dec->cmdl = cmdl;
+
+	if (cmdl->format == STD_RV)
+		dec->userData.enable = 0; /* RV has no user data */
 
 	if (cmdl->format == STD_AVC) {
 		ps_mem_desc.size = PS_SAVE_SIZE;
