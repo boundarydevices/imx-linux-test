@@ -31,7 +31,7 @@ static int disp_clr_index = -1;
 static int frame_id = 0;
 
 static int
-decode()
+decode(void)
 {
 	DecHandle handle = dec->handle;
 	DecParam decparam = {0};
@@ -155,7 +155,7 @@ dec_fill_bsbuffer(char *buf, int size)
 }
 
 static int
-encoder_fill_headers()
+encoder_fill_headers(void)
 {
 	EncHeaderParam enchdr_param = {0};
 	EncHandle handle = enc->handle;
@@ -218,7 +218,7 @@ encoder_fill_headers()
 }
 
 static int
-encode()
+encode(void)
 {
 	EncHandle handle = enc->handle;
 	EncParam  enc_param = {0};

@@ -30,8 +30,10 @@ $(TARGET): $(OBJ)
 	cp ./configs/akiyo.mp4 $(OBJDIR)
 
 %.o: %.c
-	$(CC) -Wall -O2 -c $^ -o $@
+	$(CC) $(INC) -Wall -O2 -c $^ -o $@
 
 .PHONY: clean
 clean:
 	rm -f $(OBJDIR)/$(TARGET) $(OBJ)
+
+include ../make.rules
