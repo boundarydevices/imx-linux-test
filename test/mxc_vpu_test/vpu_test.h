@@ -69,6 +69,9 @@ typedef signed char s8;
 #define DEFAULT_PORT		5555
 #define DEFAULT_PKT_SIZE	0x28000
 
+#define SIZE_USER_BUF            0x1000
+#define USER_DATA_INFO_OFFSET    8*17
+
 struct frame_buf {
 	int addrY;
 	int addrCb;
@@ -156,6 +159,12 @@ struct decode {
 	vpu_mem_desc *mvcol_memdesc;
 	Rect picCropRect;
 	int reorderEnable;
+
+	DecReportInfo mbInfo;
+	DecReportInfo mvInfo;
+	DecReportInfo frameBufStat;
+	DecReportInfo userData;
+
 	struct cmd_line *cmdl;
 };
 
@@ -169,12 +178,17 @@ struct encode {
 	int src_fbid;	/* Index of frame buffer that contains YUV image */
 	FrameBuffer *fb; /* frame buffer base given to encoder */
 	struct frame_buf **pfbpool; /* allocated fb pointers are stored here */
+
+        EncReportInfo mbInfo;
+        EncReportInfo mvInfo;
+        EncReportInfo sliceInfo;
+
 	struct cmd_line *cmdl; /* command line */
 	u8 * huffTable;
 	u8 * qMatTable;
 };
 
-void framebuf_init();
+void framebuf_init(void);
 int fwriten(int fd, void *vptr, size_t n);
 int freadn(int fd, void *vptr, size_t n);
 int vpu_read(struct cmd_line *cmd, char *buf, int n);
