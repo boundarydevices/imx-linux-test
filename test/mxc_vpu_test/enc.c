@@ -255,6 +255,7 @@ encoder_start(struct encode *enc)
 {
 	EncHandle handle = enc->handle;
 	EncParam  enc_param = {0};
+	EncOpenParam encop = {0};
 	EncOutputInfo outinfo = {0};
 	RetCode ret = 0;
 	int src_fbid = enc->src_fbid, img_size, frame_id = 0;
@@ -368,6 +369,24 @@ encoder_start(struct encode *enc)
 			err_msg("vpu_EncGetOutputInfo failed Err code: %d\n",
 									ret);
 			goto err2;
+		}
+
+		encop = handle->CodecInfo.encInfo.openParam;
+		if (encop.sliceReport == 1) {
+			int i;
+			unsigned int *p = (unsigned int *)outinfo.sliceInfo;
+			info_msg("Num of Slice=%d ", outinfo.numOfSlices);
+
+			for (i = 0; i < outinfo.numOfSlices; i++) {
+			       info_msg("%x,", *p++);
+			}
+			info_msg("\n");
+		}
+
+		if ((encop.bitstreamFormat == STD_MPEG4) &&
+					(encop.mbQpReport == 1)) {
+                        SaveQpReport(outinfo.mbQpInfo, encop.picWidth,
+				encop.picHeight, frame_id, "encqpreport.dat");
 		}
 
 		if (src_scheme == PATH_V4L2) {
