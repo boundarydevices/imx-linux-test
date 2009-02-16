@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <linux/mxcfb.h>
 #include "vpu_test.h"
 
 #define V4L2_MXC_ROTATE_NONE                    0
@@ -103,12 +104,27 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	struct v4l2_requestbuffers reqbuf = {0};
 	struct v4l2_mxc_offset off = {0};
 	struct vpu_display *disp;
+	int fd_fb;
+	struct mxcfb_gbl_alpha alpha;
+
 	int ratio = 1;
 
 	if (cpu_is_mx27()) {
 		out = 0;
 	} else {
 		out = 3;
+		fd_fb = open("/dev/fb0", O_RDWR, 0);
+		if (fd_fb < 0) {
+			err_msg("unable to open fb1\n");
+			return NULL;
+		}
+		alpha.alpha = 0;
+		alpha.enable = 1;
+		if (ioctl(fd_fb, MXCFB_SET_GBL_ALPHA, &alpha) < 0) {
+			err_msg("set alpha blending failed\n");
+			return NULL;
+		}
+		close(fd_fb);
 	}
 	dprintf(3, "rot_en:%d; rot_angle:%d; ipu_rot_en:%d\n", rotation.rot_en,
 			rotation.rot_angle, rotation.ipu_rot_en);
