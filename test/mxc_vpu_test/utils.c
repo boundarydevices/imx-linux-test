@@ -809,3 +809,60 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 	return 0;
 }
 
+void SaveQpReport(Uint32 *qpReportAddr, int picWidth, int picHeight,
+		  int frameIdx, char *fileName)
+{
+	FILE *fp;
+	int i, j;
+	int MBx, MBy, MBxof4, MBxof1, MBxx;
+	Uint32 *qpAddr;
+	Uint32 qp;
+	Uint8 lastQp[4];
+
+	if (frameIdx == 0)
+		fp = fopen(fileName, "wb");
+	else
+		fp = fopen(fileName, "a+b");
+
+	if (!fp) {
+		err_msg("Can't open %s in SaveQpReport\n", fileName);
+		return;
+	}
+
+	MBx = picWidth / 16;
+	MBxof1 = MBx % 4;
+	MBxof4 = MBx - MBxof1;
+	MBy = picHeight / 16;
+	MBxx = (MBx + 3) / 4 * 4;
+	for (i = 0; i < MBy; i++) {
+		for (j = 0; j < MBxof4; j = j + 4) {
+			dprintf(3, "qpReportAddr = %lx\n", (Uint32)qpReportAddr);
+			qpAddr = (Uint32 *)((Uint32)qpReportAddr + j + MBxx * i);
+			qp = *qpAddr;
+			fprintf(fp, " %4d %4d %3d \n", frameIdx,
+				MBx * i + j + 0, (Uint8) (qp >> 24));
+			fprintf(fp, " %4d %4d %3d \n", frameIdx,
+				MBx * i + j + 1, (Uint8) (qp >> 16));
+			fprintf(fp, " %4d %4d %3d \n", frameIdx,
+				MBx * i + j + 2, (Uint8) (qp >> 8));
+			fprintf(fp, " %4d %4d %3d \n", frameIdx,
+				MBx * i + j + 3, (Uint8) qp);
+		}
+
+		if (MBxof1 > 0) {
+			qpAddr = (Uint32 *)((Uint32)qpReportAddr + MBxx * i + MBxof4);
+			qp = *qpAddr;
+			lastQp[0] = (Uint8) (qp >> 24);
+			lastQp[1] = (Uint8) (qp >> 16);
+			lastQp[2] = (Uint8) (qp >> 8);
+			lastQp[3] = (Uint8) (qp);
+		}
+
+		for (j = 0; j < MBxof1; j++) {
+			fprintf(fp, " %4d %4d %3d \n", frameIdx,
+				MBx * i + j + MBxof4, lastQp[j]);
+		}
+	}
+
+	fclose(fp);
+}
