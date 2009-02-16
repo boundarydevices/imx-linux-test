@@ -33,7 +33,7 @@ static int fb_index;
 static struct frame_buf *fbarray[NUM_FRAME_BUFS];
 static struct frame_buf fbpool[NUM_FRAME_BUFS];
 
-void framebuf_init()
+void framebuf_init(void)
 {
 	int i;
 
@@ -42,7 +42,7 @@ void framebuf_init()
 	}
 }
 
-struct frame_buf *get_framebuf()
+struct frame_buf *get_framebuf(void)
 {
 	struct frame_buf *fb;
 
