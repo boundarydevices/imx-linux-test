@@ -480,10 +480,6 @@ encoder_start(struct encode *enc)
 			goto err2;
 		}
 
-		if ((encop.ringBufferEnable == 0) &&
-		    (outinfo.bitstreamWrapAround  == 1))
-			warn_msg("BitStream buffer wrap arounded. Prepare more buffer\n");
-
 		if (outinfo.mbInfo.enable && outinfo.mbInfo.size && outinfo.mbInfo.addr) {
 			SaveEncMbInfo(outinfo.mbInfo.addr, outinfo.mbInfo.size,
 					 encop.picWidth/16, frame_id);
@@ -494,7 +490,8 @@ encoder_start(struct encode *enc)
 					 encop.picWidth/16, frame_id);
 		}
 
-		if (outinfo.sliceInfo.enable && outinfo.sliceInfo.size && outinfo.sliceInfo.addr) {
+		if (outinfo.sliceInfo.enable && outinfo.sliceInfo.size &&
+		    outinfo.sliceInfo.addr) {
 			SaveEncSliceInfo(outinfo.sliceInfo.addr,
 					     outinfo.sliceInfo.size, frame_id);
 		}
