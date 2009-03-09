@@ -235,7 +235,7 @@ main(int argc, char **argv)
         }
 
         /* Overlay setting */
-        alpha.alpha = 255;
+        alpha.alpha = 0;
 	alpha.enable = 1;
 	if ( ioctl(fd_fb, MXCFB_SET_GBL_ALPHA, &alpha) < 0) {
                 close(fd_fb);
