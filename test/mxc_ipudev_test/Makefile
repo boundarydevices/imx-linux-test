@@ -1,14 +1,15 @@
 # list of platforms which want this test case
 INCLUDE_LIST:=IMX31_3STACK IMX35_3STACK IMX37_3STACK IMX51_3STACK
 
-SRCS = mxc_ipu_dev.c
+SRCS = mxc_ipudev_test.c utils.c test_pattern.c
+CFLAGS += -lipu -lm
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
-OBJS = mxc_ipu_dev.out
+OBJS = $(OBJDIR)/mxc_ipudev_test.out
 $(OBJS): $(SRCS)
-	$(VERBOSE) $(CC) -g $(INC) $(CFLAGS) $^ $(LIBS) -lipu -o $@
 	mkdir -p $(OBJDIR)
-	mv $@ $(OBJDIR)
+	$(VERBOSE) $(CC) -g $(INC) $(CFLAGS) $^ $(LIBS) -o $@
+	cp ipudev_config_file $(OBJDIR)
 else
 OBJS =
 endif
