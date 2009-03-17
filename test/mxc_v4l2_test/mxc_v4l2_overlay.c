@@ -181,7 +181,7 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
                 return TFAIL;
         }
 
-        ctl.id = V4L2_CID_PRIVATE_BASE;
+	ctl.id = V4L2_CID_PRIVATE_BASE + 2;
 		ctl.value = g_rotate;
         if (ioctl(fd_v4l, VIDIOC_S_CTRL, &ctl) < 0)
         {
