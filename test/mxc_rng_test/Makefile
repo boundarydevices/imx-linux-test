@@ -5,7 +5,7 @@
 #****************************************************************************/
 
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX27ADS IMX27EVB MXC27530EVB MXC30030ADS MXC30030EVB MXC30031ADS IMX51_3STACK"
+EXCLUDE_LIST:="IMX27ADS IMX51"
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = apitest rng_test move
@@ -13,15 +13,6 @@ else
 OBJS =
 endif
 KERNEL_DIR = $(LINUXPATH)
-ifeq ("$(PLATFORM)", "MXC27520EVB")
-TARGET_ARCH=-DCONFIG_ARCH_MXC91221
-endif
-ifeq ("$(PLATFORM)", "MXC30020EVB")
-TARGET_ARCH=-DCONFIG_ARCH_MXC91311
-endif
-ifeq ("$(PLATFORM)", "MXC91131EVB")
-TARGET_ARCH=-DCONFIG_ARCH_MXC91131
-endif
 ifeq ("$(PLATFORM)", "IMX25_3STACK")
 TARGET_ARCH=-DCONFIG_ARCH_MX25
 endif
