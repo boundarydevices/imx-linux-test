@@ -146,9 +146,8 @@ print_status()
 
 #
 # This echos the plaftorm name in all caps:
-# MXC27530EVB, MXC27520EVB, IMX27ADS, IMX31ADS, MXC91131EVB, MXC30030EVB, MXC30020EVB
 #
-# for example use in an if statement like:  if [ "$(platform)" = MXC27530EVB ]; then
+# for example use in an if statement like:  if [ "$(platform)" = IMX25_3STACK ]; then
 #
 # This is only for use where a test needs to run differently for different platforms.
 # To keep a test from running at all for a platform, add it to the EXCLUDES list in
@@ -172,7 +171,7 @@ platform()
 		MX313StackBoard )	plat=IMX31_3STACK ;;
 		MX353StackBoard )	plat=IMX35_3STACK ;;
 		MX373StackBoard )	plat=IMX37_3STACK ;;
-		MX513StackBoard )       plat=IMX51_3STACK ;;
+		MX51* )       		plat=IMX51 ;;
 
 		* )     ;;
 	esac
