@@ -1,5 +1,5 @@
 # list of platforms which want this test case
-INCLUDE_LIST:=IMX31_3STACK IMX35_3STACK IMX37_3STACK IMX51_3STACK
+INCLUDE_LIST:=IMX31_3STACK IMX35_3STACK IMX37_3STACK IMX51
 
 SRCS = mxc_ipudev_test.c utils.c test_pattern.c
 CFLAGS += -lipu -lIpuScreenLayer -lm
