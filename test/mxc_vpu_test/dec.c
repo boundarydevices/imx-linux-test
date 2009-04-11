@@ -680,6 +680,8 @@ decoder_start(struct decode *dec)
 	} else if (deblock_en) {
 		dblkid = dec->fbcount;
 	}
+	if (dec->cmdl->format == STD_MJPG)
+		rotid = 0;
 
 	decparam.dispReorderBuf = 0;
 
@@ -697,7 +699,7 @@ decoder_start(struct decode *dec)
 	fwidth = ((dec->picwidth + 15) & ~15);
 	fheight = ((dec->picheight + 15) & ~15);
 
-	if (rot_en || dering_en) {
+	if (rot_en || dering_en || (dec->cmdl->format == STD_MJPG)) {
 		/*
 		 * VPU is setting the rotation angle by counter-clockwise.
 		 * We convert it to clockwise, which is consistent with V4L2
@@ -712,9 +714,11 @@ decoder_start(struct decode *dec)
 		vpu_DecGiveCommand(handle, SET_MIRROR_DIRECTION,
 					&mirror);
 
-		rot_stride = (rot_angle == 90 || rot_angle == 270) ?
+		if (rot_en || dering_en) {
+			rot_stride = (rot_angle == 90 || rot_angle == 270) ?
 					fheight : fwidth;
-
+		} else
+			rot_stride = fwidth;
 		vpu_DecGiveCommand(handle, SET_ROTATOR_STRIDE, &rot_stride);
 	}
 
@@ -738,7 +742,7 @@ decoder_start(struct decode *dec)
 
 	while (1) {
 
-		if (rot_en || dering_en) {
+		if (rot_en || dering_en || (dec->cmdl->format == STD_MJPG)) {
 			vpu_DecGiveCommand(handle, SET_ROTATOR_OUTPUT,
 						(void *)&fb[rotid]);
 			if (frame_id == 0) {
@@ -829,6 +833,12 @@ decoder_start(struct decode *dec)
 		tdec_time += (sec * 1000000) + usec;
 
 		ret = vpu_DecGetOutputInfo(handle, &outinfo);
+
+		if ((dec->cmdl->format == STD_MJPG) &&
+		    (outinfo.indexFrameDisplay == 0)) {
+			outinfo.indexFrameDisplay = rotid;
+		}
+
 		dprintf(4, "frame_id = %d\n", (int)frame_id);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("vpu_DecGetOutputInfo failed Err code is %d\n"
@@ -967,7 +977,7 @@ decoder_start(struct decode *dec)
 			warn_msg("VPU doesn't have picture to be displayed.\n"
 				"\toutinfo.indexFrameDisplay = %d\n",
 						outinfo.indexFrameDisplay);
-			if (disp_clr_index >= 0) {
+			if ((dec->cmdl->format != STD_MJPG ) && (disp_clr_index >= 0)) {
 				err = vpu_DecClrDispFlag(handle, disp_clr_index);
 				if (err)
 					err_msg("vpu_DecClrDispFlag failed Error code"
@@ -977,7 +987,7 @@ decoder_start(struct decode *dec)
 			continue;
 		}
 
-		if (rot_en || dering_en)
+		if (rot_en || dering_en || (dec->cmdl->format == STD_MJPG))
 			actual_display_index = rotid;
 		else
 			actual_display_index = outinfo.indexFrameDisplay;
@@ -1002,7 +1012,11 @@ decoder_start(struct decode *dec)
 					err_msg("vpu_DecClrDispFlag failed Error code"
 							" %d\n", err);
 			}
-			if (rot_en || dering_en) {
+
+			if (dec->cmdl->format == STD_MJPG) {
+				rotid++;
+				rotid %= dec->fbcount;
+			} else if (rot_en || dering_en) {
 				disp_clr_index = outinfo.indexFrameDisplay;
 				if (disp->buf.index != -1)
                                         rotid = disp->buf.index; /* de-queued buffer as next rotation buffer */
@@ -1353,6 +1367,25 @@ decoder_parse(struct decode *dec)
 	DecHandle handle = dec->handle;
 	RetCode ret;
 
+	/*
+	 * If userData report is enabled, buffer and comamnd need to be set
+ 	 * before DecGetInitialInfo for MJPG.
+	 */
+	if (dec->userData.enable) {
+		dec->userData.size = SIZE_USER_BUF;
+		dec->userData.addr = malloc(SIZE_USER_BUF);
+		if (!dec->userData.addr)
+			err_msg("malloc_error\n");
+	}
+
+	if(dec->cmdl->format == STD_MJPG) {
+		ret = vpu_DecGiveCommand(handle,DEC_SET_REPORT_USERDATA, &dec->userData);
+		if (ret != RETCODE_SUCCESS) {
+			err_msg("Failed to set user data report, ret %d\n", ret);
+			return -1;
+		}
+	}
+
 	/* Parse bitstream and get width/height/framerate etc */
 	vpu_DecSetEscSeqInit(handle, 1);
 	ret = vpu_DecGetInitialInfo(handle, &initinfo);
@@ -1514,12 +1547,7 @@ decoder_parse(struct decode *dec)
 		if (!dec->mvInfo.addr)
 			err_msg("malloc_error\n");
 	}
-	if (dec->userData.enable) {
-		dec->userData.size = SIZE_USER_BUF;
-		dec->userData.addr = malloc(SIZE_USER_BUF);
-		if (!dec->userData.addr)
-			err_msg("malloc_error\n");
-	}
+
 	return 0;
 }
 

@@ -87,6 +87,7 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 	struct v4l2_format fmt = {0};
 	struct v4l2_streamparm parm = {0};
 	struct v4l2_requestbuffers req = {0};
+	struct v4l2_control ctl;
 
 	if (cap_fd > 0) {
 		warn_msg("capture device already opened\n");
@@ -114,6 +115,14 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 		err_msg("set format failed\n");
 		close(cap_fd);
 		cap_fd = -1;
+		return -1;
+	}
+
+	ctl.id = V4L2_CID_PRIVATE_BASE;
+	ctl.value = 0;
+	if (ioctl(cap_fd, VIDIOC_S_CTRL, &ctl) < 0)
+	{
+		printf("set control failed\n");
 		return -1;
 	}
 
