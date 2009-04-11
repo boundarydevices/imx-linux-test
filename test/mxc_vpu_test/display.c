@@ -195,7 +195,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	} else if (cpu_is_mx37() || cpu_is_mx51()) {
 		crop.c.width = cropcap.bounds.width;
 		crop.c.height = cropcap.bounds.height;
-         }
+	}
 
 	dprintf(1, "crop.c.width/height: %d/%d\n", crop.c.width, crop.c.height);
 
@@ -373,7 +373,7 @@ int v4l_put_data(struct vpu_display *disp, int index)
 
 		disp->sec = tv.tv_sec;
 		disp->usec = tv.tv_usec;
-       }
+	}
 
 	disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	disp->buf.memory = V4L2_MEMORY_MMAP;
