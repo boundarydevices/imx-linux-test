@@ -701,6 +701,7 @@ encoder_open(struct encode *enc)
 		encop.picHeight = enc->picheight;
 	}
 
+	/*Note: Frame rate cannot be less than 15fps per H.263 spec */
 	encop.frameRateInfo = 30;
 	encop.bitRate = enc->cmdl->bitrate;
 	encop.gopSize = enc->cmdl->gop;
