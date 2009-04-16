@@ -977,7 +977,7 @@ decoder_start(struct decode *dec)
 			warn_msg("VPU doesn't have picture to be displayed.\n"
 				"\toutinfo.indexFrameDisplay = %d\n",
 						outinfo.indexFrameDisplay);
-			if ((dec->cmdl->format != STD_MJPG ) && (disp_clr_index >= 0)) {
+			if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
 				err = vpu_DecClrDispFlag(handle, disp_clr_index);
 				if (err)
 					err_msg("vpu_DecClrDispFlag failed Error code"
@@ -1006,7 +1006,7 @@ decoder_start(struct decode *dec)
 			if (err)
 				return -1;
 
-			if (disp_clr_index >= 0) {
+			if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
 				err = vpu_DecClrDispFlag(handle, disp_clr_index);
 				if (err)
 					err_msg("vpu_DecClrDispFlag failed Error code"
@@ -1040,7 +1040,7 @@ decoder_start(struct decode *dec)
 							dec->picCropRect);
 			}
 
-			if (disp_clr_index >= 0) {
+			if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
 				err = vpu_DecClrDispFlag(handle,disp_clr_index);
 				if (err)
 					err_msg("vpu_DecClrDispFlag failed Error code"
