@@ -121,12 +121,21 @@ int main(int argc, char *argv[])
 			"1: video pattern with user define dma buffer queue, one full-screen output\n" \
 			"2: video pattern with user define dma buffer queue, with two output\n" \
 			"3: hopping block screen save\n" \
-			"4: color bar + hopping block\n\n");
+			"4: color bar + hopping block\n" \
+			"5: color bar overlay\n" \
+			"6: ipu dma copy test\n" \
+			"7: 2 screen layer test\n" \
+			"8: 3 screen layer test\n\n");
 		return -1;
 	}
 
-	if (test_handle.test_pattern)
-		return run_test_pattern(test_handle.test_pattern, &test_handle);
+	system("echo 0,0 > /sys/class/graphics/fb0/pan");
+
+	if (test_handle.test_pattern) {
+		ret = run_test_pattern(test_handle.test_pattern, &test_handle);
+		system("echo 0,0 > /sys/class/graphics/fb0/pan");
+		return ret;
+	}
 
 	if (test_handle.mode & OP_STREAM_MODE) {
 		if (test_handle.fcount == 1) {
@@ -148,10 +157,10 @@ int main(int argc, char *argv[])
 		test_handle.file_out1 = fopen(test_handle.outfile1, "wb");
 
 	if (test_handle.output1_enabled)
-		ret = mxc_ipu_lib_task_init(&(test_handle.input), &(test_handle.output0),
+		ret = mxc_ipu_lib_task_init(&(test_handle.input), NULL, &(test_handle.output0),
 				&(test_handle.output1), test_handle.mode, test_handle.ipu_handle);
 	else
-		ret = mxc_ipu_lib_task_init(&(test_handle.input), &(test_handle.output0),
+		ret = mxc_ipu_lib_task_init(&(test_handle.input), NULL, &(test_handle.output0),
 				NULL, test_handle.mode, test_handle.ipu_handle);
 	if (ret < 0) {
 		printf("mxc_ipu_lib_task_init failed!\n");
@@ -175,7 +184,7 @@ int main(int argc, char *argv[])
 			first_time = 0;
 			done_cnt++;
 		}
-		next_update_idx = mxc_ipu_lib_task_buf_update(test_handle.ipu_handle, 0, output_to_file_cb, &test_handle);
+		next_update_idx = mxc_ipu_lib_task_buf_update(test_handle.ipu_handle, 0, 0, output_to_file_cb, &test_handle);
 		if (next_update_idx < 0)
 			break;
 		done_cnt++;
@@ -189,6 +198,8 @@ done:
 		fclose(test_handle.file_out0);
 	if (test_handle.file_out1)
 		fclose(test_handle.file_out1);
+
+	system("echo 0,0 > /sys/class/graphics/fb0/pan");
 
 	return ret;
 }
