@@ -2,7 +2,7 @@
 INCLUDE_LIST:=IMX31_3STACK IMX35_3STACK IMX37_3STACK IMX51_3STACK
 
 SRCS = mxc_ipudev_test.c utils.c test_pattern.c
-CFLAGS += -lipu -lm
+CFLAGS += -lipu -lIpuScreenLayer -lm
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 OBJS = $(OBJDIR)/mxc_ipudev_test.out
