@@ -175,6 +175,29 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
         struct v4l2_control ctl;
         struct v4l2_crop crop;
 
+	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	parm.parm.capture.timeperframe.numerator = 1;
+	parm.parm.capture.timeperframe.denominator = g_camera_framerate;
+	parm.parm.capture.capturemode = g_capture_mode;
+
+	if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
+	{
+	        printf("VIDIOC_S_PARM failed\n");
+	        return TFAIL;
+	}
+
+	parm.parm.capture.timeperframe.numerator = 0;
+	parm.parm.capture.timeperframe.denominator = 0;
+
+	if (ioctl(fd_v4l, VIDIOC_G_PARM, &parm) < 0)
+	{
+	        printf("get frame rate failed\n");
+	        return TFAIL;
+	}
+
+	printf("frame_rate is %d\n",
+	       parm.parm.capture.timeperframe.denominator);
+
         if (ioctl(fd_v4l, VIDIOC_S_OUTPUT, &g_display_lcd) < 0)
         {
                 printf("VIDIOC_S_OUTPUT failed\n");
@@ -218,27 +241,6 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
                 return TFAIL;
         }
 
-        parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        parm.parm.capture.timeperframe.numerator = 1;
-        parm.parm.capture.timeperframe.denominator = g_camera_framerate;
-	parm.parm.capture.capturemode = g_capture_mode;
-
-        if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
-        {
-                printf("VIDIOC_S_PARM failed\n");
-                return TFAIL;
-        }
-
-        parm.parm.capture.timeperframe.numerator = 0;
-        parm.parm.capture.timeperframe.denominator = 0;
-
-        if (ioctl(fd_v4l, VIDIOC_G_PARM, &parm) < 0)
-        {
-                printf("get frame rate failed\n");
-                return TFAIL;
-        }
-
-        printf("frame_rate is %d\n", parm.parm.capture.timeperframe.denominator);
         return TPASS;
 }
 

@@ -143,6 +143,17 @@ int v4l_capture_setup(void)
                 return 0;
         }
 
+	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	parm.parm.capture.timeperframe.numerator = 1;
+	parm.parm.capture.timeperframe.denominator = g_camera_framerate;
+	parm.parm.capture.capturemode = g_capture_mode;
+
+	if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
+	{
+	        printf("VIDIOC_S_PARM failed\n");
+	        return -1;
+	}
+
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.pixelformat = g_cap_fmt;
         fmt.fmt.pix.width = g_width;
@@ -167,17 +178,6 @@ int v4l_capture_setup(void)
         {
                 printf("set format failed\n");
                 return 0;
-        }
-
-        parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        parm.parm.capture.timeperframe.numerator = 1;
-        parm.parm.capture.timeperframe.denominator = g_camera_framerate;
-	parm.parm.capture.capturemode = g_capture_mode;
-
-        if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
-        {
-                printf("VIDIOC_S_PARM failed\n");
-                return -1;
         }
 
         // Set rotation
