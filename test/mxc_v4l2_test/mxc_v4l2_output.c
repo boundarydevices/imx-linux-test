@@ -493,6 +493,7 @@ int process_cmdline(int argc, char **argv)
                              (g_in_fmt != V4L2_PIX_FMT_BGR32) &&
                              (g_in_fmt != V4L2_PIX_FMT_RGB565) &&
                              (g_in_fmt != 'PMBW') &&
+                             (g_in_fmt != V4L2_PIX_FMT_UYVY) &&
                              (g_in_fmt != V4L2_PIX_FMT_YUV420) &&
                              (g_in_fmt != V4L2_PIX_FMT_NV12) )
                         {
