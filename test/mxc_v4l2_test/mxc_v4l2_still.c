@@ -122,6 +122,17 @@ int v4l_capture_setup(void)
                 return 0;
         }
 
+	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	parm.parm.capture.timeperframe.numerator = 1;
+	parm.parm.capture.timeperframe.denominator = g_camera_framerate;
+	parm.parm.capture.capturemode = g_capture_mode;
+
+	if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
+	{
+		printf("VIDIOC_S_PARM failed\n");
+		return 0;
+	}
+
 	memset(&fmt, 0, sizeof(fmt));
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         fmt.fmt.pix.pixelformat = g_pixelformat;
@@ -147,17 +158,6 @@ int v4l_capture_setup(void)
                 return 0;
         }
 
-        parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        parm.parm.capture.timeperframe.numerator = 1;
-	parm.parm.capture.timeperframe.denominator = g_camera_framerate;
-	parm.parm.capture.capturemode = g_capture_mode;
-
-        if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
-        {
-                printf("VIDIOC_S_PARM failed\n");
-                return 0;
-        }
-
         return fd_v4l;
 }
 
@@ -169,7 +169,7 @@ void v4l_capture_test(int fd_v4l)
         char *buf1, *buf2;
         char still_file[100] = "./still.yuv";
 
-        if ((fd_still = open(still_file, O_RDWR | O_CREAT)) < 0)
+        if ((fd_still = open(still_file, O_RDWR | O_CREAT | O_TRUNC)) < 0)
         {
                 printf("Unable to create y frame recording file\n");
                 return;
@@ -201,16 +201,6 @@ void v4l_capture_test(int fd_v4l)
         if (read(fd_v4l, buf1, fmt.fmt.pix.sizeimage) != fmt.fmt.pix.sizeimage) {
                 printf("v4l2 read error.\n");
                 goto exit0;
-        }
-
-        parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        parm.parm.capture.timeperframe.numerator = 1;
-        parm.parm.capture.timeperframe.denominator = g_camera_framerate;
-        parm.parm.capture.capturemode = g_capture_mode;
-
-        if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
-        {
-                printf("VIDIOC_S_PARM failed\n");
         }
 
         if ((g_convert == 1) && (g_pixelformat != V4L2_PIX_FMT_YUV422P)
