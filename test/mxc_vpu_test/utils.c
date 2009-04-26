@@ -434,6 +434,23 @@ check_params(struct cmd_line *cmd, int op)
 	switch (cmd->format) {
 	case STD_MPEG4:
 		info_msg("Format: STD_MPEG4\n");
+		switch (cmd->mp4Class) {
+		case 0:
+			info_msg("MPEG4 class: MPEG4\n");
+			break;
+		case 1:
+			info_msg("MPEG4 class: DIVX5.0 or higher\n");
+			break;
+		case 2:
+			info_msg("MPEG4 class: XVID\n");
+			break;
+		case 5:
+			info_msg("MPEG4 class: DIVX4.0\n");
+			break;
+		default:
+			err_msg("Unsupported MPEG4 Class!\n");
+			break;
+		}
 		break;
 	case STD_H263:
 		info_msg("Format: STD_H263\n");
@@ -696,6 +713,19 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 			str++;
 			if (*str != '\0') {
 				cmd->chromaInterleave = strtol(str, NULL, 10);
+			}
+		}
+
+		return 0;
+	}
+
+	str = strstr(buf, "mp4Class");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				cmd->mp4Class = strtol(str, NULL, 10);
 			}
 		}
 

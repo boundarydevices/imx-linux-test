@@ -36,8 +36,11 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -o <output file> Write output to file \n "\
 	       "	If no output is specified, default is LCD \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, \n "\
-	       "	4 - MPEG2, 5 - DIVX, 6 - RV, 7 - MJPG, \n "\
+	       "	4 - MPEG2, 5 - DIV3, 6 - RV, 7 - MJPG, \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
+	       "  -l <mp4Class> 0 - MPEG4, 1 - DIVX 5.0 or higher, 2 - XVID, \n "\
+	       "        5 - DIVX4.0 \n "\
+	       "        This flag is effective when 'f' flag is 0 (MPEG4).\n "\
 	       "  -p <port number> UDP port number to bind \n "\
 	       "	If no port number is secified, 5555 is used \n "\
 	       "  -c <count> Number of frames to decode \n "\
@@ -122,7 +125,7 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:";
+static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:";
 
 int
 parse_config_file(char *file_name)
@@ -286,6 +289,9 @@ parse_args(int argc, char *argv[], int i)
 			break;
 		case 't':
 			input_arg[i].cmd.chromaInterleave = atoi(optarg);
+			break;
+		case 'l':
+		 	input_arg[i].cmd.mp4Class = atoi(optarg);
 			break;
 		case -1:
 			break;
