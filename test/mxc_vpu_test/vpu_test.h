@@ -138,6 +138,7 @@ struct cmd_line {
 	u16 port; /* udp port number */
 	u16 complete; /* wait for the requested buf to be filled completely */
 	int iframe;
+	int mp4Class;
 };
 
 struct decode {
