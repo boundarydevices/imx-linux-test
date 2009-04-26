@@ -20,6 +20,9 @@ port=
 # format; 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG
 format=2
 
+# mp4Class; 0 - MPEG4, 1 - DIVX 5.0 or higher, 2 - XVID, 5 - DIVX 4.0
+mp4Class=
+
 # rotation angle (0, 90, 180, 270). Do not specify anything if not needed.
 rotation=90
 
