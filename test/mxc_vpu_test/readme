@@ -38,8 +38,11 @@ decode options
    -o <output file> Write output to file
         If no output is specified, default is LCD
    -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1,
-        4 - MPEG2, 5 - DIVX, 6 - RV, 7 - MJPG,
+        4 - MPEG2, 5 - DIV3, 6 - RV, 7 - MJPG,
         If no format specified, default is 0 (MPEG4)
+   -l <mp4Class> 0 - MPEG4, 1 - DIVX 5.0 or higher, 2 - XVID,
+         5 - DIVX4.0
+         This flag is effective when 'f' flag is 0 (MPEG4).
    -p <port number> UDP port number to bind
         If no port number is secified, 5555 is used
    -c <count> Number of frames to decode
