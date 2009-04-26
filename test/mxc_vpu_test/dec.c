@@ -1564,6 +1564,7 @@ decoder_open(struct decode *dec)
 	oparam.reorderEnable = dec->reorderEnable;
 	oparam.mp4DeblkEnable = dec->cmdl->deblock_en;
 	oparam.chromaInterleave = dec->cmdl->chromaInterleave;
+	oparam.mp4Class = dec->cmdl->mp4Class;
 
 	/*
 	 * mp4 deblocking filtering is optional out-loop filtering for image
