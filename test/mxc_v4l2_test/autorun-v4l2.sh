@@ -64,6 +64,9 @@ fi
 if [ $TEST_CAMERA = 1 ]; then
 
 # V4L2 Capture Tests
+if [ "$(platform)" = IMX25_3STACK ]; then
+run_testcase "./csi_v4l2_overlay.out -t 10"
+else
 run_testcase "./mxc_v4l2_overlay.out -iw 640 -ih 480 -ow 240 -oh 320 -r 4 -fr 30 -fg -t 10"
 run_testcase "./mxc_v4l2_overlay.out -iw 640 -ih 480 -ow 240 -oh 320 -r 4 -fr 30 -t 10"
 
@@ -74,6 +77,7 @@ done
 for POS in 0 4 8 16 32 64 128; do
 	run_testcase "./mxc_v4l2_overlay.out -iw 640 -ih 480 -ot $POS -ol $POS -ow 80 -oh 60 -fr 30 -fg -t 5"
 done
+fi
 
 fi
 
