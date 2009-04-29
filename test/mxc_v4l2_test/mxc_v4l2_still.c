@@ -263,6 +263,10 @@ int main(int argc, char **argv)
                                 g_pixelformat = v4l2_fourcc('Y','4','4','4');
                                 g_bpp = 32;
                         }
+                        else if (strcmp(argv[i], "RGB565") == 0) {
+                                g_pixelformat = V4L2_PIX_FMT_RGB565;
+                                g_bpp = 16;
+                        }
                         else {
                                 printf("Pixel format not supported.\n");
                                 usage();
