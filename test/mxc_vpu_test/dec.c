@@ -797,6 +797,14 @@ decoder_start(struct decode *dec)
 			}
 		}
 
+		if (cpu_is_mx37()) {
+			DbkOffset dbkOffset;
+			dbkOffset.DbkOffsetEnable = 0;
+			dbkOffset.DbkOffsetA = 7;
+			dbkOffset.DbkOffsetB = 7;
+			vpu_DecGiveCommand(handle, SET_DBK_OFFSET, &dbkOffset);
+		}
+
 		gettimeofday(&tdec_begin, NULL);
 		ret = vpu_DecStartOneFrame(handle, &decparam);
 		if (ret != RETCODE_SUCCESS) {
