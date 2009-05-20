@@ -122,10 +122,11 @@ int main(int argc, char *argv[])
 			"2: video pattern with user define dma buffer queue, with two output\n" \
 			"3: hopping block screen save\n" \
 			"4: color bar + hopping block\n" \
-			"5: color bar overlay\n" \
-			"6: ipu dma copy test\n" \
-			"7: 2 screen layer test\n" \
-			"8: 3 screen layer test\n\n");
+			"5: color bar global alpha overlay\n" \
+			"6: color bar local alpha overlay\n" \
+			"7: ipu dma copy test\n" \
+			"8: 2 screen layer test\n" \
+			"9: 3 screen layer test\n\n");
 		return -1;
 	}
 
@@ -184,7 +185,7 @@ int main(int argc, char *argv[])
 			first_time = 0;
 			done_cnt++;
 		}
-		next_update_idx = mxc_ipu_lib_task_buf_update(test_handle.ipu_handle, 0, 0, output_to_file_cb, &test_handle);
+		next_update_idx = mxc_ipu_lib_task_buf_update(test_handle.ipu_handle, 0, 0, 0, output_to_file_cb, &test_handle);
 		if (next_update_idx < 0)
 			break;
 		done_cnt++;
