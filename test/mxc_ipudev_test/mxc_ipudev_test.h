@@ -42,6 +42,12 @@ typedef struct {
 	ipu_lib_output_param_t output1;
 } ipu_test_handle_t;
 
+enum {
+	NO_OV = 0x00,
+	GLB_ALP_OV = 0x01,
+	LOC_ALP_OV = 0x02,
+};
+
 extern int parse_config_file(char *file_name, ipu_test_handle_t *test_handle);
 int run_test_pattern(int pattern, ipu_test_handle_t * test_handle);
 
