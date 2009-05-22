@@ -756,18 +756,28 @@ done:
 	return ret;
 }
 
-void * thread_func(void *arg)
+void * thread_func_color_bar(void *arg)
 {
+	int ret;
 	ipu_test_handle_t test_handle;
 	ipu_lib_handle_t ipu_handle;
 
 	memset(&ipu_handle, 0, sizeof(ipu_lib_handle_t));
 	memset(&test_handle, 0, sizeof(ipu_test_handle_t));
+
 	test_handle.ipu_handle = &ipu_handle;
+	ret = color_bar(0, 0, &test_handle);
 
-	color_bar(0, 0, &test_handle);
+	pthread_exit((void*)ret);
+}
 
-	return NULL;
+void * thread_func_hop_block(void *arg)
+{
+	int ret;
+
+	ret = hop_block((ipu_test_handle_t *)arg);
+
+	pthread_exit((void*)ret);
 }
 
 #define PRIMARYFBDEV	"/dev/fb0"
@@ -1072,13 +1082,26 @@ int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 		return hop_block(test_handle);
 	}
 	if (pattern == 4) {
+		int ret=0;
+		int ret1=0;
+		int ret2=0;
 		pthread_t thread1;
+		pthread_t thread2;
 
 		printf("Hopping block + color bar thread test:\n");
 
-		pthread_create(&thread1, NULL, thread_func, NULL);
+		pthread_create(&thread2, NULL, thread_func_hop_block, test_handle);
+		pthread_create(&thread1, NULL, thread_func_color_bar, NULL);
 
-		return hop_block(test_handle);
+		sleep(1);
+		pthread_join(thread1, (void*)(&ret1));
+		pthread_join(thread2, (void*)(&ret2));
+		printf("Hopping block + color bar threads has joied:\n");
+		if(ret1==0 && ret2==0)
+			ret = 0;
+		else
+			ret = -1;
+		return ret;
 	}
 	if (pattern == 5) {
 		printf("Color bar overlay test:\n");
