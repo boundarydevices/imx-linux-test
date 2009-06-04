@@ -25,7 +25,9 @@ insmod mxc_v4l2_capture
 fi
 check_devnode "/dev/video0"
 fi
+if [ "$(platform)" != IMX25_3STACK ]; then
 check_devnode "/dev/video16"
+fi
 
 # Turn off fb blanking
 echo -e "\033[9;0]" > /dev/tty0
@@ -39,6 +41,7 @@ fi
 # V4L2 Output Tests
 #
 # SDC output size test cases
+if [ "$(platform)" != IMX25_3STACK ]; then
 for SIZE in 32 64 80 96 112 128 144 160 176 192 208 224 240; do
 	run_testcase "./mxc_v4l2_output.out -iw 128 -ih 128 -ow $SIZE -oh $SIZE -d $DISPLAY -r 0"
 done
@@ -54,18 +57,19 @@ for ROT in 0 1 2 3 4 5 6 7; do
 done
 
 # SDC max input size test case
-if [ "$(platform)" = IMX27ADS -o "$(platform)" = IMX25_3STACK ]; then
+if [ "$(platform)" = IMX27ADS ]; then
 	run_testcase "./mxc_v4l2_output.out -iw 640 -ih 512 -ow 240 -oh 320 -d $DISPLAY -fr 60 -r 4"
 else
 	run_testcase "./mxc_v4l2_output.out -iw 480 -ih 640 -ow 240 -oh 320 -d 4 -fr 60"
 	run_testcase "./mxc_v4l2_output.out -iw 720 -ih 512 -ow 240 -oh 184 -d $DISPLAY -fr 60"
+fi
 fi
 
 if [ $TEST_CAMERA = 1 ]; then
 
 # V4L2 Capture Tests
 if [ "$(platform)" = IMX25_3STACK ]; then
-run_testcase "./csi_v4l2_overlay.out -t 10"
+run_testcase "./csi_v4l2_overlay.out -t 10 -w 640 -h 480 -fr 30"
 else
 run_testcase "./mxc_v4l2_overlay.out -iw 640 -ih 480 -ow 240 -oh 320 -r 4 -fr 30 -fg -t 10"
 run_testcase "./mxc_v4l2_overlay.out -iw 640 -ih 480 -ow 240 -oh 320 -r 4 -fr 30 -t 10"
