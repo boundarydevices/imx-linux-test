@@ -666,7 +666,7 @@ decoder_start(struct decode *dec)
 	int rotid = 0, dblkid = 0, mirror;
 	int count = dec->cmdl->count;
 	int totalNumofErrMbs = 0;
-	int disp_clr_index = -1, actual_display_index = -1;
+	int disp_clr_index = -1, actual_display_index = -1, field = V4L2_FIELD_NONE;
 
 	if ((dec->cmdl->dst_scheme == PATH_V4L2) && (dec->cmdl->ipu_rot_en))
 		rot_en = 0;
@@ -908,22 +908,35 @@ decoder_start(struct decode *dec)
 			if (dec->cmdl->format == STD_VC1) {
 				if (outinfo.pictureStructure == 2)
 					info_msg("dec_idx %d : FRAME_INTERLACE\n", decIndex);
-				else if (outinfo.pictureStructure == 3)
-					info_msg("dec_idx %d : FIELD_INTERLACE\n", decIndex);
+				else if (outinfo.pictureStructure == 3) {
+					if (outinfo.topFieldFirst)
+						field = V4L2_FIELD_INTERLACED_TB;
+					else
+						field = V4L2_FIELD_INTERLACED_BT;
+				}
 				if (outinfo.vc1_repeatFrame)
 					info_msg("dec_idx %d : VC1 RPTFRM [%1d]\n", decIndex, outinfo.vc1_repeatFrame);
 			} else if (dec->cmdl->format == STD_AVC) {
-				if (outinfo.interlacedFrame)
+				if (outinfo.interlacedFrame) {
+					if (outinfo.topFieldFirst)
+						field = V4L2_FIELD_INTERLACED_TB;
+					else
+						field = V4L2_FIELD_INTERLACED_BT;
 					dprintf(3, "Top Field First flag: %d, dec_idx %d\n",
 						  outinfo.topFieldFirst, decIndex);
+				}
 			} else if ((dec->cmdl->format != STD_MPEG4) && (dec->cmdl->format != STD_RV)){
 				if (outinfo.interlacedFrame || !outinfo.progressiveFrame) {
 					if (outinfo.pictureStructure == 1)
-						info_msg("Top Field First flag: %d, dec_idx %d is top field\n",
-							 outinfo.topFieldFirst, decIndex);
+						field = V4L2_FIELD_TOP;
 					else if (outinfo.pictureStructure == 2)
-						info_msg("Top Field First flag: %d, dec_idx %d is bottom field\n",
-							  outinfo.topFieldFirst, decIndex);
+						field = V4L2_FIELD_BOTTOM;
+					else if (outinfo.pictureStructure == 3) {
+						if (outinfo.topFieldFirst)
+							field = V4L2_FIELD_INTERLACED_TB;
+						else
+							field = V4L2_FIELD_INTERLACED_BT;
+					}
 				}
 				if (outinfo.repeatFirstField)
 					info_msg("frame_idx %d : Repeat First Field\n", decIndex);
@@ -1009,7 +1022,10 @@ decoder_start(struct decode *dec)
 							(img_size >> 2);
 			}
 
-			err = v4l_put_data(disp, actual_display_index);
+			if (cpu_is_mx51())
+				err = v4l_put_data(disp, actual_display_index, field);
+			else
+				err = v4l_put_data(disp, actual_display_index, V4L2_FIELD_ANY);
 
 			if (err)
 				return -1;
@@ -1573,7 +1589,7 @@ decoder_open(struct decode *dec)
 	oparam.mp4DeblkEnable = dec->cmdl->deblock_en;
 	oparam.chromaInterleave = dec->cmdl->chromaInterleave;
 	oparam.mp4Class = dec->cmdl->mp4Class;
-
+	oparam.mjpg_thumbNailDecEnable = 0;
 	/*
 	 * mp4 deblocking filtering is optional out-loop filtering for image
 	 * quality. In other words, mpeg4 deblocking is post processing.
