@@ -434,14 +434,6 @@ encoder_start(struct encode *enc)
 				break;
 		}
 
-		if ((frame_id % 10) == 0) {
-			enc_param.forceIPicture = 1;
-			enc->cmdl->iframe = 1;
-		} else {
-			enc_param.forceIPicture = 0;
-			enc->cmdl->iframe = 0;
-		}
-
 		gettimeofday(&tenc_begin, NULL);
 		ret = vpu_EncStartOneFrame(handle, &enc_param);
 		if (ret != RETCODE_SUCCESS) {
@@ -825,7 +817,7 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.mp4Param.mp4_hecEnable = 0;
 		encop.EncStdParam.mp4Param.mp4_verid = 2;
 	} else if ( enc->cmdl->format == STD_H263) {
-		encop.EncStdParam.h263Param.h263_annexJEnable = 0;
+		encop.EncStdParam.h263Param.h263_annexJEnable = 1;
 		encop.EncStdParam.h263Param.h263_annexKEnable = 0;
 		encop.EncStdParam.h263Param.h263_annexTEnable = 0;
 	} else if (enc->cmdl->format == STD_AVC) {
