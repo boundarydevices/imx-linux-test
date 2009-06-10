@@ -40,8 +40,6 @@
 	printf("[WARN]\t" fmt, ## arg);	\
 	} while (0)
 
-/*#define TVOUT_ENABLE*/
-
 typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
@@ -203,7 +201,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
 struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 					struct rot rotation, Rect rotCrop);
-int v4l_put_data(struct vpu_display *disp, int index);
+int v4l_put_data(struct vpu_display *disp, int index, int field);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height);
 void framebuf_free(struct frame_buf *fb);
