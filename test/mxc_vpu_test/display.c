@@ -95,7 +95,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	int bottom = cropRect.bottom;
 	int disp_width = dec->cmdl->width;
 	int disp_height = dec->cmdl->height;
-	int fd, err, out, i;
+	int fd = -1, err = 0, out = 0, i = 0;
 	char v4l_device[32] = "/dev/video16";
 	struct v4l2_cropcap cropcap = {0};
 	struct v4l2_crop crop = {0};
@@ -105,6 +105,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	struct v4l2_mxc_offset off = {0};
 	struct vpu_display *disp;
 	int fd_fb;
+	char *tv_mode;
 	struct mxcfb_gbl_alpha alpha;
 
 	int ratio = 1;
@@ -129,15 +130,28 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	dprintf(3, "rot_en:%d; rot_angle:%d; ipu_rot_en:%d\n", rotation.rot_en,
 			rotation.rot_angle, rotation.ipu_rot_en);
 
-#ifdef	TVOUT_ENABLE
-	/* NTSC mode */
-	err = system("/bin/echo U:720x480i-60 > /sys/class/graphics/fb1/mode");
-	if (err == -1) {
-		warn_msg("set tv mode error\n");
-	}
+	tv_mode = getenv("VPU_TV_MODE");
 
-	out = 5;
-#endif
+	if (tv_mode) {
+		if (!strcmp(tv_mode, "NTSC")) {
+			err = system("/bin/echo U:720x480i-60 > /sys/class/graphics/fb1/mode");
+			out = 5;
+		} else if (!strcmp(tv_mode, "PAL")) {
+			err = system("/bin/echo U:720x576i-50 > /sys/class/graphics/fb1/mode");
+			out = 5;
+		} else if (!strcmp(tv_mode, "720P")) {
+			err = system("/bin/echo U:1280x720p-60 > /sys/class/graphics/fb1/mode");
+			out = 5;
+		} else {
+			out = 3;
+			warn_msg("VPU_TV_MODE should be set to NTSC, PAL, or 720P.\n"
+				 "\tDefault display is LCD if not set this environment "
+				 "or set wrong string.\n");
+		}
+		if (err == -1) {
+			warn_msg("set tv mode error\n");
+		}
+	}
 
 	if (rotation.rot_en) {
 		if (rotation.rot_angle == 90 || rotation.rot_angle == 270) {
@@ -269,6 +283,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	dprintf(1, "fmt.fmt.pix.width = %d\n\tfmt.fmt.pix.height = %d\n",
 				fmt.fmt.pix.width, fmt.fmt.pix.height);
 
+	fmt.fmt.pix.field = V4L2_FIELD_ANY;
 	if (dec->cmdl->chromaInterleave == 0)
 		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
 	else {
@@ -361,10 +376,11 @@ void v4l_display_close(struct vpu_display *disp)
 	}
 }
 
-int v4l_put_data(struct vpu_display *disp, int index)
+int v4l_put_data(struct vpu_display *disp, int index, int field)
 {
 	struct timeval tv;
 	int err, type;
+	struct v4l2_format fmt = {0};
 
 	if (disp->ncount == 0) {
 		gettimeofday(&tv, 0);
@@ -399,6 +415,7 @@ int v4l_put_data(struct vpu_display *disp, int index)
 	}
 
 	disp->buf.index = index;
+	disp->buf.field = field;
 	err = ioctl(disp->fd, VIDIOC_QBUF, &disp->buf);
 	if (err < 0) {
 		err_msg("VIDIOC_QBUF failed\n");
@@ -407,6 +424,29 @@ int v4l_put_data(struct vpu_display *disp, int index)
 	disp->queued_count++;
 
 	if (disp->ncount == 1) {
+		if ((disp->buf.field == V4L2_FIELD_TOP) ||
+		    (disp->buf.field == V4L2_FIELD_BOTTOM) ||
+		    (disp->buf.field == V4L2_FIELD_INTERLACED_TB) ||
+		    (disp->buf.field == V4L2_FIELD_INTERLACED_BT)) {
+			/* For interlace feature */
+			fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+			err = ioctl(disp->fd, VIDIOC_G_FMT, &fmt);
+			if (err < 0) {
+				err_msg("VIDIOC_G_FMT failed\n");
+				goto err;
+			}
+			if ((disp->buf.field == V4L2_FIELD_TOP) ||
+			    (disp->buf.field == V4L2_FIELD_BOTTOM))
+				fmt.fmt.pix.field = V4L2_FIELD_ALTERNATE;
+			else
+				fmt.fmt.pix.field = field;
+			fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+			err = ioctl(disp->fd, VIDIOC_S_FMT, &fmt);
+			if (err < 0) {
+				err_msg("VIDIOC_S_FMT failed\n");
+				goto err;
+			}
+		}
 		type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		err = ioctl(disp->fd, VIDIOC_STREAMON, &type);
 		if (err < 0) {
