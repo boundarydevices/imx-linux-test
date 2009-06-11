@@ -60,6 +60,7 @@ void usage(void)
 		"-m    Capture mode, 0-low resolution(default), 1-high resolution \n"
 		"-fr   Capture frame rate, 30fps by default\n"
                 "The output is saved in ./still.yuv\n"
+		"MX25(CSI) driver supports RGB565, YUV420 and UYVY\n"
                 "MX27(eMMA) driver supports YUV420, YUYV and YUV444\n"
                 "MXC(IPU) driver supports UYVY, YUV422P and YUV420\n\n"
                 );
