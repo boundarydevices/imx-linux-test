@@ -97,8 +97,8 @@ int configure_asrc_channel(int fd_asrc, struct audio_info_s *info)
 	config.word_width = 32;
 	config.inclk = INCLK_NONE;
 	//config.inclk = INCLK_SSI1_TX;
-	config.outclk = OUTCLK_SSI1_TX;
-	//config.outclk = OUTCLK_ASRCK1_CLK;
+	//config.outclk = OUTCLK_SSI1_TX;
+	config.outclk = OUTCLK_ASRCK1_CLK;
 	pair_index = req.index;
 	if (err = ioctl(fd_asrc, ASRC_CONFIG_PAIR, &config) < 0)
 		return err;
