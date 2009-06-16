@@ -51,7 +51,7 @@ run_testcase " aplay -N -M /dev/s441.wav"
 fi
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " rm /dev/s882.wav /dev/s441.wav /dev/raw.txt"
+run_testcase " rm /dev/s882.wav /dev/s441.wav"
 fi
 print_status
 exit $STATUS
