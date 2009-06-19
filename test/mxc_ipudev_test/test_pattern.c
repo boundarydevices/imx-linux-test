@@ -362,6 +362,16 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 		goto done;
 	}
 
+	if(fb_var.yres_virtual != 2*fb_var.yres)
+	{
+		fb_var.yres_virtual = 2*fb_var.yres;
+		if ( ioctl(fd_fb, FBIOPUT_VSCREENINFO, &fb_var) < 0) {
+			printf("Get FB var info failed!\n");
+			ret = -1;
+			goto done;
+		}
+	}
+
 	screen_size = fb_var.yres * fb_fix.line_length;
 	fb[0] = mmap(NULL, screen_size, PROT_READ | PROT_WRITE, MAP_SHARED,
 			fd_fb, 0);
@@ -877,7 +887,7 @@ void * thread_func_color_bar(void *arg)
 	memset(&test_handle, 0, sizeof(ipu_test_handle_t));
 
 	test_handle.ipu_handle = &ipu_handle;
-	color_bar(0, NO_OV, &test_handle);
+	ret = color_bar(0, NO_OV, &test_handle);
 
 	pthread_exit((void*)ret);
 }
