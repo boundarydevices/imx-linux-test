@@ -122,11 +122,12 @@ int main(int argc, char *argv[])
 			"2: video pattern with user define dma buffer queue, with two output\n" \
 			"3: hopping block screen save\n" \
 			"4: color bar + hopping block\n" \
-			"5: color bar global alpha overlay\n" \
-			"6: color bar local alpha overlay\n" \
-			"7: ipu dma copy test\n" \
-			"8: 2 screen layer test\n" \
-			"9: 3 screen layer test\n\n");
+			"5: color bar IC global alpha overlay\n" \
+			"6: color bar IC separate local alpha overlay\n" \
+			"7: color bar IC local alpha within pixel overlay\n" \
+			"8: ipu dma copy test\n" \
+			"9: 2 screen layer test\n" \
+			"10: 3 screen layer test\n\n");
 		return -1;
 	}
 
