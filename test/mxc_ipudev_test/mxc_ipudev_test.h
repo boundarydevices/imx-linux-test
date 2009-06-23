@@ -44,8 +44,9 @@ typedef struct {
 
 enum {
 	NO_OV = 0x00,
-	GLB_ALP_OV = 0x01,
-	LOC_ALP_OV = 0x02,
+	IC_GLB_ALP_OV = 0x01,
+	IC_LOC_SEP_ALP_OV = 0x02,
+	IC_LOC_PIX_ALP_OV = 0x03,
 };
 
 extern int parse_config_file(char *file_name, ipu_test_handle_t *test_handle);
