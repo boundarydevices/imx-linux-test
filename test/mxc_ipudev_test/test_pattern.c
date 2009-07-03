@@ -145,6 +145,11 @@ void gen_fill_pattern(char * buf, int in_width, int in_height)
 	}
 }
 
+void gen_fill_alpha(void * alpha_buf, int alpha_size, char alpha)
+{
+	memset(alpha_buf, alpha, alpha_size);
+}
+
 int foreground_fb(void)
 {
 	int fd_fb;
@@ -1027,6 +1032,7 @@ void * thread_func_hop_block(void *arg)
 #define	BUFCNT_1ST	1
 #define BUFCNT_2ND	3
 #define BUFCNT_3TH	5
+#define FRM_CNT		511
 static ScreenLayer first_layer;
 static ScreenLayer second_layer;
 static ScreenLayer third_layer;
@@ -1081,23 +1087,32 @@ void * second_layer_thread_func(void *arg)
 	void * buf_2nd[BUFCNT_2ND];
 	MethodAlphaData alpha_data;
 	MethodColorKeyData colorkey_data;
-	int size, i, ret;
+	int buf_size, alpha_buf_size, x, y, i, ret, alpha_type = *((int *)arg);
+	int SL_width, SL_height;
+	char alpha_val;
 
 	memset(&second_layer, 0, sizeof(ScreenLayer));
 	second_layer.screenRect.left = fb_width/4;
 	second_layer.screenRect.top = fb_height/4;
 	second_layer.screenRect.right = fb_width*3/4;
 	second_layer.screenRect.bottom = fb_height*3/4;
+	SL_width = second_layer.screenRect.right - second_layer.screenRect.left;
+	SL_height = second_layer.screenRect.bottom - second_layer.screenRect.top;
 	second_layer.fmt = v4l2_fourcc('B', 'G', 'R', '3');
 	second_layer.pPrimary = &first_layer;
+	if (alpha_type == IC_LOC_SEP_ALP_OV)
+		second_layer.supportLocalAlpha = 1;
 	if ((ret = CreateScreenLayer(&second_layer, BUFCNT_2ND))
 		!= E_RET_SUCCESS) {
 		printf("CreateScreenLayer second layer err %d\n", ret);
 		goto err;
 	}
 	/* set alpha and key color */
-	alpha_data.enable = 1;
-	alpha_data.alpha = 255;
+	if (alpha_type == IC_GLB_ALP_OV) {
+		alpha_data.globalAlphaEnable = 1;
+		alpha_data.alpha = 255;
+	} else if (alpha_type == IC_LOC_SEP_ALP_OV)
+		alpha_data.localAlphaEnable = 1;
 	colorkey_data.enable = 0;
 	colorkey_data.keyColor = 0;
 	if ((ret = SetScreenLayer(&second_layer, E_SET_ALPHA, &alpha_data))
@@ -1123,19 +1138,42 @@ void * second_layer_thread_func(void *arg)
 	param.destRect.right = second_layer.screenRect.right - second_layer.screenRect.left;
 	param.destRect.bottom = second_layer.screenRect.bottom - second_layer.screenRect.top;
 	param.destRot = 0;
-	size = param.srcWidth * param.srcHeight * 3/2;
-	ret = dma_memory_alloc(size, BUFCNT_2ND, paddr_2nd, buf_2nd);
+	buf_size = param.srcWidth * param.srcHeight * 3/2;
+	if (alpha_type == IC_LOC_SEP_ALP_OV)
+		alpha_buf_size = SL_width * SL_height;
+	ret = dma_memory_alloc(buf_size, BUFCNT_2ND, paddr_2nd, buf_2nd);
 	if ( ret < 0) {
 		printf("dma_memory_alloc failed\n");
 		goto err1;
 	}
 
-	for (i=0;i<255;i++) {
+	for (i=0;i<FRM_CNT;i++) {
 		if (ctrl_c_rev)
 			break;
 
 		param.srcPaddr = paddr_2nd[i%BUFCNT_2ND];
 		gen_fill_pattern(buf_2nd[i%BUFCNT_2ND], param.srcWidth, param.srcHeight);
+
+		/* Fill local alpha buffer */
+		if (alpha_type == IC_LOC_SEP_ALP_OV) {
+			gen_fill_alpha(second_layer.bufAlphaVaddr[i%BUFCNT_2ND], alpha_buf_size, 0x80);
+			if (i < FRM_CNT/3) {
+				alpha_val = 0x80;
+				for (x=SL_width/4; x<3*SL_width/4; x++)
+					for (y=SL_height/4; y<3*SL_height/4; y++)
+						LoadAlphaPoint(&second_layer, x, y, alpha_val, i%BUFCNT_2ND);
+			} else if (i < 2*FRM_CNT/3) {
+				alpha_val = 0x00;
+				for (x=SL_width/4; x<3*SL_width/4; x++)
+					for (y=SL_height/4; y<3*SL_height/4; y++)
+						LoadAlphaPoint(&second_layer, x, y, alpha_val, i%BUFCNT_2ND);
+			} else if (i < FRM_CNT) {
+				alpha_val = 0xFF;
+				for (x=SL_width/4; x<3*SL_width/4; x++)
+					for (y=SL_height/4; y<3*SL_height/4; y++)
+						LoadAlphaPoint(&second_layer, x, y, alpha_val, i%BUFCNT_2ND);
+			}
+		}
 
 		if ((ret = LoadScreenLayer(&second_layer, &param, i%BUFCNT_2ND)) != E_RET_SUCCESS) {
 			printf("LoadScreenLayer err %d\n", ret);
@@ -1156,7 +1194,7 @@ void * second_layer_thread_func(void *arg)
 	}
 
 err2:
-	dma_memory_free(size, BUFCNT_2ND, paddr_2nd, buf_2nd);
+	dma_memory_free(buf_size, BUFCNT_2ND, paddr_2nd, buf_2nd);
 err1:
 	DestoryScreenLayer(&second_layer);
 err:
@@ -1171,23 +1209,32 @@ void * third_layer_thread_func(void *arg)
 	void * buf_3th[BUFCNT_3TH];
 	MethodAlphaData alpha_data;
 	MethodColorKeyData colorkey_data;
-	int size, i, ret;
+	int buf_size, alpha_buf_size, i, ret, x, y, alpha_type = *((int *)arg);
+	int SL_width, SL_height;
+	char alpha_val;
 
 	memset(&third_layer, 0, sizeof(ScreenLayer));
-	third_layer.screenRect.left = fb_width*3/4 - 20;
-	third_layer.screenRect.top = fb_height*3/4 - 20;
-	third_layer.screenRect.right = fb_width - 20;
-	third_layer.screenRect.bottom = fb_height - 20;
+	third_layer.screenRect.left = fb_width*1/4 - 20;
+	third_layer.screenRect.top = fb_height*1/4 - 20;
+	third_layer.screenRect.right = fb_width/2 - 20;
+	third_layer.screenRect.bottom = fb_height/2 - 20;
+	SL_width = third_layer.screenRect.right - third_layer.screenRect.left;
+	SL_height = third_layer.screenRect.bottom - third_layer.screenRect.top;
 	third_layer.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
 	third_layer.pPrimary = &first_layer;
+	if (alpha_type == IC_LOC_SEP_ALP_OV)
+		third_layer.supportLocalAlpha = 1;
 	if ((ret = CreateScreenLayer(&third_layer, BUFCNT_3TH))
 		!= E_RET_SUCCESS) {
 		printf("CreateScreenLayer third layer err %d\n", ret);
 		goto err;
 	}
 	/* set alpha and key color */
-	alpha_data.enable = 1;
-	alpha_data.alpha = 255;
+	if (alpha_type == IC_GLB_ALP_OV) {
+		alpha_data.globalAlphaEnable = 1;
+		alpha_data.alpha = 255;
+	} else if (alpha_type == IC_LOC_SEP_ALP_OV)
+		alpha_data.localAlphaEnable = 1;
 	colorkey_data.enable = 0;
 	colorkey_data.keyColor = 0;
 	if ((ret = SetScreenLayer(&third_layer, E_SET_ALPHA, &alpha_data))
@@ -1213,19 +1260,31 @@ void * third_layer_thread_func(void *arg)
 	param.destRect.right = third_layer.screenRect.right - third_layer.screenRect.left;
 	param.destRect.bottom = third_layer.screenRect.bottom - third_layer.screenRect.top;
 	param.destRot = 0;
-	size = param.srcWidth * param.srcHeight * 3/2;
-	ret = dma_memory_alloc(size, BUFCNT_3TH, paddr_3th, buf_3th);
+	buf_size = param.srcWidth * param.srcHeight * 3/2;
+	if (alpha_type == IC_LOC_SEP_ALP_OV)
+		alpha_buf_size = SL_width * SL_height;
+	ret = dma_memory_alloc(buf_size, BUFCNT_3TH, paddr_3th, buf_3th);
 	if ( ret < 0) {
 		printf("dma_memory_alloc failed\n");
 		goto err1;
 	}
 
-	for (i=0;i<255;i++) {
+	for (i=0;i<FRM_CNT;i++) {
 		if (ctrl_c_rev)
 			break;
 
 		param.srcPaddr = paddr_3th[i%BUFCNT_3TH];
 		gen_fill_pattern(buf_3th[i%BUFCNT_3TH], param.srcWidth, param.srcHeight);
+
+		/* Fill local alpha buffer */
+		if (alpha_type == IC_LOC_SEP_ALP_OV) {
+			if(i < FRM_CNT/3)
+				gen_fill_alpha(third_layer.bufAlphaVaddr[i%BUFCNT_3TH], alpha_buf_size, 0x80);
+			else if(i < 2*FRM_CNT/3)
+				gen_fill_alpha(third_layer.bufAlphaVaddr[i%BUFCNT_3TH], alpha_buf_size, 0x00);
+			else if(i < FRM_CNT)
+				gen_fill_alpha(third_layer.bufAlphaVaddr[i%BUFCNT_3TH], alpha_buf_size, 0xFF);
+		}
 
 		if ((ret = LoadScreenLayer(&third_layer, &param, i%BUFCNT_3TH)) != E_RET_SUCCESS) {
 			printf("LoadScreenLayer err %d\n", ret);
@@ -1244,7 +1303,7 @@ void * third_layer_thread_func(void *arg)
 	}
 
 err2:
-	dma_memory_free(size, BUFCNT_3TH, paddr_3th, buf_3th);
+	dma_memory_free(buf_size, BUFCNT_3TH, paddr_3th, buf_3th);
 err1:
 	DestoryScreenLayer(&third_layer);
 err:
@@ -1252,7 +1311,7 @@ err:
 	return NULL;
 }
 
-int screenlayer_test(int three_layer)
+int screenlayer_test(int three_layer, int alpha_type)
 {
 	pthread_t first_layer_thread;
 	pthread_t second_layer_thread;
@@ -1291,13 +1350,13 @@ int screenlayer_test(int three_layer)
 	/* create second layer */
 	printf("Add second layer!\n");
 	second_layer_enabled = 1;
-	pthread_create(&second_layer_thread, NULL, second_layer_thread_func, NULL);
+	pthread_create(&second_layer_thread, NULL, second_layer_thread_func, &alpha_type);
 
 	if (three_layer) {
 		/* create third layer */
 		printf("Add third layer!\n");
 		third_layer_enabled = 1;
-		pthread_create(&third_layer_thread, NULL, third_layer_thread_func, NULL);
+		pthread_create(&third_layer_thread, NULL, third_layer_thread_func, &alpha_type);
 	}
 
 	while(!ctrl_c_rev)usleep(100000);
@@ -1364,12 +1423,20 @@ int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 	}
 	if (pattern == 9) {
 		printf("Screen layer with 2 layers test:\n");
-		return screenlayer_test(0);
+		return screenlayer_test(0, IC_GLB_ALP_OV);
 	}
 	if (pattern == 10) {
 		printf("Screen layer with 3 layers test:\n");
-		return screenlayer_test(1);
+		return screenlayer_test(1, IC_GLB_ALP_OV);
 	}
+	if (pattern == 11) {
+		printf("Screen layer with 2 layers test using local alpha blending:\n");
+		return screenlayer_test(0, IC_LOC_SEP_ALP_OV);
+	}
+	if (pattern == 12) {
+		printf("Screen layer with 3 layers test using local alpha blending:\n");
+		return screenlayer_test(1, IC_LOC_SEP_ALP_OV);
+ 	}
 
 	printf("No such test pattern %d\n", pattern);
 	return -1;
