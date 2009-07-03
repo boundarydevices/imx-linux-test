@@ -126,8 +126,10 @@ int main(int argc, char *argv[])
 			"6: color bar IC separate local alpha overlay\n" \
 			"7: color bar IC local alpha within pixel overlay\n" \
 			"8: ipu dma copy test\n" \
-			"9: 2 screen layer test\n" \
-			"10: 3 screen layer test\n\n");
+			"9: 2 screen layer test using global alpha blending\n" \
+			"10: 3 screen layer test using global alpha blending\n" \
+			"11: 2 screen layer test using local alpha blending\n" \
+			"12: 3 screen layer test using local alpha blending\n\n");
 		return -1;
 	}
 
