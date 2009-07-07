@@ -126,10 +126,12 @@ int main(int argc, char *argv[])
 			"6: color bar IC separate local alpha overlay\n" \
 			"7: color bar IC local alpha within pixel overlay\n" \
 			"8: ipu dma copy test\n" \
-			"9: 2 screen layer test using global alpha blending\n" \
-			"10: 3 screen layer test using global alpha blending\n" \
-			"11: 2 screen layer test using local alpha blending\n" \
-			"12: 3 screen layer test using local alpha blending\n\n");
+			"9: 2 screen layer test using IC global alpha blending\n" \
+			"10: 3 screen layer test using IC global alpha blending\n" \
+			"11: 2 screen layer test using IC local alpha blending with alpha value in separate buffer\n" \
+			"12: 3 screen layer test using IC local alpha blending with alpha value in separate buffer\n" \
+			"13: 2 screen layer test using IC local alpha blending with alpha value in pixel\n" \
+			"14: 3 screen layer test using IC local alpha blending with alpha value in pixel\n\n");
 		return -1;
 	}
 
