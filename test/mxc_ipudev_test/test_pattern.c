@@ -29,8 +29,10 @@
 #include <time.h>
 #include <pthread.h>
 #include <math.h>
+#include <semaphore.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <linux/mxcfb.h>
 #include "mxc_ipudev_test.h"
 #include "ScreenLayer.h"
@@ -1077,15 +1079,58 @@ void * thread_func_hop_block(void *arg)
 #define BUFCNT_2ND	3
 #define BUFCNT_3TH	5
 #define FRM_CNT		511
-static ScreenLayer first_layer;
-static ScreenLayer second_layer;
-static ScreenLayer third_layer;
-static int fb_width, fb_height, fb_bpp;
-static int second_layer_enabled = 0;
-static int third_layer_enabled = 0;
+/* variables for semaphore */
+sem_t *         semIDUnit;
+const char*     semNameUnit="IPU_SL_unit_test";
+
+/* Vittual address of shared memory in current process */
+int * vshmUnitTest =NULL;
+
+int getFBInfor(int * pfbWidth, int * pfbHeight, int * pfbBPP )
+{
+	int ret, fd_fb;
+	struct fb_var_screeninfo fb_var;
+	struct fb_fix_screeninfo fb_fix;
+
+	ret = 0;
+	/* get fb info */
+	if ((fd_fb = open(PRIMARYFBDEV, O_RDWR, 0)) < 0) {
+		printf("Unable to open /dev/fb0\n");
+		ret = -1;
+		goto getFBInfor_err1;
+	}
+
+	if ( ioctl(fd_fb, FBIOGET_FSCREENINFO, &fb_fix) < 0) {
+		printf("Get FB fix info failed!\n");
+		ret = -1;
+		goto getFBInfor_err2;
+	}
+
+	if ( ioctl(fd_fb, FBIOGET_VSCREENINFO, &fb_var) < 0) {
+		printf("Get FB var info failed!\n");
+		ret = -1;
+		goto getFBInfor_err2;
+	}
+	*pfbWidth	= fb_var.xres;
+	*pfbHeight	= fb_var.yres;
+	*pfbBPP		= fb_var.bits_per_pixel;
+getFBInfor_err2:
+	close(fd_fb);
+getFBInfor_err1:
+	return ret;
+}
 void * first_layer_thread_func(void *arg)
 {
 	int i, ret;
+	ScreenLayer first_layer;
+	int fb_width, fb_height, fb_bpp;
+
+	ret = getFBInfor(&fb_width, &fb_height, &fb_bpp);
+	if(ret == -1)
+	{
+		printf("Can not get fb information. \n");
+		goto err;
+	}
 
 	memset(&first_layer, 0, sizeof(ScreenLayer));
 	if (fb_bpp == 24)
@@ -1101,7 +1146,7 @@ void * first_layer_thread_func(void *arg)
 	}
 
 	i = 0;
-	while (i < 100 && !ctrl_c_rev) {
+	while (i < 50 && !ctrl_c_rev) {
 		if (i % 3 == 0)
 			memset(first_layer.bufVaddr[0], 0x0, first_layer.bufSize);
 		else if (i % 3 == 1)
@@ -1109,23 +1154,27 @@ void * first_layer_thread_func(void *arg)
 		else if (i % 3 == 2)
 			memset(first_layer.bufVaddr[0], 0xff, first_layer.bufSize);
 		i++;
-		if (!second_layer_enabled && !third_layer_enabled) {
+		sem_wait(semIDUnit);
+		if (!vshmUnitTest[1] && !vshmUnitTest[2]) {
 			if ((ret = UpdateScreenLayer(&first_layer)) != E_RET_SUCCESS) {
 				printf("UpdateScreenLayer err %d\n",ret);
 				goto err1;
 			}
 		}
+		sem_post(semIDUnit);
 		sleep(2);
 	}
 err1:
-	while(second_layer_enabled || third_layer_enabled)sleep(1);
+	while(vshmUnitTest[1] || vshmUnitTest[2])sleep(1);
 	DestoryScreenLayer(&first_layer);
 err:
+	printf("First layer has been destroyed! \n");
 	return NULL;
 }
 
 void * second_layer_thread_func(void *arg)
 {
+	ScreenLayer second_layer;
 	LoadParam param;
 	dma_addr_t paddr_2nd[BUFCNT_2ND];
 	void * buf_2nd[BUFCNT_2ND];
@@ -1134,19 +1183,46 @@ void * second_layer_thread_func(void *arg)
 	int buf_size, alpha_buf_size, x, y, i, ret, alpha_type = *((int *)arg);
 	int SL_width, SL_height;
 	char alpha_val;
+	int fb_width, fb_height, fb_bpp;
+	int show_time = 0;
 
+	ret = getFBInfor(&fb_width, &fb_height, &fb_bpp);
+	if(ret == -1)
+	{
+		printf("Can not get fb information. \n");
+		goto err;
+	}
+
+	alpha_buf_size = 0;
 	memset(&second_layer, 0, sizeof(ScreenLayer));
-	second_layer.screenRect.left = fb_width/4;
-	second_layer.screenRect.top = fb_height/4;
-	second_layer.screenRect.right = fb_width*3/4;
-	second_layer.screenRect.bottom = fb_height*3/4;
+	memset(&alpha_data, 0, sizeof(MethodAlphaData));
+	memset(&colorkey_data, 0, sizeof(MethodColorKeyData));
+	second_layer.screenRect.left = 0;
+	second_layer.screenRect.top = 0;
+	second_layer.screenRect.right = fb_width;
+	second_layer.screenRect.bottom = fb_height;
 	SL_width = second_layer.screenRect.right - second_layer.screenRect.left;
 	SL_height = second_layer.screenRect.bottom - second_layer.screenRect.top;
 	if (alpha_type == IC_LOC_PIX_ALP_OV)
 		second_layer.fmt = v4l2_fourcc('R', 'G', 'B', 'A');
 	else
 		second_layer.fmt = v4l2_fourcc('B', 'G', 'R', '3');
-	second_layer.pPrimary = &first_layer;
+	i=100;
+	while(i)
+	{
+		i--;
+		second_layer.pPrimary = GetPrimarySLHandle(PRIMARYFBDEV);
+		if(second_layer.pPrimary == NULL)
+			usleep(200*1000);
+		else
+			break;
+	}
+	if(i==0)
+	{
+		printf("Should create primary layer firstly. \n");
+		ret = -1;
+		goto err;
+	}
 	if (alpha_type == IC_LOC_SEP_ALP_OV)
 		second_layer.supportSepLocalAlpha = 1;
 	if ((ret = CreateScreenLayer(&second_layer, BUFCNT_2ND))
@@ -1195,16 +1271,32 @@ void * second_layer_thread_func(void *arg)
 	}
 
 	for (i=0;i<FRM_CNT;i++) {
+		struct timeval frame_begin,frame_end;
+                int sec, usec;
+
 		if (ctrl_c_rev)
 			break;
 
 		param.srcPaddr = paddr_2nd[i%BUFCNT_2ND];
 		gen_fill_pattern(buf_2nd[i%BUFCNT_2ND], param.srcWidth, param.srcHeight);
 
+		gettimeofday(&frame_begin, NULL);
+
 		if ((ret = LoadScreenLayer(&second_layer, &param, i%BUFCNT_2ND)) != E_RET_SUCCESS) {
 			printf("LoadScreenLayer err %d\n", ret);
 			goto err2;
 		}
+
+		gettimeofday(&frame_end, NULL);
+
+                sec = frame_end.tv_sec - frame_begin.tv_sec;
+                usec = frame_end.tv_usec - frame_begin.tv_usec;
+
+                if (usec < 0) {
+                        sec--;
+                        usec = usec + 1000000;
+                }
+                show_time += (sec * 1000000) + usec;
 
 		/* Fill local alpha buffer */
 		if (alpha_type == IC_LOC_SEP_ALP_OV) {
@@ -1247,30 +1339,53 @@ void * second_layer_thread_func(void *arg)
 			}
 		}
 
+		gettimeofday(&frame_begin, NULL);
+
 		if ((ret = FlipScreenLayerBuf(&second_layer, i%BUFCNT_2ND)) != E_RET_SUCCESS) {
 			printf("FlipScreenLayerBuf err %d\n", ret);
 			goto err2;
 		}
-
-		if (!third_layer_enabled) {
+		sem_wait(semIDUnit);
+		if (!vshmUnitTest[2]) {
 			if ((ret = UpdateScreenLayer(&second_layer)) != E_RET_SUCCESS) {
 				printf("UpdateScreenLayer err %d\n",ret);
 				goto err2;
 			}
 		}
+		sem_post(semIDUnit);
+
+		gettimeofday(&frame_end, NULL);
+
+                sec = frame_end.tv_sec - frame_begin.tv_sec;
+                usec = frame_end.tv_usec - frame_begin.tv_usec;
+
+                if (usec < 0) {
+                        sec--;
+                        usec = usec + 1000000;
+                }
+                show_time += (sec * 1000000) + usec;
+
+                /* screenlayer should not update fast than lcd refresh rate*/
+                usleep(10000);
 	}
+
+	printf("2nd layer avg frame time %d us\n", show_time/FRM_CNT);
 
 err2:
 	dma_memory_free(buf_size, BUFCNT_2ND, paddr_2nd, buf_2nd);
 err1:
 	DestoryScreenLayer(&second_layer);
 err:
-	second_layer_enabled = 0;
+	sem_wait(semIDUnit);
+	vshmUnitTest[1] = 0;
+	sem_post(semIDUnit);
+	printf("Second layer has been destroyed! \n");
 	return NULL;
 }
 
 void * third_layer_thread_func(void *arg)
 {
+	ScreenLayer third_layer;
 	LoadParam param;
 	dma_addr_t paddr_3th[BUFCNT_3TH];
 	void * buf_3th[BUFCNT_3TH];
@@ -1279,19 +1394,42 @@ void * third_layer_thread_func(void *arg)
 	int buf_size, alpha_buf_size, i, ret, x, y, alpha_type = *((int *)arg);
 	int SL_width, SL_height;
 	char alpha_val;
+	int fb_width, fb_height, fb_bpp;
+	int show_time = 0;
 
+	ret = getFBInfor(&fb_width, &fb_height, &fb_bpp);
+	if(ret == -1)
+	{
+		printf("Can not get fb information. \n");
+		goto err;
+	}
+
+	alpha_buf_size = 0;
 	memset(&third_layer, 0, sizeof(ScreenLayer));
-	third_layer.screenRect.left = fb_width*1/4 - 20;
-	third_layer.screenRect.top = fb_height*1/4 - 20;
-	third_layer.screenRect.right = fb_width/2 - 20;
-	third_layer.screenRect.bottom = fb_height/2 - 20;
+	memset(&alpha_data, 0, sizeof(MethodAlphaData));
+	memset(&colorkey_data, 0, sizeof(MethodColorKeyData));
+	third_layer.screenRect.left = fb_width*1/4;
+	third_layer.screenRect.top = fb_height*1/4;
+	third_layer.screenRect.right = fb_width*3/4;
+	third_layer.screenRect.bottom = fb_height*3/4;
 	SL_width = third_layer.screenRect.right - third_layer.screenRect.left;
 	SL_height = third_layer.screenRect.bottom - third_layer.screenRect.top;
 	if (alpha_type == IC_LOC_PIX_ALP_OV)
 		third_layer.fmt = v4l2_fourcc('R', 'G', 'B', 'A');
 	else
 		third_layer.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
-	third_layer.pPrimary = &first_layer;
+	i=100;
+	while(i)
+	{
+		i--;
+		third_layer.pPrimary = GetPrimarySLHandle(PRIMARYFBDEV);
+		if(third_layer.pPrimary == NULL)
+			usleep(20*1000);
+		else
+			break;
+	}
+	if(i==0)
+		printf("Should create primary layer firstly. \n");
 	if (alpha_type == IC_LOC_SEP_ALP_OV)
 		third_layer.supportSepLocalAlpha = 1;
 	if ((ret = CreateScreenLayer(&third_layer, BUFCNT_3TH))
@@ -1340,16 +1478,32 @@ void * third_layer_thread_func(void *arg)
 	}
 
 	for (i=0;i<FRM_CNT;i++) {
+		struct timeval frame_begin,frame_end;
+                int sec, usec;
+
 		if (ctrl_c_rev)
 			break;
 
 		param.srcPaddr = paddr_3th[i%BUFCNT_3TH];
 		gen_fill_pattern(buf_3th[i%BUFCNT_3TH], param.srcWidth, param.srcHeight);
 
+		gettimeofday(&frame_begin, NULL);
+
 		if ((ret = LoadScreenLayer(&third_layer, &param, i%BUFCNT_3TH)) != E_RET_SUCCESS) {
 			printf("LoadScreenLayer err %d\n", ret);
 			goto err2;
 		}
+
+		gettimeofday(&frame_end, NULL);
+
+                sec = frame_end.tv_sec - frame_begin.tv_sec;
+                usec = frame_end.tv_usec - frame_begin.tv_usec;
+
+                if (usec < 0) {
+                        sec--;
+                        usec = usec + 1000000;
+                }
+                show_time += (sec * 1000000) + usec;
 
 		/* Fill local alpha buffer */
 		if (alpha_type == IC_LOC_SEP_ALP_OV) {
@@ -1381,6 +1535,8 @@ void * third_layer_thread_func(void *arg)
 			}
 		}
 
+		gettimeofday(&frame_begin, NULL);
+
 		if ((ret = FlipScreenLayerBuf(&third_layer, i%BUFCNT_3TH)) != E_RET_SUCCESS) {
 			printf("FlipScreenLayerBuf err %d\n", ret);
 			goto err2;
@@ -1390,14 +1546,33 @@ void * third_layer_thread_func(void *arg)
 			printf("UpdateScreenLayer err %d\n",ret);
 			goto err2;
 		}
+
+		gettimeofday(&frame_end, NULL);
+
+                sec = frame_end.tv_sec - frame_begin.tv_sec;
+                usec = frame_end.tv_usec - frame_begin.tv_usec;
+
+                if (usec < 0) {
+                        sec--;
+                        usec = usec + 1000000;
+                }
+                show_time += (sec * 1000000) + usec;
+
+                /* screenlayer should not update fast than lcd refresh rate*/
+                usleep(10000);
 	}
+
+	printf("3rd layer avg frame time %d us\n", show_time/FRM_CNT);
 
 err2:
 	dma_memory_free(buf_size, BUFCNT_3TH, paddr_3th, buf_3th);
 err1:
 	DestoryScreenLayer(&third_layer);
 err:
-	third_layer_enabled = 0;
+	sem_wait(semIDUnit);
+	vshmUnitTest[2] = 0;
+	sem_post(semIDUnit);
+	printf("Third layer has been destroyed! \n");
 	return NULL;
 }
 
@@ -1406,32 +1581,42 @@ int screenlayer_test(int three_layer, int alpha_type)
 	pthread_t first_layer_thread;
 	pthread_t second_layer_thread;
 	pthread_t third_layer_thread;
-	int ret, fd_fb;
-	struct fb_var_screeninfo fb_var;
-	struct fb_fix_screeninfo fb_fix;
+	int ret;
+        int shmIDUnit;
+        struct stat shmStat;
+        char shmNameUnit[32]="shm_name_unit_test";
 
-	/* get fb info */
-	if ((fd_fb = open(PRIMARYFBDEV, O_RDWR, 0)) < 0) {
-		printf("Unable to open /dev/fb0\n");
-		ret = -1;
-		goto err;
-	}
+        ret = 0;
+        semIDUnit = sem_open(semNameUnit, O_CREAT, 0666, 1);
+        if(SEM_FAILED == semIDUnit){
+                printf("can not open the semaphore for SL IPC Unit test!\n");
+                ret = -1;
+                goto done;
+        }
 
-	if ( ioctl(fd_fb, FBIOGET_FSCREENINFO, &fb_fix) < 0) {
-		printf("Get FB fix info failed!\n");
-		ret = -1;
-		goto err;
-	}
+        shmIDUnit = shm_open(shmNameUnit, O_RDWR|O_CREAT, 0666);
+        if(shmIDUnit == -1){
+                printf("can not open the shared memory for SL IPC Unit test!\n");
+                ret = -1;
+                sem_close(semIDUnit);
+                goto done;
+        }
+        /* Get special size shm */
+        ftruncate(shmIDUnit,3 * sizeof(int));
+        /* Connect to the shm */
+        fstat(shmIDUnit, &shmStat);
 
-	if ( ioctl(fd_fb, FBIOGET_VSCREENINFO, &fb_var) < 0) {
-		printf("Get FB var info failed!\n");
-		ret = -1;
-		goto err;
-	}
-	fb_width = fb_var.xres;
-	fb_height = fb_var.yres;
-	fb_bpp = fb_var.bits_per_pixel;
-	close(fd_fb);
+        if(vshmUnitTest == NULL)
+                vshmUnitTest = (int *)mmap(NULL,shmStat.st_size,PROT_READ|PROT_WRITE,MAP_SHARED,shmIDUnit,0);
+
+        if(vshmUnitTest == MAP_FAILED || vshmUnitTest ==NULL)
+        {
+                ret = -1;
+                sem_close(semIDUnit);
+                shm_unlink(shmNameUnit);
+                goto done;
+        }
+	memset(vshmUnitTest, 0, 3 *sizeof(int));
 
 	/* create first layer */
 	printf("Display to primary layer!\n");
@@ -1439,13 +1624,13 @@ int screenlayer_test(int three_layer, int alpha_type)
 
 	/* create second layer */
 	printf("Add second layer!\n");
-	second_layer_enabled = 1;
+	vshmUnitTest[1] = 1;
 	pthread_create(&second_layer_thread, NULL, second_layer_thread_func, &alpha_type);
 
 	if (three_layer) {
 		/* create third layer */
 		printf("Add third layer!\n");
-		third_layer_enabled = 1;
+		vshmUnitTest[2] = 1;
 		pthread_create(&third_layer_thread, NULL, third_layer_thread_func, &alpha_type);
 	}
 
@@ -1455,7 +1640,148 @@ int screenlayer_test(int three_layer, int alpha_type)
 		pthread_join(third_layer_thread, NULL);
 	pthread_join(second_layer_thread, NULL);
 	pthread_join(first_layer_thread, NULL);
-err:
+
+	sem_unlink(semNameUnit);
+	shm_unlink(shmNameUnit);
+done:
+	return ret;
+}
+/*
+**	ProcessA: First_layer & second_layer
+**	ProcessB: Third_layer
+*/
+int screenlayer_test_ipc(int process_num, int three_layer, int alpha_type)
+{
+	pthread_t first_layer_thread;
+	pthread_t second_layer_thread;
+	pthread_t third_layer_thread;
+	int ret;
+	int shmIDUnit;
+	struct stat shmStat;
+	char shmNameUnit[32]="shm_name_unit_test";
+
+	ret = 0;
+	semIDUnit = sem_open(semNameUnit, O_CREAT, 0666, 1);
+	if(SEM_FAILED == semIDUnit){
+                printf("can not open the semaphore for SL IPC Unit test!\n");
+                ret = -1;
+                goto done;
+        }
+
+	shmIDUnit = shm_open(shmNameUnit, O_RDWR|O_CREAT, 0666);
+        if(shmIDUnit == -1){
+                printf("can not open the shared memory for SL IPC Unit test!\n");
+                ret = -1;
+                sem_close(semIDUnit);
+                goto done;
+        }
+        /* Get special size shm */
+        ftruncate(shmIDUnit,3 * sizeof(int));
+        /* Connect to the shm */
+        fstat(shmIDUnit, &shmStat);
+
+        if(vshmUnitTest == NULL)
+		vshmUnitTest = (int *)mmap(NULL,shmStat.st_size,PROT_READ|PROT_WRITE,MAP_SHARED,shmIDUnit,0);
+
+	if(vshmUnitTest == MAP_FAILED || vshmUnitTest ==NULL)
+	{
+		ret = -1;
+		sem_close(semIDUnit);
+		shm_unlink(shmNameUnit);
+		goto done;
+	}
+	memset(vshmUnitTest, 0, 3 *sizeof(int));
+	vshmUnitTest[1] = 1;
+
+	/* Two process cases*/
+	if(process_num == 2)
+	{
+		if(three_layer) vshmUnitTest[2]  = 1;
+		/* Process A */
+		if(fork() != 0)
+		{
+			/* create first layer */
+			printf("Display to primary layer!\n");
+			pthread_create(&first_layer_thread, NULL, first_layer_thread_func, NULL);
+
+			if(three_layer)
+			{
+				/* create second layer */
+				printf("Add second layer!\n");
+				pthread_create(&second_layer_thread, NULL, second_layer_thread_func, &alpha_type);
+				pthread_join(second_layer_thread, NULL);
+			}
+
+			pthread_join(first_layer_thread, NULL);
+			sem_unlink(semNameUnit);
+			shm_unlink(shmNameUnit);
+			printf("SL IPC: Process A has been exited. \n");
+			exit(0);
+		}else{
+			/* Process B */
+			sleep(2);
+			if(three_layer)
+			{
+				/* create third layer */
+				printf("Add third layer!\n");
+				pthread_create(&third_layer_thread, NULL, third_layer_thread_func, &alpha_type);
+				pthread_join(third_layer_thread, NULL);
+			} else
+			{
+				/* create second layer */
+		                printf("Add second layer(two layers case)!\n");
+                        	pthread_create(&second_layer_thread, NULL, second_layer_thread_func, &alpha_type);
+		                pthread_join(second_layer_thread, NULL);
+			}
+			printf("SL IPC: Process B has been exited. \n");
+		}
+		sem_unlink(semNameUnit);
+		shm_unlink(shmNameUnit);
+		exit(0);
+	}else if(process_num ==3)
+	{
+		vshmUnitTest[2]  = 1;
+		/* Process A */
+                if(fork()!=0)
+                {
+                        /* create first layer */
+                        printf("Display to primary layer!\n");
+                        pthread_create(&first_layer_thread, NULL, first_layer_thread_func, NULL);
+                        pthread_join(first_layer_thread, NULL);
+                        sem_unlink(semNameUnit);
+                        shm_unlink(shmNameUnit);
+                        printf("SL IPC: Process A has been exited. \n");
+                        exit(0);
+                }else{
+			/* Process B */
+			if(fork()==0)
+			{
+                                /* create second layer */
+                                printf("Add second layer!\n");
+                                pthread_create(&second_layer_thread, NULL, second_layer_thread_func, &alpha_type);
+				pthread_join(second_layer_thread, NULL);
+				sem_unlink(semNameUnit);
+	                        shm_unlink(shmNameUnit);
+        	                printf("SL IPC: Process B has been exited. \n");
+                	        exit(0);
+			}
+			else
+			{
+				/* Process C */
+				/* create third layer */
+				printf("Add third layer!\n");
+				pthread_create(&third_layer_thread, NULL, third_layer_thread_func, &alpha_type);
+				pthread_join(third_layer_thread, NULL);
+				sem_unlink(semNameUnit);
+	                        shm_unlink(shmNameUnit);
+        	                printf("SL IPC: Process C has been exited. \n");
+                	        exit(0);
+			}
+
+		}
+	}
+
+done:
 	return ret;
 }
 
@@ -1535,6 +1861,26 @@ int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 		printf("Screen layer with 3 layers test using IC local alpha blending with alpha value in pixel:\n");
 		return screenlayer_test(1, IC_LOC_PIX_ALP_OV);
  	}
+	if (pattern == 15){
+		printf("Screen layer IPC(global alpha): ProcessA(first_layer ) ProcessB(second_layer):\n");
+		return screenlayer_test_ipc(2, 0, IC_GLB_ALP_OV);
+	}
+	if (pattern == 16){
+		printf("Screen layer IPC(local alpha): ProcessA(first_layer ) ProcessB(second_layer):\n");
+		return screenlayer_test_ipc(2, 0, IC_LOC_SEP_ALP_OV);
+	}
+	if (pattern == 17){
+		printf("Screen layer IPC(global alpha): ProcessA(first_layer + second_layer) ProcessB(third_layer):\n");
+		return screenlayer_test_ipc(2, 1, IC_GLB_ALP_OV);
+	}
+	if (pattern == 18){
+		printf("Screen layer IPC(local alpha): ProcessA(first_layer + second_layer) ProcessB(third_layer):\n");
+		return screenlayer_test_ipc(2, 1, IC_LOC_SEP_ALP_OV);
+	}
+	if (pattern == 19){
+		printf("Screen layer IPC(local alpha): ProcessA(first_layer) ProcessB(second_layer) ProcessC(third_layer):\n");
+		return screenlayer_test_ipc(3, 1, IC_LOC_SEP_ALP_OV);
+	}
 
 	printf("No such test pattern %d\n", pattern);
 	return -1;
