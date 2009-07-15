@@ -131,7 +131,12 @@ int main(int argc, char *argv[])
 			"11: 2 screen layer test using IC local alpha blending with alpha value in separate buffer\n" \
 			"12: 3 screen layer test using IC local alpha blending with alpha value in separate buffer\n" \
 			"13: 2 screen layer test using IC local alpha blending with alpha value in pixel\n" \
-			"14: 3 screen layer test using IC local alpha blending with alpha value in pixel\n\n");
+			"14: 3 screen layer test using IC local alpha blending with alpha value in pixel\n" \
+			"15: 2 screen layer test IPC ProcessA + ProcessB with globla alpha blending)\n" \
+			"16: 2 screen layer test IPC ProcessA + ProcessB with local alpha blending)\n" \
+			"17: 3 screen layer test IPC ProcessA(first_layer + sencond_layer) + ProcessB(third_layer) with globla alpha blending)\n" \
+			"18: 3 screen layer test IPC ProcessA(first_layer + sencond_layer) + ProcessB(third_layer) with local alpha blending)\n" \
+			"19: 3 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) ProcessC(third_layer) with local alpha blending)\n\n");
 		return -1;
 	}
 
