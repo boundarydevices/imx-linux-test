@@ -106,7 +106,7 @@ void SaveEncSliceInfo(u8 *SliceParaBuf, int size, int EncNum)
 		nMbAddr = (SliceParaBuf[2] << 8) | SliceParaBuf[3];
 		nSliceBits = (int)(SliceParaBuf[4] << 24)|(SliceParaBuf[5] << 16)|
 				(SliceParaBuf[6] << 8)|(SliceParaBuf[7]);
-		fprintf(fpEncSliceInfo, "[%2d] mbAddr.%3d, Bits.%d\n", i, nMbAddr, nSliceBits);
+		fprintf(fpEncSliceInfo, "[%2d] mbIndex.%3d, Bits.%d\n", i, nMbAddr, nSliceBits);
 		SliceParaBuf += 8;
 	}
 
@@ -374,10 +374,6 @@ encoder_start(struct encode *enc)
 	enc_param.forceIPicture = 0;
 	enc_param.skipPicture = 0;
 
-	enc->mbInfo.enable = 0;
-	enc->mvInfo.enable = 0;
-	enc->sliceInfo.enable = 0;
-
 	/* Set report info flag */
 	if (enc->mbInfo.enable) {
 		ret = vpu_EncGiveCommand(handle, ENC_SET_REPORT_MBINFO, &enc->mbInfo);
@@ -632,6 +628,10 @@ encoder_configure(struct encode *enc)
 		}
 	}
 
+	enc->mbInfo.enable = 0;
+	enc->mvInfo.enable = 0;
+	enc->sliceInfo.enable = 0;
+
 	if (enc->mbInfo.enable) {
 		enc->mbInfo.addr = malloc(initinfo.reportBufSize.mbInfoBufSize);
 		if (!enc->mbInfo.addr)
@@ -698,8 +698,8 @@ encoder_open(struct encode *enc)
 	encop.bitRate = enc->cmdl->bitrate;
 	encop.gopSize = enc->cmdl->gop;
 	encop.slicemode.sliceMode = 0;	/* 0: 1 slice per picture; 1: Multiple slices per picture */
-	encop.slicemode.sliceSizeMode = 0;
-	encop.slicemode.sliceSize = 4000;
+	encop.slicemode.sliceSizeMode = 0; /* 0: silceSize defined by bits; 1: sliceSize defined by MB number*/
+	encop.slicemode.sliceSize = 4000;  /* Size of a slice in bits or MB numbers */
 
 	encop.initialDelay = 0;
 	encop.vbvBufferSize = 0;        /* 0 = ignore 8 */
