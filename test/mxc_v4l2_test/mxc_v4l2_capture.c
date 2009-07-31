@@ -62,6 +62,7 @@ struct testbuffer
 struct testbuffer buffers[TEST_BUFFER_NUM];
 int g_width = 176;
 int g_height = 144;
+int g_input = 0;
 int g_capture_count = 100;
 int g_rotate = 0;
 int g_cap_fmt = V4L2_PIX_FMT_YUV420;
@@ -152,6 +153,12 @@ int v4l_capture_setup(void)
 	{
 	        printf("VIDIOC_S_PARM failed\n");
 	        return -1;
+	}
+
+	if (ioctl(fd_v4l, VIDIOC_S_INPUT, &g_input) < 0)
+	{
+		printf("VIDIOC_S_INPUT failed\n");
+		return -1;
 	}
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -299,6 +306,9 @@ int process_cmdline(int argc, char **argv)
                 else if (strcmp(argv[i], "-h") == 0) {
                         g_height = atoi(argv[++i]);
                 }
+		else if (strcmp(argv[i], "-i") == 0) {
+			g_input = atoi(argv[++i]);
+		}
                 else if (strcmp(argv[i], "-r") == 0) {
                         g_rotate = atoi(argv[++i]);
                 }
@@ -322,6 +332,7 @@ int process_cmdline(int argc, char **argv)
                              (g_cap_fmt != V4L2_PIX_FMT_BGR32) &&
                              (g_cap_fmt != V4L2_PIX_FMT_RGB565) &&
 			     (g_cap_fmt != V4L2_PIX_FMT_NV12) &&
+			     (g_cap_fmt != V4L2_PIX_FMT_UYVY) &&
                              (g_cap_fmt != V4L2_PIX_FMT_YUV420) )
                         {
                                 return -1;
@@ -331,6 +342,7 @@ int process_cmdline(int argc, char **argv)
                         printf("MXC Video4Linux capture Device Test\n\n" \
                                "Syntax: mxc_v4l2_capture.out -w <capture width>\n" \
                                " -h <capture height>\n" \
+			       " -i <input mode, 0-use csi->prp_enc->mem, 1-use csi->mem>\n" \
                                " -r <rotation> -c <capture counter> \n"
                                " -e <destination cropping: extra pixels> \n" \
 			       " -m <capture mode, 0-low resolution, 1-high resolution> \n" \
