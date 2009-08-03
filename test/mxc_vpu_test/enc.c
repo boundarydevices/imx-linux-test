@@ -583,10 +583,15 @@ encoder_configure(struct encode *enc)
 		else
 			ram_size = ((enc->picwidth + 15) & ~15) * 36 + 2048;
 		IOGetIramBase(&iram);
-		if ((iram.end - iram.start) < ram_size)
+		if ((iram.end - iram.start) < ram_size) {
+			err_msg("vpu iram is less than needed.\n");
+			return -1;
+		} else {
+			/* Allocate max iram for vpu encoder search ram*/
 			ram_size = iram.end - iram.start;
-		search_pa.searchRamAddr = iram.start;
-		search_pa.SearchRamSize = ram_size;
+			search_pa.searchRamAddr = iram.start;
+			search_pa.SearchRamSize = ram_size;
+		}
 	}
 
 	ret = vpu_EncGiveCommand(handle, ENC_SET_SEARCHRAM_PARAM, &search_pa);
@@ -709,6 +714,11 @@ encoder_open(struct encode *enc)
 	encop.mbReport = 0;
 	encop.mbQpReport = 0;
 	encop.rcIntraQp = -1;
+	encop.userQpMax = 0;
+	encop.userGamma = (Uint32)(0.75*32768);         /*  (0*32768 <= gamma <= 1*32768) */
+	encop.RcIntervalMode= 1;        /* 0:normal, 1:frame_level, 2:slice_level, 3: user defined Mb_level */
+	encop.MbInterval = 0;
+
 	encop.ringBufferEnable = 0;
 	encop.dynamicAllocEnable = 0;
 	encop.chromaInterleave = enc->cmdl->chromaInterleave;
