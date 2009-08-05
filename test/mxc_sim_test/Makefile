@@ -3,7 +3,7 @@
 #
 
 # list of platforms which want this test case
-INCLUDE_LIST:= IMX51
+INCLUDE_LIST:= IMX51 IMX25_3STACK
 
 OBJS = mxc_sim_test.o
 
