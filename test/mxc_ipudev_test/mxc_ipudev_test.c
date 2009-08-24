@@ -136,7 +136,9 @@ int main(int argc, char *argv[])
 			"16: 2 screen layer test IPC ProcessA + ProcessB with local alpha blending)\n" \
 			"17: 3 screen layer test IPC ProcessA(first_layer + sencond_layer) + ProcessB(third_layer) with globla alpha blending)\n" \
 			"18: 3 screen layer test IPC ProcessA(first_layer + sencond_layer) + ProcessB(third_layer) with local alpha blending)\n" \
-			"19: 3 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) ProcessC(third_layer) with local alpha blending)\n\n");
+			"19: 3 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) ProcessC(third_layer) with local alpha blending)\n" \
+			"20: 2 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) with DP local alpha blending)\n" \
+			"21: 2 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) with local alpha blending plus tv copy)\n\n");
 		return -1;
 	}
 
