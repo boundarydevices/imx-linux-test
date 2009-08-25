@@ -123,6 +123,7 @@ mxc_v4l_overlay_test(int timeout)
         struct v4l2_control ctl;
 	char fb_device_2[100] = "/dev/fb2";
 	int fd_fb_2 = 0;
+	struct mxcfb_loc_alpha l_alpha;
 
 	if (g_alpha_mode) {
 		/* The window shows graphics and video planes. */
@@ -343,6 +344,21 @@ out:
 	if (g_alpha_mode) {
 		munmap((void *)alpha_buf0, alpha_buf_size);
 		munmap((void *)alpha_buf1, alpha_buf_size);
+
+		/*
+		 * Disable DP local alpha function, otherwise,
+		 * the alpha channel will be enabled even if we
+		 * use DP global alpha next time and this will
+		 * cause display issue.
+		 */
+		l_alpha.enable = 0;
+		l_alpha.alpha_phy_addr0 = 0;
+		l_alpha.alpha_phy_addr1 = 0;
+		if (ioctl(fd_fb_2, MXCFB_SET_LOC_ALPHA, &l_alpha) < 0) {
+			printf("Set local alpha failed\n");
+			close(fd_fb_2);
+			return TFAIL;
+		}
 		close(fd_fb_2);
 	}
 
