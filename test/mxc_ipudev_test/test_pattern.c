@@ -389,6 +389,7 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 	int paddr[BUF_CNT] = {0};
 	struct fb_var_screeninfo fb_var;
 	struct fb_fix_screeninfo fb_fix;
+	struct mxcfb_gbl_alpha g_alpha;
 	unsigned int system_rev = 0, ipu_version;
 	ipu_lib_overlay_param_t ov;
 	int screen_size, ov_fake_fb_size = 0, ov_alpha_fake_fb_size = 0;
@@ -414,6 +415,14 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 
 	if ((fd_fb = open("/dev/fb0", O_RDWR, 0)) < 0) {
 		printf("Unable to open /dev/fb0\n");
+		ret = -1;
+		goto done;
+	}
+
+	g_alpha.alpha = 128;
+	g_alpha.enable = 1;
+	if (ioctl(fd_fb, MXCFB_SET_GBL_ALPHA, &g_alpha) < 0) {
+		printf("Set global alpha failed\n");
 		ret = -1;
 		goto done;
 	}
@@ -1610,6 +1619,21 @@ void * second_layer_thread_func(void *arg)
 	printf("2nd layer avg frame time %d us\n", show_time/i);
 
 	if (op_type & DP_LOC_SEP_ALP_OV) {
+		struct mxcfb_loc_alpha l_alpha;
+
+		/*
+		 * Disable DP local alpha function, otherwise,
+		 * the alpha channel will be enabled even if we
+		 * use DP global alpha next time and this will
+		 * cause display issue.
+		 */
+		l_alpha.enable = 0;
+		l_alpha.alpha_phy_addr0 = 0;
+		l_alpha.alpha_phy_addr1 = 0;
+		if (ioctl(fd_fb, MXCFB_SET_LOC_ALPHA, &l_alpha) < 0) {
+			printf("Set local alpha failed\n");
+		}
+
 		blank = FB_BLANK_POWERDOWN;
 		ioctl(fd_fb, FBIOBLANK, blank);
 		close(fd_fb);
