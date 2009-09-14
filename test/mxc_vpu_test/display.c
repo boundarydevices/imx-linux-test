@@ -379,7 +379,7 @@ void v4l_display_close(struct vpu_display *disp)
 int v4l_put_data(struct vpu_display *disp, int index, int field)
 {
 	struct timeval tv;
-	int err, type;
+	int err, type, threshold;
 	struct v4l2_format fmt = {0};
 
 	if (disp->ncount == 0) {
@@ -457,7 +457,10 @@ int v4l_put_data(struct vpu_display *disp, int index, int field)
 
 	disp->ncount++;
 
-	if (disp->queued_count > 1) {
+	threshold = 2;
+	if (disp->buf.field == V4L2_FIELD_ANY || disp->buf.field == V4L2_FIELD_NONE)
+		threshold = 1;
+	if (disp->queued_count > threshold) {
 		disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		disp->buf.memory = V4L2_MEMORY_MMAP;
 		err = ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf);
