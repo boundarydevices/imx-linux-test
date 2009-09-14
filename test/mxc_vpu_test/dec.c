@@ -667,6 +667,7 @@ decoder_start(struct decode *dec)
 	int count = dec->cmdl->count;
 	int totalNumofErrMbs = 0;
 	int disp_clr_index = -1, actual_display_index = -1, field = V4L2_FIELD_NONE;
+	int is_waited_int = 0;
 
 	if ((dec->cmdl->dst_scheme == PATH_V4L2) && (dec->cmdl->ipu_rot_en))
 		rot_en = 0;
@@ -812,6 +813,7 @@ decoder_start(struct decode *dec)
 			return -1;
 		}
 
+		is_waited_int = 0;
 		while (vpu_IsBusy()) {
 			err = dec_fill_bsbuffer(handle, dec->cmdl,
 				      dec->virt_bsbuf_addr,
@@ -826,8 +828,12 @@ decoder_start(struct decode *dec)
 
 			if (!err) {
 				vpu_WaitForInt(500);
+				is_waited_int = 1;
 			}
 		}
+
+		if (!is_waited_int)
+			vpu_WaitForInt(500);
 
 		gettimeofday(&tdec_end, NULL);
 		sec = tdec_end.tv_sec - tdec_begin.tv_sec;
@@ -926,7 +932,7 @@ decoder_start(struct decode *dec)
 						  outinfo.topFieldFirst, decIndex);
 				}
 			} else if ((dec->cmdl->format != STD_MPEG4) && (dec->cmdl->format != STD_RV)){
-				if (outinfo.interlacedFrame || !outinfo.progressiveFrame) {
+				if (!outinfo.interlacedFrame) {
 					if (outinfo.pictureStructure == 1)
 						field = V4L2_FIELD_TOP;
 					else if (outinfo.pictureStructure == 2)
@@ -1389,6 +1395,7 @@ decoder_parse(struct decode *dec)
 {
 	DecInitialInfo initinfo = {0};
 	DecHandle handle = dec->handle;
+	int align;
 	RetCode ret;
 
 	/*
@@ -1541,10 +1548,24 @@ decoder_parse(struct decode *dec)
 	 *
 	 * Performance is better when more buffers are used if IPU performance
 	 * is bottleneck.
+	 *
+	 * Two more buffers may be needed for interlace stream from IPU DVI view
 	 */
-	dec->fbcount = initinfo.minFrameBufferCount + 2;
+	if (initinfo.interlace)
+		dec->fbcount = initinfo.minFrameBufferCount + 2 + 2;
+	else
+		dec->fbcount = initinfo.minFrameBufferCount + 2;
+
 	dec->picwidth = ((initinfo.picWidth + 15) & ~15);
-	dec->picheight = ((initinfo.picHeight + 15) & ~15);
+
+	align = 16;
+	if ((dec->cmdl->format == STD_MPEG2 ||
+	    dec->cmdl->format == STD_VC1 ||
+	    dec->cmdl->format == STD_AVC) && initinfo.interlace == 1)
+		align = 32;
+
+	dec->picheight = ((initinfo.picHeight + align - 1) & ~(align - 1));
+
 	if ((dec->picwidth == 0) || (dec->picheight == 0))
 		return -1;
 
