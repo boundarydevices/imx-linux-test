@@ -55,6 +55,8 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -u <ipu rotation> Using IPU rotation for display - 1. IPU rotation \n "\
 	       "        default is VPU rotation(0).\n "\
 	       "        This flag is effective when 'r' flag is specified.\n "\
+	       "  -v <vdi motion> set IPU VDI motion algorithm l, m, h.\n "\
+	       "	default is m-medium. \n "\
 	       "  -w <width> display picture width \n "\
 	       "	default is source picture width. \n "\
 	       "  -h <height> display picture height \n "\
@@ -125,7 +127,7 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:";
+static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:v:";
 
 int
 parse_config_file(char *file_name)
@@ -262,6 +264,9 @@ parse_args(int argc, char *argv[], int i)
 			break;
 		case 'c':
 			input_arg[i].cmd.count = atoi(optarg);
+			break;
+		case 'v':
+			input_arg[i].cmd.vdi_motion = optarg[0];
 			break;
 		case 'w':
 			input_arg[i].cmd.width = atoi(optarg);

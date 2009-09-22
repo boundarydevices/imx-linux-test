@@ -43,6 +43,9 @@
 typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
+typedef unsigned int  uint32_t;
+typedef unsigned short int  uint16_t;
+typedef unsigned char  uint8_t;
 typedef signed int s32;
 typedef signed short s16;
 typedef signed char s8;
@@ -137,6 +140,7 @@ struct cmd_line {
 	u16 complete; /* wait for the requested buf to be filled completely */
 	int iframe;
 	int mp4Class;
+	char vdi_motion;	/* VDI motion algorithm */
 };
 
 struct decode {

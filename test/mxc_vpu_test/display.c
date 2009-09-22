@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <linux/mxcfb.h>
 #include "vpu_test.h"
+#include <linux/ipu.h>
+#include <linux/mxc_v4l2.h>
 
 #define V4L2_MXC_ROTATE_NONE                    0
 #define V4L2_MXC_ROTATE_VERT_FLIP               1
@@ -35,11 +37,6 @@
 #define V4L2_MXC_ROTATE_90_RIGHT_VFLIP          5
 #define V4L2_MXC_ROTATE_90_RIGHT_HFLIP          6
 #define V4L2_MXC_ROTATE_90_LEFT                 7
-
-struct v4l2_mxc_offset {
-	unsigned long u_offset;
-	unsigned long v_offset;
-};
 
 void v4l_free_bufs(int n, struct vpu_display *disp)
 {
@@ -106,6 +103,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	struct vpu_display *disp;
 	int fd_fb;
 	char *tv_mode;
+	char motion_mode = dec->cmdl->vdi_motion;
 	struct mxcfb_gbl_alpha alpha;
 
 	int ratio = 1;
@@ -217,6 +215,27 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	if (err < 0) {
 		err_msg("VIDIOC_S_CROP failed\n");
 		goto err;
+	}
+
+	/* Set VDI motion algorithm. */
+	if (motion_mode) {
+		struct v4l2_control ctrl;
+		ctrl.id = V4L2_CID_MXC_MOTION;
+		if (motion_mode == 'h') {
+			ctrl.value = HIGH_MOTION;
+		} else if (motion_mode == 'l') {
+			ctrl.value = LOW_MOTION;
+		} else if (motion_mode == 'm') {
+			ctrl.value = MED_MOTION;
+		} else {
+			ctrl.value = MED_MOTION;
+			info_msg("%c unknown motion mode, medium, the default is used\n",motion_mode);
+		}
+		err = ioctl(fd, VIDIOC_S_CTRL, &ctrl);
+		if (err < 0) {
+			err_msg("VIDIOC_S_CTRL failed\n");
+			goto err;
+		}
 	}
 
 	if (rotation.ipu_rot_en && (rotation.rot_angle != 0)) {
