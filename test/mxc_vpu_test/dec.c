@@ -932,7 +932,7 @@ decoder_start(struct decode *dec)
 						  outinfo.topFieldFirst, decIndex);
 				}
 			} else if ((dec->cmdl->format != STD_MPEG4) && (dec->cmdl->format != STD_RV)){
-				if (!outinfo.interlacedFrame) {
+				if (outinfo.interlacedFrame) {
 					if (outinfo.pictureStructure == 1)
 						field = V4L2_FIELD_TOP;
 					else if (outinfo.pictureStructure == 2)
@@ -1429,7 +1429,7 @@ decoder_parse(struct decode *dec)
 	if (initinfo.streamInfoObtained) {
 		switch (dec->cmdl->format) {
 		case STD_AVC:
-			info_msg("H.264 Profile: %d Level: %d FrameMbsOnlyFlag: %d\n",
+			info_msg("H.264 Profile: %d Level: %d Interlace: %d\n",
 				initinfo.profile, initinfo.level, initinfo.interlace);
 
 			if (initinfo.aspectRateInfo) {
