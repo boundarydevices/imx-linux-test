@@ -44,6 +44,8 @@ extern "C"{
 static int g_convert = 0;
 static int g_width = 640;
 static int g_height = 480;
+static int g_top = 0;
+static int g_left = 0;
 static unsigned long g_pixelformat = V4L2_PIX_FMT_YUYV;
 static int g_bpp = 16;
 static int g_camera_framerate = 30;
@@ -51,9 +53,11 @@ static int g_capture_mode = 0;
 
 void usage(void)
 {
-	printf("Usage: mxc_v4l2_still.out [-w width] [-h height] [-f pixformat] [-c] [-m] [-fr]\n"
+	printf("Usage: mxc_v4l2_still.out [-w width] [-h height] [-t top] [-l left] [-f pixformat] [-c] [-m] [-fr]\n"
                 "-w    Image width, 640 by default\n"
                 "-h    Image height, 480 by default\n"
+		"-t    Image top(crop from the source frame), 0 by default\n"
+		"-l    Image left(crop from the source frame), 0 by default\n"
                 "-f    Image pixel format, YUV420, YUV422P, YUYV (default), UYVY or YUV444\n"
                 "-c    Convert to YUV420P. This option is valid for interleaved pixel\n"
                 "      formats only - YUYV, UYVY, YUV444\n"
@@ -134,6 +138,17 @@ int v4l_capture_setup(void)
 		return 0;
 	}
 
+	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	crop.c.left = g_left;
+	crop.c.top = g_top;
+	crop.c.width = g_width;
+	crop.c.height = g_height;
+	if (ioctl(fd_v4l, VIDIOC_S_CROP, &crop) < 0)
+	{
+		printf("set cropping failed\n");
+		return 0;
+	}
+
 	memset(&fmt, 0, sizeof(fmt));
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         fmt.fmt.pix.pixelformat = g_pixelformat;
@@ -145,17 +160,6 @@ int v4l_capture_setup(void)
         if (ioctl(fd_v4l, VIDIOC_S_FMT, &fmt) < 0)
         {
                 printf("set format failed\n");
-                return 0;
-        }
-
-        crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        crop.c.left = 0;
-        crop.c.top = 0;
-        crop.c.width = g_width;
-        crop.c.height = g_height;
-        if (ioctl(fd_v4l, VIDIOC_S_CROP, &crop) < 0)
-        {
-                printf("set cropping failed\n");
                 return 0;
         }
 
@@ -233,6 +237,12 @@ int main(int argc, char **argv)
                 else if (strcmp(argv[i], "-h") == 0) {
                         g_height = atoi(argv[++i]);
                 }
+		else if (strcmp(argv[i], "-t") == 0) {
+			g_top = atoi(argv[++i]);
+		}
+		else if (strcmp(argv[i], "-l") == 0) {
+			g_left = atoi(argv[++i]);
+		}
                 else if (strcmp(argv[i], "-c") == 0) {
                         g_convert = 1;
                 }
