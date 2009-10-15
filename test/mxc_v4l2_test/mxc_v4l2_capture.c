@@ -60,8 +60,12 @@ struct testbuffer
 };
 
 struct testbuffer buffers[TEST_BUFFER_NUM];
-int g_width = 176;
-int g_height = 144;
+int g_in_width = 176;
+int g_in_height = 144;
+int g_out_width = 176;
+int g_out_height = 144;
+int g_top = 0;
+int g_left = 0;
 int g_input = 0;
 int g_capture_count = 100;
 int g_rotate = 0;
@@ -104,7 +108,7 @@ int start_capturing(int fd_v4l)
 				buf.m.offset = buffers[i].offset;
 				if (g_extra_pixel){
 	                buf.m.offset += g_extra_pixel *
-	                	(g_width + 2 * g_extra_pixel) + g_extra_pixel;
+	                	(g_out_width + 2 * g_extra_pixel) + g_extra_pixel;
 				}
 
                 if (ioctl (fd_v4l, VIDIOC_QBUF, &buf) < 0) {
@@ -135,6 +139,7 @@ int v4l_capture_setup(void)
         struct v4l2_format fmt;
         struct v4l2_control ctrl;
         struct v4l2_streamparm parm;
+	struct v4l2_crop crop;
         int fd_v4l = 0;
 		struct v4l2_mxc_offset off;
 
@@ -161,22 +166,40 @@ int v4l_capture_setup(void)
 		return -1;
 	}
 
+	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (ioctl(fd_v4l, VIDIOC_G_CROP, &crop) < 0)
+	{
+		printf("VIDIOC_G_CROP failed\n");
+		return -1;
+	}
+
+	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	crop.c.width = g_in_width;
+	crop.c.height = g_in_height;
+	crop.c.top = g_top;
+	crop.c.left = g_left;
+	if (ioctl(fd_v4l, VIDIOC_S_CROP, &crop) < 0)
+	{
+		printf("VIDIOC_S_CROP failed\n");
+		return -1;
+	}
+
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.pixelformat = g_cap_fmt;
-        fmt.fmt.pix.width = g_width;
-        fmt.fmt.pix.height = g_height;
+        fmt.fmt.pix.width = g_out_width;
+        fmt.fmt.pix.height = g_out_height;
         if (g_extra_pixel){
-			off.u_offset = (2 * g_extra_pixel + g_width) * (g_height + g_extra_pixel)
-				 - g_extra_pixel + (g_extra_pixel / 2) * ((g_width / 2)
+			off.u_offset = (2 * g_extra_pixel + g_out_width) * (g_out_height + g_extra_pixel)
+				 - g_extra_pixel + (g_extra_pixel / 2) * ((g_out_width / 2)
 				 + g_extra_pixel) + g_extra_pixel / 2;
-			off.v_offset = off.u_offset + (g_extra_pixel + g_width / 2) *
-				((g_height / 2) + g_extra_pixel);
-        	fmt.fmt.pix.bytesperline = g_width + g_extra_pixel * 2;
+			off.v_offset = off.u_offset + (g_extra_pixel + g_out_width / 2) *
+				((g_out_height / 2) + g_extra_pixel);
+        	fmt.fmt.pix.bytesperline = g_out_width + g_extra_pixel * 2;
 			fmt.fmt.pix.priv = (uint32_t) &off;
-        	fmt.fmt.pix.sizeimage = (g_width + g_extra_pixel * 2 )
-        		* (g_height + g_extra_pixel * 2) * 3 / 2;
+        	fmt.fmt.pix.sizeimage = (g_out_width + g_extra_pixel * 2 )
+        		* (g_out_height + g_extra_pixel * 2) * 3 / 2;
 		} else {
-	        fmt.fmt.pix.bytesperline = g_width;
+	        fmt.fmt.pix.bytesperline = g_out_width;
 			fmt.fmt.pix.priv = 0;
         	fmt.fmt.pix.sizeimage = 0;
 		}
@@ -300,12 +323,24 @@ int process_cmdline(int argc, char **argv)
         int i;
 
         for (i = 1; i < argc; i++) {
-                if (strcmp(argv[i], "-w") == 0) {
-                        g_width = atoi(argv[++i]);
+                if (strcmp(argv[i], "-iw") == 0) {
+                        g_in_width = atoi(argv[++i]);
                 }
-                else if (strcmp(argv[i], "-h") == 0) {
-                        g_height = atoi(argv[++i]);
+                else if (strcmp(argv[i], "-ih") == 0) {
+                        g_in_height = atoi(argv[++i]);
                 }
+		else if (strcmp(argv[i], "-ow") == 0) {
+			g_out_width = atoi(argv[++i]);
+		}
+		else if (strcmp(argv[i], "-oh") == 0) {
+			g_out_height = atoi(argv[++i]);
+		}
+		else if (strcmp(argv[i], "-t") == 0) {
+			g_top = atoi(argv[++i]);
+		}
+		else if (strcmp(argv[i], "-l") == 0) {
+			g_left = atoi(argv[++i]);
+		}
 		else if (strcmp(argv[i], "-i") == 0) {
 			g_input = atoi(argv[++i]);
 		}
@@ -340,8 +375,12 @@ int process_cmdline(int argc, char **argv)
                 }
                 else if (strcmp(argv[i], "-help") == 0) {
                         printf("MXC Video4Linux capture Device Test\n\n" \
-                               "Syntax: mxc_v4l2_capture.out -w <capture width>\n" \
-                               " -h <capture height>\n" \
+			       "Syntax: mxc_v4l2_capture.out -iw <capture croped width>\n" \
+			       " -ih <capture cropped height>\n" \
+			       " -ow <capture output width>\n" \
+			       " -oh <capture output height>\n" \
+			       " -t <capture top>\n" \
+			       " -l <capture left>\n" \
 			       " -i <input mode, 0-use csi->prp_enc->mem, 1-use csi->mem>\n" \
                                " -r <rotation> -c <capture counter> \n"
                                " -e <destination cropping: extra pixels> \n" \
@@ -351,9 +390,11 @@ int process_cmdline(int argc, char **argv)
                }
         }
 
-        printf("g_width = %d, g_height = %d\n", g_width, g_height);
+	printf("in_width = %d, in_height = %d\n", g_in_width, g_in_height);
+	printf("out_width = %d, out_height = %d\n", g_out_width, g_out_height);
+	printf("top = %d, left = %d\n", g_top, g_left);
 
-        if ((g_width == 0) || (g_height == 0)) {
+        if ((g_in_width == 0) || (g_in_height == 0)) {
                 return -1;
         }
         return 0;
