@@ -19,9 +19,8 @@
 #include <linux/dma-mapping.h>
 #include <linux/fs.h>
 #include <linux/version.h>
-#include <asm/dma.h>
-#include <asm/mach/dma.h>
-#include <asm/delay.h>
+#include <linux/delay.h>
+#include <mach/dma.h>
 
 #include <linux/device.h>
 
