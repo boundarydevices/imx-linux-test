@@ -48,10 +48,11 @@ struct audio_buf {
 	unsigned int max_len;
 };
 
+#define WAVE_HEAD_SIZE 44 + 14
 static struct audio_buf input_buf[BUF_NUM];
 static struct audio_buf output_buf[BUF_NUM];
 static enum asrc_pair_index pair_index;
-static char header[58];
+static char header[WAVE_HEAD_SIZE];
 
 static int *input_buffer;
 static int *output_buffer;
@@ -357,9 +358,6 @@ void bitshift(FILE * src, struct audio_info_s *info)
 	int format_size;
 	int i = 0;
 	format_size = *(int *)&header[16];
-	if (strncmp((char *)&header[20 + format_size], "fact", 4) == 0) {
-		format_size += 12;
-	}
 
 	if (info->frame_bits <= 16) {
 		nleft = (info->data_len >> 1);
@@ -408,42 +406,83 @@ void bitshift(FILE * src, struct audio_info_s *info)
 	}
 }
 
-void header_parser(FILE * src, struct audio_info_s *info)
+int header_parser(FILE * src, struct audio_info_s *info)
 {
 
 	int format_size;
+	char chunk_id[4];
+	int chunk_size;
 
+	/* check the "RIFF" chunk */
 	fseek(src, 0, SEEK_SET);
-	fread(header, 1, 58, src);
+	fread(chunk_id, 4, 1, src);
+	while (strncmp(chunk_id, "RIFF", 4) != 0){
+		fread(&chunk_size, 4, 1, src);
+		fseek(src, chunk_size, SEEK_CUR);
+		if(fread(chunk_id, 4, 1, src) == 0) {
+			printf("Wrong wave file format \n");
+			return -1;
+		}
+	}
+	fseek(src, -4, SEEK_CUR);
+	fread(&header[0], 1, 12, src);
 
-	fseek(src, 16, SEEK_SET);
+	/* check the "fmt " chunk */
+	fread(chunk_id, 4, 1, src);
+	while (strncmp(chunk_id, "fmt ", 4) != 0){
+		fread(&chunk_size, 4, 1, src);
+		fseek(src, chunk_size, SEEK_CUR);
+		if(fread(chunk_id, 4, 1, src) == 0) {
+			printf("Wrong wave file format \n");
+			return -1;
+		}
+	}
+	/* fmt chunk size */
 	fread(&format_size, 4, 1, src);
 
-	fseek(src, 22, SEEK_SET);
-	fread(&info->channel, 2, 1, src);
+	fseek(src, -8, SEEK_CUR);
+	fread(&header[12], 1, format_size + 8, src);
 
-	fseek(src, 24, SEEK_SET);
-	fread(&info->sample_rate, 4, 1, src);
+	/* AudioFormat(2) */
 
-	fseek(src, 32, SEEK_SET);
-	fread(&info->blockalign, 2, 1, src);
+	/* NumChannel(2) */
+	info->channel = *(short *)&header[12 + 8 + 2];
 
-	fseek(src, 34, SEEK_SET);
-	fread(&info->frame_bits, 2, 1, src);
+	/* SampleRate(4) */
+	info->sample_rate = *(int *)&header[12 + 8 + 2 + 2];
 
-	if (strncmp((char *)&header[20 + format_size], "fact", 4) == 0)
-		format_size += 12;
+	/* ByteRate(4) */
 
-	if (strncmp((char *)&header[20 + format_size], "data", 4) != 0)
-		printf("header parser wrong\n");
+	/* BlockAlign(2) */
+	info->blockalign = *(short *)&header[12 + 8 + 2 + 2 + 4 + 4];
 
-	fseek(src, 24 + format_size, SEEK_SET);
+	/* BitsPerSample(2) */
+	info->frame_bits = *(short *)&header[12 + 8 + 2 + 2 + 4 + 4 + 2];
+
+
+	/* check the "data" chunk */
+	fread(chunk_id, 4, 1, src);
+	while (strncmp(chunk_id, "data", 4) != 0) {
+		fread(&chunk_size, 4, 1, src);
+		/* seek to next chunk if it is not "data" chunk */
+		fseek(src, chunk_size, SEEK_CUR);
+		if(fread(chunk_id, 4, 1, src) == 0) {
+		    printf("No data chunk found \nWrong wave file format \n");
+		    return -1;
+		}
+	}
+	/* wave data length */
 	fread(&info->data_len, 4, 1, src);
+
+	fseek(src, -8, SEEK_CUR);
+	fread(&header[format_size + 20], 1, 8, src);
 
 	info->output_data_len =
 	    asrc_get_output_buffer_size(info->data_len,
 					info->sample_rate,
 					info->output_sample_rate);
+
+	/* write the data chunk size to the header */
 	*(int *)&header[24 + format_size] = info->output_data_len;
 
 	*(int *)&header[4] = info->output_data_len + 20 + format_size;
@@ -453,9 +492,7 @@ void header_parser(FILE * src, struct audio_info_s *info)
 	*(int *)&header[28] =
 	    info->output_sample_rate * info->channel * (info->frame_bits / 8);
 
-	fseek(src, 28 + format_size, SEEK_SET);
-
-	return;
+	return 1;
 
 }
 
@@ -468,13 +505,10 @@ void convert_data(FILE * dst, struct audio_info_s *info)
 
 	format_size = *(int *)&header[16];
 
-	if (strncmp((char *)&header[20 + format_size], "fact", 4) == 0) {
-		format_size += 12;
-	}
 	*(int *)&header[24 + format_size] = output_done_bytes;
 	*(int *)&header[4] = output_done_bytes + 20 + format_size;
 	size = *(int *)&header[24 + format_size];
-	while (i < 58) {
+	while (i < (format_size + 28)) {
 		fwrite(&header[i], 1, 1, dst);
 		i++;
 	}
@@ -630,7 +664,9 @@ int main(int ac, char *av[])
 		goto err_src_not_found;
 	}
 
-	header_parser(fd_src, &audio_info);
+	if ((header_parser(fd_src, &audio_info)) <= 0) {
+		goto end_err;
+	}
 
 	bitshift(fd_src, &audio_info);
 
