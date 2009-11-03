@@ -12,7 +12,7 @@ TARGET_ARCH=-DCONFIG_ARCH_MX51
 endif
 
 # Add compilation checks
-CFLAGS += -g -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wdeclaration-after-statement
+CFLAGS += -g -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wdeclaration-after-statement -fPIC
 
 EXAMPLE_OBJECTS:= apitest.o run_tests.o sym.o hash.o gen_encrypt.o \
                   callback.o auth_decrypt.o rand.o hmac1.o hmac2.o cap.o \
