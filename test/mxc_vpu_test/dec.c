@@ -659,7 +659,7 @@ decoder_start(struct decode *dec)
 	int err, eos = 0, fill_end_bs = 0, decodefinish = 0;
 	struct timeval tdec_begin,tdec_end, total_start, total_end;
 	RetCode ret;
-	int sec, usec;
+	int sec, usec, loop_id;
 	u32 yuv_addr, img_size;
 	double tdec_time = 0, frame_id = 0, total_time=0;
 	int decIndex = 0;
@@ -814,6 +814,7 @@ decoder_start(struct decode *dec)
 		}
 
 		is_waited_int = 0;
+		loop_id = 0;
 		while (vpu_IsBusy()) {
 			err = dec_fill_bsbuffer(handle, dec->cmdl,
 				      dec->virt_bsbuf_addr,
@@ -826,9 +827,22 @@ decoder_start(struct decode *dec)
 				return -1;
 			}
 
+			/*
+			 * Suppose vpu is hang if one frame cannot be decoded in 5s,
+			 * then do vpu software reset.
+			 * Please DON'T add the code if the application is in network
+			 * case since vpu interrupt also cannot be received if no
+			 * enough data.
+			 */
+			if (loop_id == 10) {
+				err = vpu_SWReset(handle, 0);
+				return -1;
+				}
+
 			if (!err) {
 				vpu_WaitForInt(500);
 				is_waited_int = 1;
+				loop_id ++;
 			}
 		}
 
