@@ -7,7 +7,8 @@ OBJS = 	$(OBJDIR)/autorun-v4l2.sh \
 	$(OBJDIR)/mxc_v4l2_still.out \
 	$(OBJDIR)/mxc_v4l2_tvin.out
 ifeq ($(PLATFORM), IMX25_3STACK)
-OBJS += $(OBJDIR)/csi_v4l2_overlay.out
+OBJS += $(OBJDIR)/csi_v4l2_overlay.out \
+	$(OBJDIR)/csi_v4l2_capture.out
 else
 OBJS += $(OBJDIR)/mxc_v4l2_overlay.out \
 	$(OBJDIR)/mxc_v4l2_capture.out
