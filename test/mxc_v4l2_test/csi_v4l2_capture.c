@@ -120,7 +120,6 @@ int v4l_capture_setup(void)
 {
         char v4l_device[100] = "/dev/video0";
         struct v4l2_format fmt;
-        struct v4l2_control ctrl;
         struct v4l2_streamparm parm;
         int fd_v4l = 0;
 
