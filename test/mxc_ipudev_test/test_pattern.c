@@ -234,6 +234,28 @@ int foreground_fb(void)
 	return 0;
 }
 
+int dc_fb(void)
+{
+	int fd_fb;
+	struct fb_fix_screeninfo fb_fix;
+
+	fd_fb = open("/dev/fb0", O_RDWR, 0);
+	ioctl(fd_fb, FBIOGET_FSCREENINFO, &fb_fix);
+	if (strcmp(fb_fix.id, "DISP3 BG - DI1") == 0) {
+		close(fd_fb);
+		return 0;
+	}
+
+	fd_fb = open("/dev/fb1", O_RDWR, 0);
+	ioctl(fd_fb, FBIOGET_FSCREENINFO, &fb_fix);
+	if (strcmp(fb_fix.id, "DISP3 BG - DI1") == 0) {
+		close(fd_fb);
+		return 1;
+	}
+
+	return -1;
+}
+
 int fd_fb_alloc = 0;
 
 int dma_memory_alloc(int size, int cnt, dma_addr_t paddr[], void * vaddr[])
@@ -1066,6 +1088,149 @@ err:
 done:
 	if (fd_fb)
 		close(fd_fb);
+	return ret;
+}
+
+int h_splitted_tv_video_playback(ipu_test_handle_t * test_handle)
+{
+	int ret = 0, fd_fb = 0, dc_fb_num = 0, screen_size = 0, in_size = 0, i = 0, done_cnt = 0, half_frame_done_cnt = 0, total_fcount = 0;
+	void * in_buf[BUF_CNT] = {0};
+	int in_paddr[BUF_CNT] = {0};
+	char fbdev[] = "/dev/fb0";
+	unsigned int system_rev = 0;
+	struct fb_var_screeninfo fb_var;
+	struct fb_fix_screeninfo fb_fix;
+
+	get_system_rev(&system_rev);
+	if (((system_rev & 0xff000) != 0x37000) &&
+		(system_rev & 0xff000) != 0x51000) {
+		printf("We support to test splitted tv video playback on MX51/MX37 only!\n");
+		ret = -1;
+		goto done0;
+	}
+
+	/* This test assumes the TV uses MEM_DC_SYNC channel */
+	dc_fb_num = dc_fb();
+	if (dc_fb_num < 0) {
+		printf("Can't find the dc fb!\n");
+		ret = -1;
+		goto done0;
+	}
+
+	fbdev[7] = '0' + dc_fb_num;
+	if ((fd_fb = open(fbdev, O_RDWR, 0)) < 0) {
+		printf("Unable to open the dc fb %s\n", fbdev);
+		ret = -1;
+		goto done0;
+	}
+
+	if ( ioctl(fd_fb, FBIOGET_VSCREENINFO, &fb_var) < 0) {
+		printf("Get FB var info failed!\n");
+		ret = -1;
+		goto done1;
+	}
+
+	fb_var.yres_virtual = 2*fb_var.yres;
+	fb_var.nonstd = v4l2_fourcc('U', 'Y', 'V', 'Y');
+	if ( ioctl(fd_fb, FBIOPUT_VSCREENINFO, &fb_var) < 0) {
+		printf("Get FB var info failed!\n");
+		ret = -1;
+		goto done1;
+	}
+	if ( ioctl(fd_fb, FBIOGET_FSCREENINFO, &fb_fix) < 0) {
+		printf("Get FB fix info failed!\n");
+		ret = -1;
+		goto done1;
+	}
+
+	screen_size = fb_var.yres * fb_fix.line_length;
+
+	total_fcount = 512;
+	test_handle->mode = OP_NORMAL_MODE | TASK_PP_MODE;
+	test_handle->input.width = 640;
+	test_handle->input.height = 480;
+	test_handle->input.fmt = v4l2_fourcc('I', '4', '2', '0');
+	test_handle->output0.width = fb_var.xres;
+	test_handle->output0.height = fb_var.yres;
+	test_handle->output0.fmt = v4l2_fourcc('U', 'Y', 'V', 'Y');
+	test_handle->output0.rot = 0;
+	test_handle->output0.show_to_fb = 0;
+
+	in_size = test_handle->input.width * test_handle->input.height * 3/2;
+	ret = dma_memory_alloc(in_size, BUF_CNT, in_paddr, in_buf);
+	if ( ret < 0) {
+		printf("dma_memory_alloc input buffer failed\n");
+		goto done1;
+	}
+
+	gen_fill_pattern(in_buf[0], test_handle->input.width, test_handle->input.height);
+
+	while (done_cnt < total_fcount) {
+		test_handle->input.user_def_paddr[0] = in_paddr[i];
+		if (half_frame_done_cnt % 2 == 0) {
+			test_handle->input.input_crop_win.pos.x = 0;
+			test_handle->input.input_crop_win.pos.y = 0;
+			test_handle->input.input_crop_win.win_w = test_handle->input.width/2;
+			test_handle->input.input_crop_win.win_h = test_handle->input.height;
+			test_handle->output0.output_win.win_w = fb_var.xres/2;
+			test_handle->output0.output_win.win_h = fb_var.yres;
+			test_handle->output0.output_win.pos.x = 0;
+			test_handle->output0.output_win.pos.y = 0;
+		} else {
+			test_handle->input.input_crop_win.pos.x = test_handle->input.width/2;
+			test_handle->input.input_crop_win.pos.y = 0;
+			test_handle->input.input_crop_win.win_w = test_handle->input.width/2;
+			test_handle->input.input_crop_win.win_h = test_handle->input.height;
+			test_handle->output0.output_win.win_w = fb_var.xres/2;
+			test_handle->output0.output_win.win_h = fb_var.yres;
+			test_handle->output0.output_win.pos.x = fb_var.xres/2;
+			test_handle->output0.output_win.pos.y = 0;
+		}
+		if (done_cnt%2)
+			test_handle->output0.user_def_paddr[0] = fb_fix.smem_start + screen_size;
+		else
+			test_handle->output0.user_def_paddr[0] = fb_fix.smem_start;
+
+		ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL,
+				&(test_handle->output0), NULL,
+				test_handle->mode, test_handle->ipu_handle);
+		if (ret < 0) {
+			printf("mxc_ipu_lib_task_init failed!\n");
+			goto done2;
+		}
+
+		if (mxc_ipu_lib_task_buf_update(test_handle->ipu_handle, 0, 0, 0, 0, 0) < 0) {
+			printf("mxc_ipu_lib_task_buf_update failed!\n");
+			ret = -1;
+			mxc_ipu_lib_task_uninit(test_handle->ipu_handle);
+			goto done2;
+		}
+
+		half_frame_done_cnt++;
+
+		/* One output frame is filled */
+		if (half_frame_done_cnt % 2 == 0) {
+			i++;
+			done_cnt++;
+			if (done_cnt % 2)
+				fb_var.yoffset = fb_var.yres;
+			else
+				fb_var.yoffset = 0;
+			ioctl(fd_fb, FBIOPAN_DISPLAY, &fb_var);
+		}
+		if (i == BUF_CNT)
+			i = 0;
+
+		if (half_frame_done_cnt % 2 == 0)
+			gen_fill_pattern(in_buf[i], test_handle->input.width, test_handle->input.height);
+
+		mxc_ipu_lib_task_uninit(test_handle->ipu_handle);
+	}
+done2:
+	dma_memory_free(in_size, BUF_CNT, in_paddr, in_buf);
+done1:
+	close(fd_fb);
+done0:
 	return ret;
 }
 
@@ -2157,6 +2322,10 @@ int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 	if (pattern == 21){
 		printf("[No mandatory test]Screen layer IPC(local alpha + tvout): ProcessA(first_layer) ProcessB(second_layer):\n");
 		return screenlayer_test_ipc(2, 0, IC_LOC_SEP_ALP_OV | COPY_TV);
+	}
+	if (pattern == 22){
+		printf("Horizontally slipped video test on TV(support upsizing), assuming the TV uses MEM_DC_SYNC channel:\n");
+		return h_splitted_tv_video_playback(test_handle);
 	}
 
 	printf("No such test pattern %d\n", pattern);
