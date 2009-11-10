@@ -1471,15 +1471,6 @@ void * second_layer_thread_func(void *arg)
 
 		gen_fill_alpha_in_separate_buffer(alpha_buf1, alpha_buf_size, 0x80);
 
-		if (ioctl(fd_fb, MXCFB_SET_LOC_ALP_BUF, &loc_alpha_phy_addr0) < 0) {
-			printf("Set local alpha buf failed\n");
-			close(fd_fb);
-		}
-		if (ioctl(fd_fb, MXCFB_SET_LOC_ALP_BUF, &loc_alpha_phy_addr1) < 0) {
-			printf("Set local alpha buf failed\n");
-			close(fd_fb);
-		}
-
 		memcpy(second_layer.fbdev, OVERLAYFBDEV, strlen(OVERLAYFBDEV)+1);
 		second_layer.pPrimary = NULL;
 		second_layer.flag = F_FBDIRECT_PRIMARYONLY;
@@ -1687,54 +1678,69 @@ void * second_layer_thread_func(void *arg)
 		}
 		/* Fill local alpha buffer */
 		else if (op_type & DP_LOC_SEP_ALP_OV) {
-			if (i == FRM_CNT/4) {
+			if (i > FRM_CNT/4 && i <= 2*FRM_CNT/4) {
 				/*
 				 * The middle quarter window shows
 				 * video plane only.
 				 */
-				fill_alpha_buffer(alpha_buf0,
-						  SL_width/4,
-						  SL_height/4,
-						  3*SL_width/4,
-						  3*SL_height/4,
-						  SL_width,
-						  0x00);
-				if (ioctl(fd_fb, MXCFB_SET_LOC_ALP_BUF, &loc_alpha_phy_addr0) < 0) {
-					printf("Set local alpha buf failed\n");
-					close(fd_fb);
-				}
-			} else if (i == 2*FRM_CNT/4) {
+				if (i%2)
+					fill_alpha_buffer(alpha_buf0,
+							  SL_width/4,
+							  SL_height/4,
+							  3*SL_width/4,
+							  3*SL_height/4,
+							  SL_width,
+							  0x00);
+				else
+					fill_alpha_buffer(alpha_buf1,
+							  SL_width/4,
+							  SL_height/4,
+							  3*SL_width/4,
+							  3*SL_height/4,
+							  SL_width,
+							  0x00);
+			} else if (i > 2*FRM_CNT/4 && i <= 3*FRM_CNT/4) {
 				/*
 				 * The middle quarter window shows
 				 * graphics plane only.
 				 */
-				fill_alpha_buffer(alpha_buf1,
-						  SL_width/4,
-						  SL_height/4,
-						  3*SL_width/4,
-						  3*SL_height/4,
-						  SL_width,
-						  0xff);
-				if (ioctl(fd_fb, MXCFB_SET_LOC_ALP_BUF, &loc_alpha_phy_addr1) < 0) {
-					printf("Set local alpha buf failed\n");
-					close(fd_fb);
-				}
-			} else if (i == 3*FRM_CNT/4) {
+				if (i%2)
+					fill_alpha_buffer(alpha_buf0,
+							  SL_width/4,
+							  SL_height/4,
+							  3*SL_width/4,
+							  3*SL_height/4,
+							  SL_width,
+							  0xff);
+				else
+					fill_alpha_buffer(alpha_buf1,
+							  SL_width/4,
+							  SL_height/4,
+							  3*SL_width/4,
+							  3*SL_height/4,
+							  SL_width,
+							  0xff);
+			} else if (i > 3*FRM_CNT/4 && i < FRM_CNT) {
 				/*
 				 * The middle quarter window shows
 				 * graphics and video planes.
 				 */
-				fill_alpha_buffer(alpha_buf0,
-						  SL_width/4,
-						  SL_height/4,
-						  3*SL_width/4,
-						  3*SL_height/4,
-						  SL_width,
-						  0x80);
-				if (ioctl(fd_fb, MXCFB_SET_LOC_ALP_BUF, &loc_alpha_phy_addr0) < 0) {
-					printf("Set local alpha buf failed\n");
-					close(fd_fb);
-				}
+				if (i%2)
+					fill_alpha_buffer(alpha_buf0,
+							  SL_width/4,
+							  SL_height/4,
+							  3*SL_width/4,
+							  3*SL_height/4,
+							  SL_width,
+							  0x80);
+				else
+					fill_alpha_buffer(alpha_buf1,
+							  SL_width/4,
+							  SL_height/4,
+							  3*SL_width/4,
+							  3*SL_height/4,
+							  SL_width,
+							  0x80);
 			}
 		}
 
