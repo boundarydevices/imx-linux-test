@@ -165,23 +165,37 @@ int v4l_capture_setup(void)
 
 int v4l_capture_test(int fd_v4l)
 {
+	struct fb_var_screeninfo var;
         struct v4l2_buffer buf;
         struct v4l2_format fmt;
 	char fb_device[100] = "/dev/fb0";
 	int fd_fb = 0;
-	int frame_num = 0, i;
-	unsigned short * fb0;
+	int frame_num = 0, i, fb0_size;
+	unsigned char *fb0;
 	struct timeval tv1, tv2;
 
 	if ((fd_fb = open(fb_device, O_RDWR )) < 0) {
 		printf("Unable to open frame buffer\n");
+		goto FAIL;
+	}
+
+	if (ioctl(fd_fb, FBIOGET_VSCREENINFO, &var) < 0) {
+		printf("FBIOPUT_VSCREENINFO failed\n");
+		goto FAIL;
+	}
+
+	var.xres_virtual = var.xres;
+	var.yres_virtual = 2 * var.yres;
+	if (ioctl(fd_fb, FBIOPUT_VSCREENINFO, &var) < 0) {
+		printf("FBIOPUT_VSCREENINFO failed\n");
+		goto FAIL;
 	}
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if (ioctl(fd_v4l, VIDIOC_G_FMT, &fmt) < 0)
         {
                 printf("get format failed\n");
-                return -1;
+		goto FAIL;
         } else {
 		printf("\t Width = %d", fmt.fmt.pix.width);
 		printf("\t Height = %d", fmt.fmt.pix.height);
@@ -191,16 +205,17 @@ int v4l_capture_test(int fd_v4l)
         if (start_capturing(fd_v4l) < 0)
         {
                 printf("start_capturing failed\n");
-                return -1;
+		goto FAIL;
         }
 
 	 /* Map the device to memory*/
-	fb0 = (unsigned short *)mmap(0, buffers[1].length,
+	fb0_size = var.xres * var.yres_virtual * var.bits_per_pixel / 8;
+	fb0 = (unsigned char *)mmap(0, fb0_size,
 					PROT_READ | PROT_WRITE, MAP_SHARED, fd_fb, 0);
 	if ((int)fb0 == -1)
 	{
 		printf("Error: failed to map framebuffer device 0 to memory.\n");
-		close(fd_fb);
+		goto FAIL;
 	}
 
 	gettimeofday(&tv1, NULL);
@@ -210,15 +225,35 @@ int v4l_capture_test(int fd_v4l)
                 buf.memory = V4L2_MEMORY_MMAP;
                 if (ioctl (fd_v4l, VIDIOC_DQBUF, &buf) < 0) {
                         printf("VIDIOC_DQBUF failed.\n");
+			break;
                 }
 
         	for (i = 0; i < TEST_BUFFER_NUM; i++) {
-			if (buf.m.userptr == buffers[i].offset)
-				memcpy(fb0, buffers[i].start, buffers[i].length);
+			if (buf.m.userptr == buffers[i].offset) {
+				if (var.yoffset == 0) {
+					var.yoffset += var.yres;
+					memcpy((unsigned char *)(fb0 + buffers[i].length),
+						buffers[i].start, buffers[i].length);
+					if (ioctl(fd_fb, FBIOPAN_DISPLAY, &var) < 0) {
+						printf("FBIOPAN_DISPLAY failed\n");
+						break;
+					}
+				} else {
+					var.yoffset = 0;
+					memcpy(fb0, buffers[i].start, buffers[i].length);
+					if (ioctl(fd_fb, FBIOPAN_DISPLAY, &var) < 0) {
+						printf("FBIOPAN_DISPLAY failed\n");
+						break;
+					}
+				}
+
+				break;
+			}
 		}
 
 		if (ioctl (fd_v4l, VIDIOC_QBUF, &buf) < 0) {
 			printf("VIDIOC_QBUF failed\n");
+			break;
 		}
 
 		frame_num += 1;
@@ -228,13 +263,17 @@ int v4l_capture_test(int fd_v4l)
         if (stop_capturing(fd_v4l) < 0)
         {
                 printf("stop_capturing failed\n");
-                return -1;
         }
 
+	munmap((void *)fd_fb, fb0_size);
+	close(fd_fb);
         close(fd_v4l);
         return 0;
+FAIL:
+	close(fd_fb);
+        close(fd_v4l);
+        return -1;
 }
-
 
 int process_cmdline(int argc, char **argv)
 {
@@ -268,3 +307,4 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+
