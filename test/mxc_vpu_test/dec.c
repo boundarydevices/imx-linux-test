@@ -945,7 +945,9 @@ decoder_start(struct decode *dec)
 					dprintf(3, "Top Field First flag: %d, dec_idx %d\n",
 						  outinfo.topFieldFirst, decIndex);
 				}
-			} else if ((dec->cmdl->format != STD_MPEG4) && (dec->cmdl->format != STD_RV)){
+			} else if ((dec->cmdl->format != STD_MPEG4) &&
+				   (dec->cmdl->format != STD_H263) &&
+				   (dec->cmdl->format != STD_RV)){
 				if (outinfo.interlacedFrame) {
 					if (outinfo.pictureStructure == 1)
 						field = V4L2_FIELD_TOP;
