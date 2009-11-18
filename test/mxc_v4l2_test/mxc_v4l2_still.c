@@ -35,7 +35,6 @@ extern "C"{
 #include <stdio.h>
 #include <stdlib.h>
 #include <asm/types.h>
-#include <linux/compiler.h>
 #include <linux/videodev.h>
 #include <sys/mman.h>
 #include <string.h>
