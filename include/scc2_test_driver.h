@@ -79,19 +79,6 @@
 /** @{ */
 /** ioctl cmd to return version and configuration information on driver and
  *  SCC2 */
-#ifdef _IOW
-#undef _IOW
-#endif
-#ifdef _IOWR
-#undef _IOWR
-#endif
-#ifdef _IO
-#undef _IO
-#endif
-
-#define _IOW(x, y, z) y
-#define _IOWR(x, y, z) y
-#define _IO(x, y) y
 
 #define SCC2_TEST_GET_CONFIGURATION _IOW (SCC2_TEST_DRIVER_IOCTL_IDENTIFIER, 0, \
          scc_configuration_access)
