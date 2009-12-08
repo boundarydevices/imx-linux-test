@@ -72,7 +72,6 @@ mxc_v4l_tvin_test(void)
         int overlay = 1;
 	v4l2_std_id id;
 	struct v4l2_streamparm parm;
-	struct v4l2_crop crop;
 
         parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         parm.parm.capture.timeperframe.numerator = 1;
@@ -104,16 +103,6 @@ mxc_v4l_tvin_test(void)
 		    g_cap_mode = (g_cap_mode + 1) % 2;
 		    parm.parm.capture.capturemode = g_cap_mode;
 		    ioctl(fd_v4l, VIDIOC_S_PARM, &parm);
-		    crop.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
-		    crop.c.left = 0;
-		    crop.c.top = 0;
-		    crop.c.width = PAL_WIDTH;
-		    crop.c.height = PAL_HEIGHT;
-		    if (ioctl(fd_v4l, VIDIOC_S_CROP, &crop) < 0)
-        	    {
-			printf("set cropping failed\n");
-			return TFAIL;
-		    }
 		    g_current_std = id;
                     sleep(1);
 		    continue;
