@@ -131,6 +131,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	tv_mode = getenv("VPU_TV_MODE");
 
 	if (tv_mode) {
+		err = system("/bin/echo 1 > /sys/class/graphics/fb1/blank");
 		if (!strcmp(tv_mode, "NTSC")) {
 			err = system("/bin/echo U:720x480i-60 > /sys/class/graphics/fb1/mode");
 			out = 5;
