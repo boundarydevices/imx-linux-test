@@ -261,6 +261,13 @@ int v4l_capture_test(int fd_v4l)
 		gettimeofday(&tv2, NULL);
 	} while(tv2.tv_sec - tv1.tv_sec < g_timeout);
 
+	/* Make sure pan display offset is zero before capture is stopped */
+	if (var.yoffset) {
+		var.yoffset = 0;
+		if (ioctl(fd_fb, FBIOPAN_DISPLAY, &var) < 0)
+			printf("FBIOPAN_DISPLAY failed\n");
+	}
+
         if (stop_capturing(fd_v4l) < 0)
         {
                 printf("stop_capturing failed\n");
