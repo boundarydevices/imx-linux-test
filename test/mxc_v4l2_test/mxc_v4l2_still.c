@@ -40,12 +40,31 @@ extern "C"{
 #include <string.h>
 #include <malloc.h>
 
+#define ipu_fourcc(a,b,c,d)\
+        (((__u32)(a)<<0)|((__u32)(b)<<8)|((__u32)(c)<<16)|((__u32)(d)<<24))
+
+#define IPU_PIX_FMT_YUYV    ipu_fourcc('Y','U','Y','V') /*!< 16 YUV 4:2:2 */
+#define IPU_PIX_FMT_UYVY    ipu_fourcc('U','Y','V','Y') /*!< 16 YUV 4:2:2 */
+#define IPU_PIX_FMT_NV12    ipu_fourcc('N','V','1','2') /* 12 Y/CbCr 4:2:0 */
+#define IPU_PIX_FMT_YUV420P ipu_fourcc('I','4','2','0') /*!< 12 YUV 4:2:0 */
+#define IPU_PIX_FMT_YUV420P2 ipu_fourcc('Y','U','1','2') /*!< 12 YUV 4:2:0 */
+#define IPU_PIX_FMT_YUV422P ipu_fourcc('4','2','2','P') /*!< 16 YUV 4:2:2 */
+#define IPU_PIX_FMT_YUV444  ipu_fourcc('Y','4','4','4') /*!< 24 YUV 4:4:4 */
+#define IPU_PIX_FMT_RGB565  ipu_fourcc('R','G','B','P') /*!< 16 RGB-5-6-5 */
+#define IPU_PIX_FMT_BGR24   ipu_fourcc('B','G','R','3') /*!< 24 BGR-8-8-8 */
+#define IPU_PIX_FMT_RGB24   ipu_fourcc('R','G','B','3') /*!< 24 RGB-8-8-8 */
+#define IPU_PIX_FMT_BGR32   ipu_fourcc('B','G','R','4') /*!< 32 BGR-8-8-8-8 */
+#define IPU_PIX_FMT_BGRA32  ipu_fourcc('B','G','R','A') /*!< 32 BGR-8-8-8-8 */
+#define IPU_PIX_FMT_RGB32   ipu_fourcc('R','G','B','4') /*!< 32 RGB-8-8-8-8 */
+#define IPU_PIX_FMT_RGBA32  ipu_fourcc('R','G','B','A') /*!< 32 RGB-8-8-8-8 */
+#define IPU_PIX_FMT_ABGR32  ipu_fourcc('A','B','G','R') /*!< 32 ABGR-8-8-8-8 */
+
 static int g_convert = 0;
 static int g_width = 640;
 static int g_height = 480;
 static int g_top = 0;
 static int g_left = 0;
-static unsigned long g_pixelformat = V4L2_PIX_FMT_YUYV;
+static unsigned long g_pixelformat = IPU_PIX_FMT_YUYV;
 static int g_bpp = 16;
 static int g_camera_framerate = 30;
 static int g_capture_mode = 0;
@@ -75,13 +94,13 @@ void fmt_convert(char *dest, char *src, struct v4l2_format fmt)
         int row, col, pos = 0;
         int bpp, yoff, uoff, voff;
 
-        if (fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV) {
+        if (fmt.fmt.pix.pixelformat == IPU_PIX_FMT_YUYV) {
                 bpp = 2;
                 yoff = 0;
                 uoff = 1;
                 voff = 3;
         }
-        else if (fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_UYVY) {
+        else if (fmt.fmt.pix.pixelformat == IPU_PIX_FMT_UYVY) {
                 bpp = 2;
                 yoff = 1;
                 uoff = 0;
@@ -110,6 +129,37 @@ void fmt_convert(char *dest, char *src, struct v4l2_format fmt)
                 for (col = 0; col < fmt.fmt.pix.width; col += 2)
                         dest[pos++] = src[row * fmt.fmt.pix.bytesperline + col * bpp + voff];
         }
+}
+
+int bytes_per_pixel(int fmt)
+{
+	switch (fmt) {
+	case IPU_PIX_FMT_YUV420P:
+	case IPU_PIX_FMT_YUV422P:
+	case IPU_PIX_FMT_NV12:
+		return 1;
+		break;
+	case IPU_PIX_FMT_RGB565:
+	case IPU_PIX_FMT_YUYV:
+	case IPU_PIX_FMT_UYVY:
+		return 2;
+		break;
+	case IPU_PIX_FMT_BGR24:
+	case IPU_PIX_FMT_RGB24:
+		return 3;
+		break;
+	case IPU_PIX_FMT_BGR32:
+	case IPU_PIX_FMT_BGRA32:
+	case IPU_PIX_FMT_RGB32:
+	case IPU_PIX_FMT_RGBA32:
+	case IPU_PIX_FMT_ABGR32:
+		return 4;
+		break;
+	default:
+		return 1;
+		break;
+	}
+	return 0;
 }
 
 int v4l_capture_setup(void)
@@ -154,7 +204,7 @@ int v4l_capture_setup(void)
         fmt.fmt.pix.width = g_width;
         fmt.fmt.pix.height = g_height;
         fmt.fmt.pix.sizeimage = fmt.fmt.pix.width * fmt.fmt.pix.height * g_bpp / 8;
-        fmt.fmt.pix.bytesperline = g_width * g_bpp / 8;
+        fmt.fmt.pix.bytesperline = g_width * bytes_per_pixel(g_pixelformat);
 
         if (ioctl(fd_v4l, VIDIOC_S_FMT, &fmt) < 0)
         {
@@ -168,7 +218,6 @@ int v4l_capture_setup(void)
 void v4l_capture_test(int fd_v4l)
 {
         struct v4l2_format fmt;
-        struct v4l2_streamparm parm;
         int fd_still = 0;
         char *buf1, *buf2;
         char still_file[100] = "./still.yuv";
@@ -207,8 +256,8 @@ void v4l_capture_test(int fd_v4l)
                 goto exit0;
         }
 
-        if ((g_convert == 1) && (g_pixelformat != V4L2_PIX_FMT_YUV422P)
-        	&& (g_pixelformat != V4L2_PIX_FMT_YUV420)) {
+        if ((g_convert == 1) && (g_pixelformat != IPU_PIX_FMT_YUV422P)
+		&& (g_pixelformat != IPU_PIX_FMT_YUV420P2)) {
                 fmt_convert(buf2, buf1, fmt);
                 write(fd_still, buf2, fmt.fmt.pix.width * fmt.fmt.pix.height * 3 / 2);
         }
@@ -253,28 +302,32 @@ int main(int argc, char **argv)
 		}
                 else if (strcmp(argv[i], "-f") == 0) {
                         i++;
-                        if (strcmp(argv[i], "YUV420") == 0) {
-                                g_pixelformat = V4L2_PIX_FMT_YUV420;
+			if (strcmp(argv[i], "NV12") == 0) {
+				g_pixelformat = IPU_PIX_FMT_NV12;
+				g_bpp = 12;
+			}
+			else if (strcmp(argv[i], "YUV420") == 0) {
+                                g_pixelformat = IPU_PIX_FMT_YUV420P2;
                                 g_bpp = 12;
                         }
                         else if (strcmp(argv[i], "YUV422P") == 0) {
-                                g_pixelformat = V4L2_PIX_FMT_YUV422P;
+                                g_pixelformat = IPU_PIX_FMT_YUV422P;
                                 g_bpp = 16;
                         }
                         else if (strcmp(argv[i], "YUYV") == 0) {
-                                g_pixelformat = V4L2_PIX_FMT_YUYV;
+                                g_pixelformat = IPU_PIX_FMT_YUYV;
                                 g_bpp = 16;
                         }
                         else if (strcmp(argv[i], "UYVY") == 0) {
-                                g_pixelformat = V4L2_PIX_FMT_UYVY;
+                                g_pixelformat = IPU_PIX_FMT_UYVY;
                                 g_bpp = 16;
                         }
                         else if (strcmp(argv[i], "YUV444") == 0) {
-                                g_pixelformat = v4l2_fourcc('Y','4','4','4');
+                                g_pixelformat = IPU_PIX_FMT_YUV444;
                                 g_bpp = 32;
                         }
                         else if (strcmp(argv[i], "RGB565") == 0) {
-                                g_pixelformat = V4L2_PIX_FMT_RGB565;
+                                g_pixelformat = IPU_PIX_FMT_RGB565;
                                 g_bpp = 16;
                         }
                         else {
