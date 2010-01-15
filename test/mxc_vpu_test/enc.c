@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -571,33 +571,14 @@ encoder_configure(struct encode *enc)
 	EncInitialInfo initinfo = {0};
 	RetCode ret;
 	MirrorDirection mirror;
-	iram_t iram;
-	int ram_size;
 
 	if (cpu_is_mx27()) {
 		search_pa.searchRamAddr = 0xFFFF4C00;
-	} else if (cpu_is_mx51()) {
-		memset(&iram, 0, sizeof(iram_t));
-		if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270)
-			ram_size = ((enc->picheight + 15) & ~15) * 36 + 2048;
-		else
-			ram_size = ((enc->picwidth + 15) & ~15) * 36 + 2048;
-		IOGetIramBase(&iram);
-		if ((iram.end - iram.start) < ram_size) {
-			err_msg("vpu iram is less than needed.\n");
+		ret = vpu_EncGiveCommand(handle, ENC_SET_SEARCHRAM_PARAM, &search_pa);
+		if (ret != RETCODE_SUCCESS) {
+			err_msg("Encoder SET_SEARCHRAM_PARAM failed\n");
 			return -1;
-		} else {
-			/* Allocate max iram for vpu encoder search ram*/
-			ram_size = iram.end - iram.start;
-			search_pa.searchRamAddr = iram.start;
-			search_pa.SearchRamSize = ram_size;
 		}
-	}
-
-	ret = vpu_EncGiveCommand(handle, ENC_SET_SEARCHRAM_PARAM, &search_pa);
-	if (ret != RETCODE_SUCCESS) {
-		err_msg("Encoder SET_SEARCHRAM_PARAM failed\n");
-		return -1;
 	}
 
 	if (enc->cmdl->rot_en) {
