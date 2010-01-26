@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -1438,7 +1438,8 @@ decoder_parse(struct decode *dec)
 	ret = vpu_DecGetInitialInfo(handle, &initinfo);
 	vpu_DecSetEscSeqInit(handle, 0);
 	if (ret != RETCODE_SUCCESS) {
-		err_msg("vpu_DecGetInitialInfo failed %d\n", ret);
+		err_msg("vpu_DecGetInitialInfo failed, ret:%d, errorcode:%d\n",
+		         ret, initinfo.errorcode);
 		return -1;
 	}
 
