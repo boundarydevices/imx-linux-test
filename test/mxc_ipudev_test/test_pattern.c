@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -1976,6 +1976,7 @@ int screenlayer_test_ipc(int process_num, int three_layer, int op_type)
 			if(three_layer)
 			{
 				/* create second layer */
+				sleep(2);
 				printf("Add second layer!\n");
 				pthread_create(&second_layer_thread, NULL, second_layer_thread_func, &op_type);
 				pthread_join(second_layer_thread, NULL);
