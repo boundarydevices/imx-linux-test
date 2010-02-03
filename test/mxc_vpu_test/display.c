@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -147,9 +147,12 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 				 "\tDefault display is LCD if not set this environment "
 				 "or set wrong string.\n");
 		}
+		err = system("/bin/echo 0 > /sys/class/graphics/fb1/blank");
 		if (err == -1) {
 			warn_msg("set tv mode error\n");
 		}
+		/* make sure tvout init done */
+		sleep(2);
 	}
 
 	if (rotation.rot_en) {
@@ -388,7 +391,15 @@ err:
 void v4l_display_close(struct vpu_display *disp)
 {
 	int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+
 	if (disp) {
+		while (disp->queued_count > 0) {
+			disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+			disp->buf.memory = V4L2_MEMORY_MMAP;
+			if (ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf) < 0)
+				break;
+			disp->queued_count--;
+		}
 		ioctl(disp->fd, VIDIOC_STREAMOFF, &type);
 		v4l_free_bufs(disp->nframes, disp);
 		close(disp->fd);
