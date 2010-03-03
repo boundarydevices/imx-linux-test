@@ -1044,7 +1044,7 @@ decoder_start(struct decode *dec)
 							(img_size >> 2);
 			}
 
-			if (cpu_is_mx51())
+			if (cpu_is_mx5x())
 				err = v4l_put_data(disp, actual_display_index, field);
 			else
 				err = v4l_put_data(disp, actual_display_index, V4L2_FIELD_ANY);
@@ -1296,7 +1296,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 			fb[i].bufY = pfbpool[i]->addrY;
 			fb[i].bufCb = pfbpool[i]->addrCb;
 			fb[i].bufCr = pfbpool[i]->addrCr;
-			if (cpu_is_mx37() || cpu_is_mx51()) {
+			if (cpu_is_mx37() || cpu_is_mx5x()) {
 				fb[i].bufMvCol = pfbpool[i]->mvColBuf;
 			}
 		}
@@ -1323,7 +1323,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		if (deblock_en == 0) {
 			img_size = dec->stride * dec->picheight;
 
-			if (cpu_is_mx37() || cpu_is_mx51()) {
+			if (cpu_is_mx37() || cpu_is_mx5x()) {
 				mvcol_md = dec->mvcol_memdesc =
 					calloc(totalfb, sizeof(vpu_mem_desc));
 			}
@@ -1332,7 +1332,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 				fb[i].bufCb = fb[i].bufY + img_size;
 				fb[i].bufCr = fb[i].bufCb + (img_size >> 2);
 				/* allocate MvCol buffer here */
-				if (cpu_is_mx37() || cpu_is_mx51()) {
+				if (cpu_is_mx37() || cpu_is_mx5x()) {
 					memset(&mvcol_md[i], 0,
 							sizeof(vpu_mem_desc));
 					mvcol_md[i].size = img_size >> 2;
