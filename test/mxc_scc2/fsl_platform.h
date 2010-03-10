@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -68,7 +68,7 @@
 #define FSL_HAVE_RTIC2
 #define FSL_HAVE_SRTC
 
-#elif defined(CONFIG_ARCH_MX51)
+#elif defined(CONFIG_ARCH_MX5)
 
 #define FSL_HAVE_SCC2
 #define FSL_HAVE_SAHARA4
