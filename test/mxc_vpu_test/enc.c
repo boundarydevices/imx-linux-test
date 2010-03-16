@@ -30,6 +30,7 @@ extern struct capture_testbuffer cap_buffers[];
 
 /* When app need to exit */
 extern int quitflag;
+static int frameRateInfo = 0;
 
 #define FN_ENC_QP_DATA "enc_qp.log"
 #define FN_ENC_SLICE_BND_DATA "enc_slice_bnd.log"
@@ -172,6 +173,7 @@ encoder_fill_headers(struct encode *enc)
 	EncHeaderParam enchdr_param = {0};
 	EncHandle handle = enc->handle;
 	RetCode ret;
+	int mbPicNum;
 
 #if STREAM_ENC_PIC_RESET == 1
 	u32 vbuf;
@@ -181,27 +183,50 @@ encoder_fill_headers(struct encode *enc)
 
 	/* Must put encode header before encoding */
 	if (enc->cmdl->format == STD_MPEG4) {
-		if (!cpu_is_mx5x()) {
-			enchdr_param.headerType = VOS_HEADER;
-			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
+		enchdr_param.headerType = VOS_HEADER;
+		/*
+		 * Please set userProfileLevelEnable to 0 if you need to generate
+	         * user profile and level automaticaly by resolution, here is one
+		 * sample of how to work when userProfileLevelEnable is 1.
+		 */
+		enchdr_param.userProfileLevelEnable = 1;
+		mbPicNum = ((enc->picwidth + 15) / 16) *((enc->picheight + 15) / 16);
+		if (enc->picwidth <= 176 && enc->picheight <= 144 &&
+		    mbPicNum * frameRateInfo <= 1485)
+			enchdr_param.userProfileLevelIndication = 8; /* L1 */
+		/* Please set userProfileLevelIndication to 8 if L0 is needed */
+		else if (enc->picwidth <= 352 && enc->picheight <= 288 &&
+			 mbPicNum * frameRateInfo <= 5940)
+			enchdr_param.userProfileLevelIndication = 2; /* L2 */
+		else if (enc->picwidth <= 352 && enc->picheight <= 288 &&
+			 mbPicNum * frameRateInfo <= 11880)
+			enchdr_param.userProfileLevelIndication = 3; /* L3 */
+		else if (enc->picwidth <= 640 && enc->picheight <= 480 &&
+			 mbPicNum * frameRateInfo <= 36000)
+			enchdr_param.userProfileLevelIndication = 4; /* L4a */
+		else if (enc->picwidth <= 720 && enc->picheight <= 576 &&
+			 mbPicNum * frameRateInfo <= 40500)
+			enchdr_param.userProfileLevelIndication = 5; /* L5 */
+		else
+			enchdr_param.userProfileLevelIndication = 6; /* L6 */
+		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
 
 #if STREAM_ENC_PIC_RESET == 1
-			vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-			ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-			if (ret < 0)
-				return -1;
+		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
+		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
+		if (ret < 0)
+			return -1;
 #endif
 
-			enchdr_param.headerType = VIS_HEADER;
-			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
+		enchdr_param.headerType = VIS_HEADER;
+		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
 
 #if STREAM_ENC_PIC_RESET == 1
-			vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-			ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-			if (ret < 0)
-				return -1;
+		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
+		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
+		if (ret < 0)
+			return -1;
 #endif
-		}
 
 		enchdr_param.headerType = VOL_HEADER;
 		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
@@ -373,6 +398,7 @@ encoder_start(struct encode *enc)
 	enc_param.quantParam = 23;
 	enc_param.forceIPicture = 0;
 	enc_param.skipPicture = 0;
+	enc_param.enableAutoSkip = 1;
 
 	/* Set report info flag */
 	if (enc->mbInfo.enable) {
@@ -467,6 +493,9 @@ encoder_start(struct encode *enc)
 									ret);
 			goto err2;
 		}
+
+		if (outinfo.skipEncoded)
+			info_msg("Skip encoding one Frame!\n");
 
 		if (outinfo.mbInfo.enable && outinfo.mbInfo.size && outinfo.mbInfo.addr) {
 			SaveEncMbInfo(outinfo.mbInfo.addr, outinfo.mbInfo.size,
@@ -680,7 +709,7 @@ encoder_open(struct encode *enc)
 	}
 
 	/*Note: Frame rate cannot be less than 15fps per H.263 spec */
-	encop.frameRateInfo = 30;
+	encop.frameRateInfo = frameRateInfo = 30;
 	encop.bitRate = enc->cmdl->bitrate;
 	encop.gopSize = enc->cmdl->gop;
 	encop.slicemode.sliceMode = 0;	/* 0: 1 slice per picture; 1: Multiple slices per picture */
@@ -689,13 +718,14 @@ encoder_open(struct encode *enc)
 
 	encop.initialDelay = 0;
 	encop.vbvBufferSize = 0;        /* 0 = ignore 8 */
-	encop.enableAutoSkip = 1;
 	encop.intraRefresh = 0;
 	encop.sliceReport = 0;
 	encop.mbReport = 0;
 	encop.mbQpReport = 0;
 	encop.rcIntraQp = -1;
 	encop.userQpMax = 0;
+	encop.userQpMin = 0;
+
 	encop.userGamma = (Uint32)(0.75*32768);         /*  (0*32768 <= gamma <= 1*32768) */
 	encop.RcIntervalMode= 1;        /* 0:normal, 1:frame_level, 2:slice_level, 3: user defined Mb_level */
 	encop.MbInterval = 0;
