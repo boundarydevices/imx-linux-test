@@ -830,9 +830,8 @@ decoder_start(struct decode *dec)
 			/*
 			 * Suppose vpu is hang if one frame cannot be decoded in 5s,
 			 * then do vpu software reset.
-			 * Please DON'T add the code if the application is in network
-			 * case since vpu interrupt also cannot be received if no
-			 * enough data.
+			 * Please take care of this for network case since vpu
+			 * interrupt also cannot be received if no enough data.
 			 */
 			if (loop_id == 10) {
 				err = vpu_SWReset(handle, 0);
@@ -1411,7 +1410,7 @@ decoder_parse(struct decode *dec)
 {
 	DecInitialInfo initinfo = {0};
 	DecHandle handle = dec->handle;
-	int align;
+	int align, profile, level;
 	RetCode ret;
 
 	/*
@@ -1501,8 +1500,49 @@ decoder_parse(struct decode *dec)
 			break;
 
 		case STD_MPEG4:
+			if (initinfo.level & 0x80) { /* VOS Header */
+				initinfo.level &= 0x7F;
+				if (initinfo.level == 8 && initinfo.profile == 0) {
+					level = 0; profile = 0;	 /* Simple, Level_L0 */
+				} else {
+					switch (initinfo.profile) {
+					case 0xB:
+						profile = 1; /* advanced coding efficiency object */
+						break;
+					case 0xF:
+						if (initinfo.level & 8 == 0)
+							profile = 2; /* advanced simple object */
+						else
+							profile = 5; /* reserved */
+						break;
+					case 0x0:
+						profile = 0;
+						break;    /* Simple Profile */
+					default:
+						profile = 5;
+						break;
+					}
+					level = initinfo.level;
+				}
+			} else { /* VOL Header only */
+				level = 7;  /* reserved */
+				switch (initinfo.profile) {
+				case 0x1:
+					profile = 0;  /* simple object */
+					break;
+				case 0xC:
+					profile = 1;  /* advanced coding efficiency object */
+					break;
+				case 0x11:
+					profile = 2;  /* advanced simple object */
+					break;
+				default:
+					profile = 5;  /* reserved */
+					break;
+				}
+			}
 			info_msg("Mpeg4 Profile: %d Level: %d Interlaced: %d\n",
-				initinfo.profile, initinfo.level, initinfo.interlace);
+				profile, level, initinfo.interlace);
 			/*
 			 * Profile: 8'b00000000: SP, 8'b00010001: ASP
 			 * Level: 4'b0000: L0, 4'b0001: L1, 4'b0010: L2, 4'b0011: L3, ...
