@@ -172,6 +172,7 @@ platform()
 		MX353StackBoard )	plat=IMX35_3STACK ;;
 		MX373StackBoard )	plat=IMX37_3STACK ;;
 		MX51* )       		plat=IMX51 ;;
+		MX53* )       		plat=IMX53 ;;
 
 		* )     ;;
 	esac
