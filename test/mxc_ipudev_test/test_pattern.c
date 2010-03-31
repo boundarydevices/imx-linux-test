@@ -418,7 +418,8 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 
 	get_system_rev(&system_rev);
 	if (((system_rev & 0xff000) == 0x37000) ||
-		(((system_rev & 0xff000) == 0x51000)))
+		(((system_rev & 0xff000) == 0x51000)) ||
+		(((system_rev & 0xff000) == 0x53000)))
 		ipu_version = 3;
 	else
 		ipu_version = 1;
