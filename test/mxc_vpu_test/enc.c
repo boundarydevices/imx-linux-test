@@ -456,6 +456,12 @@ encoder_start(struct encode *enc)
 				break;
 		}
 
+		/* RTC setting */
+		enc_param.underrunEnable = 0;
+		enc_param.accumulativeMode = 0;
+		enc_param.pulseWidth = 0;
+		enc_param.refMbClk = 0;
+
 		gettimeofday(&tenc_begin, NULL);
 		ret = vpu_EncStartOneFrame(handle, &enc_param);
 		if (ret != RETCODE_SUCCESS) {
@@ -725,10 +731,13 @@ encoder_open(struct encode *enc)
 	encop.rcIntraQp = -1;
 	encop.userQpMax = 0;
 	encop.userQpMin = 0;
+	encop.userQpMinEnable = 0;
+	encop.userQpMaxEnable = 0;
 
 	encop.userGamma = (Uint32)(0.75*32768);         /*  (0*32768 <= gamma <= 1*32768) */
 	encop.RcIntervalMode= 1;        /* 0:normal, 1:frame_level, 2:slice_level, 3: user defined Mb_level */
 	encop.MbInterval = 0;
+	encop.avcIntra16x16OnlyModeEnable = 0;
 
 	encop.ringBufferEnable = 0;
 	encop.dynamicAllocEnable = 0;
