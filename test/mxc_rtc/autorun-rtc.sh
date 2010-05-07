@@ -39,6 +39,8 @@ if [ "$RTC_IRQS" != "$RTC_IRQS_EXPECTED" ]; then
 	STATUS=1
 else
 	echo "checking rtc interrupts PASS"
+       #RTC wait for time set notification test
+        run_testcase "./rtc_timesetnotification_test.out"
 fi
 
 print_status
