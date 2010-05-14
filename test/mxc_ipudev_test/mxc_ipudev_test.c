@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -148,6 +148,9 @@ int main(int argc, char *argv[])
 		ret = run_test_pattern(test_handle.test_pattern, &test_handle);
 		system("echo 0,0 > /sys/class/graphics/fb0/pan");
 		return ret;
+	} else if (argc < 4) {
+		printf("Pls set input file\n");
+		return -1;
 	}
 
 	if (test_handle.mode & OP_STREAM_MODE) {
