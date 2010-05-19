@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -72,6 +72,14 @@ typedef signed char s8;
 
 #define SIZE_USER_BUF            0x1000
 #define USER_DATA_INFO_OFFSET    8*17
+
+enum {
+    MODE420 = 0,
+    MODE422 = 1,
+    MODE224 = 2,
+    MODE444 = 3,
+    MODE400 = 4
+};
 
 struct frame_buf {
 	int addrY;
@@ -153,6 +161,7 @@ struct decode {
 	int picwidth;
 	int picheight;
 	int stride;
+	int mjpg_fmt;
 	int fbcount;
 	int rot_buf_count;
 	int extrafb;
@@ -207,7 +216,7 @@ struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 					struct rot rotation, Rect rotCrop);
 int v4l_put_data(struct vpu_display *disp, int index, int field);
 void v4l_display_close(struct vpu_display *disp);
-struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height);
+struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height);
 void framebuf_free(struct frame_buf *fb);
 
 int v4l_start_capturing(void);
