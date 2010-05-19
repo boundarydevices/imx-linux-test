@@ -63,19 +63,23 @@ void put_framebuf(struct frame_buf *fb)
 	fbarray[fb_index] = fb;
 }
 
-struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height)
+struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height)
 {
 	struct frame_buf *fb;
 	int err;
+	int divX, divY;
 
 	fb = get_framebuf();
 	if (fb == NULL)
 		return NULL;
 
+	divX = (format == MODE420 || format == MODE422) ? 2 : 1;
+	divY = (format == MODE420 || format == MODE224) ? 2 : 1;
+
 	memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
-	fb->desc.size = (strideY * height * 3 / 2);
+	fb->desc.size = (strideY * height  + strideY / divX * height / divY * 2);
 	if (cpu_is_mx37() || cpu_is_mx5x())
-		fb->desc.size += strideY * height / 4;
+		fb->desc.size += strideY / divX * height / divY;
 
 	err = IOGetPhyMem(&fb->desc);
 	if (err) {
@@ -86,12 +90,12 @@ struct frame_buf *framebuf_alloc(int stdMode, int strideY, int height)
 
 	fb->addrY = fb->desc.phy_addr;
 	fb->addrCb = fb->addrY + strideY * height;
-	fb->addrCr = fb->addrCb + strideY / 2 * height / 2;
+	fb->addrCr = fb->addrCb + strideY / divX * height / divY;
 	if (cpu_is_mx37() || cpu_is_mx5x()) {
 		if (stdMode==STD_MJPG)
 			fb->mvColBuf = fb->addrCr;
 		else
-			fb->mvColBuf = fb->addrCr + strideY / 2 * height / 2;
+			fb->mvColBuf = fb->addrCr + strideY / divX * height / divY;
 	}
 	fb->desc.virt_uaddr = IOGetVirtMem(&(fb->desc));
 	if (fb->desc.virt_uaddr <= 0) {
