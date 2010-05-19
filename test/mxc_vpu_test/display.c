@@ -307,9 +307,16 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 				fmt.fmt.pix.width, fmt.fmt.pix.height);
 
 	fmt.fmt.pix.field = V4L2_FIELD_ANY;
-	if (dec->cmdl->chromaInterleave == 0)
-		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-	else {
+	if (dec->cmdl->chromaInterleave == 0) {
+		if (dec->mjpg_fmt == MODE420)
+			fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+		else if (dec->mjpg_fmt == MODE422)
+			fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV422P;
+		else {
+			err_msg(" Display cannot support this MJPG format\n");
+			goto err;
+		}
+	} else {
 		info_msg("Display: NV12\n");
 		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
 	}
