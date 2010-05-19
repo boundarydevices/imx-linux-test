@@ -1245,7 +1245,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	FrameBuffer *fb;
 	struct frame_buf **pfbpool;
 	struct vpu_display *disp = NULL;
-	int stride;
+	int stride, divX, divY;
 	vpu_mem_desc *mvcol_md = NULL;
 	Rect rotCrop;
 
@@ -1291,8 +1291,8 @@ decoder_allocate_framebuffer(struct decode *dec)
 	    ((dst_scheme == PATH_V4L2) && deblock_en)) {
 
 		for (i = 0; i < totalfb; i++) {
-			pfbpool[i] = framebuf_alloc(dec->cmdl->format, dec->stride,
-						    dec->picheight);
+			pfbpool[i] = framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
+						    dec->stride, dec->picheight);
 			if (pfbpool[i] == NULL) {
 				totalfb = i;
 				goto err;
@@ -1325,6 +1325,9 @@ decoder_allocate_framebuffer(struct decode *dec)
 			goto err;
 		}
 
+		divX = (dec->mjpg_fmt == MODE420 || dec->mjpg_fmt == MODE422) ? 2 : 1;
+		divY = (dec->mjpg_fmt == MODE420 || dec->mjpg_fmt == MODE224) ? 2 : 1;
+
 		if (deblock_en == 0) {
 			img_size = dec->stride * dec->picheight;
 
@@ -1332,15 +1335,16 @@ decoder_allocate_framebuffer(struct decode *dec)
 				mvcol_md = dec->mvcol_memdesc =
 					calloc(totalfb, sizeof(vpu_mem_desc));
 			}
+
 			for (i = 0; i < totalfb; i++) {
 				fb[i].bufY = disp->buffers[i]->offset;
 				fb[i].bufCb = fb[i].bufY + img_size;
-				fb[i].bufCr = fb[i].bufCb + (img_size >> 2);
+				fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
 				/* allocate MvCol buffer here */
 				if (cpu_is_mx37() || cpu_is_mx5x()) {
 					memset(&mvcol_md[i], 0,
 							sizeof(vpu_mem_desc));
-					mvcol_md[i].size = img_size >> 2;
+					mvcol_md[i].size = img_size / divX / divY;
 					ret = IOGetPhyMem(&mvcol_md[i]);
 					if (ret) {
 						err_msg("buf alloc failed\n");
@@ -1571,6 +1575,11 @@ decoder_parse(struct decode *dec)
 
 		case STD_DIV3:
 			info_msg("DIV3 Profile: %d Level: %d\n", initinfo.profile, initinfo.level);
+			break;
+
+		case STD_MJPG:
+			dec->mjpg_fmt = initinfo.mjpg_sourceFormat;
+			info_msg("MJPG SourceFormat: %d\n", initinfo.mjpg_sourceFormat);
 			break;
 
 		default:
