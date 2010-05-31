@@ -11,7 +11,7 @@ OBJ = main.o \
       loopback.o
 
 # list of platforms which want this test case
-INCLUDE_LIST:=IMX27ADS IMX31ADS IMX37_3STACK IMX51
+INCLUDE_LIST:=IMX27ADS IMX31ADS IMX37_3STACK IMX51 IMX53
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 TARGET = mxc_vpu_test.out
@@ -22,7 +22,7 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(LINK) -lpthread -o $(TARGET) $(OBJ) -lvpu
+	$(LINK) -lpthread -o $(TARGET) $(OBJ) ${LIBS} -lvpu -lipu
 	mkdir -p $(OBJDIR)
 	mv $(TARGET) $(OBJDIR)
 	cp autorun-vpu.sh $(OBJDIR)
