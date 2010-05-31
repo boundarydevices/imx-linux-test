@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -35,6 +35,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	If no input file is specified, default is network \n "\
 	       "  -o <output file> Write output to file \n "\
 	       "	If no output is specified, default is LCD \n "\
+	       "  -x <output method> V4l2(0) or IPU lib(1) \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, \n "\
 	       "	4 - MPEG2, 5 - DIV3, 6 - RV, 7 - MJPG, \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
@@ -127,7 +128,7 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:v:";
+static char *options = "i:o:x:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:v:";
 
 int
 parse_config_file(char *file_name)
@@ -236,6 +237,20 @@ parse_args(int argc, char *argv[], int i)
 			}
 			strncpy(input_arg[i].cmd.output, optarg, MAX_PATH);
 			input_arg[i].cmd.dst_scheme = PATH_FILE;
+			break;
+		case 'x':
+			if (atoi(optarg) == 0) {
+				input_arg[i].cmd.dst_scheme = PATH_V4L2;
+				info_msg("Display through V4L2\n");
+			} else {
+				input_arg[i].cmd.dst_scheme = PATH_IPU;
+				info_msg("Display through IPU LIB\n");
+			}
+			if (!cpu_is_mx37() && !cpu_is_mx5x() &&
+				(input_arg[i].cmd.dst_scheme == PATH_IPU)) {
+				input_arg[i].cmd.dst_scheme = PATH_V4L2;
+				warn_msg("ipu lib disp only support in ipuv3\n");
+			}
 			break;
 		case 'n':
 			if (input_arg[i].mode == ENCODE) {

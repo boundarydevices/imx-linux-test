@@ -669,7 +669,8 @@ decoder_start(struct decode *dec)
 	int disp_clr_index = -1, actual_display_index = -1, field = V4L2_FIELD_NONE;
 	int is_waited_int = 0;
 
-	if ((dec->cmdl->dst_scheme == PATH_V4L2) && (dec->cmdl->ipu_rot_en))
+	if (((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
+			&& (dec->cmdl->ipu_rot_en))
 		rot_en = 0;
 
 	/* deblock_en is zero on mx37 and mx51 since it is cleared in decode_open() function. */
@@ -727,7 +728,7 @@ decoder_start(struct decode *dec)
 		deblock_fb = &fb[dblkid];
 	}
 
-	if (dec->cmdl->dst_scheme == PATH_V4L2) {
+	if ((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU)) {
 		img_size = dec->stride * dec->picheight;
 	} else {
 		img_size = dec->picwidth * dec->picheight * 3 / 2;
@@ -1025,13 +1026,15 @@ decoder_start(struct decode *dec)
 			warn_msg("VPU doesn't have picture to be displayed.\n"
 				"\toutinfo.indexFrameDisplay = %d\n",
 						outinfo.indexFrameDisplay);
-			if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
-				err = vpu_DecClrDispFlag(handle, disp_clr_index);
-				if (err)
-					err_msg("vpu_DecClrDispFlag failed Error code"
-							" %d\n", err);
+			if (dec->cmdl->dst_scheme != PATH_IPU) {
+				if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
+					err = vpu_DecClrDispFlag(handle, disp_clr_index);
+					if (err)
+						err_msg("vpu_DecClrDispFlag failed Error code"
+								" %d\n", err);
+				}
+				disp_clr_index = outinfo.indexFrameDisplay;
 			}
-			disp_clr_index = outinfo.indexFrameDisplay;
 			continue;
 		}
 
@@ -1040,7 +1043,7 @@ decoder_start(struct decode *dec)
 		else
 			actual_display_index = outinfo.indexFrameDisplay;
 
-		if (dec->cmdl->dst_scheme == PATH_V4L2) {
+		if ((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU)) {
 			if (deblock_en) {
 				deblock_fb->bufY =
 					disp->buffers[disp->buf.index]->offset;
@@ -1050,32 +1053,40 @@ decoder_start(struct decode *dec)
 			}
 
 			if (cpu_is_mx5x())
-				err = v4l_put_data(disp, actual_display_index, field);
+				if (dec->cmdl->dst_scheme == PATH_V4L2)
+					err = v4l_put_data(disp, actual_display_index, field);
+				else
+					err = ipu_put_data(disp, actual_display_index, field);
 			else
-				err = v4l_put_data(disp, actual_display_index, V4L2_FIELD_ANY);
+				if (dec->cmdl->dst_scheme == PATH_V4L2)
+					err = v4l_put_data(disp, actual_display_index, V4L2_FIELD_ANY);
+				else
+					err = ipu_put_data(disp, actual_display_index, V4L2_FIELD_ANY);
 
 			if (err)
 				return -1;
 
-			if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
-				err = vpu_DecClrDispFlag(handle, disp_clr_index);
-				if (err)
-					err_msg("vpu_DecClrDispFlag failed Error code"
-							" %d\n", err);
-			}
+			if (dec->cmdl->dst_scheme == PATH_V4L2) {
+				if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
+					err = vpu_DecClrDispFlag(handle, disp_clr_index);
+					if (err)
+						err_msg("vpu_DecClrDispFlag failed Error code"
+								" %d\n", err);
+				}
 
-			if (dec->cmdl->format == STD_MJPG) {
-				rotid++;
-				rotid %= dec->fbcount;
-			} else if (rot_en || dering_en) {
-				disp_clr_index = outinfo.indexFrameDisplay;
-				if (disp->buf.index != -1)
-                                        rotid = disp->buf.index; /* de-queued buffer as next rotation buffer */
-                                else
-                                        rotid++;
+				if (dec->cmdl->format == STD_MJPG) {
+					rotid++;
+					rotid %= dec->fbcount;
+				} else if (rot_en || dering_en) {
+					disp_clr_index = outinfo.indexFrameDisplay;
+					if (disp->buf.index != -1)
+						rotid = disp->buf.index; /* de-queued buffer as next rotation buffer */
+					else
+						rotid++;
+				}
+				else
+					disp_clr_index = disp->buf.index;
 			}
-			else
-				disp_clr_index = disp->buf.index;
 		} else {
 			pfb = pfbpool[actual_display_index];
 
@@ -1152,9 +1163,12 @@ decoder_free_framebuffer(struct decode *dec)
 
 	totalfb = dec->fbcount + dec->extrafb;
 
-	if (dec->cmdl->dst_scheme == PATH_V4L2) {
+	if ((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU)) {
 		if (dec->disp) {
-			v4l_display_close(dec->disp);
+			if (dec->cmdl->dst_scheme == PATH_V4L2)
+				v4l_display_close(dec->disp);
+			else
+				ipu_display_close(dec->disp);
 			dec->disp = NULL;
 		}
 
@@ -1171,8 +1185,9 @@ decoder_free_framebuffer(struct decode *dec)
 	}
 
 	/* deblock_en is zero on mx37 and mx51 since it is cleared in decode_open() function. */
-	if ((dec->cmdl->dst_scheme != PATH_V4L2) ||
-	    ((dec->cmdl->dst_scheme == PATH_V4L2) && deblock_en)) {
+	if (((dec->cmdl->dst_scheme != PATH_V4L2) && (dec->cmdl->dst_scheme != PATH_IPU)) ||
+			(((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
+			 && deblock_en)) {
 		for (i = 0; i < totalfb; i++) {
 			framebuf_free(dec->pfbpool[i]);
 		}
@@ -1249,7 +1264,8 @@ decoder_allocate_framebuffer(struct decode *dec)
 	vpu_mem_desc *mvcol_md = NULL;
 	Rect rotCrop;
 
-	if ((dec->cmdl->dst_scheme == PATH_V4L2) && (dec->cmdl->ipu_rot_en))
+	if (((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
+			&& (dec->cmdl->ipu_rot_en))
 		rot_en = 0;
 
 	if (rot_en || dering_en) {
@@ -1258,7 +1274,8 @@ decoder_allocate_framebuffer(struct decode *dec)
 		 * are allocated for rotation if path is V4L,then we can delay 1 frame
 		 * de-queue from v4l queue to improve performance.
 		 */
-		dec->rot_buf_count = (dec->cmdl->dst_scheme == PATH_V4L2) ? 2 : 1;
+		dec->rot_buf_count = ((dec->cmdl->dst_scheme == PATH_V4L2) ||
+				(dec->cmdl->dst_scheme == PATH_IPU)) ? 2 : 1;
 		dec->extrafb += dec->rot_buf_count;
 	}
 
@@ -1287,8 +1304,8 @@ decoder_allocate_framebuffer(struct decode *dec)
 		return -1;
 	}
 
-	if ((dst_scheme != PATH_V4L2) ||
-	    ((dst_scheme == PATH_V4L2) && deblock_en)) {
+	if (((dst_scheme != PATH_V4L2) && (dst_scheme != PATH_IPU)) ||
+			(((dst_scheme == PATH_V4L2) || (dst_scheme == PATH_IPU)) && deblock_en)) {
 
 		for (i = 0; i < totalfb; i++) {
 			pfbpool[i] = framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
@@ -1307,7 +1324,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		}
 	}
 
-	if (dst_scheme == PATH_V4L2) {
+	if ((dst_scheme == PATH_V4L2) || (dst_scheme == PATH_IPU)) {
 		rotation.rot_en = dec->cmdl->rot_en;
 		rotation.rot_angle = dec->cmdl->rot_angle;
 
@@ -1317,9 +1334,15 @@ decoder_allocate_framebuffer(struct decode *dec)
 		}
 		if (rotation.rot_en) {
 			swapCropRect(dec, &rotCrop);
-			disp = v4l_display_open(dec, totalfb, rotation, rotCrop);
+			if (dst_scheme == PATH_V4L2)
+				disp = v4l_display_open(dec, totalfb, rotation, rotCrop);
+			else
+				disp = ipu_display_open(dec, totalfb, rotation, rotCrop);
 		} else
-			disp = v4l_display_open(dec, totalfb, rotation, dec->picCropRect);
+			if (dst_scheme == PATH_V4L2)
+				disp = v4l_display_open(dec, totalfb, rotation, dec->picCropRect);
+			else
+				disp = ipu_display_open(dec, totalfb, rotation, dec->picCropRect);
 
 		if (disp == NULL) {
 			goto err;
@@ -1337,7 +1360,10 @@ decoder_allocate_framebuffer(struct decode *dec)
 			}
 
 			for (i = 0; i < totalfb; i++) {
-				fb[i].bufY = disp->buffers[i]->offset;
+				if (dst_scheme == PATH_V4L2)
+					fb[i].bufY = disp->buffers[i]->offset;
+				else
+					fb[i].bufY = disp->ipu_bufs[i].ipu_paddr;
 				fb[i].bufCb = fb[i].bufY + img_size;
 				fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
 				/* allocate MvCol buffer here */
@@ -1373,10 +1399,13 @@ err1:
 	if (dst_scheme == PATH_V4L2) {
 		v4l_display_close(disp);
 		dec->disp = NULL;
+	} else if (dst_scheme == PATH_IPU) {
+		ipu_display_close(disp);
+		dec->disp = NULL;
 	}
 
 err:
-	if ((dst_scheme != PATH_V4L2) ||
+	if (((dst_scheme != PATH_V4L2) && (dst_scheme != PATH_IPU))||
 	   ((dst_scheme == PATH_V4L2) && deblock_en )) {
 		for (i = 0; i < totalfb; i++) {
 			framebuf_free(pfbpool[i]);
