@@ -38,6 +38,309 @@
 #define V4L2_MXC_ROTATE_90_RIGHT_HFLIP          6
 #define V4L2_MXC_ROTATE_90_LEFT                 7
 
+static __inline int queue_size(struct ipu_queue * q)
+{
+        if (q->tail >= q->head)
+                return (q->tail - q->head);
+        else
+                return ((q->tail + QUEUE_SIZE) - q->head);
+}
+
+static __inline int queue_buf(struct ipu_queue * q, int idx)
+{
+        if (((q->tail + 1) % QUEUE_SIZE) == q->head)
+                return -1;      /* queue full */
+        q->list[q->tail] = idx;
+        q->tail = (q->tail + 1) % QUEUE_SIZE;
+        return 0;
+}
+
+static __inline int dequeue_buf(struct ipu_queue * q)
+{
+        int ret;
+        if (q->tail == q->head)
+                return -1;      /* queue empty */
+        ret = q->list[q->head];
+        q->head = (q->head + 1) % QUEUE_SIZE;
+        return ret;
+}
+
+static __inline int peek_next_buf(struct ipu_queue * q)
+{
+        if (q->tail == q->head)
+                return -1;      /* queue empty */
+        return q->list[q->head];
+}
+
+int ipu_memory_alloc(int size, int cnt, dma_addr_t paddr[], void * vaddr[], int fd_fb_alloc)
+{
+	int i, ret = 0;
+
+	for (i=0;i<cnt;i++) {
+		/*alloc mem from DMA zone*/
+		/*input as request mem size */
+		paddr[i] = size;
+		if ( ioctl(fd_fb_alloc, FBIO_ALLOC, &(paddr[i])) < 0) {
+			printf("Unable alloc mem from /dev/fb0\n");
+			close(fd_fb_alloc);
+			ret = -1;
+			goto done;
+		}
+
+		vaddr[i] = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED,
+				fd_fb_alloc, paddr[i]);
+		if (vaddr[i] == MAP_FAILED) {
+			printf("mmap failed!\n");
+			ret = -1;
+			goto done;
+		}
+	}
+done:
+	return ret;
+}
+
+void ipu_memory_free(int size, int cnt, dma_addr_t paddr[], void * vaddr[], int fd_fb_alloc)
+{
+	int i;
+
+	for (i=0;i<cnt;i++) {
+		if (vaddr[i])
+			munmap(vaddr[i], size);
+		if (paddr[i])
+			ioctl(fd_fb_alloc, FBIO_FREE, &(paddr[i]));
+	}
+}
+
+static pthread_mutex_t ipu_mutex;
+static pthread_cond_t ipu_cond;
+static int ipu_waiting = 0;
+static int ipu_running = 0;
+static inline void wait_queue()
+{
+	pthread_mutex_lock(&ipu_mutex);
+	ipu_waiting = 1;
+	pthread_cond_wait(&ipu_cond, &ipu_mutex);
+	pthread_mutex_unlock(&ipu_mutex);
+}
+
+static inline void wakeup_queue()
+{
+	pthread_cond_signal(&ipu_cond);
+}
+
+extern int quitflag;
+void * disp_loop_thread(void *arg)
+{
+	struct decode *dec = (struct decode *)arg;
+	DecHandle handle = dec->handle;
+	struct vpu_display *disp = dec->disp;
+	int index = -1, disp_clr_index, err, mode;
+	pthread_attr_t attr;
+
+	ipu_running = 1;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setschedpolicy(&attr, SCHED_RR);
+
+	while(1) {
+		disp_clr_index = index;
+		index = dequeue_buf(&(disp->ipu_q));
+		if (index < 0) {
+			wait_queue();
+			ipu_waiting = 0;
+			index = dequeue_buf(&(disp->ipu_q));
+			if (index < 0) {
+				info_msg("thread is going to finish\n");
+				break;
+			}
+		}
+
+		if (disp->ncount == 0)
+			disp->input.user_def_paddr[0] = disp->ipu_bufs[index].ipu_paddr;
+		else if (disp->ncount == 1) {
+			disp->input.user_def_paddr[1] = disp->ipu_bufs[index].ipu_paddr;
+			mode = OP_STREAM_MODE | TASK_PP_MODE;
+			err = mxc_ipu_lib_task_init(&(disp->input), NULL, &(disp->output), NULL, mode, &(disp->ipu_handle));
+			if (err < 0) {
+				err_msg("mxc_ipu_lib_task_init failed, err %d\n", err);
+				quitflag = 1;
+				return NULL;
+			}
+			/* it only enable ipu task and finish first frame */
+			err = mxc_ipu_lib_task_buf_update(&(disp->ipu_handle), 0, 0, 0, NULL, NULL);
+			if (err < 0) {
+				err_msg("mxc_ipu_lib_task_buf_update failed, err %d\n", err);
+				quitflag = 1;
+				break;
+			}
+		} else {
+			err = mxc_ipu_lib_task_buf_update(&(disp->ipu_handle), disp->ipu_bufs[index].ipu_paddr,
+					0, 0, NULL, NULL);
+			if (err < 0) {
+				err_msg("mxc_ipu_lib_task_buf_update failed, err %d\n", err);
+				quitflag = 1;
+				break;
+			}
+		}
+
+		if ((dec->cmdl->format != STD_MJPG) && (disp_clr_index >= 0) && (!disp->stopping)) {
+			err = vpu_DecClrDispFlag(handle, disp_clr_index);
+			if (err) {
+				err_msg("vpu_DecClrDispFlag failed Error code %d\n", err);
+				quitflag = 1;
+				break;
+			}
+		}
+		disp->ncount++;
+	}
+	mxc_ipu_lib_task_uninit(&(disp->ipu_handle));
+	pthread_attr_destroy(&attr);
+	info_msg("Disp loop thread exit\n");
+	ipu_running = 0;
+	return NULL;
+}
+
+struct vpu_display *
+ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect cropRect)
+{
+	int width = dec->picwidth;
+	int height = dec->picheight;
+	int left = cropRect.left;
+	int top = cropRect.top;
+	int right = cropRect.right;
+	int bottom = cropRect.bottom;
+	int disp_width = dec->cmdl->width;
+	int disp_height = dec->cmdl->height;
+	int err = 0, i;
+	struct vpu_display *disp;
+	struct mxcfb_gbl_alpha alpha;
+	struct fb_var_screeninfo fb_var;
+
+	disp = (struct vpu_display *)calloc(1, sizeof(struct vpu_display));
+	if (disp == NULL) {
+		err_msg("falied to allocate vpu_display\n");
+		return NULL;
+	}
+
+	/* set alpha */
+	disp->fd = open("/dev/fb0", O_RDWR, 0);
+	if (disp->fd < 0) {
+		err_msg("unable to open fb0\n");
+		free(disp);
+		return NULL;
+	}
+	alpha.alpha = 0;
+	alpha.enable = 1;
+	if (ioctl(disp->fd, MXCFB_SET_GBL_ALPHA, &alpha) < 0) {
+		err_msg("set alpha blending failed\n");
+		close(disp->fd);
+		free(disp);
+		return NULL;
+	}
+	if ( ioctl(disp->fd, FBIOGET_VSCREENINFO, &fb_var) < 0) {
+		err_msg("Get FB var info failed!\n");
+		close(disp->fd);
+		free(disp);
+		return NULL;
+	}
+	if (!disp_width || !disp_height) {
+		disp_width = fb_var.xres;
+		disp_height = fb_var.yres;
+	}
+
+	if (rotation.rot_en) {
+		if (rotation.rot_angle == 90 || rotation.rot_angle == 270) {
+			i = width;
+			width = height;
+			height = i;
+		}
+		dprintf(3, "VPU rot: width = %d; height = %d\n", width, height);
+	}
+
+	/* allocate buffers, use an extra buf for init buf */
+	disp->nframes = nframes;
+	disp->frame_size = width*height*3/2;
+	for (i=0;i<nframes;i++) {
+		err = ipu_memory_alloc(disp->frame_size, 1, &(disp->ipu_bufs[i].ipu_paddr),
+				&(disp->ipu_bufs[i].ipu_vaddr), disp->fd);
+		if ( err < 0) {
+			err_msg("ipu_memory_alloc failed\n");
+			free(disp);
+			return NULL;
+		}
+	}
+
+	memset(&(disp->ipu_handle), 0, sizeof(ipu_lib_handle_t));
+	memset(&(disp->input), 0, sizeof(ipu_lib_input_param_t));
+	memset(&(disp->output), 0, sizeof(ipu_lib_output_param_t));
+
+        disp->input.width = width;
+        disp->input.height = height;
+	disp->input.input_crop_win.pos.x = left;
+	disp->input.input_crop_win.pos.y = top;
+	disp->input.input_crop_win.win_w = right - left;
+	disp->input.input_crop_win.win_h = bottom - top;
+	if (dec->cmdl->chromaInterleave == 0)
+		disp->input.fmt = V4L2_PIX_FMT_YUV420;
+	else
+		disp->input.fmt = V4L2_PIX_FMT_NV12;
+
+	disp->output.width = disp_width;
+	disp->output.height = disp_height;
+	disp->output.fmt = V4L2_PIX_FMT_UYVY;
+	if (rotation.ipu_rot_en && (rotation.rot_angle != 0)) {
+		if (rotation.rot_angle == 90)
+			disp->output.rot = IPU_ROTATE_90_RIGHT;
+		else if (rotation.rot_angle == 180)
+			disp->output.rot = IPU_ROTATE_180;
+		else if (rotation.rot_angle == 270)
+			disp->output.rot = IPU_ROTATE_90_LEFT;
+	}
+	disp->output.show_to_fb = 1;
+	disp->output.fb_disp.fb_num = 2;
+
+	disp->ipu_q.tail = disp->ipu_q.head = 0;
+	disp->stopping = 0;
+
+	dec->disp = disp;
+	pthread_mutex_init(&ipu_mutex, NULL);
+	pthread_cond_init(&ipu_cond, NULL);
+
+	/* start disp loop thread */
+	pthread_create(&(disp->disp_loop_thread), NULL, disp_loop_thread, (void *)dec);
+
+	return disp;
+}
+
+void ipu_display_close(struct vpu_display *disp)
+{
+	int i;
+
+	disp->stopping = 1;
+	while(ipu_running && ((queue_size(&(disp->ipu_q)) > 0) || !ipu_waiting)) usleep(10000);
+	if (ipu_running) {
+		wakeup_queue();
+		info_msg("Join disp loop thread\n");
+		pthread_join(disp->disp_loop_thread, NULL);
+	}
+	pthread_mutex_destroy(&ipu_mutex);
+	pthread_cond_destroy(&ipu_cond);
+	for (i=0;i<disp->nframes;i++)
+		ipu_memory_free(disp->frame_size, 1, &(disp->ipu_bufs[i].ipu_paddr),
+				&(disp->ipu_bufs[i].ipu_vaddr), disp->fd);
+	close(disp->fd);
+	free(disp);
+}
+
+int ipu_put_data(struct vpu_display *disp, int index, int field)
+{
+	disp->ipu_bufs[index].field = field;
+	queue_buf(&(disp->ipu_q), index);
+	wakeup_queue();
+
+	return 0;
+}
+
 void v4l_free_bufs(int n, struct vpu_display *disp)
 {
 	int i;
