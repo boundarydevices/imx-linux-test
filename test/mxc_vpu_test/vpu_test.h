@@ -19,6 +19,8 @@
 #include <linux/videodev.h>
 #include <pthread.h>
 #include <errno.h>
+#include <stdint.h>
+#include "mxc_ipu_hl_lib.h"
 #include "vpu_lib.h"
 #include "vpu_io.h"
 
@@ -40,15 +42,8 @@
 	printf("[WARN]\t" fmt, ## arg);	\
 	} while (0)
 
-typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
-typedef unsigned int  uint32_t;
-typedef unsigned short int  uint16_t;
-typedef unsigned char  uint8_t;
-typedef signed int s32;
-typedef signed short s16;
-typedef signed char s8;
 
 #define STREAM_BUF_SIZE		0x80000
 #define STREAM_FILL_SIZE	0x10000
@@ -61,6 +56,7 @@ typedef signed char s8;
 #define PATH_V4L2	0
 #define PATH_FILE	1
 #define PATH_NET	2
+#define PATH_IPU	3
 
 /* Test operations */
 #define ENCODE		1
@@ -95,6 +91,20 @@ struct v4l_buf {
 	size_t length;
 };
 
+#define MAX_BUF_NUM	32
+#define QUEUE_SIZE	(MAX_BUF_NUM + 1)
+struct ipu_queue {
+	int list[MAX_BUF_NUM + 1];
+	int head;
+	int tail;
+};
+
+struct ipu_buf {
+	int ipu_paddr;
+	void * ipu_vaddr;
+	int field;
+};
+
 struct vpu_display {
 	int fd;
 	int nframes;
@@ -103,8 +113,17 @@ struct vpu_display {
 	int queued_count;
 	suseconds_t usec;
 	struct v4l2_buffer buf;
-	struct v4l_buf *buffers[32];
-} ;
+	struct v4l_buf *buffers[MAX_BUF_NUM];
+
+	int frame_size;
+	ipu_lib_handle_t ipu_handle;
+	ipu_lib_input_param_t input;
+	ipu_lib_output_param_t output;
+	pthread_t disp_loop_thread;
+	struct ipu_queue ipu_q;
+	struct ipu_buf ipu_bufs[MAX_BUF_NUM];
+	int stopping;
+};
 
 struct capture_testbuffer {
 	size_t offset;
@@ -218,6 +237,11 @@ int v4l_put_data(struct vpu_display *disp, int index, int field);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height);
 void framebuf_free(struct frame_buf *fb);
+
+struct vpu_display *
+ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect cropRect);
+void ipu_display_close(struct vpu_display *disp);
+int ipu_put_data(struct vpu_display *disp, int index, int field);
 
 int v4l_start_capturing(void);
 void v4l_stop_capturing(void);
