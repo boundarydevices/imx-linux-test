@@ -41,16 +41,10 @@ void output_to_file_cb(void * arg, int index)
 {
 	ipu_test_handle_t * test_handle = (ipu_test_handle_t *)arg;
 
-	if (test_handle->file_out0)
-		if(fwrite(test_handle->ipu_handle->outbuf_start0[index], 1,
-				test_handle->ipu_handle->ofr_size[0],
-				test_handle->file_out0) < test_handle->ipu_handle->ofr_size[0]) {
-			printf("Can not write enough data into output file!\n");
-		}
-	if (test_handle->file_out1)
-		if(fwrite(test_handle->ipu_handle->outbuf_start1[index], 1,
-				test_handle->ipu_handle->ofr_size[1],
-				test_handle->file_out1) < test_handle->ipu_handle->ofr_size[1]) {
+	if (test_handle->file_out)
+		if(fwrite(test_handle->ipu_handle->outbuf_start[index], 1,
+				test_handle->ipu_handle->ofr_size,
+				test_handle->file_out) < test_handle->ipu_handle->ofr_size) {
 			printf("Can not write enough data into output file!\n");
 		}
 }
@@ -78,8 +72,8 @@ int process_cmdline(int argc, char **argv, ipu_test_handle_t * test_handle)
 		return 0;
 
 	if ((test_handle->input.width == 0) || (test_handle->input.height == 0) ||
-			(test_handle->output0.width == 0) ||
-			(test_handle->output0.height == 0)
+			(test_handle->output.width == 0) ||
+			(test_handle->output.height == 0)
 			|| (test_handle->fcount < 1))
 		return -1;
 
@@ -89,10 +83,13 @@ int process_cmdline(int argc, char **argv, ipu_test_handle_t * test_handle)
 int main(int argc, char *argv[])
 {
 	int ret = 0, next_update_idx = 0, done_cnt = 0, first_time = 1;
+	int done_loop = 0, total_cnt = 0;
 	ipu_lib_handle_t ipu_handle;
 	ipu_test_handle_t test_handle;
 	FILE * file_in = NULL;
 	struct sigaction act;
+	struct timeval begin, end;
+	int sec, usec, run_time = 0;
 
 	memset(&ipu_handle, 0, sizeof(ipu_lib_handle_t));
 	memset(&test_handle, 0, sizeof(ipu_test_handle_t));
@@ -119,26 +116,24 @@ int main(int argc, char *argv[])
 				"<input raw file>\n\n", argv[0]);
 		printf("test pattern:\n" \
 			"1: video pattern with user define dma buffer queue, one full-screen output\n" \
-			"2: video pattern with user define dma buffer queue, with two output\n" \
-			"3: hopping block screen save\n" \
-			"4: color bar + hopping block\n" \
-			"5: color bar IC global alpha overlay\n" \
-			"6: color bar IC separate local alpha overlay\n" \
-			"7: color bar IC local alpha within pixel overlay\n" \
-			"8: ipu dma copy test\n" \
-			"9: 2 screen layer test using IC global alpha blending\n" \
-			"10: 3 screen layer test using IC global alpha blending\n" \
-			"11: 2 screen layer test using IC local alpha blending with alpha value in separate buffer\n" \
-			"12: 3 screen layer test using IC local alpha blending with alpha value in separate buffer\n" \
-			"13: 2 screen layer test using IC local alpha blending with alpha value in pixel\n" \
-			"14: 3 screen layer test using IC local alpha blending with alpha value in pixel\n" \
-			"15: 2 screen layer test IPC ProcessA + ProcessB with globla alpha blending\n" \
-			"16: 2 screen layer test IPC ProcessA + ProcessB with local alpha blending\n" \
-			"17: 3 screen layer test IPC ProcessA(first_layer + sencond_layer) + ProcessB(third_layer) with globla alpha blending\n" \
-			"18: 3 screen layer test IPC ProcessA(first_layer + sencond_layer) + ProcessB(third_layer) with local alpha blending\n" \
-			"19: 3 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) ProcessC(third_layer) with local alpha blending\n" \
-			"20: 2 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) with local alpha blending plus tv copy\n" \
-			"21: Horizontally splitted video test on TV(support upsizing), assuming the TV uses MEM_DC_SYNC channel\n\n");
+			"2: hopping block screen save\n" \
+			"3: color bar + hopping block\n" \
+			"4: color bar IC global alpha overlay\n" \
+			"5: color bar IC separate local alpha overlay\n" \
+			"6: color bar IC local alpha within pixel overlay\n" \
+			"7: ipu dma copy test\n" \
+			"8: 2 screen layer test using IC global alpha blending\n" \
+			"9: 3 screen layer test using IC global alpha blending\n" \
+			"10: 2 screen layer test using IC local alpha blending with alpha value in separate buffer\n" \
+			"11: 3 screen layer test using IC local alpha blending with alpha value in separate buffer\n" \
+			"12: 2 screen layer test using IC local alpha blending with alpha value in pixel\n" \
+			"13: 3 screen layer test using IC local alpha blending with alpha value in pixel\n" \
+			"14: 2 screen layer test IPC ProcessA + ProcessB with globla alpha blending\n" \
+			"15: 2 screen layer test IPC ProcessA + ProcessB with local alpha blending\n" \
+			"16: 3 screen layer test IPC ProcessA(first_layer + sencond_layer) + ProcessB(third_layer) with globla alpha blending\n" \
+			"17: 3 screen layer test IPC ProcessA(first_layer + sencond_layer) + ProcessB(third_layer) with local alpha blending\n" \
+			"18: 3 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) ProcessC(third_layer) with local alpha blending\n" \
+			"19: 2 screen layer test IPC ProcessA(first_layer) ProcessB(sencond_layer) with local alpha blending plus tv copy\n\n");
 		return -1;
 	}
 
@@ -166,24 +161,19 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	if (test_handle.outfile0 && !test_handle.output0.show_to_fb)
-		test_handle.file_out0 = fopen(test_handle.outfile0, "wb");
-	if (test_handle.outfile1 && !test_handle.output1.show_to_fb &&
-		test_handle.output1_enabled)
-		test_handle.file_out1 = fopen(test_handle.outfile1, "wb");
+	if (test_handle.outfile && !test_handle.output.show_to_fb)
+		test_handle.file_out = fopen(test_handle.outfile, "wb");
 
-	if (test_handle.output1_enabled)
-		ret = mxc_ipu_lib_task_init(&(test_handle.input), NULL, &(test_handle.output0),
-				&(test_handle.output1), test_handle.mode, test_handle.ipu_handle);
-	else
-		ret = mxc_ipu_lib_task_init(&(test_handle.input), NULL, &(test_handle.output0),
-				NULL, test_handle.mode, test_handle.ipu_handle);
+	ret = mxc_ipu_lib_task_init(&(test_handle.input), NULL, &(test_handle.output),
+			test_handle.mode, test_handle.ipu_handle);
 	if (ret < 0) {
 		printf("mxc_ipu_lib_task_init failed!\n");
 		goto done;
 	}
 
+again:
 	while((done_cnt < test_handle.fcount) && (ctrl_c_rev == 0)) {
+		gettimeofday(&begin, NULL);
 		if (fread(test_handle.ipu_handle->inbuf_start[next_update_idx], 1, test_handle.ipu_handle->ifr_size, file_in)
 				< test_handle.ipu_handle->ifr_size) {
 			ret = -1;
@@ -199,21 +189,40 @@ int main(int argc, char *argv[])
 			}
 			first_time = 0;
 			done_cnt++;
+			total_cnt++;
 		}
 		next_update_idx = mxc_ipu_lib_task_buf_update(test_handle.ipu_handle, 0, 0, 0, output_to_file_cb, &test_handle);
 		if (next_update_idx < 0)
 			break;
 		done_cnt++;
+		total_cnt++;
+
+		gettimeofday(&end, NULL);
+		sec = end.tv_sec - begin.tv_sec;
+		usec = end.tv_usec - begin.tv_usec;
+
+		if (usec < 0) {
+			sec--;
+			usec = usec + 1000000;
+		}
+		run_time += (sec * 1000000) + usec;
 	}
+
+	done_loop++;
+	if ((done_loop < test_handle.loop_cnt) && (ctrl_c_rev == 0)) {
+		done_cnt = 0;
+		fseek(file_in, 0L, SEEK_SET);
+		goto again;
+	}
+
+	printf("total frame count %d avg frame time %d us, fps %f\n", total_cnt, run_time/total_cnt, total_cnt/(run_time/1000000.0));
 
 	mxc_ipu_lib_task_uninit(test_handle.ipu_handle);
 
 done:
 	fclose(file_in);
-	if (test_handle.file_out0)
-		fclose(test_handle.file_out0);
-	if (test_handle.file_out1)
-		fclose(test_handle.file_out1);
+	if (test_handle.file_out)
+		fclose(test_handle.file_out);
 
 	system("echo 0,0 > /sys/class/graphics/fb0/pan");
 
