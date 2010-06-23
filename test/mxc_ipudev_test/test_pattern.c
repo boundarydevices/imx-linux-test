@@ -360,20 +360,20 @@ int copy_test(ipu_test_handle_t * test_handle)
 	test_handle->fcount = 10;
 	test_handle->input.width = fb_var.xres;
 	test_handle->input.height = fb_var.yres;
-	test_handle->output0.width = fb_var.xres;
-	test_handle->output0.height = fb_var.yres;
+	test_handle->output.width = fb_var.xres;
+	test_handle->output.height = fb_var.yres;
 	if (fb_var.bits_per_pixel == 24) {
-		test_handle->output0.fmt = v4l2_fourcc('B', 'G', 'R', '3');
+		test_handle->output.fmt = v4l2_fourcc('B', 'G', 'R', '3');
 		test_handle->input.fmt = v4l2_fourcc('B', 'G', 'R', '3');
 	} else {
-		test_handle->output0.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
+		test_handle->output.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
 		test_handle->input.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
 	}
 	test_handle->input.user_def_paddr[0] = fake_fb_paddr[0];
-	test_handle->output0.user_def_paddr[0] = fb_fix.smem_start;
+	test_handle->output.user_def_paddr[0] = fb_fix.smem_start;
 
-	ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL, &(test_handle->output0),
-			NULL, test_handle->mode, test_handle->ipu_handle);
+	ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL, &(test_handle->output),
+				test_handle->mode, test_handle->ipu_handle);
 	if (ret < 0) {
 		printf("mxc_ipu_lib_task_init failed!\n");
 		goto err;
@@ -402,10 +402,10 @@ done:
 	return ret;
 }
 
-int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
+int color_bar(int overlay, ipu_test_handle_t * test_handle)
 {
 	int ret = 0, fd_fb = 0, size = 0, i, k = 0, done_cnt = 0, fcount = 0;
-	void * buf[BUF_CNT] = {0}, * fb[2];
+	void * buf[BUF_CNT] = {0}, * fb[3];
 	void * ov_fake_fb = 0, * ov_alpha_fake_fb = 0;
 	int ov_fake_fb_paddr = 0, ov_alpha_fake_fb_paddr = 0;
 	int paddr[BUF_CNT] = {0};
@@ -424,7 +424,7 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 	else
 		ipu_version = 1;
 
-	if ((ipu_version == 1) && two_output) {
+	if (ipu_version == 1) {
 		printf("ipuv1 can not support dispaly 2 output together!\n");
 		printf("because ipuv1 ENC channel can not be linked to disp channel!\n");
 		ret = -1;
@@ -461,9 +461,9 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 		goto done;
 	}
 
-	if(fb_var.yres_virtual != 2*fb_var.yres)
+	if(fb_var.yres_virtual != 3*fb_var.yres)
 	{
-		fb_var.yres_virtual = 2*fb_var.yres;
+		fb_var.yres_virtual = 3*fb_var.yres;
 		if ( ioctl(fd_fb, FBIOPUT_VSCREENINFO, &fb_var) < 0) {
 			printf("Get FB var info failed!\n");
 			ret = -1;
@@ -472,14 +472,17 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 	}
 
 	screen_size = fb_var.yres * fb_fix.line_length;
-	fb[0] = mmap(NULL, 2 * screen_size, PROT_READ | PROT_WRITE, MAP_SHARED,
+	fb[0] = mmap(NULL, 3 * screen_size, PROT_READ | PROT_WRITE, MAP_SHARED,
 			fd_fb, 0);
 	if (fb[0] == MAP_FAILED) {
 		printf("fb buf0 mmap failed, errno %d!\n", errno);
 		ret = -1;
 		goto done;
 	}
-	fb[1] = (void *)((char *)fb[0] + screen_size);
+	/* ipu use fb base+screen_size as buf0 */
+	fb[1] = (void *)((char *)fb[0]);
+	fb[0] = (void *)((char *)fb[1] + screen_size);
+	fb[2] = (void *)((char *)fb[1] + 2*screen_size);
 
 	/* use I420 input format as fix*/
 	test_handle->mode = OP_STREAM_MODE;
@@ -488,33 +491,16 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 	test_handle->input.height = 240;
 	test_handle->input.fmt = v4l2_fourcc('I', '4', '2', '0');
 	if (fb_var.bits_per_pixel == 24)
-		test_handle->output0.fmt = v4l2_fourcc('B', 'G', 'R', '3');
+		test_handle->output.fmt = v4l2_fourcc('B', 'G', 'R', '3');
 	else
-		test_handle->output0.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
-	test_handle->output0.show_to_fb = 1;
-	test_handle->output0.fb_disp.fb_num = 0;
+		test_handle->output.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
+	test_handle->output.show_to_fb = 1;
+	test_handle->output.fb_disp.fb_num = 0;
 	/* ipuv1 only support display on PP & VF task mode */
 	if (ipu_version == 1)
 		test_handle->mode |= TASK_PP_MODE;
-	test_handle->output0.rot = 3;
-	if (two_output) {
-		/* two output case -- show to BG+FG */
-		test_handle->output0.width = fb_var.xres;
-		test_handle->output0.height = fb_var.yres/3;
-		test_handle->output0.fb_disp.pos.x = 0;
-		test_handle->output0.fb_disp.pos.y = 0;
-		test_handle->output1.width = fb_var.xres;
-		test_handle->output1.height = fb_var.yres/3;
-		if (fb_var.bits_per_pixel == 24)
-			test_handle->output1.fmt = v4l2_fourcc('B', 'G', 'R', '3');
-		else
-			test_handle->output1.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
-		test_handle->output1.show_to_fb = 1;
-		test_handle->output1.fb_disp.fb_num = foreground_fb();
-		test_handle->output1.rot = 3;
-		test_handle->output1.fb_disp.pos.x = 0;
-		test_handle->output1.fb_disp.pos.y = fb_var.yres/2;
-	} else if (overlay){
+	test_handle->output.rot = 3;
+	if (overlay){
 		/* overlay case -- fake fb+overlay show to fb0*/
 		ov.width = fb_var.xres;
 		ov.height = fb_var.yres;
@@ -533,10 +519,10 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 			ov_fake_fb_size = screen_size;
 			ov_alpha_fake_fb_size = ov.width * ov.height;
 
-			test_handle->output0.width = fb_var.xres/2;
-			test_handle->output0.height = fb_var.yres/2;
-			test_handle->output0.fb_disp.pos.x = fb_var.xres/4;
-			test_handle->output0.fb_disp.pos.y = fb_var.yres/4;
+			test_handle->output.width = fb_var.xres/2;
+			test_handle->output.height = fb_var.yres/2;
+			test_handle->output.fb_disp.pos.x = fb_var.xres/4;
+			test_handle->output.fb_disp.pos.y = fb_var.yres/4;
 		} else if (overlay == IC_GLB_ALP_OV) {
 			ov.ov_crop_win.pos.x = fb_var.xres/4;
 			ov.ov_crop_win.pos.y = fb_var.yres/4;
@@ -546,10 +532,10 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 			ov.global_alpha_en = 1;
 			ov_fake_fb_size = screen_size;
 
-			test_handle->output0.width = fb_var.xres/2;
-			test_handle->output0.height = fb_var.yres/2;
-			test_handle->output0.fb_disp.pos.x = fb_var.xres/4;
-			test_handle->output0.fb_disp.pos.y = fb_var.yres/4;
+			test_handle->output.width = fb_var.xres/2;
+			test_handle->output.height = fb_var.yres/2;
+			test_handle->output.fb_disp.pos.x = fb_var.xres/4;
+			test_handle->output.fb_disp.pos.y = fb_var.yres/4;
 		} else if (overlay == IC_LOC_PIX_ALP_OV) {
 			ov.fmt = v4l2_fourcc('R', 'G', 'B', 'A');
 			ov.ov_crop_win.pos.x = 0;
@@ -566,18 +552,18 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 			 * FB0. We choose to set graphic plane and video plane
 			 * to be the same resolution with FB0.
 			 */
-			test_handle->output0.width = fb_var.xres;
-			test_handle->output0.height = fb_var.yres;
-			test_handle->output0.fb_disp.pos.x = 0;
-			test_handle->output0.fb_disp.pos.y = 0;
+			test_handle->output.width = fb_var.xres;
+			test_handle->output.height = fb_var.yres;
+			test_handle->output.fb_disp.pos.x = 0;
+			test_handle->output.fb_disp.pos.y = 0;
 		}
 		ov.key_color_en = 0;
-		ov.alpha = 0;
+		ov.alpha = 128;
 		ov.key_color = 0x808080;
 	} else {
 		/* one output case -- full screen */
-		test_handle->output0.width = fb_var.xres;
-		test_handle->output0.height = fb_var.yres;
+		test_handle->output.width = fb_var.xres;
+		test_handle->output.height = fb_var.yres;
 	}
 
 	/*allocate dma buffers from fb dev*/
@@ -635,17 +621,12 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 	gen_fill_pattern(buf[1], test_handle->input.width, test_handle->input.height);
 	done_cnt = i = 1;
 
-	if (two_output)
-		ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL, &(test_handle->output0),
-				&(test_handle->output1), test_handle->mode, test_handle->ipu_handle);
-	else {
-		if (overlay)
-			ret = mxc_ipu_lib_task_init(&(test_handle->input), &ov, &(test_handle->output0),
-				NULL, test_handle->mode, test_handle->ipu_handle);
-		else
-			ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL, &(test_handle->output0),
-				NULL, test_handle->mode, test_handle->ipu_handle);
-	}
+	if (overlay)
+		ret = mxc_ipu_lib_task_init(&(test_handle->input), &ov, &(test_handle->output),
+				test_handle->mode, test_handle->ipu_handle);
+	else
+		ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL, &(test_handle->output),
+				test_handle->mode, test_handle->ipu_handle);
 	if (ret < 0) {
 		printf("mxc_ipu_lib_task_init failed!\n");
 		goto done;
@@ -667,7 +648,8 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 						       ov_fake_fb_size);
 					j++;
 				}
-				memcpy(fb[(done_cnt+1)%2], ov_fake_fb,
+				/* fb show sequence should be 0->1->2->0 */
+				memcpy(fb[done_cnt%3], ov_fake_fb,
 				       ov_fake_fb_size);
 				if (mxc_ipu_lib_task_buf_update(test_handle->ipu_handle, paddr[i], ov_fake_fb_paddr, 0, NULL, NULL) < 0)
 					break;
@@ -827,7 +809,7 @@ int color_bar(int two_output, int overlay, ipu_test_handle_t * test_handle)
 					memset(ov_alpha_fake_fb, 0xFF,
 				      	       ov_alpha_fake_fb_size);
 				}
-				memcpy(fb[(done_cnt+1)%2], ov_fake_fb,
+				memcpy(fb[done_cnt%3], ov_fake_fb,
 				       ov_fake_fb_size);
 				if (mxc_ipu_lib_task_buf_update(test_handle->ipu_handle, paddr[i], ov_fake_fb_paddr, ov_alpha_fake_fb_paddr, NULL, NULL) < 0)
 					break;
@@ -928,10 +910,14 @@ void hop_block_output_cb(void * arg, int index)
 	ioctl(fd_fb, FBIOGET_VSCREENINFO, &fb_var);
 	/* for buf index 0, its phyaddr is fb buf1*/
 	/* for buf index 1, its phyaddr is fb buf0*/
+	/* for buf index 2, its phyaddr is fb buf2*/
 	if (index == 0)
 		fb_var.yoffset = fb_var.yres;
-	else
+	else if (index == 1)
 		fb_var.yoffset = 0;
+	else
+		fb_var.yoffset = 2 * fb_var.yres;
+
 	ioctl(fd_fb, FBIOPAN_DISPLAY, &fb_var);
 }
 
@@ -998,7 +984,7 @@ int hop_block(ipu_test_handle_t * test_handle)
 			- test_handle->block_width%8;
 	fb_var.xres_virtual = fb_var.xres;
 	fb_var.yres = test_handle->block_width;
-	fb_var.yres_virtual = fb_var.yres * 2;
+	fb_var.yres_virtual = fb_var.yres * 3;
 	if ( ioctl(fd_fb, FBIOPUT_VSCREENINFO, &fb_var) < 0) {
 		printf("Set FB var info failed!\n");
 		ret = -1;
@@ -1027,20 +1013,21 @@ int hop_block(ipu_test_handle_t * test_handle)
 	test_handle->input.width = 400;
 	test_handle->input.height = 400;
 	test_handle->input.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
-	test_handle->output0.width = test_handle->block_width
+	test_handle->output.width = test_handle->block_width
 					- test_handle->block_width%8;
-	test_handle->output0.height = test_handle->block_width;
+	test_handle->output.height = test_handle->block_width;
 	if (fb_var.bits_per_pixel == 24)
-		test_handle->output0.fmt = v4l2_fourcc('B', 'G', 'R', '3');
+		test_handle->output.fmt = v4l2_fourcc('B', 'G', 'R', '3');
 	else
-		test_handle->output0.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
-	test_handle->output0.show_to_fb = 0;
+		test_handle->output.fmt = v4l2_fourcc('R', 'G', 'B', 'P');
+	test_handle->output.show_to_fb = 0;
 	screen_size = fb_var.yres * fb_fix.line_length;
-	test_handle->output0.user_def_paddr[0] = fb_fix.smem_start + screen_size;
-	test_handle->output0.user_def_paddr[1] = fb_fix.smem_start;
+	test_handle->output.user_def_paddr[0] = fb_fix.smem_start + screen_size;
+	test_handle->output.user_def_paddr[1] = fb_fix.smem_start;
+	test_handle->output.user_def_paddr[2] = fb_fix.smem_start + 2*screen_size;
 
-	ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL, &(test_handle->output0),
-			NULL, test_handle->mode, test_handle->ipu_handle);
+	ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL, &(test_handle->output),
+			test_handle->mode, test_handle->ipu_handle);
 	if (ret < 0) {
 		printf("mxc_ipu_lib_task_init failed!\n");
 		goto done;
@@ -1092,149 +1079,6 @@ done:
 	return ret;
 }
 
-int h_splitted_tv_video_playback(ipu_test_handle_t * test_handle)
-{
-	int ret = 0, fd_fb = 0, dc_fb_num = 0, screen_size = 0, in_size = 0, i = 0, done_cnt = 0, half_frame_done_cnt = 0, total_fcount = 0;
-	void * in_buf[BUF_CNT] = {0};
-	int in_paddr[BUF_CNT] = {0};
-	char fbdev[] = "/dev/fb0";
-	unsigned int system_rev = 0;
-	struct fb_var_screeninfo fb_var;
-	struct fb_fix_screeninfo fb_fix;
-
-	get_system_rev(&system_rev);
-	if (((system_rev & 0xff000) != 0x37000) &&
-		(system_rev & 0xff000) != 0x51000) {
-		printf("We support to test splitted tv video playback on MX51/MX37 only!\n");
-		ret = -1;
-		goto done0;
-	}
-
-	/* This test assumes the TV uses MEM_DC_SYNC channel */
-	dc_fb_num = dc_fb();
-	if (dc_fb_num < 0) {
-		printf("Can't find the dc fb!\n");
-		ret = -1;
-		goto done0;
-	}
-
-	fbdev[7] = '0' + dc_fb_num;
-	if ((fd_fb = open(fbdev, O_RDWR, 0)) < 0) {
-		printf("Unable to open the dc fb %s\n", fbdev);
-		ret = -1;
-		goto done0;
-	}
-
-	if ( ioctl(fd_fb, FBIOGET_VSCREENINFO, &fb_var) < 0) {
-		printf("Get FB var info failed!\n");
-		ret = -1;
-		goto done1;
-	}
-
-	fb_var.yres_virtual = 2*fb_var.yres;
-	fb_var.nonstd = v4l2_fourcc('U', 'Y', 'V', 'Y');
-	if ( ioctl(fd_fb, FBIOPUT_VSCREENINFO, &fb_var) < 0) {
-		printf("Get FB var info failed!\n");
-		ret = -1;
-		goto done1;
-	}
-	if ( ioctl(fd_fb, FBIOGET_FSCREENINFO, &fb_fix) < 0) {
-		printf("Get FB fix info failed!\n");
-		ret = -1;
-		goto done1;
-	}
-
-	screen_size = fb_var.yres * fb_fix.line_length;
-
-	total_fcount = 512;
-	test_handle->mode = OP_NORMAL_MODE | TASK_PP_MODE;
-	test_handle->input.width = 640;
-	test_handle->input.height = 480;
-	test_handle->input.fmt = v4l2_fourcc('I', '4', '2', '0');
-	test_handle->output0.width = fb_var.xres;
-	test_handle->output0.height = fb_var.yres;
-	test_handle->output0.fmt = v4l2_fourcc('U', 'Y', 'V', 'Y');
-	test_handle->output0.rot = 0;
-	test_handle->output0.show_to_fb = 0;
-
-	in_size = test_handle->input.width * test_handle->input.height * 3/2;
-	ret = dma_memory_alloc(in_size, BUF_CNT, in_paddr, in_buf);
-	if ( ret < 0) {
-		printf("dma_memory_alloc input buffer failed\n");
-		goto done1;
-	}
-
-	gen_fill_pattern(in_buf[0], test_handle->input.width, test_handle->input.height);
-
-	while (done_cnt < total_fcount) {
-		test_handle->input.user_def_paddr[0] = in_paddr[i];
-		if (half_frame_done_cnt % 2 == 0) {
-			test_handle->input.input_crop_win.pos.x = 0;
-			test_handle->input.input_crop_win.pos.y = 0;
-			test_handle->input.input_crop_win.win_w = test_handle->input.width/2;
-			test_handle->input.input_crop_win.win_h = test_handle->input.height;
-			test_handle->output0.output_win.win_w = fb_var.xres/2;
-			test_handle->output0.output_win.win_h = fb_var.yres;
-			test_handle->output0.output_win.pos.x = 0;
-			test_handle->output0.output_win.pos.y = 0;
-		} else {
-			test_handle->input.input_crop_win.pos.x = test_handle->input.width/2;
-			test_handle->input.input_crop_win.pos.y = 0;
-			test_handle->input.input_crop_win.win_w = test_handle->input.width/2;
-			test_handle->input.input_crop_win.win_h = test_handle->input.height;
-			test_handle->output0.output_win.win_w = fb_var.xres/2;
-			test_handle->output0.output_win.win_h = fb_var.yres;
-			test_handle->output0.output_win.pos.x = fb_var.xres/2;
-			test_handle->output0.output_win.pos.y = 0;
-		}
-		if (done_cnt%2)
-			test_handle->output0.user_def_paddr[0] = fb_fix.smem_start + screen_size;
-		else
-			test_handle->output0.user_def_paddr[0] = fb_fix.smem_start;
-
-		ret = mxc_ipu_lib_task_init(&(test_handle->input), NULL,
-				&(test_handle->output0), NULL,
-				test_handle->mode, test_handle->ipu_handle);
-		if (ret < 0) {
-			printf("mxc_ipu_lib_task_init failed!\n");
-			goto done2;
-		}
-
-		if (mxc_ipu_lib_task_buf_update(test_handle->ipu_handle, 0, 0, 0, 0, 0) < 0) {
-			printf("mxc_ipu_lib_task_buf_update failed!\n");
-			ret = -1;
-			mxc_ipu_lib_task_uninit(test_handle->ipu_handle);
-			goto done2;
-		}
-
-		half_frame_done_cnt++;
-
-		/* One output frame is filled */
-		if (half_frame_done_cnt % 2 == 0) {
-			i++;
-			done_cnt++;
-			if (done_cnt % 2)
-				fb_var.yoffset = fb_var.yres;
-			else
-				fb_var.yoffset = 0;
-			ioctl(fd_fb, FBIOPAN_DISPLAY, &fb_var);
-		}
-		if (i == BUF_CNT)
-			i = 0;
-
-		if (half_frame_done_cnt % 2 == 0)
-			gen_fill_pattern(in_buf[i], test_handle->input.width, test_handle->input.height);
-
-		mxc_ipu_lib_task_uninit(test_handle->ipu_handle);
-	}
-done2:
-	dma_memory_free(in_size, BUF_CNT, in_paddr, in_buf);
-done1:
-	close(fd_fb);
-done0:
-	return ret;
-}
-
 void * thread_func_color_bar(void *arg)
 {
 	int ret;
@@ -1245,7 +1089,7 @@ void * thread_func_color_bar(void *arg)
 	memset(&test_handle, 0, sizeof(ipu_test_handle_t));
 
 	test_handle.ipu_handle = &ipu_handle;
-	ret = color_bar(0, NO_OV, &test_handle);
+	ret = color_bar(NO_OV, &test_handle);
 
 	pthread_exit((void*)ret);
 }
@@ -2062,17 +1906,13 @@ int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 {
 	if (pattern == 1) {
 		printf("Color bar test with full-screen:\n");
-		return color_bar(0, NO_OV, test_handle);
+		return color_bar(NO_OV, test_handle);
 	}
 	if (pattern == 2) {
-		printf("Color bar test 1 input with 2 output:\n");
-		return color_bar(1, NO_OV, test_handle);
-	}
-	if (pattern == 3) {
 		printf("Hopping block test:\n");
 		return hop_block(test_handle);
 	}
-	if (pattern == 4) {
+	if (pattern == 3) {
 		int ret=0;
 		int ret1=0;
 		int ret2=0;
@@ -2094,73 +1934,69 @@ int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 			ret = -1;
 		return ret;
 	}
-	if (pattern == 5) {
+	if (pattern == 4) {
 		printf("Color bar IC global alpha overlay test:\n");
-		return color_bar(0, IC_GLB_ALP_OV, test_handle);
+		return color_bar(IC_GLB_ALP_OV, test_handle);
+	}
+	if (pattern == 5) {
+		printf("Color bar IC separate local alpha overlay test:\n");
+		return color_bar(IC_LOC_SEP_ALP_OV, test_handle);
 	}
 	if (pattern == 6) {
-		printf("Color bar IC separate local alpha overlay test:\n");
-		return color_bar(0, IC_LOC_SEP_ALP_OV, test_handle);
+		printf("Color bar IC local alpha within pixel overlay test:\n");
+		return color_bar(IC_LOC_PIX_ALP_OV, test_handle);
 	}
 	if (pattern == 7) {
-		printf("Color bar IC local alpha within pixel overlay test:\n");
-		return color_bar(0, IC_LOC_PIX_ALP_OV, test_handle);
-	}
-	if (pattern == 8) {
 		printf("Copy test:\n");
 		return copy_test(test_handle);
 	}
-	if (pattern == 9) {
+	if (pattern == 8) {
 		printf("Screen layer with 2 layers test using IC global alpha blending:\n");
 		return screenlayer_test(0, IC_GLB_ALP_OV);
 	}
-	if (pattern == 10) {
+	if (pattern == 9) {
 		printf("Screen layer with 3 layers test using IC global alpha blending:\n");
 		return screenlayer_test(1, IC_GLB_ALP_OV);
 	}
-	if (pattern == 11) {
+	if (pattern == 10) {
 		printf("Screen layer with 2 layers test using IC local alpha blending with alpha value in separate buffer:\n");
 		return screenlayer_test(0, IC_LOC_SEP_ALP_OV);
 	}
-	if (pattern == 12) {
+	if (pattern == 11) {
 		printf("Screen layer with 3 layers test using IC local alpha blending with alpha value in separate buffer:\n");
 		return screenlayer_test(1, IC_LOC_SEP_ALP_OV);
  	}
-	if (pattern == 13) {
+	if (pattern == 12) {
 		printf("Screen layer with 2 layers test using IC local alpha blending with alpha value in pixel:\n");
 		return screenlayer_test(0, IC_LOC_PIX_ALP_OV);
 	}
-	if (pattern == 14) {
+	if (pattern == 13) {
 		printf("Screen layer with 3 layers test using IC local alpha blending with alpha value in pixel:\n");
 		return screenlayer_test(1, IC_LOC_PIX_ALP_OV);
  	}
-	if (pattern == 15){
+	if (pattern == 14){
 		printf("Screen layer IPC(global alpha): ProcessA(first_layer ) ProcessB(second_layer):\n");
 		return screenlayer_test_ipc(2, 0, IC_GLB_ALP_OV);
 	}
-	if (pattern == 16){
+	if (pattern == 15){
 		printf("Screen layer IPC(local alpha): ProcessA(first_layer ) ProcessB(second_layer):\n");
 		return screenlayer_test_ipc(2, 0, IC_LOC_SEP_ALP_OV);
 	}
-	if (pattern == 17){
+	if (pattern == 16){
 		printf("Screen layer IPC(global alpha): ProcessA(first_layer + second_layer) ProcessB(third_layer):\n");
 		return screenlayer_test_ipc(2, 1, IC_GLB_ALP_OV);
 	}
-	if (pattern == 18){
+	if (pattern == 17){
 		printf("Screen layer IPC(local alpha): ProcessA(first_layer + second_layer) ProcessB(third_layer):\n");
 		return screenlayer_test_ipc(2, 1, IC_LOC_SEP_ALP_OV);
 	}
-	if (pattern == 19){
+	if (pattern == 18){
 		printf("Screen layer IPC(local alpha): ProcessA(first_layer) ProcessB(second_layer) ProcessC(third_layer):\n");
 		return screenlayer_test_ipc(3, 1, IC_LOC_SEP_ALP_OV);
 	}
-	if (pattern == 20){
+	if (pattern == 19){
 		printf("[No mandatory test]Screen layer IPC(local alpha + tvout): ProcessA(first_layer) ProcessB(second_layer):\n");
 		return screenlayer_test_ipc(2, 0, IC_LOC_SEP_ALP_OV | COPY_TV);
-	}
-	if (pattern == 21){
-		printf("Horizontally slipped video test on TV(support upsizing), assuming the TV uses MEM_DC_SYNC channel:\n");
-		return h_splitted_tv_video_playback(test_handle);
 	}
 
 	printf("No such test pattern %d\n", pattern);
