@@ -241,7 +241,7 @@ mxc_v4l_output_test(FILE *in)
 						if (i < g_num_buffers)
 							deq_cnt = i;
 						else
-							deq_cnt = g_num_buffers;
+							deq_cnt = g_num_buffers - 1;
 						for (j=0;j<(deq_cnt - 1);j++) {
 							buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 							buf.memory = V4L2_MEMORY_MMAP;
@@ -273,7 +273,7 @@ mxc_v4l_output_test(FILE *in)
 						if (i < g_num_buffers)
 							deq_cnt = i;
 						else
-							deq_cnt = g_num_buffers;
+							deq_cnt = g_num_buffers - 1;
 						for (j=0;j<(deq_cnt - 1);j++) {
 							buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 							buf.memory = V4L2_MEMORY_MMAP;
