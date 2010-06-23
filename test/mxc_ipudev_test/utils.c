@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -80,14 +80,14 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		}
 	}
 
-	str = strstr(buf, "output1_enable");
+	str = strstr(buf, "loop_cnt");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output1_enabled = strtol(str, NULL, 10);
-				printf("output1_enable\t= %d\n", test_handle->output1_enabled);
+				test_handle->loop_cnt = strtol(str, NULL, 10);
+				printf("loop_cnt\t= %d\n", test_handle->loop_cnt);
 			}
 			return 0;
 		}
@@ -194,239 +194,120 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		}
 	}
 
-	/* output0 */
-	str = strstr(buf, "out0_width");
+	/* output */
+	str = strstr(buf, "out_width");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output0.width = strtol(str, NULL, 10);
-				printf("out0_width\t= %d\n", test_handle->output0.width);
+				test_handle->output.width = strtol(str, NULL, 10);
+				printf("out_width\t= %d\n", test_handle->output.width);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "out0_height");
+	str = strstr(buf, "out_height");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output0.height = strtol(str, NULL, 10);
-				printf("out0_height\t= %d\n", test_handle->output0.height);
+				test_handle->output.height = strtol(str, NULL, 10);
+				printf("out_height\t= %d\n", test_handle->output.height);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "out0_fmt");
+	str = strstr(buf, "out_fmt");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output0.fmt =
+				test_handle->output.fmt =
 					v4l2_fourcc(str[0], str[1], str[2], str[3]);
-				printf("out0_fmt\t= %s\n", str);
+				printf("out_fmt\t\t= %s\n", str);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "out0_rot");
+	str = strstr(buf, "out_rot");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output0.rot = strtol(str, NULL, 10);
-				printf("out0_rot\t= %d\n", test_handle->output0.rot);
+				test_handle->output.rot = strtol(str, NULL, 10);
+				printf("out_rot\t\t= %d\n", test_handle->output.rot);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "out0_to_fb");
+	str = strstr(buf, "out_to_fb");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output0.show_to_fb = strtol(str, NULL, 10);
-				printf("out0_to_fb\t= %d\n", test_handle->output0.show_to_fb);
+				test_handle->output.show_to_fb = strtol(str, NULL, 10);
+				printf("out_to_fb\t= %d\n", test_handle->output.show_to_fb);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "out0_fb_num");
+	str = strstr(buf, "out_fb_num");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output0.fb_disp.fb_num = strtol(str, NULL, 10);
-				printf("out0_fb_num\t= %d\n", test_handle->output0.fb_disp.fb_num);
+				test_handle->output.fb_disp.fb_num = strtol(str, NULL, 10);
+				printf("out_fb_num\t= %d\n", test_handle->output.fb_disp.fb_num);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "out0_posx");
+	str = strstr(buf, "out_posx");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output0.fb_disp.pos.x = strtol(str, NULL, 10);
-				printf("out0_posx\t= %d\n", test_handle->output0.fb_disp.pos.x);
+				test_handle->output.fb_disp.pos.x = strtol(str, NULL, 10);
+				printf("out_posx\t= %d\n", test_handle->output.fb_disp.pos.x);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "out0_posy");
+	str = strstr(buf, "out_posy");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output0.fb_disp.pos.y = strtol(str, NULL, 10);
-				printf("out0_posy\t= %d\n", test_handle->output0.fb_disp.pos.y);
+				test_handle->output.fb_disp.pos.y = strtol(str, NULL, 10);
+				printf("out_posy\t= %d\n", test_handle->output.fb_disp.pos.y);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "out0_filename");
+	str = strstr(buf, "out_filename");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				memcpy(test_handle->outfile0, str, strlen(str));
-				printf("out0_filename\t= %s\n", test_handle->outfile0);
-			}
-			return 0;
-		}
-	}
-
-	/* output1 */
-	str = strstr(buf, "out1_width");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output1.width = strtol(str, NULL, 10);
-				printf("out1_width\t= %d\n", test_handle->output1.width);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out1_height");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output1.height = strtol(str, NULL, 10);
-				printf("out1_height\t= %d\n", test_handle->output1.height);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out1_fmt");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output1.fmt =
-					v4l2_fourcc(str[0], str[1], str[2], str[3]);
-				printf("out1_fmt\t= %s\n", str);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out1_rot");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output1.rot = strtol(str, NULL, 10);
-				printf("out1_rot\t= %d\n", test_handle->output1.rot);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out1_to_fb");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output1.show_to_fb = strtol(str, NULL, 10);
-				printf("out1_to_fb\t= %d\n", test_handle->output1.show_to_fb);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out1_fb_num");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output1.fb_disp.fb_num = strtol(str, NULL, 10);
-				printf("out1_fb_num\t= %d\n", test_handle->output1.fb_disp.fb_num);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out1_posx");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output1.fb_disp.pos.x = strtol(str, NULL, 10);
-				printf("out1_posx\t= %d\n", test_handle->output1.fb_disp.pos.x);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out1_posy");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output1.fb_disp.pos.y = strtol(str, NULL, 10);
-				printf("out1_posy\t= %d\n", test_handle->output1.fb_disp.pos.y);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out1_filename");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				memcpy(test_handle->outfile1, str, strlen(str));
-				printf("out1_filename\t= %s\n", test_handle->outfile1);
+				memcpy(test_handle->outfile, str, strlen(str));
+				printf("out_filename\t= %s\n", test_handle->outfile);
 			}
 			return 0;
 		}
