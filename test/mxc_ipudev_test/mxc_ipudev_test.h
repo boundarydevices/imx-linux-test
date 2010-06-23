@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -29,17 +29,14 @@
 typedef struct {
 	ipu_lib_handle_t * ipu_handle;
 	int fcount;
+	int loop_cnt;
 	int mode;
 	int test_pattern;
 	int block_width;
-	int output1_enabled;
-	char outfile0[128];
-	char outfile1[128];
-	FILE * file_out0;
-	FILE * file_out1;
+	char outfile[128];
+	FILE * file_out;
 	ipu_lib_input_param_t input;
-	ipu_lib_output_param_t output0;
-	ipu_lib_output_param_t output1;
+	ipu_lib_output_param_t output;
 } ipu_test_handle_t;
 
 enum {
