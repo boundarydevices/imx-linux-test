@@ -160,7 +160,7 @@ void * disp_loop_thread(void *arg)
 		else if (disp->ncount == 1) {
 			disp->input.user_def_paddr[1] = disp->ipu_bufs[index].ipu_paddr;
 			mode = OP_STREAM_MODE | TASK_PP_MODE;
-			err = mxc_ipu_lib_task_init(&(disp->input), NULL, &(disp->output), NULL, mode, &(disp->ipu_handle));
+			err = mxc_ipu_lib_task_init(&(disp->input), NULL, &(disp->output), mode, &(disp->ipu_handle));
 			if (err < 0) {
 				err_msg("mxc_ipu_lib_task_init failed, err %d\n", err);
 				quitflag = 1;
