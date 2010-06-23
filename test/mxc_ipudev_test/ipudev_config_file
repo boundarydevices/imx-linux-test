@@ -35,13 +35,13 @@
 # 	STREAM_MODE = 0x20
 
 #### mode
-mode=0x22
+mode=0x24
 
 #### operation frame count
 fcount=50
 
-#### output1 enable?
-output1_enable=0
+#### operation loop count
+loop_cnt=1
 
 #### input
 in_width=320
@@ -53,28 +53,15 @@ in_posy=0
 in_win_w=0
 in_win_h=0
 
-#### output0
-out0_width=320
-out0_height=240
-out0_fmt=RGBP
-out0_rot=0
+#### output
+out_width=1024
+out_height=768
+out_fmt=UYVY
+out_rot=0
 #output to framebuffer
-out0_to_fb=1
-out0_fb_num=0
-out0_posx=0
-out0_posy=0
+out_to_fb=1
+out_fb_num=2
+out_posx=0
+out_posy=0
 #output to file
-out0_filename=output0.dat
-
-#### output1
-out1_width=320
-out1_height=240
-out1_fmt=RGBP
-out1_rot=0
-#output to framebuffer
-out1_to_fb=1
-out1_fb_num=2
-out1_posx=0
-out1_posy=0
-#output to file
-out1_filename=output1.dat
+out_filename=output.dat
