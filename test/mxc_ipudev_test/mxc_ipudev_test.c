@@ -180,12 +180,33 @@ again:
 			printf("Can not read enough data from input file!\n");
 			break;
 		}
+		if (first_time && (test_handle.mode == (TASK_VDI_VF_MODE | OP_NORMAL_MODE)) && (test_handle.input.motion_sel != HIGH_MOTION)) {
+			if (fread(test_handle.ipu_handle->inbuf_start[1], 1, test_handle.ipu_handle->ifr_size, file_in)
+					< test_handle.ipu_handle->ifr_size) {
+				ret = -1;
+				printf("Can not read enough data from input file!\n");
+				break;
+			}
+			first_time = 0;
+			done_cnt++;
+			total_cnt++;
+		}
 		if (first_time && (test_handle.mode & OP_STREAM_MODE)) {
 			if (fread(test_handle.ipu_handle->inbuf_start[1], 1, test_handle.ipu_handle->ifr_size, file_in)
 					< test_handle.ipu_handle->ifr_size) {
 				ret = -1;
 				printf("Can not read enough data from input file!\n");
 				break;
+			}
+			if ((test_handle.mode & TASK_VDI_VF_MODE) && (test_handle.input.motion_sel != HIGH_MOTION)) {
+				if (fread(test_handle.ipu_handle->inbuf_start[2], 1, test_handle.ipu_handle->ifr_size, file_in)
+						< test_handle.ipu_handle->ifr_size) {
+					ret = -1;
+					printf("Can not read enough data from input file!\n");
+					break;
+				}
+				done_cnt++;
+				total_cnt++;
 			}
 			first_time = 0;
 			done_cnt++;
