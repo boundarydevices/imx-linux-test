@@ -194,6 +194,21 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		}
 	}
 
+	str = strstr(buf, "motion_sel");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				test_handle->input.motion_sel =
+					strtol(str, NULL, 10);
+				printf("motion_sel\t= %d\n",
+					test_handle->input.motion_sel);
+			}
+			return 0;
+		}
+	}
+
 	/* output */
 	str = strstr(buf, "out_width");
 	if (str != NULL) {
