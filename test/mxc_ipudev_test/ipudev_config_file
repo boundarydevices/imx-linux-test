@@ -31,8 +31,15 @@
 # 	TASK_ENC = 0x1
 # 	TASK_VF = 0x2
 # 	TASK_PP = 0x4
+# 	TASK_VDI_VF = 0x8
 # 	NORMAL_MODE = 0x10
 # 	STREAM_MODE = 0x20
+#
+# video de-interlace motion ref:
+#	MEDIUM_MOTION = 0
+#	LOW_MOTION = 1
+#	HIGH_MOTION = 2
+#
 
 #### mode
 mode=0x24
@@ -52,6 +59,8 @@ in_posx=0
 in_posy=0
 in_win_w=0
 in_win_h=0
+#input motion(video de-interlace)
+motion_sel=0
 
 #### output
 out_width=1024
