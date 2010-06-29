@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -162,18 +162,18 @@ int bytes_per_pixel(int fmt)
 	return 0;
 }
 
-int v4l_capture_setup(void)
+int v4l_capture_setup(int * fd_v4l)
 {
         char v4l_device[100] = "/dev/video0";
         struct v4l2_streamparm parm;
         struct v4l2_format fmt;
         struct v4l2_crop crop;
-        int fd_v4l = 0;
+        int ret = 0;
 
-        if ((fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
+        if ((*fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
         {
                 printf("Unable to open %s\n", v4l_device);
-                return 0;
+                return -1;
         }
 
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -181,10 +181,10 @@ int v4l_capture_setup(void)
 	parm.parm.capture.timeperframe.denominator = g_camera_framerate;
 	parm.parm.capture.capturemode = g_capture_mode;
 
-	if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
+	if ((ret = ioctl(*fd_v4l, VIDIOC_S_PARM, &parm)) < 0)
 	{
 		printf("VIDIOC_S_PARM failed\n");
-		return 0;
+		return ret;
 	}
 
 	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -192,10 +192,10 @@ int v4l_capture_setup(void)
 	crop.c.top = g_top;
 	crop.c.width = g_width;
 	crop.c.height = g_height;
-	if (ioctl(fd_v4l, VIDIOC_S_CROP, &crop) < 0)
+	if ((ret = ioctl(*fd_v4l, VIDIOC_S_CROP, &crop)) < 0)
 	{
 		printf("set cropping failed\n");
-		return 0;
+		return ret;
 	}
 
 	memset(&fmt, 0, sizeof(fmt));
@@ -206,32 +206,32 @@ int v4l_capture_setup(void)
         fmt.fmt.pix.sizeimage = fmt.fmt.pix.width * fmt.fmt.pix.height * g_bpp / 8;
         fmt.fmt.pix.bytesperline = g_width * bytes_per_pixel(g_pixelformat);
 
-        if (ioctl(fd_v4l, VIDIOC_S_FMT, &fmt) < 0)
+        if ((ret = ioctl(*fd_v4l, VIDIOC_S_FMT, &fmt)) < 0)
         {
                 printf("set format failed\n");
-                return 0;
+                return ret;
         }
 
-        return fd_v4l;
+        return ret;
 }
 
-void v4l_capture_test(int fd_v4l)
+int v4l_capture_test(int fd_v4l)
 {
         struct v4l2_format fmt;
-        int fd_still = 0;
+        int fd_still = 0, ret = 0;
         char *buf1, *buf2;
         char still_file[100] = "./still.yuv";
 
         if ((fd_still = open(still_file, O_RDWR | O_CREAT | O_TRUNC)) < 0)
         {
                 printf("Unable to create y frame recording file\n");
-                return;
+                return -1;
         }
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if (ioctl(fd_v4l, VIDIOC_G_FMT, &fmt) < 0) {
+        if ((ret = ioctl(fd_v4l, VIDIOC_G_FMT, &fmt)) < 0) {
                 printf("get format failed\n");
-                return;
+                return ret;
         } else {
                 printf("\t Width = %d\n", fmt.fmt.pix.width);
                 printf("\t Height = %d\n", fmt.fmt.pix.height);
@@ -271,12 +271,15 @@ exit0:
                 free(buf2);
         close(fd_still);
         close(fd_v4l);
+
+	return ret;
 }
 
 int main(int argc, char **argv)
 {
         int fd_v4l;
         int i;
+	int ret;
 
         for (i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-w") == 0) {
@@ -333,17 +336,20 @@ int main(int argc, char **argv)
                         else {
                                 printf("Pixel format not supported.\n");
                                 usage();
-                                return 0;
+                                return -1;
                         }
                 }
                 else {
                         usage();
-                        return 0;
+                        return -1;
                 }
         }
 
-        fd_v4l = v4l_capture_setup();
-        v4l_capture_test(fd_v4l);
+        ret = v4l_capture_setup(&fd_v4l);
+	if (ret)
+		return ret;
 
-        return 0;
+        ret = v4l_capture_test(fd_v4l);
+
+        return ret;
 }
