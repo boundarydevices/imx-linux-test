@@ -123,6 +123,7 @@ struct vpu_display {
 	struct ipu_queue ipu_q;
 	struct ipu_buf ipu_bufs[MAX_BUF_NUM];
 	int stopping;
+	int deinterlaced;
 };
 
 struct capture_testbuffer {
