@@ -9,7 +9,7 @@ STATUS=0
 
 echo "$(platform)"
 if [ "$(platform)" == IMX37_3STACK ] || [ "$(platform)" == IMX51 ] \
-    || [ "$(platform)" == IMX53 ]; then
+    || [ "$(platform)" == IMX53 ] || [ "$(platform)" == IMX50 ]; then
 	rtc_test_param=--no-periodic
 	RTC_IRQS_EXPECTED=1
 else
