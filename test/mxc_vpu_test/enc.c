@@ -456,12 +456,6 @@ encoder_start(struct encode *enc)
 				break;
 		}
 
-		/* RTC setting */
-		enc_param.underrunEnable = 0;
-		enc_param.accumulativeMode = 0;
-		enc_param.pulseWidth = 0;
-		enc_param.refMbClk = 0;
-
 		gettimeofday(&tenc_begin, NULL);
 		ret = vpu_EncStartOneFrame(handle, &enc_param);
 		if (ret != RETCODE_SUCCESS) {
