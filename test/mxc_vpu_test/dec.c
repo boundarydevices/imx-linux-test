@@ -807,12 +807,6 @@ decoder_start(struct decode *dec)
 			vpu_DecGiveCommand(handle, SET_DBK_OFFSET, &dbkOffset);
 		}
 
-		/* RTC setting */
-		decparam.underrunEnable = 0;
-		decparam.accumulativeMode = 0;
-		decparam.pulseWidth = 0;
-		decparam.refMbClk = 0;
-
 		gettimeofday(&tdec_begin, NULL);
 		ret = vpu_DecStartOneFrame(handle, &decparam);
 		if (ret != RETCODE_SUCCESS) {
