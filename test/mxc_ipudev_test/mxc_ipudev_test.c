@@ -65,10 +65,17 @@ int process_cmdline(int argc, char **argv, ipu_test_handle_t * test_handle)
 			test_handle->block_width = atoi(argv[++i]);
 			if (test_handle->block_width < 16)
 				test_handle->block_width = 16;
+		} else if (strcmp(argv[i], "-Q") == 0)
+			test_handle->query_task = 1;
+		else if (strcmp(argv[i], "-K") == 0) {
+			test_handle->kill_task = 1;
+			test_handle->kill_task_idx = atoi(argv[++i]);
 		}
 	}
 
 	if (test_handle->test_pattern)
+		return 0;
+	if (test_handle->query_task || test_handle->kill_task)
 		return 0;
 
 	if ((test_handle->input.width == 0) || (test_handle->input.height == 0) ||
@@ -76,6 +83,48 @@ int process_cmdline(int argc, char **argv, ipu_test_handle_t * test_handle)
 			(test_handle->output.height == 0)
 			|| (test_handle->fcount < 1))
 		return -1;
+
+	return 0;
+}
+
+int query_ipu_task(void)
+{
+	int i;
+	ipu_lib_ctl_task_t task;
+
+	for (i = 0; i< MAX_TASK_NUM; i++) {
+		task.index = i;
+		mxc_ipu_lib_task_control(IPU_CTL_TASK_QUERY, (void *)(&task), NULL);
+		if (task.task_pid) {
+			printf("\ntask %d:\n", i);
+			printf("\tpid: %d\n", task.task_pid);
+			printf("\tmode:\n");
+			if (task.task_mode & IC_ENC)
+				printf("\t\tIC_ENC\n");
+			if (task.task_mode & IC_VF)
+				printf("\t\tIC_VF\n");
+			if (task.task_mode & IC_PP)
+				printf("\t\tIC_PP\n");
+			if (task.task_mode & ROT_ENC)
+				printf("\t\tROT_ENC\n");
+			if (task.task_mode & ROT_VF)
+				printf("\t\tROT_VF\n");
+			if (task.task_mode & ROT_PP)
+				printf("\t\tROT_PP\n");
+			if (task.task_mode & VDI_IC_VF)
+				printf("\t\tVDI_IC_VF\n");
+		}
+	}
+
+	return 0;
+}
+
+int kill_ipu_task(int index)
+{
+	ipu_lib_ctl_task_t task;
+
+	task.index = index;
+	mxc_ipu_lib_task_control(IPU_CTL_TASK_KILL, (void *)(&task), NULL);
 
 	return 0;
 }
@@ -113,8 +162,12 @@ int main(int argc, char *argv[])
 				"-C <config file>\n" \
 				"-P <test pattern>\n" \
 				"[-bw <block width for pattern 3>]\n" \
-				"<input raw file>\n\n", argv[0]);
-		printf("test pattern:\n" \
+				"<input raw file>\n\n" \
+				"Query ipu task runing:\n" \
+				"-Q\n\n" \
+				"Kill ipu task:\n" \
+				"-K <task_index>\n", argv[0]);
+		printf("\ntest pattern:\n" \
 			"1: video pattern with user define dma buffer queue, one full-screen output\n" \
 			"2: hopping block screen save\n" \
 			"3: color bar + hopping block\n" \
@@ -144,8 +197,14 @@ int main(int argc, char *argv[])
 		system("echo 0,0 > /sys/class/graphics/fb0/pan");
 		return ret;
 	} else if (argc < 4) {
-		printf("Pls set input file\n");
-		return -1;
+		if (test_handle.query_task)
+			return query_ipu_task();
+		else if (test_handle.kill_task)
+			return kill_ipu_task(test_handle.kill_task_idx);
+		else {
+			printf("Pls set input file\n");
+			return -1;
+		}
 	}
 
 	if (test_handle.mode & OP_STREAM_MODE) {
