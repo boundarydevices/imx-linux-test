@@ -33,6 +33,9 @@ typedef struct {
 	int mode;
 	int test_pattern;
 	int block_width;
+	int query_task;
+	int kill_task;
+	int kill_task_idx;
 	char outfile[128];
 	FILE * file_out;
 	ipu_lib_input_param_t input;
