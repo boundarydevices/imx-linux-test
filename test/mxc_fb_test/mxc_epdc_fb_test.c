@@ -47,7 +47,7 @@ extern "C"{
 #include <malloc.h>
 
 #include "ginger_rgb_800x600.c"
-#include "fsl_rgb_488x360.c"
+#include "fsl_rgb_480x360.c"
 #include "colorbar_rgb_800x600.c"
 
 
@@ -428,24 +428,24 @@ static int test_updates(void)
 
 	printf("FSL updates\n");
 	memset(fb, 0xFF, 800*600*2);
-	copy_image_to_buffer(300, 0, 488, 360, fsl_rgb_488x360, BUFFER_FB, &screen_info);
-	update_to_display(300, 0, 488, 560, WAVEFORM_MODE_AUTO, TRUE);
+	copy_image_to_buffer(300, 0, 480, 360, fsl_rgb_480x360, BUFFER_FB, &screen_info);
+	update_to_display(300, 0, 480, 560, WAVEFORM_MODE_AUTO, TRUE);
 
 	memset(fb, 0xFF, 800*600*2);
-	copy_image_to_buffer(300, 48, 488, 360, fsl_rgb_488x360, BUFFER_FB, &screen_info);
-	update_to_display(300, 0, 488, 560, WAVEFORM_MODE_AUTO, TRUE);
+	copy_image_to_buffer(300, 48, 480, 360, fsl_rgb_480x360, BUFFER_FB, &screen_info);
+	update_to_display(300, 0, 480, 560, WAVEFORM_MODE_AUTO, TRUE);
 
 	memset(fb, 0xFF, 800*600*2);
-	copy_image_to_buffer(300, 100, 488, 360, fsl_rgb_488x360, BUFFER_FB, &screen_info);
-	update_to_display(300, 0, 488, 560, WAVEFORM_MODE_AUTO, TRUE);
+	copy_image_to_buffer(300, 100, 480, 360, fsl_rgb_480x360, BUFFER_FB, &screen_info);
+	update_to_display(300, 0, 480, 560, WAVEFORM_MODE_AUTO, TRUE);
 
 	memset(fb, 0xFF, 800*600*2);
-	copy_image_to_buffer(300, 148, 488, 360, fsl_rgb_488x360, BUFFER_FB, &screen_info);
-	update_to_display(300, 0, 488, 560, WAVEFORM_MODE_AUTO, TRUE);
+	copy_image_to_buffer(300, 148, 480, 360, fsl_rgb_480x360, BUFFER_FB, &screen_info);
+	update_to_display(300, 0, 480, 560, WAVEFORM_MODE_AUTO, TRUE);
 
 	memset(fb, 0xFF, 800*600*2);
-	copy_image_to_buffer(300, 200, 488, 360, fsl_rgb_488x360, BUFFER_FB, &screen_info);
-	update_to_display(300, 0, 488, 560, WAVEFORM_MODE_AUTO, TRUE);
+	copy_image_to_buffer(300, 200, 480, 360, fsl_rgb_480x360, BUFFER_FB, &screen_info);
+	update_to_display(300, 0, 480, 560, WAVEFORM_MODE_AUTO, TRUE);
 
 	printf("Ginger update\n");
 	copy_image_to_buffer(0, 0, 800, 600, ginger_rgb_800x600, BUFFER_FB, &screen_info);
@@ -484,8 +484,8 @@ static int test_rotation(void)
 		printf("After rotation...xres = %d, yres = %d\n", screen_info.xres, screen_info.yres);
 
 		printf("Rotated FSL\n");
-		copy_image_to_buffer(0, 0, 488, 360, fsl_rgb_488x360, BUFFER_FB, &screen_info);
-		update_to_display(0, 0, 488, 360, WAVEFORM_MODE_AUTO, FALSE);
+		copy_image_to_buffer(0, 0, 480, 360, fsl_rgb_480x360, BUFFER_FB, &screen_info);
+		update_to_display(0, 0, 480, 360, WAVEFORM_MODE_AUTO, FALSE);
 
 		sleep(3);
 		printf("Blank screen\n");
@@ -683,7 +683,7 @@ static int test_auto_update(void)
 	sleep(1);
 
 	printf("Auto-update FSL logo\n");
-	copy_image_to_buffer(0, 0, 488, 360, fsl_rgb_488x360, BUFFER_FB, &screen_info);
+	copy_image_to_buffer(0, 0, 480, 360, fsl_rgb_480x360, BUFFER_FB, &screen_info);
 
 	sleep(2);
 
@@ -924,17 +924,17 @@ static int test_overlay(void)
 	update_to_display(0, 0, screen_info.xres, screen_info.yres, WAVEFORM_MODE_AUTO, TRUE);
 
 	printf("Show rotated overlay in center\n");
-	copy_image_to_buffer(0, 0, 488, 360, fsl_rgb_488x360,
+	copy_image_to_buffer(0, 0, 480, 360, fsl_rgb_480x360,
 		BUFFER_OVERLAY, &screen_info);
 
 	/* Update region of overlay shown */
-	upd_data.update_region.left = (screen_info.xres - 488)/2;
-	upd_data.update_region.width = 488;
+	upd_data.update_region.left = (screen_info.xres - 480)/2;
+	upd_data.update_region.width = 480;
 	upd_data.update_region.top = (screen_info.yres - 360)/2;
 	upd_data.update_region.height = 360;
 	upd_data.update_marker = marker_val++;
 	upd_data.alt_buffer_data.alt_update_region.left = 0;
-	upd_data.alt_buffer_data.alt_update_region.width = 488;
+	upd_data.alt_buffer_data.alt_update_region.width = 480;
 	upd_data.alt_buffer_data.alt_update_region.top = 0;
 	upd_data.alt_buffer_data.alt_update_region.height = 360;
 
