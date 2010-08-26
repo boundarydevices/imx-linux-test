@@ -744,6 +744,7 @@ static int test_pan(void)
 			printf("Pan fail!\n");
 			break;
 		}
+		update_to_display(0, 0, screen_info.xres, screen_info.yres, WAVEFORM_MODE_AUTO, TRUE);
 	}
 	printf("Pan test done.\n");
 
