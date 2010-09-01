@@ -1,8 +1,10 @@
 # list of platforms which want this test case
-INCLUDE_LIST:=IMX233 IMX28
+INCLUDE_LIST:=IMX233 IMX28 IMX50 IMX51 IMX5
+
+CFLAGS += -lpthread
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
-OBJS = $(OBJDIR)/mxs_pxp_test.out $(OBJDIR)/mxs_pxp_out_test.sh
+OBJS = $(OBJDIR)/pxp_v4l2_test.out $(OBJDIR)/pxp_v4l2_out_test.sh
 else
 OBJS =
 endif
