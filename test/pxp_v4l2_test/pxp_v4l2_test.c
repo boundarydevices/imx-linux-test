@@ -1,5 +1,5 @@
 /*
- * pxp_test - test application for the MXS PxP
+ * pxp_test - V4L2 test application for the PxP
  *
  * Copyright (C) 2009-2010 Freescale Semiconductor, Inc.
  * Copyright 2008-2009 Embedded Alley Solutions
@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <signal.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -155,6 +157,26 @@ static void help(char *bin)
 	printf("\t-vf   \tflip image vertically\n");
 	printf("\t-w n   \twait n seconds before exiting\n");
 	printf("\t-?    \tprint this usage information\n");
+}
+
+sigset_t sigset;
+int quitflag = 0;
+static int signal_thread(void *arg)
+{
+	int sig;
+	struct pxp_control *pxp = (struct pxp_control *)arg;
+
+	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
+
+	sigwait(&sigset, &sig);
+	if (sig == SIGINT) {
+		printf("Ctrl-C received\n");
+	} else {
+		printf("Unknown signal. Still exiting\n");
+	}
+	quitflag = 1;
+
+	return 0;
 }
 
 static struct pxp_control *pxp_init(int argc, char **argv)
@@ -588,6 +610,9 @@ static int pxp_start(struct pxp_control *pxp)
 	gettimeofday(&tv_start, NULL);
 
 	for (i = 0;; i++) {
+		if (quitflag == 1)
+			break;
+
 		struct v4l2_buffer buf;
 		buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		buf.memory = V4L2_MEMORY_MMAP;
@@ -730,6 +755,7 @@ static void pxp_cleanup(struct pxp_control *pxp)
 int main(int argc, char **argv)
 {
 	struct pxp_control *pxp;
+	pthread_t sigtid;
 
 	if (!(pxp = pxp_init(argc, argv)))
 		return 1;
@@ -738,6 +764,11 @@ int main(int argc, char **argv)
 		perror("video device open failed");
 		return 1;
 	}
+
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
+	pthread_create(&sigtid, NULL, (void *)&signal_thread, pxp);
 
 	if (pxp_check_capabilities(pxp))
 		return 1;
