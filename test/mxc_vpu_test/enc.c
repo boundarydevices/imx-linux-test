@@ -190,21 +190,21 @@ encoder_fill_headers(struct encode *enc)
 		 * sample of how to work when userProfileLevelEnable is 1.
 		 */
 		enchdr_param.userProfileLevelEnable = 1;
-		mbPicNum = ((enc->picwidth + 15) / 16) *((enc->picheight + 15) / 16);
-		if (enc->picwidth <= 176 && enc->picheight <= 144 &&
+		mbPicNum = ((enc->enc_picwidth + 15) / 16) *((enc->enc_picheight + 15) / 16);
+		if (enc->enc_picwidth <= 176 && enc->enc_picheight <= 144 &&
 		    mbPicNum * frameRateInfo <= 1485)
 			enchdr_param.userProfileLevelIndication = 8; /* L1 */
 		/* Please set userProfileLevelIndication to 8 if L0 is needed */
-		else if (enc->picwidth <= 352 && enc->picheight <= 288 &&
+		else if (enc->enc_picwidth <= 352 && enc->enc_picheight <= 288 &&
 			 mbPicNum * frameRateInfo <= 5940)
 			enchdr_param.userProfileLevelIndication = 2; /* L2 */
-		else if (enc->picwidth <= 352 && enc->picheight <= 288 &&
+		else if (enc->enc_picwidth <= 352 && enc->enc_picheight <= 288 &&
 			 mbPicNum * frameRateInfo <= 11880)
 			enchdr_param.userProfileLevelIndication = 3; /* L3 */
-		else if (enc->picwidth <= 640 && enc->picheight <= 480 &&
+		else if (enc->enc_picwidth <= 640 && enc->enc_picheight <= 480 &&
 			 mbPicNum * frameRateInfo <= 36000)
 			enchdr_param.userProfileLevelIndication = 4; /* L4a */
-		else if (enc->picwidth <= 720 && enc->picheight <= 576 &&
+		else if (enc->enc_picwidth <= 720 && enc->enc_picheight <= 576 &&
 			 mbPicNum * frameRateInfo <= 40500)
 			enchdr_param.userProfileLevelIndication = 5; /* L5 */
 		else
@@ -283,7 +283,7 @@ int
 encoder_allocate_framebuffer(struct encode *enc)
 {
 	EncHandle handle = enc->handle;
-	int i, stride, src_fbid = enc->src_fbid, fbcount = enc->fbcount;
+	int i, enc_stride, src_stride, src_fbid = enc->src_fbid, fbcount = enc->fbcount;
 	RetCode ret;
 	FrameBuffer *fb;
 	struct frame_buf **pfbpool;
@@ -303,7 +303,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	for (i = 0; i < fbcount; i++) {
-		pfbpool[i] = framebuf_alloc(enc->cmdl->format, MODE420, (enc->picwidth + 15) & ~15,  (enc->picheight + 15) & ~15);
+		pfbpool[i] = framebuf_alloc(enc->cmdl->format, MODE420, (enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
 		if (pfbpool[i] == NULL) {
 			fbcount = i;
 			goto err1;
@@ -312,29 +312,34 @@ encoder_allocate_framebuffer(struct encode *enc)
 		fb[i].bufY = pfbpool[i]->addrY;
 		fb[i].bufCb = pfbpool[i]->addrCb;
 		fb[i].bufCr = pfbpool[i]->addrCr;
+		fb[i].strideY = pfbpool[i]->strideY;
+		fb[i].strideC = pfbpool[i]->strideC;
 	}
 
 	/* Must be a multiple of 16 */
-	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270)
-		stride = (enc->picheight + 15 ) & ~15;
-	else
-		stride = (enc->picwidth + 15) & ~15;
+	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270) {
+		enc_stride = (enc->enc_picheight + 15 ) & ~15;
+		src_stride = (enc->src_picheight + 15 ) & ~15;
+	} else {
+		enc_stride = (enc->enc_picwidth + 15) & ~15;
+		src_stride = (enc->src_picwidth + 15 ) & ~15;
+	}
 
-	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, stride);
+	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, enc_stride, src_stride);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
 		goto err1;
 	}
 
 	if (enc->cmdl->src_scheme == PATH_V4L2) {
-		ret = v4l_capture_setup(enc, enc->picwidth, enc->picheight, 30);
+		ret = v4l_capture_setup(enc, enc->src_picwidth, enc->src_picheight, 30);
 		if (ret < 0) {
 			goto err1;
 		}
 	} else {
 		/* Allocate a single frame buffer for source frame */
-		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, MODE420, enc->picwidth,
-						   enc->picheight);
+		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, MODE420, enc->src_picwidth,
+						   enc->src_picheight);
 		if (pfbpool[src_fbid] == NULL) {
 			err_msg("failed to allocate single framebuf\n");
 			goto err1;
@@ -343,6 +348,8 @@ encoder_allocate_framebuffer(struct encode *enc)
 		fb[src_fbid].bufY = pfbpool[src_fbid]->addrY;
 		fb[src_fbid].bufCb = pfbpool[src_fbid]->addrCb;
 		fb[src_fbid].bufCr = pfbpool[src_fbid]->addrCr;
+		fb[src_fbid].strideY = pfbpool[src_fbid]->strideY;
+		fb[src_fbid].strideC = pfbpool[src_fbid]->strideC;
 		enc->fbcount++;
 	}
 
@@ -400,6 +407,17 @@ encoder_start(struct encode *enc)
 	enc_param.skipPicture = 0;
 	enc_param.enableAutoSkip = 1;
 
+	enc_param.encLeftOffset = 0;
+	enc_param.encTopOffset = 0;
+	if ((enc_param.encLeftOffset + enc->enc_picwidth) > enc->src_picwidth) {
+		err_msg("Configure is failure for width and left offset\n");
+		return -1;
+	}
+	if ((enc_param.encTopOffset + enc->enc_picheight) > enc->src_picheight) {
+		err_msg("Configure is failure for height and top offset\n");
+		return -1;
+	}
+
 	/* Set report info flag */
 	if (enc->mbInfo.enable) {
 		ret = vpu_EncGiveCommand(handle, ENC_SET_REPORT_MBINFO, &enc->mbInfo);
@@ -428,9 +446,9 @@ encoder_start(struct encode *enc)
 			return -1;
 		}
 
-		img_size = enc->picwidth * enc->picheight;
+		img_size = enc->src_picwidth * enc->src_picheight;
 	} else {
-		img_size = enc->picwidth * enc->picheight * 3 / 2;
+		img_size = enc->src_picwidth * enc->src_picheight * 3 / 2;
 	}
 
 	gettimeofday(&total_start, NULL);
@@ -694,18 +712,24 @@ encoder_open(struct encode *enc)
 	encop.bitstreamBufferSize = STREAM_BUF_SIZE;
 	encop.bitstreamFormat = enc->cmdl->format;
 
+	/* width and height in command line means source image size */
 	if (enc->cmdl->width && enc->cmdl->height) {
-		enc->picwidth = enc->cmdl->width;
-		enc->picheight = enc->cmdl->height;
+		enc->src_picwidth = enc->cmdl->width;
+		enc->src_picheight = enc->cmdl->height;
 	}
+
+	/* Please change encoded picture width and height per your needs
+           it is same as source picture image normally */
+	enc->enc_picwidth = enc->src_picwidth;
+	enc->enc_picheight = enc->src_picheight;
 
 	/* If rotation angle is 90 or 270, pic width and height are swapped */
 	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270) {
-		encop.picWidth = enc->picheight;
-		encop.picHeight = enc->picwidth;
+		encop.picWidth = enc->enc_picheight;
+		encop.picHeight = enc->enc_picwidth;
 	} else {
-		encop.picWidth = enc->picwidth;
-		encop.picHeight = enc->picheight;
+		encop.picWidth = enc->enc_picwidth;
+		encop.picHeight = enc->enc_picheight;
 	}
 
 	/*Note: Frame rate cannot be less than 15fps per H.263 spec */
