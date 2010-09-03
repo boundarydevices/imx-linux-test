@@ -91,6 +91,9 @@ struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int heigh
 	fb->addrY = fb->desc.phy_addr;
 	fb->addrCb = fb->addrY + strideY * height;
 	fb->addrCr = fb->addrCb + strideY / divX * height / divY;
+	fb->strideY = strideY;
+	fb->strideC =  strideY / divX;
+
 	if (cpu_is_mx37() || cpu_is_mx5x()) {
 		if (stdMode==STD_MJPG)
 			fb->mvColBuf = fb->addrCr;

@@ -81,6 +81,8 @@ struct frame_buf {
 	int addrY;
 	int addrCb;
 	int addrCr;
+	int strideY;
+	int strideC;
 	int mvColBuf;
 	vpu_mem_desc desc;
 };
@@ -204,8 +206,10 @@ struct encode {
 	EncHandle handle;		/* Encoder handle */
 	PhysicalAddress phy_bsbuf_addr; /* Physical bitstream buffer */
 	u32 virt_bsbuf_addr;		/* Virtual bitstream buffer */
-	int picwidth;	/* Picture width */
-	int picheight;	/* Picture height */
+	int enc_picwidth;	/* Encoded Picture width */
+	int enc_picheight;	/* Encoded Picture height */
+	int src_picwidth;        /* Source Picture width */
+	int src_picheight;       /* Source Picture height */
 	int fbcount;	/* Total number of framebuffers allocated */
 	int src_fbid;	/* Index of frame buffer that contains YUV image */
 	FrameBuffer *fb; /* frame buffer base given to encoder */
