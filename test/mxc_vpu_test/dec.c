@@ -39,6 +39,11 @@ static FILE *fpUserDataLogfile = NULL;
 #define FN_MV_DATA "dec_mv.log"
 #define FN_USER_DATA "dec_user_data.log"
 
+#ifdef COMBINED_VIDEO_SUPPORT
+#define MAX_FRAME_WIDTH 720
+#define MAX_FRAME_HEIGHT 576
+#endif
+
 void SaveFrameBufStat(u8 *frmStatusBuf, int size, int DecNum)
 {
 
@@ -1380,6 +1385,10 @@ decoder_allocate_framebuffer(struct decode *dec)
 	bufinfo.avcSliceBufInfo.sliceSaveBuffer = dec->phy_slice_buf;
 	bufinfo.avcSliceBufInfo.sliceSaveBufferSize = dec->phy_slicebuf_size;
 
+	/* User needs to fill max suported macro block value of frame as following*/
+	bufinfo.maxDecFrmInfo.maxMbX = dec->stride / 16;
+	bufinfo.maxDecFrmInfo.maxMbY = dec->picheight / 16;
+	bufinfo.maxDecFrmInfo.maxMbNum = dec->stride * dec->picheight / 256;
 	ret = vpu_DecRegisterFrameBuffer(handle, fb, fbcount, stride, &bufinfo);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
@@ -1633,6 +1642,12 @@ decoder_parse(struct decode *dec)
 					initinfo.picCropRect.right,
 					initinfo.picCropRect.bottom);
 
+#ifdef COMBINED_VIDEO_SUPPORT
+	/* Following lines are sample code to support minFrameBuffer counter
+	   changed in combined video stream. */
+	if (dec->cmdl->format == STD_AVC)
+		initinfo.minFrameBufferCount = 19;
+#endif
 	/*
 	 * We suggest to add two more buffers than minFrameBufferCount:
 	 *
@@ -1660,6 +1675,16 @@ decoder_parse(struct decode *dec)
 		align = 32;
 
 	dec->picheight = ((initinfo.picHeight + align - 1) & ~(align - 1));
+
+#ifdef COMBINED_VIDEO_SUPPORT
+	/* Following lines are sample code to support resolution change
+	   from small to large in combined video stream. MAX_FRAME_WIDTH
+           and MAX_FRAME_HEIGHT must be defined per user requirement. */
+	if (dec->picwidth < MAX_FRAME_WIDTH)
+		dec->picwidth = MAX_FRAME_WIDTH;
+	if (dec->picheight < MAX_FRAME_HEIGHT)
+		dec->picheight =  MAX_FRAME_HEIGHT;
+#endif
 
 	if ((dec->picwidth == 0) || (dec->picheight == 0))
 		return -1;
