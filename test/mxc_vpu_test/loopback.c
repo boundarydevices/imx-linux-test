@@ -234,7 +234,7 @@ encode(void)
 		return -1;
 	}
 
-	img_size = enc->picwidth * enc->picheight;
+	img_size = enc->src_picwidth * enc->src_picheight;
 	fb[src_fbid].bufY = cap_buffers[v4l2_buf.index].offset;
 	fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
 	fb[src_fbid].bufCr = fb[src_fbid].bufCb + (img_size >> 2);
@@ -322,8 +322,8 @@ encdec_test(void *arg)
 
 	enc->phy_bsbuf_addr = enc_mem_desc.phy_addr;
 	enc->cmdl = cmdl;
-	enc->picwidth = 176;
-	enc->picheight = 144;
+	enc->src_picwidth = 176;
+	enc->src_picheight = 144;
 
 	dec = (struct decode *)calloc(1, sizeof(struct decode));
 	if (dec == NULL) {
