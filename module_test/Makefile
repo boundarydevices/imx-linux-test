@@ -41,7 +41,7 @@ sahara_test_driver-objs := km_test.o $(SAHARA_TEST_SOURCE)run_tests.o \
 
 obj-m += $(module_list-y)
 
-EXTRA_CFLAGS := -DLINUX_KERNEL
+EXTRA_CFLAGS := -DLINUX_KERNEL -DIMX_NEEDS_DEPRECATED_SYMBOLS
 
 ## NOTE: The following should be removed. They are directly requesting kernel
 ##       source.
