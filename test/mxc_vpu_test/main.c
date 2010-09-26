@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -62,6 +62,12 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is source picture width. \n "\
 	       "  -h <height> display picture height \n "\
 	       "	default is source picture height \n "\
+	       "  -j <left offset> display picture left offset \n "\
+	       "	default is 0. \n "\
+	       "  -k <top offset> display picture top offset \n "\
+	       "	default is 0 \n "\
+	       "  -a <frame rate> display framerate \n "\
+	       "	default is 30 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
 	       "        default is none-interleave(0). \n "\
 	       "  -s <prescan> Enable prescan in decoding - 1. enabled \n "\
@@ -128,7 +134,7 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:x:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:v:";
+static char *options = "i:o:x:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:j:k:a:v:";
 
 int
 parse_config_file(char *file_name)
@@ -289,6 +295,12 @@ parse_args(int argc, char *argv[], int i)
 		case 'h':
 			input_arg[i].cmd.height = atoi(optarg);
 			break;
+		case 'j':
+			input_arg[i].cmd.loff = atoi(optarg);
+			break;
+		case 'k':
+			input_arg[i].cmd.toff = atoi(optarg);
+			break;
 		case 'g':
 			input_arg[i].cmd.gop = atoi(optarg);
 			break;
@@ -312,6 +324,9 @@ parse_args(int argc, char *argv[], int i)
 			break;
 		case 'l':
 		 	input_arg[i].cmd.mp4Class = atoi(optarg);
+			break;
+		case 'a':
+			input_arg[i].cmd.fps = atoi(optarg);
 			break;
 		case -1:
 			break;
