@@ -93,7 +93,7 @@ decode(void)
 		goto out;
 	}
 
-	ret = v4l_put_data(disp, outinfo.indexFrameDisplay, V4L2_FIELD_ANY);
+	ret = v4l_put_data(disp, outinfo.indexFrameDisplay, V4L2_FIELD_ANY, 30);
 	if (ret)
 		return -1;
 
