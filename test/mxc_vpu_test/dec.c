@@ -1022,7 +1022,7 @@ decoder_start(struct decode *dec)
 		/* BIT don't have picture to be displayed */
 		if ((outinfo.indexFrameDisplay == -3) ||
 				(outinfo.indexFrameDisplay == -2)) {
-			warn_msg("VPU doesn't have picture to be displayed.\n"
+			dprintf(3, "VPU doesn't have picture to be displayed.\n"
 				"\toutinfo.indexFrameDisplay = %d\n",
 						outinfo.indexFrameDisplay);
 			if (dec->cmdl->dst_scheme != PATH_IPU) {
@@ -1053,14 +1053,14 @@ decoder_start(struct decode *dec)
 
 			if (cpu_is_mx5x())
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
-					err = v4l_put_data(disp, actual_display_index, field);
+					err = v4l_put_data(disp, actual_display_index, field, dec->cmdl->fps);
 				else
-					err = ipu_put_data(disp, actual_display_index, field);
+					err = ipu_put_data(disp, actual_display_index, field, dec->cmdl->fps);
 			else
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
-					err = v4l_put_data(disp, actual_display_index, V4L2_FIELD_ANY);
+					err = v4l_put_data(disp, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
 				else
-					err = ipu_put_data(disp, actual_display_index, V4L2_FIELD_ANY);
+					err = ipu_put_data(disp, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
 
 			if (err)
 				return -1;
@@ -1474,6 +1474,7 @@ decoder_parse(struct decode *dec)
 		}
 	}
 
+
 	/* Parse bitstream and get width/height/framerate etc */
 	vpu_DecSetEscSeqInit(handle, 1);
 	ret = vpu_DecGetInitialInfo(handle, &initinfo);
@@ -1624,24 +1625,6 @@ decoder_parse(struct decode *dec)
 			initinfo.frameRateInfo,
 			initinfo.minFrameBufferCount);
 
-	/*
-	 * Information about H.264 decoder picture cropping rectangle which
-	 * presents the offset of top-left point and bottom-right point from
-	 * the origin of frame buffer.
-	 *
-	 * By using these four offset values, host application can easily
-	 * detect the position of target output window. When display cropping
-	 * is off, the cropping window size will be 0.
-	 *
-	 * This structure for cropping rectangles is only valid for H.264
-	 * decoder case.
-	 */
-	info_msg("CROP left/top/right/bottom %lu %lu %lu %lu\n",
-					initinfo.picCropRect.left,
-					initinfo.picCropRect.top,
-					initinfo.picCropRect.right,
-					initinfo.picCropRect.bottom);
-
 #ifdef COMBINED_VIDEO_SUPPORT
 	/* Following lines are sample code to support minFrameBuffer counter
 	   changed in combined video stream. */
@@ -1689,6 +1672,38 @@ decoder_parse(struct decode *dec)
 	if ((dec->picwidth == 0) || (dec->picheight == 0))
 		return -1;
 
+	/*
+	 * Information about H.264 decoder picture cropping rectangle which
+	 * presents the offset of top-left point and bottom-right point from
+	 * the origin of frame buffer.
+	 *
+	 * By using these four offset values, host application can easily
+	 * detect the position of target output window. When display cropping
+	 * is off, the cropping window size will be 0.
+	 *
+	 * This structure for cropping rectangles is only valid for H.264
+	 * decoder case.
+	 */
+
+	/* Add non-h264 crop support, assume left=top=0 */
+	if ((dec->picwidth > initinfo.picWidth ||
+		dec->picheight > initinfo.picHeight) &&
+		(!initinfo.picCropRect.left &&
+		!initinfo.picCropRect.top &&
+		!initinfo.picCropRect.right &&
+		!initinfo.picCropRect.bottom)) {
+		initinfo.picCropRect.left = 0;
+		initinfo.picCropRect.top = 0;
+		initinfo.picCropRect.right = initinfo.picWidth;
+		initinfo.picCropRect.bottom = initinfo.picHeight;
+	}
+
+	info_msg("CROP left/top/right/bottom %lu %lu %lu %lu\n",
+					initinfo.picCropRect.left,
+					initinfo.picCropRect.top,
+					initinfo.picCropRect.right,
+					initinfo.picCropRect.bottom);
+
 	memcpy(&(dec->picCropRect), &(initinfo.picCropRect),
 					sizeof(initinfo.picCropRect));
 
@@ -1712,6 +1727,10 @@ decoder_parse(struct decode *dec)
 		if (!dec->mvInfo.addr)
 			err_msg("malloc_error\n");
 	}
+
+	if (dec->cmdl->fps == 0)
+		dec->cmdl->fps = 30;
+	info_msg("Display fps will be %d\n", dec->cmdl->fps);
 
 	return 0;
 }

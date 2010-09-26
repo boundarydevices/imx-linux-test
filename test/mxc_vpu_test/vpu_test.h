@@ -149,6 +149,8 @@ struct cmd_line {
 	int dst_fd;
 	int width;
 	int height;
+	int loff;
+	int toff;
 	int format;
 	int deblock_en;
 	int dering_en;
@@ -171,6 +173,7 @@ struct cmd_line {
 	int iframe;
 	int mp4Class;
 	char vdi_motion;	/* VDI motion algorithm */
+	int fps;
 };
 
 struct decode {
@@ -238,7 +241,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
 struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 					struct rot rotation, Rect rotCrop);
-int v4l_put_data(struct vpu_display *disp, int index, int field);
+int v4l_put_data(struct vpu_display *disp, int index, int field, int fps);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height);
 void framebuf_free(struct frame_buf *fb);
@@ -246,7 +249,7 @@ void framebuf_free(struct frame_buf *fb);
 struct vpu_display *
 ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect cropRect);
 void ipu_display_close(struct vpu_display *disp);
-int ipu_put_data(struct vpu_display *disp, int index, int field);
+int ipu_put_data(struct vpu_display *disp, int index, int field, int fps);
 
 int v4l_start_capturing(void);
 void v4l_stop_capturing(void);
