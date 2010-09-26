@@ -230,6 +230,8 @@ ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	int bottom = cropRect.bottom;
 	int disp_width = dec->cmdl->width;
 	int disp_height = dec->cmdl->height;
+	int disp_left =  dec->cmdl->loff;
+	int disp_top =  dec->cmdl->toff;
 	char motion_mode = dec->cmdl->vdi_motion;
 	int err = 0, i;
 	struct vpu_display *disp;
@@ -331,8 +333,13 @@ ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		else if (rotation.rot_angle == 270)
 			disp->output.rot = IPU_ROTATE_90_LEFT;
 	}
+	disp->output.fb_disp.pos.x = disp_left;
+	disp->output.fb_disp.pos.y = disp_top;
 	disp->output.show_to_fb = 1;
 	disp->output.fb_disp.fb_num = 2;
+
+	info_msg("Display to %d %d, top offset %d, left offset %d\n",
+			disp_width, disp_height, disp_top, disp_left);
 
 	disp->ipu_q.tail = disp->ipu_q.head = 0;
 	disp->stopping = 0;
@@ -368,8 +375,10 @@ void ipu_display_close(struct vpu_display *disp)
 	free(disp);
 }
 
-int ipu_put_data(struct vpu_display *disp, int index, int field)
+int ipu_put_data(struct vpu_display *disp, int index, int field, int fps)
 {
+	/*TODO: ipu lib dose not support fps control yet*/
+
 	disp->ipu_bufs[index].field = field;
 	if (field == V4L2_FIELD_TOP || field == V4L2_FIELD_BOTTOM ||
 	    field == V4L2_FIELD_INTERLACED_TB ||
@@ -435,6 +444,8 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	int bottom = cropRect.bottom;
 	int disp_width = dec->cmdl->width;
 	int disp_height = dec->cmdl->height;
+	int disp_left =  dec->cmdl->loff;
+	int disp_top =  dec->cmdl->toff;
 	int fd = -1, err = 0, out = 0, i = 0;
 	char v4l_device[32] = "/dev/video16";
 	struct v4l2_cropcap cropcap = {0};
@@ -543,8 +554,8 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	}
 
 	crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	crop.c.top = 0;
-	crop.c.left = 0;
+	crop.c.top = disp_top;
+	crop.c.left = disp_left;
 	crop.c.width = width / ratio;
 	crop.c.height = height / ratio;
 
@@ -555,6 +566,9 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		crop.c.width = cropcap.bounds.width;
 		crop.c.height = cropcap.bounds.height;
 	}
+
+	info_msg("Display to %d %d, top offset %d, left offset %d\n",
+			crop.c.width, crop.c.height, disp_top, disp_left);
 
 	dprintf(1, "crop.c.width/height: %d/%d\n", crop.c.width, crop.c.height);
 
@@ -757,7 +771,7 @@ void v4l_display_close(struct vpu_display *disp)
 	}
 }
 
-int v4l_put_data(struct vpu_display *disp, int index, int field)
+int v4l_put_data(struct vpu_display *disp, int index, int field, int fps)
 {
 	struct timeval tv;
 	int err, type, threshold;
@@ -784,7 +798,7 @@ int v4l_put_data(struct vpu_display *disp, int index, int field)
 	}
 
 	if (disp->ncount > 0) {
-		disp->usec += (1000000 / 30);
+		disp->usec += (1000000 / fps);
 		if (disp->usec >= 1000000) {
 			disp->sec += 1;
 			disp->usec -= 1000000;
