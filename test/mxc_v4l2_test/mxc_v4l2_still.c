@@ -222,7 +222,7 @@ int v4l_capture_test(int fd_v4l)
         char *buf1, *buf2;
         char still_file[100] = "./still.yuv";
 
-        if ((fd_still = open(still_file, O_RDWR | O_CREAT | O_TRUNC)) < 0)
+        if ((fd_still = open(still_file, O_RDWR | O_CREAT | O_TRUNC, 0x0666)) < 0)
         {
                 printf("Unable to create y frame recording file\n");
                 return -1;
