@@ -39,13 +39,8 @@ if [ "$RTC_IRQS" != "$RTC_IRQS_EXPECTED" ]; then
 	STATUS=1
 else
 	echo "checking rtc interrupts PASS"
-
-	# Time set notification mechanism has not yet been ported to 2.6.35
-	KERNEL_VERSION=$( cat /proc/version|cut -d' ' -f3|cut -d'-' -f1)
-	if [ "$KERNEL_VERSION" != 2.6.35.3 ]; then
        #RTC wait for time set notification test
         run_testcase "./rtc_timesetnotification_test.out"
-      fi
 fi
 
 print_status
