@@ -1,10 +1,10 @@
 # list of platforms which did not want this test case
 EXCLUDE_LIST:=
 CFLAGS += -lm
-LIBS += -lX11 -lXdamage
+LIBS += -lX11 -lXdamage -lXrender
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
-OBJS = $(OBJDIR)/mxc_epdc_x11_fb_test.out
+OBJS = $(OBJDIR)/mxc_epdc_x11_fb_test.out $(OBJDIR)/x11_overlay.out
 else
 OBJS =
 endif
