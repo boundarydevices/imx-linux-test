@@ -177,7 +177,7 @@ static void copy_image_to_fb(int left, int top, int width, int height, uint *img
 	bytes_per_pixel = screen_info->bits_per_pixel / 8;
 
 	for (i = 0; i < height; i++) {
-		memcpy(fb_ptr + ((i + top) * screen_info->xres + left) * bytes_per_pixel / 4,
+		memcpy(fb_ptr + ((i + top) * screen_info->xres_virtual + left) * bytes_per_pixel / 4,
 			img_ptr + (i * width) * bytes_per_pixel /4,
 			width * bytes_per_pixel);
 	}
@@ -195,6 +195,7 @@ static void update_to_display(int left, int top, int width, int height, int wave
 	upd_data.update_region.top = top;
 	upd_data.update_region.height = height;
 	upd_data.temp = TEMP_USE_AMBIENT;
+	upd_data.use_alt_buffer = 0;
 
 	if (wait_for_complete) {
 		/* Get unique marker value */
