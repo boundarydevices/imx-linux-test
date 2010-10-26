@@ -245,7 +245,11 @@ ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	}
 
 	/* set alpha */
+#ifdef BUILD_FOR_ANDROID
+	disp->fd = open("/dev/graphics/fb0", O_RDWR, 0);
+#else
 	disp->fd = open("/dev/fb0", O_RDWR, 0);
+#endif
 	if (disp->fd < 0) {
 		err_msg("unable to open fb0\n");
 		free(disp);
@@ -466,9 +470,13 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		out = 0;
 	} else {
 		out = 3;
+#ifdef BUILD_FOR_ANDROID
+		fd_fb = open("/dev/graphics/fb0", O_RDWR, 0);
+#else
 		fd_fb = open("/dev/fb0", O_RDWR, 0);
+#endif
 		if (fd_fb < 0) {
-			err_msg("unable to open fb1\n");
+			err_msg("unable to open fb0\n");
 			return NULL;
 		}
 		alpha.alpha = 0;
