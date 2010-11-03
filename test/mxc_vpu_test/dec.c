@@ -32,6 +32,8 @@ static FILE *fpSliceBndLogfile = NULL;
 static FILE *fpMvLogfile = NULL;
 static FILE *fpUserDataLogfile = NULL;
 
+static int isInterlacedMPEG4 = 0;
+
 #define FN_FRAME_BUFFER_STATUS "dec_frame_buf_status.log"
 #define FN_ERR_MAP_DATA "dec_error_map.log"
 #define FN_QP_DATA "dec_qp.log"
@@ -941,8 +943,10 @@ decoder_start(struct decode *dec)
 				}
 				if (outinfo.vc1_repeatFrame)
 					info_msg("dec_idx %d : VC1 RPTFRM [%1d]\n", decIndex, outinfo.vc1_repeatFrame);
-			} else if (dec->cmdl->format == STD_AVC) {
-				if (outinfo.interlacedFrame) {
+			} else if ((dec->cmdl->format == STD_AVC) ||
+				   (dec->cmdl->format == STD_MPEG4)) {
+				if ((outinfo.interlacedFrame) ||
+				    ((dec->cmdl->format == STD_MPEG4) && isInterlacedMPEG4)) {
 					if (outinfo.topFieldFirst)
 						field = V4L2_FIELD_INTERLACED_TB;
 					else
@@ -1584,6 +1588,8 @@ decoder_parse(struct decode *dec)
 					break;
 				}
 			}
+			isInterlacedMPEG4 = initinfo.interlace;
+
 			info_msg("Mpeg4 Profile: %d Level: %d Interlaced: %d\n",
 				profile, level, initinfo.interlace);
 			/*
