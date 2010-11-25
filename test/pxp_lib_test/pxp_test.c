@@ -71,6 +71,8 @@ char *usage = "Usage: ./pxp_test.out "\
 #define WIDTH	480
 #define HEIGHT	360
 
+#define NR_INSTANCE		15
+
 int fd_fb = 0;
 unsigned short * fb0;
 int g_fb0_size;
@@ -88,7 +90,7 @@ struct input_argument {
 sigset_t sigset;
 int quitflag;
 
-static struct input_argument input_arg[4];
+static struct input_argument input_arg[NR_INSTANCE];
 static int instance;
 
 static char *mainopts = "HI:";
@@ -115,7 +117,7 @@ int parse_main_args(int argc, char *argv[])
 			status = -1;
 			break;
 		}
-	} while ((opt != -1) && (status == 0) && (instance < 4));
+	} while ((opt != -1) && (status == 0) && (instance < NR_INSTANCE));
 
 	optind = 1;
 	return status;
