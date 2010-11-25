@@ -195,7 +195,7 @@ static void update_to_display(int left, int top, int width, int height, int wave
 	upd_data.update_region.top = top;
 	upd_data.update_region.height = height;
 	upd_data.temp = TEMP_USE_AMBIENT;
-	upd_data.use_alt_buffer = 0;
+	upd_data.flags = 0;
 
 	if (wait_for_complete) {
 		/* Get unique marker value */
