@@ -60,6 +60,8 @@ int g_cap_mode = 0;
 int g_input = 1;
 int g_fmt = V4L2_PIX_FMT_UYVY;
 int g_rotate = 0;
+int g_motion = 0;
+int g_tb = 0;
 int g_output = 3;
 int g_output_num_buffers = 4;
 int g_capture_num_buffers = 3;
@@ -278,7 +280,7 @@ int v4l_output_setup(void)
         }
 
 	ctrl.id = V4L2_CID_PRIVATE_BASE + 3;
-        ctrl.value = 0;
+        ctrl.value = g_motion;
         if (ioctl(fd_output_v4l, VIDIOC_S_CTRL, &ctrl) < 0)
         {
                 printf("set ctrl failed\n");
@@ -296,7 +298,10 @@ int v4l_output_setup(void)
 	fmt.fmt.pix.bytesperline = g_in_width;
 	fmt.fmt.pix.priv = 0;
 	fmt.fmt.pix.sizeimage = 0;
-	fmt.fmt.pix.field = V4L2_FIELD_INTERLACED_BT;
+	if (g_tb)
+		fmt.fmt.pix.field = V4L2_FIELD_INTERLACED_TB;
+	else
+		fmt.fmt.pix.field = V4L2_FIELD_INTERLACED_BT;
         if (ioctl(fd_output_v4l, VIDIOC_S_FMT, &fmt) < 0)
         {
                 printf("set format failed\n");
@@ -503,6 +508,12 @@ int process_cmdline(int argc, char **argv)
 				printf("Default format is used: UYVY\n");
                         }
                 }
+                else if (strcmp(argv[i], "-m") == 0) {
+                        g_motion = atoi(argv[++i]);
+                }
+                else if (strcmp(argv[i], "-tb") == 0) {
+                        g_tb = 1;
+                }
                 else if (strcmp(argv[i], "-help") == 0) {
                         printf("MXC Video4Linux TVin Test\n\n" \
 			       "Syntax: mxc_v4l2_tvin.out\n" \
@@ -511,6 +522,8 @@ int process_cmdline(int argc, char **argv)
 			       " -ot <display top>\n" \
 			       " -ol <display left>\n" \
                                " -r <rotation> -c <capture counter> \n"
+			       " -m <motion> 0:medium 1:low 2:high, 0-default\n"
+			       " -tb top field first, bottom field first-default\n"
 			       " -f <format, only YU12, YUYV, UYVY and NV12 are supported> \n");
                         return TFAIL;
                }
