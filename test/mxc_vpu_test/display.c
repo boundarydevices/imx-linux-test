@@ -129,7 +129,54 @@ static inline void wakeup_queue()
 }
 
 extern int quitflag;
-void * disp_loop_thread(void *arg)
+extern int vpu_v4l_performance_test;
+
+static pthread_mutex_t v4l_mutex;
+
+/* The thread for display in performance test with v4l */
+void v4l_disp_loop_thread(void *arg)
+{
+	struct decode *dec = (struct decode *)arg;
+	struct vpu_display *disp = dec->disp;
+	pthread_attr_t attr;
+	struct timeval ts;
+	int error_status = 0, ret;
+	struct v4l2_buffer buffer;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setschedpolicy(&attr, SCHED_RR);
+
+	while (!error_status && !quitflag) {
+		/* Use timed wait here */
+		do {
+			gettimeofday(&ts, NULL);
+			ts.tv_usec +=100000; // 100ms
+		} while ((sem_timedwait(&disp->avaiable_dequeue_frame,
+			 &ts) != 0) && !quitflag);
+
+		if (quitflag)
+			break;
+
+		buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		buffer.memory = V4L2_MEMORY_MMAP;
+		ret = ioctl(disp->fd, VIDIOC_DQBUF, &buffer);
+		if (ret < 0) {
+			err_msg("VIDIOC_DQBUF failed\n");
+			error_status = 1;
+		}
+		/* Clear the flag after showing */
+		ret = vpu_DecClrDispFlag(dec->handle, buffer.index);
+
+		pthread_mutex_lock(&v4l_mutex);
+		disp->queued_count--;
+		pthread_mutex_unlock(&v4l_mutex);
+		sem_post(&disp->avaiable_decoding_frame);
+	}
+	pthread_attr_destroy(&attr);
+	return;
+}
+
+void ipu_disp_loop_thread(void *arg)
 {
 	struct decode *dec = (struct decode *)arg;
 	DecHandle handle = dec->handle;
@@ -171,7 +218,7 @@ void * disp_loop_thread(void *arg)
 			if (err < 0) {
 				err_msg("mxc_ipu_lib_task_init failed, err %d\n", err);
 				quitflag = 1;
-				return NULL;
+				return;
 			}
 			/* it only enable ipu task and finish first frame */
 			err = mxc_ipu_lib_task_buf_update(&(disp->ipu_handle), 0, 0, 0, NULL, NULL);
@@ -216,7 +263,7 @@ void * disp_loop_thread(void *arg)
 	pthread_attr_destroy(&attr);
 	info_msg("Disp loop thread exit\n");
 	ipu_running = 0;
-	return NULL;
+	return;
 }
 
 struct vpu_display *
@@ -353,7 +400,7 @@ ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	pthread_cond_init(&ipu_cond, NULL);
 
 	/* start disp loop thread */
-	pthread_create(&(disp->disp_loop_thread), NULL, disp_loop_thread, (void *)dec);
+	pthread_create(&(disp->ipu_disp_loop_thread), NULL, ipu_disp_loop_thread, (void *)dec);
 
 	return disp;
 }
@@ -368,7 +415,7 @@ void ipu_display_close(struct vpu_display *disp)
 	if (ipu_running) {
 		wakeup_queue();
 		info_msg("Join disp loop thread\n");
-		pthread_join(disp->disp_loop_thread, NULL);
+		pthread_join(disp->ipu_disp_loop_thread, NULL);
 	}
 	pthread_mutex_destroy(&ipu_mutex);
 	pthread_cond_destroy(&ipu_cond);
@@ -460,7 +507,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	struct v4l2_mxc_offset off = {0};
 	struct vpu_display *disp;
 	int fd_fb;
-	char *tv_mode;
+	char *tv_mode, *test_mode;
 	char motion_mode = dec->cmdl->vdi_motion;
 	struct mxcfb_gbl_alpha alpha;
 
@@ -753,6 +800,28 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	disp->fd = fd;
 	disp->nframes = nframes;
 
+	/*
+	 * Use environment VIDEO_PERFORMANCE_TEST to select different mode.
+	 * When doing performance test, video decoding and display are in different
+	 * threads and default display fps is controlled by cmd. Display will
+	 * show the frame immediately if user doesn't input fps with -a option.
+	 * This is different from normal unit test.
+	 */
+	test_mode = getenv("VIDEO_PERFORMANCE_TEST");
+	if (test_mode && !strcmp(test_mode, "1") && (dec->cmdl->dst_scheme == PATH_V4L2))
+		vpu_v4l_performance_test = 1;
+
+	if (vpu_v4l_performance_test) {
+		dec->disp = disp;
+		sem_init(&disp->avaiable_decoding_frame, 0,
+			    dec->fbcount - dec->minFrameBufferCount);
+		sem_init(&disp->avaiable_dequeue_frame, 0, 0);
+		pthread_mutex_init(&v4l_mutex, NULL);
+		/* start v4l disp loop thread */
+		pthread_create(&(disp->v4l_disp_loop_thread), NULL,
+				    v4l_disp_loop_thread, (void *)dec);
+	}
+
 	return disp;
 err:
 	close(fd);
@@ -765,6 +834,13 @@ void v4l_display_close(struct vpu_display *disp)
 	int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 
 	if (disp) {
+		if (vpu_v4l_performance_test) {
+			quitflag = 1;
+			pthread_join(disp->v4l_disp_loop_thread, NULL);
+			sem_destroy(&disp->avaiable_decoding_frame);
+			sem_destroy(&disp->avaiable_dequeue_frame);
+		}
+
 		while (disp->queued_count > 0) {
 			disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 			disp->buf.memory = V4L2_MEMORY_MMAP;
@@ -806,25 +882,38 @@ int v4l_put_data(struct vpu_display *disp, int index, int field, int fps)
 	}
 
 	if (disp->ncount > 0) {
-		disp->usec += (1000000 / fps);
-		if (disp->usec >= 1000000) {
-			disp->sec += 1;
-			disp->usec -= 1000000;
+		if (fps != 0) {
+			disp->usec += (1000000 / fps);
+			if (disp->usec >= 1000000) {
+				disp->sec += 1;
+				disp->usec -= 1000000;
+			}
+
+			disp->buf.timestamp.tv_sec = disp->sec;
+			disp->buf.timestamp.tv_usec = disp->usec;
+		} else {
+			gettimeofday(&tv, 0);
+			disp->buf.timestamp.tv_sec = tv.tv_sec;
+			disp->buf.timestamp.tv_usec = tv.tv_usec;
 		}
-
-		disp->buf.timestamp.tv_sec = disp->sec;
-		disp->buf.timestamp.tv_usec = disp->usec;
-
 	}
 
 	disp->buf.index = index;
 	disp->buf.field = field;
+
 	err = ioctl(disp->fd, VIDIOC_QBUF, &disp->buf);
 	if (err < 0) {
 		err_msg("VIDIOC_QBUF failed\n");
 		goto err;
 	}
-	disp->queued_count++;
+
+	if (vpu_v4l_performance_test) {
+		/* Use mutex to protect queued_count in multi-threads */
+		pthread_mutex_lock(&v4l_mutex);
+		disp->queued_count++;
+		pthread_mutex_unlock(&v4l_mutex);
+	} else
+		disp->queued_count++;
 
 	if (disp->ncount == 1) {
 		if ((disp->buf.field == V4L2_FIELD_TOP) ||
@@ -864,17 +953,30 @@ int v4l_put_data(struct vpu_display *disp, int index, int field, int fps)
 	if (disp->buf.field == V4L2_FIELD_ANY || disp->buf.field == V4L2_FIELD_NONE)
 		threshold = 1;
 	if (disp->queued_count > threshold) {
-		disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-		disp->buf.memory = V4L2_MEMORY_MMAP;
-		err = ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf);
-		if (err < 0) {
-			err_msg("VIDIOC_DQBUF failed\n");
-			goto err;
+		if (vpu_v4l_performance_test) {
+			sem_post(&disp->avaiable_dequeue_frame);
+		} else {
+			disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+			disp->buf.memory = V4L2_MEMORY_MMAP;
+			err = ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf);
+			if (err < 0) {
+				err_msg("VIDIOC_DQBUF failed\n");
+				goto err;
+			}
+			disp->queued_count--;
 		}
-		disp->queued_count--;
 	}
 	else
 		disp->buf.index = -1;
+
+	/* Block here to wait avaiable_decoding_frame */
+	if (vpu_v4l_performance_test) {
+		do {
+			gettimeofday(&tv, NULL);
+			tv.tv_usec +=100000; // 100ms
+		} while ((sem_timedwait(&disp->avaiable_decoding_frame,
+			    &tv) != 0) && !quitflag);
+	}
 
 	return 0;
 

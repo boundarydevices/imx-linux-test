@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <stdint.h>
+#include <semaphore.h>
 #include "mxc_ipu_hl_lib.h"
 #include "vpu_lib.h"
 #include "vpu_io.h"
@@ -45,8 +46,8 @@
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-#define STREAM_BUF_SIZE		0x80000
-#define STREAM_FILL_SIZE	0x10000
+#define STREAM_BUF_SIZE		0x200000
+#define STREAM_FILL_SIZE	0x40000
 #define STREAM_READ_SIZE	(512 * 8)
 #define STREAM_END_SIZE		0
 #define PS_SAVE_SIZE		0x080000
@@ -121,7 +122,12 @@ struct vpu_display {
 	ipu_lib_handle_t ipu_handle;
 	ipu_lib_input_param_t input;
 	ipu_lib_output_param_t output;
-	pthread_t disp_loop_thread;
+	pthread_t ipu_disp_loop_thread;
+	pthread_t v4l_disp_loop_thread;
+
+	sem_t avaiable_decoding_frame;
+	sem_t avaiable_dequeue_frame;
+
 	struct ipu_queue ipu_q;
 	struct ipu_buf ipu_bufs[MAX_BUF_NUM];
 	int stopping;
@@ -188,6 +194,7 @@ struct decode {
 	int stride;
 	int mjpg_fmt;
 	int fbcount;
+	int minFrameBufferCount;
 	int rot_buf_count;
 	int extrafb;
 	FrameBuffer *fb;
