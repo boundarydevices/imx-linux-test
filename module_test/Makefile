@@ -18,6 +18,9 @@ endif
 ifeq ($(CONFIG_MXC_SDMA_API),y)
 module_list-y += mxc_sdma_mem_test.o
 endif
+ifeq ($(CONFIG_FB_MXC_EINK_PANEL),y)
+module_list-y += epdc_test_driver.o
+endif
 
 # sahara uses common files for both test application and test module
 SAHARA_TEST_SOURCE=../test/mxc_sahara_test/
