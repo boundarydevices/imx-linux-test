@@ -25,6 +25,8 @@
 
 extern int quitflag;
 
+int vpu_v4l_performance_test;
+
 static FILE *fpFrmStatusLogfile = NULL;
 static FILE *fpErrMapLogfile = NULL;
 static FILE *fpQpLogfile = NULL;
@@ -1029,7 +1031,8 @@ decoder_start(struct decode *dec)
 			dprintf(3, "VPU doesn't have picture to be displayed.\n"
 				"\toutinfo.indexFrameDisplay = %d\n",
 						outinfo.indexFrameDisplay);
-			if (dec->cmdl->dst_scheme != PATH_IPU) {
+
+			if (!vpu_v4l_performance_test && (dec->cmdl->dst_scheme != PATH_IPU)) {
 				if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
 					err = vpu_DecClrDispFlag(handle, disp_clr_index);
 					if (err)
@@ -1070,11 +1073,13 @@ decoder_start(struct decode *dec)
 				return -1;
 
 			if (dec->cmdl->dst_scheme == PATH_V4L2) {
-				if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
-					err = vpu_DecClrDispFlag(handle, disp_clr_index);
-					if (err)
-						err_msg("vpu_DecClrDispFlag failed Error code"
+				if (!vpu_v4l_performance_test) {
+					if (dec->cmdl->format != STD_MJPG && disp_clr_index >= 0) {
+						err = vpu_DecClrDispFlag(handle, disp_clr_index);
+						if (err)
+							err_msg("vpu_DecClrDispFlag failed Error code"
 								" %d\n", err);
+					}
 				}
 
 				if (dec->cmdl->format == STD_MJPG) {
@@ -1456,8 +1461,9 @@ decoder_parse(struct decode *dec)
 {
 	DecInitialInfo initinfo = {0};
 	DecHandle handle = dec->handle;
-	int align, profile, level;
+	int align, profile, level, extended_fbcount;
 	RetCode ret;
+	char *count;
 
 	/*
 	 * If userData report is enabled, buffer and comamnd need to be set
@@ -1650,10 +1656,17 @@ decoder_parse(struct decode *dec)
 	 *
 	 * Two more buffers may be needed for interlace stream from IPU DVI view
 	 */
-	if (initinfo.interlace)
-		dec->fbcount = initinfo.minFrameBufferCount + 2 + 2;
+	dec->minFrameBufferCount = initinfo.minFrameBufferCount;
+	count = getenv("VPU_EXTENDED_BUFFER_COUNT");
+	if (count)
+		extended_fbcount = atoi(count);
 	else
-		dec->fbcount = initinfo.minFrameBufferCount + 2;
+		extended_fbcount = 2;
+
+	if (initinfo.interlace)
+		dec->fbcount = initinfo.minFrameBufferCount + extended_fbcount + 2;
+	else
+		dec->fbcount = initinfo.minFrameBufferCount + extended_fbcount;
 
 	dec->picwidth = ((initinfo.picWidth + 15) & ~15);
 
@@ -1734,8 +1747,6 @@ decoder_parse(struct decode *dec)
 			err_msg("malloc_error\n");
 	}
 
-	if (dec->cmdl->fps == 0)
-		dec->cmdl->fps = 30;
 	info_msg("Display fps will be %d\n", dec->cmdl->fps);
 
 	return 0;
@@ -1811,6 +1822,8 @@ decode_test(void *arg)
 	vpu_mem_desc slice_mem_desc = {0};
 	struct decode *dec;
 	int ret, eos = 0, fill_end_bs = 0, fillsize = 0;
+
+	vpu_v4l_performance_test = 0;
 
 	dec = (struct decode *)calloc(1, sizeof(struct decode));
 	if (dec == NULL) {
@@ -1899,6 +1912,10 @@ decode_test(void *arg)
 	ret = decoder_allocate_framebuffer(dec);
 	if (ret)
 		goto err1;
+
+	/* Not set fps when doing performance test default */
+        if ((dec->cmdl->fps == 0) && !vpu_v4l_performance_test)
+                dec->cmdl->fps = 30;
 
 	/* start decoding */
 	ret = decoder_start(dec);
