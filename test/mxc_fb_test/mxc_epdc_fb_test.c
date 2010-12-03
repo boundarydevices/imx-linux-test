@@ -83,7 +83,8 @@ int test_map[NUM_TESTS];
 typedef int (*testfunc)();
 testfunc testfunc_array[NUM_TESTS] = {NULL};
 
-int fd_fb = 0;
+int fd_fb;
+int fd_fb_ioctl;
 unsigned short * fb;
 int g_fb_size;
 struct fb_var_screeninfo screen_info;
@@ -151,12 +152,12 @@ static void update_to_display(int left, int top, int width, int height, int wave
 		upd_data.update_marker = 0;
 	}
 
-	retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	while (retval < 0) {
 		/* We have limited memory available for updates, so wait and
 		 * then try again after some updates have completed */
 		sleep(1);
-		retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+		retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	}
 
 /*
@@ -166,7 +167,7 @@ static void update_to_display(int left, int top, int width, int height, int wave
 
 	if (wait_for_complete) {
 		/* Wait for update to complete */
-		retval = ioctl(fd_fb, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
+		retval = ioctl(fd_fb_ioctl, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
 		if (retval < 0) {
 			printf("Wait for update complete failed.  Error = 0x%x", retval);
 		}
@@ -219,7 +220,7 @@ static void draw_rgb_crosshatch(struct fb_var_screeninfo * var, int mode)
 					sleep(1);
 					printf("Retrying update\n");
 				}
-				retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+				retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 				ioctl_tries++;
 			} while ((retval < 0) && (ioctl_tries < 5));
 			if (retval < 0)
@@ -258,7 +259,7 @@ static void draw_rgb_crosshatch(struct fb_var_screeninfo * var, int mode)
 					sleep(1);
 					printf("Retrying update\n");
 				}
-				retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+				retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 				ioctl_tries++;
 			} while ((retval < 0) && (ioctl_tries < 5));
 			if (retval < 0)
@@ -301,7 +302,7 @@ static void draw_rgb_crosshatch(struct fb_var_screeninfo * var, int mode)
 					sleep(1);
 					printf("Retrying update\n");
 				}
-				retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+				retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 				ioctl_tries++;
 			} while ((retval < 0) && (ioctl_tries < 5));
 			if (retval < 0)
@@ -336,7 +337,7 @@ static void draw_rgb_crosshatch(struct fb_var_screeninfo * var, int mode)
 					sleep(1);
 					printf("Retrying update\n");
 				}
-				retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+				retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 				ioctl_tries++;
 			} while ((retval < 0) && (ioctl_tries < 5));
 			if (retval < 0)
@@ -695,7 +696,7 @@ static int test_auto_update(void)
 
 	printf("Change to auto-update mode\n");
 	auto_update_mode = AUTO_UPDATE_MODE_AUTOMATIC_MODE;
-	retval = ioctl(fd_fb, MXCFB_SET_AUTO_UPDATE_MODE, &auto_update_mode);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SET_AUTO_UPDATE_MODE, &auto_update_mode);
 	if (retval < 0)
 	{
 		return TFAIL;
@@ -727,7 +728,7 @@ static int test_auto_update(void)
 
 	printf("Change to region update mode\n");
 	auto_update_mode = AUTO_UPDATE_MODE_REGION_MODE;
-	retval = ioctl(fd_fb, MXCFB_SET_AUTO_UPDATE_MODE, &auto_update_mode);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SET_AUTO_UPDATE_MODE, &auto_update_mode);
 	if (retval < 0)
 	{
 		return TFAIL;
@@ -834,16 +835,16 @@ static int test_overlay(void)
 
 	printf("Show full-screen overlay\n");
 
-	retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	while (retval < 0) {
 		/* We have limited memory available for updates, so wait and
 		 * then try again after some updates have completed */
 		sleep(1);
-		retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+		retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	}
 
 	/* Wait for update to complete */
-	retval = ioctl(fd_fb, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
+	retval = ioctl(fd_fb_ioctl, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
 	if (retval < 0) {
 		printf("Wait for update complete failed.  Error = 0x%x", retval);
 	}
@@ -870,16 +871,16 @@ static int test_overlay(void)
 	upd_data.alt_buffer_data.alt_update_region.top = 0;
 	upd_data.alt_buffer_data.alt_update_region.height = screen_info.yres/2;
 
-	retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	while (retval < 0) {
 		/* We have limited memory available for updates, so wait and
 		 * then try again after some updates have completed */
 		sleep(1);
-		retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+		retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	}
 
 	/* Wait for update to complete */
-	retval = ioctl(fd_fb, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
+	retval = ioctl(fd_fb_ioctl, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
 	if (retval < 0) {
 		printf("Wait for update complete failed.  Error = 0x%x", retval);
 	}
@@ -906,16 +907,16 @@ static int test_overlay(void)
 	upd_data.alt_buffer_data.alt_update_region.top = screen_info.yres/4;
 	upd_data.alt_buffer_data.alt_update_region.height = screen_info.yres/2;
 
-	retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	while (retval < 0) {
 		/* We have limited memory available for updates, so wait and
 		 * then try again after some updates have completed */
 		sleep(1);
-		retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+		retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	}
 
 	/* Wait for update to complete */
-	retval = ioctl(fd_fb, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
+	retval = ioctl(fd_fb_ioctl, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
 	if (retval < 0) {
 		printf("Wait for update complete failed.  Error = 0x%x", retval);
 	}
@@ -935,16 +936,16 @@ static int test_overlay(void)
 	upd_data.alt_buffer_data.alt_update_region.top = screen_info.yres/4;
 	upd_data.alt_buffer_data.alt_update_region.height = screen_info.yres/2;
 
-	retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	while (retval < 0) {
 		/* We have limited memory available for updates, so wait and
 		 * then try again after some updates have completed */
 		sleep(1);
-		retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+		retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	}
 
 	/* Wait for update to complete */
-	retval = ioctl(fd_fb, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
+	retval = ioctl(fd_fb_ioctl, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
 	if (retval < 0) {
 		printf("Wait for update complete failed.  Error = 0x%x", retval);
 	}
@@ -988,16 +989,16 @@ static int test_overlay(void)
 	upd_data.alt_buffer_data.alt_update_region.top = 0;
 	upd_data.alt_buffer_data.alt_update_region.height = 360;
 
-	retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	while (retval < 0) {
 		/* We have limited memory available for updates, so wait and
 		 * then try again after some updates have completed */
 		sleep(1);
-		retval = ioctl(fd_fb, MXCFB_SEND_UPDATE, &upd_data);
+		retval = ioctl(fd_fb_ioctl, MXCFB_SEND_UPDATE, &upd_data);
 	}
 
 	/* Wait for update to complete */
-	retval = ioctl(fd_fb, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
+	retval = ioctl(fd_fb_ioctl, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &upd_data.update_marker);
 	if (retval < 0) {
 		printf("Wait for update complete failed.  Error = 0x%x", retval);
 	}
@@ -1352,9 +1353,19 @@ main(int argc, char **argv)
 			break;
 
 		fb_num++;
+
+		printf("Opened EPDC fb device %s\n", fb_dev);
 	}
 
-	printf("Opened EPDC fb device %s\n", fb_dev);
+	/*
+	 * If kernel test driver exists, we default
+	 * to using it for EPDC ioctls
+	 */
+	fd_fb_ioctl = open("/dev/epdc_test", O_RDWR, 0);
+	if (fd_fb_ioctl >= 0)
+		printf("\n****Using EPDC kernel module test driver!****\n\n");
+	else
+		fd_fb_ioctl = fd_fb;
 
 	retval = ioctl(fd_fb, FBIOGET_VSCREENINFO, &screen_info);
 	if (retval < 0)
@@ -1389,7 +1400,7 @@ main(int argc, char **argv)
 
 	printf("Set to region update mode\n");
 	auto_update_mode = AUTO_UPDATE_MODE_REGION_MODE;
-	retval = ioctl(fd_fb, MXCFB_SET_AUTO_UPDATE_MODE, &auto_update_mode);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SET_AUTO_UPDATE_MODE, &auto_update_mode);
 	if (retval < 0)
 	{
 		goto err2;
@@ -1402,7 +1413,7 @@ main(int argc, char **argv)
 	wv_modes.mode_gc8 = 2;
 	wv_modes.mode_gc16 = 2;
 	wv_modes.mode_gc32 = 2;
-	retval = ioctl(fd_fb, MXCFB_SET_WAVEFORM_MODES, &wv_modes);
+	retval = ioctl(fd_fb_ioctl, MXCFB_SET_WAVEFORM_MODES, &wv_modes);
 	if (retval < 0)
 	{
 		goto err2;
@@ -1422,13 +1433,15 @@ main(int argc, char **argv)
 		if (test_map[i])
 			if ((*testfunc_array[i])()) {
 				printf("\nError: Updates test failed.\n");
-		goto err2;
-	}
+				goto err2;
+			}
 
 err2:
 	munmap(fb, g_fb_size);
 err1:
 	close(fd_fb);
+	if (fd_fb != fd_fb_ioctl)
+		close(fd_fb_ioctl);
 err0:
 	return retval;
 }
