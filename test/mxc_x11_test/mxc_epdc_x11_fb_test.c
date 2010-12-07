@@ -175,7 +175,7 @@ int main (int argc, char* argv[])
 	mxcfbUpdateData.update_mode = UPDATE_MODE_FULL;
 	mxcfbUpdateData.waveform_mode = WAVEFORM_MODE_AUTO;
 	mxcfbUpdateData.temp = TEMP_USE_AMBIENT;
-	mxcfbUpdateData.use_alt_buffer = 0;
+	mxcfbUpdateData.flags = 0;
 	mxcfbUpdateData.update_marker = 0;
 
 	int numPanelUpdates = 0;
