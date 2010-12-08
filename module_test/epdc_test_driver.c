@@ -93,6 +93,15 @@ static int epdc_test_ioctl(struct file *file, unsigned int cmd,
 					NULL);
 			break;
 		}
+	case MXCFB_SET_UPDATE_SCHEME:
+		{
+			u32 update_scheme = 0;
+			if (!get_user(update_scheme, (__u32 __user *) arg))
+				ret =
+				    mxc_epdc_fb_set_upd_scheme(update_scheme,
+					NULL);
+			break;
+		}
 	case MXCFB_SEND_UPDATE:
 		{
 			struct mxcfb_update_data upd_data;
