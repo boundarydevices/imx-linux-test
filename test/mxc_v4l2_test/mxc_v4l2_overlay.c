@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2010 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -740,7 +740,8 @@ main(int argc, char **argv)
                 }
 
                 fb_v4l2.flags = V4L2_FBUF_FLAG_PRIMARY;
-                fb_v4l2.base = (void *) fb0_fix.smem_start;
+                fb_v4l2.base = (void *) fb0_fix.smem_start +
+				fb0_fix.line_length*fb0_var.yoffset;
         } else {
 	        g_alpha.alpha = 0;
 	        g_alpha.enable = 1;
