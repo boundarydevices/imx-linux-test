@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2007-2011 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -163,10 +163,19 @@ int prepare_output(void)
 
 int v4l_capture_setup(void)
 {
+	struct v4l2_dbg_chip_ident chip;
 	struct v4l2_format fmt;
 	struct v4l2_streamparm parm;
         struct v4l2_requestbuffers req;
 	v4l2_std_id id;
+
+	if (ioctl(fd_capture_v4l, VIDIOC_DBG_G_CHIP_IDENT, &chip))
+	{
+                printf("VIDIOC_DBG_G_CHIP_IDENT failed.\n");
+		close(fd_capture_v4l);
+                return TFAIL;
+	}
+	printf("TV decoder chip is %s\n", chip.match.name);
 
 	if (ioctl(fd_capture_v4l, VIDIOC_S_INPUT, &g_input) < 0)
 	{
