@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -141,12 +141,43 @@ int v4l_capture_setup(void)
 	struct v4l2_crop crop;
         int fd_v4l = 0;
 		struct v4l2_mxc_offset off;
+	struct v4l2_dbg_chip_ident chip;
+	struct v4l2_frmsizeenum fsize;
+	struct v4l2_fmtdesc ffmt;
 
         if ((fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
         {
                 printf("Unable to open %s\n", v4l_device);
                 return 0;
         }
+
+	if (ioctl(fd_v4l, VIDIOC_DBG_G_CHIP_IDENT, &chip))
+	{
+                printf("VIDIOC_DBG_G_CHIP_IDENT failed.\n");
+                return -1;
+	}
+	printf("sensor chip is %s\n", chip.match.name);
+
+	fsize.index = g_capture_mode;
+	if (ioctl(fd_v4l, VIDIOC_ENUM_FRAMESIZES, &fsize) < 0)
+	{
+	        printf("VIDIOC_ENUM_FRAMESIZES failed\n");
+	        return -1;
+	}
+
+	printf("sensor frame size is %dx%d\n", fsize.discrete.width,
+					       fsize.discrete.height);
+
+	ffmt.index = g_capture_mode;
+	if (ioctl(fd_v4l, VIDIOC_ENUM_FMT, &ffmt) < 0)
+	{
+	        printf("VIDIOC_ENUM_FMT failed\n");
+	        return -1;
+	}
+	if (ffmt.pixelformat == V4L2_PIX_FMT_YUYV)
+		printf("sensor frame format is YUYV\n");
+	else if (ffmt.pixelformat == V4L2_PIX_FMT_UYVY)
+		printf("sensor frame format is UYVY\n");
 
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	parm.parm.capture.timeperframe.numerator = 1;
