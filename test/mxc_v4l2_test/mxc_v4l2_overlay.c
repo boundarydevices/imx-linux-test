@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -401,6 +401,29 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
         v4l2_std_id id;
         struct v4l2_control ctl;
         struct v4l2_crop crop;
+	struct v4l2_frmsizeenum fsize;
+	struct v4l2_fmtdesc ffmt;
+
+	fsize.index = g_capture_mode;
+	if (ioctl(fd_v4l, VIDIOC_ENUM_FRAMESIZES, &fsize) < 0)
+	{
+	        printf("VIDIOC_ENUM_FRAMESIZES failed\n");
+	        return TFAIL;
+	}
+
+	printf("sensor frame size is %dx%d\n", fsize.discrete.width,
+					       fsize.discrete.height);
+
+	ffmt.index = g_capture_mode;
+	if (ioctl(fd_v4l, VIDIOC_ENUM_FMT, &ffmt) < 0)
+	{
+	        printf("VIDIOC_ENUM_FMT failed\n");
+	        return TFAIL;
+	}
+	if (ffmt.pixelformat == V4L2_PIX_FMT_YUYV)
+		printf("sensor frame format is YUYV\n");
+	else if (ffmt.pixelformat == V4L2_PIX_FMT_UYVY)
+		printf("sensor frame format is UYVY\n");
 
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	parm.parm.capture.timeperframe.numerator = 1;
@@ -567,6 +590,7 @@ main(int argc, char **argv)
         struct mxcfb_loc_alpha l_alpha;
 	int ret = 0;
 	struct sigaction act;
+	struct v4l2_dbg_chip_ident chip;
 
 	/* for ctrl-c */
 	sigemptyset(&act.sa_mask);
@@ -586,6 +610,13 @@ main(int argc, char **argv)
                 printf("Unable to open %s\n", v4l_device);
                 return TFAIL;
         }
+
+	if (ioctl(fd_v4l, VIDIOC_DBG_G_CHIP_IDENT, &chip))
+	{
+                printf("VIDIOC_DBG_G_CHIP_IDENT failed.\n");
+                return TFAIL;
+	}
+	printf("sensor chip is %s\n", chip.match.name);
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
         fmt.fmt.win.w.top=  g_display_top ;
