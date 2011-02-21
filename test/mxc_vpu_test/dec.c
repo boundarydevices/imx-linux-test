@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -677,6 +677,7 @@ decoder_start(struct decode *dec)
 	int totalNumofErrMbs = 0;
 	int disp_clr_index = -1, actual_display_index = -1, field = V4L2_FIELD_NONE;
 	int is_waited_int = 0;
+	char *delay_ms, *endptr;
 
 	if (((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
 			&& (dec->cmdl->ipu_rot_en))
@@ -1140,6 +1141,10 @@ decoder_start(struct decode *dec)
 				return -1;
 			}
 		}
+
+	delay_ms = getenv("VPU_DECODER_DELAY_MS");
+	if (delay_ms && strtol(delay_ms, &endptr, 10))
+		usleep(strtol(delay_ms,&endptr, 10) * 1000);
 	}
 
 	if (totalNumofErrMbs) {
