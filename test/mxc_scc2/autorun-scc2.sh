@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 PATH=$PATH:/unit_tests/modules:$PWD
 source /unit_tests/test-utils.sh
 
