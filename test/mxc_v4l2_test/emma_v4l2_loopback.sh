@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Script to loopback MPEG4 encoded capture from camera to screen
 #
