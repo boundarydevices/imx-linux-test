@@ -1,5 +1,5 @@
 
-#!/bin/sh
+#!/bin/bash
 
 source /unit_tests/test-utils.sh
 

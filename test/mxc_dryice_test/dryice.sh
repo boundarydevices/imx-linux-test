@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 PATH=$PATH:/unit_tests/modules:$PWD
 source /unit_tests/test-utils.sh
 
@@ -31,7 +31,7 @@ run()
 	fi
 	n_total=$(($n_total+1))
 }
-	
+
 run test=setp nr=0
 run test=setp nr=1
 run test=setp nr=2
