@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #   On imx31ads board, turn off buzzer (set SW2-2 to OFF).
 
