@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ## This command should be checked for error status.  It has numerous side
 ## effects relating to exportation of symbols
 ##

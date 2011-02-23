@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 mkfifo /tmp/cap_pipe
 
