@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo Setting TV to NTSC mode
 echo U:720x480i-60 > /sys/class/graphics/fb1/mode
