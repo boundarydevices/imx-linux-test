@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # If this script is run with no parameters, it will run all the test ID's in
 # autorun-suite.txt.  The autorun-suite.txt file also describes how each test

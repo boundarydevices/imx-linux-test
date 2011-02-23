@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Initialize the test accounting environment
 . test_subs.sh
 
