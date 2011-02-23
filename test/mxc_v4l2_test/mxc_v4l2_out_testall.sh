@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ./mxc_v4l2_output.out -iw 352 -ih 240 -ow 176 -oh 120 -d 0 fb-352x240.yuv
 ./mxc_v4l2_output.out -iw 352 -ih 240 -ow 176 -oh 120 -d 0 -r 1 fb-352x240.yuv

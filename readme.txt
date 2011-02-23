@@ -78,7 +78,7 @@ tests are having difficulty.  These scripts can also make it easier for people w
 are not familiar with the unit tests to run them.  Currently the simplest autorun
 script is misc/test/wdog/autorun-wdog.sh, which is quoted below.
 
-      #!/bin/sh
+      #!/bin/bash
 
       source /unit_tests/test-utils.sh
 
