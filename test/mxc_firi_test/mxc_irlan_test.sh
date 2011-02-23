@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 kernel_ver=2.6.22
 

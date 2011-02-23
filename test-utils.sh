@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # If one test case fails, this script keeps running the rest of the
