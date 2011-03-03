@@ -1042,7 +1042,7 @@ static int test_overlay(void)
 	struct mxcfb_update_data upd_data;
 	int retval;
 	struct fb_fix_screeninfo fix_screen_info;
-	__u32 ol_phys_addr, ol_virt_addr;
+	__u32 ol_phys_addr;
 
 	printf("Ginger update\n");
 	copy_image_to_buffer(0, 0, 800, 600, ginger_rgb_800x600, BUFFER_FB,
@@ -1062,9 +1062,6 @@ static int test_overlay(void)
 	ol_phys_addr = fix_screen_info.smem_start +
 		screen_info.xres_virtual*ALIGN_PIXEL_128(screen_info.yres)*screen_info.bits_per_pixel/8;
 
-	ol_virt_addr = (__u32)fb +
-		screen_info.xres_virtual*ALIGN_PIXEL_128(screen_info.yres)*screen_info.bits_per_pixel/8;
-
 	upd_data.update_mode = UPDATE_MODE_FULL;
 	upd_data.waveform_mode = WAVEFORM_MODE_AUTO;
 	upd_data.update_region.left = 0;
@@ -1077,7 +1074,6 @@ static int test_overlay(void)
 	upd_data.flags = EPDC_FLAG_USE_ALT_BUFFER;
 	/* Overlay buffer data */
 	upd_data.alt_buffer_data.phys_addr = ol_phys_addr;
-	upd_data.alt_buffer_data.virt_addr = (void *)ol_virt_addr;
 	upd_data.alt_buffer_data.width = screen_info.xres_virtual;
 	upd_data.alt_buffer_data.height = screen_info.yres;
 	upd_data.alt_buffer_data.alt_update_region.left = 0;
@@ -1226,10 +1222,7 @@ static int test_overlay(void)
 
 	ol_phys_addr = fix_screen_info.smem_start +
 		screen_info.xres_virtual*ALIGN_PIXEL_128(screen_info.yres)*screen_info.bits_per_pixel/8;
-	ol_virt_addr = (__u32)fb +
-		screen_info.xres_virtual*ALIGN_PIXEL_128(screen_info.yres)*screen_info.bits_per_pixel/8;
 	upd_data.alt_buffer_data.phys_addr = ol_phys_addr;
-	upd_data.alt_buffer_data.virt_addr = (void *)ol_virt_addr;
 	upd_data.alt_buffer_data.width = screen_info.xres_virtual;
 	upd_data.alt_buffer_data.height = screen_info.yres;
 
