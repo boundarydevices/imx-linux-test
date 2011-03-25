@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2009-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -36,7 +36,9 @@
 #include <sys/stat.h>
 #include <linux/mxcfb.h>
 #include "mxc_ipudev_test.h"
+#ifndef BUILD_FOR_ANDROID
 #include "ScreenLayer.h"
+#endif
 
 /*
        Y = R *  .299 + G *  .587 + B *  .114;
@@ -202,9 +204,9 @@ void gen_fill_alpha_in_pixel_for_point(void * buf, unsigned int pixel_format,
 
 	if (pixel_format == v4l2_fourcc('R', 'G', 'B', 'A') ||
 	    pixel_format == v4l2_fourcc('B', 'G', 'R', 'A')) {
-		p_alpha = (u8 *)(buf + 4*sl_width*y + 4*x + 3);
+		p_alpha = (unsigned char *)(buf + 4*sl_width*y + 4*x + 3);
 	} else if (pixel_format == v4l2_fourcc('A', 'B', 'G', 'R')) {
-		p_alpha = (u8 *)(buf + 4*sl_width*y + 4*x);
+		p_alpha = (unsigned char *)(buf + 4*sl_width*y + 4*x);
 	} else {
 		printf("Unsupported pixel format with alpha value!\n");
 		return;
@@ -1092,6 +1094,8 @@ void * thread_func_color_bar(void *arg)
 	ret = color_bar(NO_OV, &test_handle);
 
 	pthread_exit((void*)ret);
+
+	return NULL;
 }
 
 void * thread_func_hop_block(void *arg)
@@ -1101,8 +1105,11 @@ void * thread_func_hop_block(void *arg)
 	ret = hop_block((ipu_test_handle_t *)arg);
 
 	pthread_exit((void*)ret);
+
+	return NULL;
 }
 
+#ifndef BUILD_FOR_ANDROID
 #define PRIMARYFBDEV	"/dev/fb0"
 #define OVERLAYFBDEV	"/dev/fb2"
 #define	BUFCNT_1ST	1
@@ -1901,6 +1908,7 @@ int screenlayer_test_ipc(int process_num, int three_layer, int op_type)
 done:
 	return ret;
 }
+#endif
 
 int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 {
@@ -1950,6 +1958,7 @@ int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 		printf("Copy test:\n");
 		return copy_test(test_handle);
 	}
+#ifndef BUILD_FOR_ANDROID
 	if (pattern == 8) {
 		printf("Screen layer with 2 layers test using IC global alpha blending:\n");
 		return screenlayer_test(0, IC_GLB_ALP_OV);
@@ -1998,6 +2007,7 @@ int run_test_pattern(int pattern, ipu_test_handle_t * test_handle)
 		printf("[No mandatory test]Screen layer IPC(local alpha + tvout): ProcessA(first_layer) ProcessB(second_layer):\n");
 		return screenlayer_test_ipc(2, 0, IC_LOC_SEP_ALP_OV | COPY_TV);
 	}
+#endif
 
 	printf("No such test pattern %d\n", pattern);
 	return -1;
