@@ -28,4 +28,3 @@ echo
 
 print_test_results
 
-return
