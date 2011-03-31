@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2005-2006, 2011 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 /*
  * The code contained herein is licensed under the GNU General Public
@@ -43,10 +43,10 @@ OS_DEV_INIT(km_test_init)
 
 	if (code == OS_ERROR_FAIL_S) {
 		os_printk("km_test driver initialization failed: %d\n", code);
-		retval = FALSE;
+		retval = code;
 	} else {
 		Major = code;
-		retval = TRUE;
+		retval = 0;
 	}
 
 	os_dev_init_return(retval);
