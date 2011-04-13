@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (C) 2005-2009, 2011 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -34,6 +34,9 @@ MODULE_LICENSE("GPL");
 
 /** Create a place to track/notify sleeping processes */
 DECLARE_WAIT_QUEUE_HEAD(waitQueue);
+
+/* Mutex to prevent usage of the ioctl function by more than 1 user at a time */
+DEFINE_MUTEX(scc2_test_mutex);
 
 OS_DEV_INIT_DCL(scc2_test_init);
 OS_DEV_SHUTDOWN_DCL(scc2_test_cleanup);
@@ -217,6 +220,8 @@ OS_DEV_IOCTL(scc2_test_ioctl)
     unsigned cmd = os_dev_get_ioctl_op();
     unsigned long scc_data = os_dev_get_ioctl_arg();
 
+	mutex_lock(&scc2_test_mutex);
+
     switch (cmd) {
     case SCC2_TEST_GET_CONFIGURATION:
         error_code = scc2_test_get_configuration(scc_data);
@@ -271,6 +276,8 @@ OS_DEV_IOCTL(scc2_test_ioctl)
         break;
 
     } /* End switch */
+
+	mutex_unlock(&scc2_test_mutex);
 
     os_dev_ioctl_return(error_code);
 }
