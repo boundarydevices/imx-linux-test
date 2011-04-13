@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (C) 2004-2009, 2011 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -24,6 +24,7 @@
 #ifdef __KERNEL__
 
 #include <portable_os.h>
+#include <linux/mutex.h>
 
 #endif /* kernel */
 
