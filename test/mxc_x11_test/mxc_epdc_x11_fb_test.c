@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 #include <poll.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xdamage.h>
+#include <X11/extensions/Xrandr.h>
 #include <linux/fb.h>
 #include <linux/mxcfb.h>
 #include <sys/ioctl.h>
@@ -56,6 +57,7 @@ int main (int argc, char* argv[])
 	Display* xDisplay = NULL;
 	Damage xDamageScreen = 0;
 	int fd = -1;
+	XRRScreenConfiguration* xrrScreenConfig = NULL;
 
 	/* Open the X display */
 	xDisplay = XOpenDisplay(NULL);
@@ -70,6 +72,62 @@ int main (int argc, char* argv[])
 	if (0 == xRootWindow)
 	{
 		printf("\nError: unable to access root window for screen\n");
+		goto cleanup;
+	}
+
+	/* Access the XRandR screen configuration. */
+	xrrScreenConfig = XRRGetScreenInfo(xDisplay, xRootWindow);
+	if (NULL == xrrScreenConfig)
+	{
+		printf("\nError: unable to query XRandR screen config\n");
+		goto cleanup;
+	}
+
+	/* Query the list of XRandR configured screen sizes. */
+	int xrrSizeListCount;
+	XRRScreenSize* xrrSizeList =
+		XRRConfigSizes(xrrScreenConfig, &xrrSizeListCount);
+
+	/* Query the current XRandR screen rotation and which screen size */
+	/* is currently being used. */
+	Rotation xrrRotate;
+	int xrrSizeIndex =
+		XRRConfigCurrentConfiguration( xrrScreenConfig, &xrrRotate);
+	const int screenWidth = xrrSizeList[xrrSizeIndex].width;
+	const int screenHeight = xrrSizeList[xrrSizeIndex].height;
+
+	/* Display XRandR information */
+	printf("using XRandR: screen size = %dx%d, rotation = ",
+		screenWidth, screenHeight);
+	int fbRotate = -1;
+	if (RR_Rotate_0 & xrrRotate)
+	{
+		printf("UR\n");
+		fbRotate = FB_ROTATE_UR;
+	}
+	else if (RR_Rotate_90 & xrrRotate)
+	{
+		printf("CW\n");
+		fbRotate = FB_ROTATE_CW;
+	}
+	else if (RR_Rotate_180 & xrrRotate)
+	{
+		printf("UD\n");
+		fbRotate = FB_ROTATE_UD;
+	}
+	else if (RR_Rotate_270 & xrrRotate)
+	{
+		printf("CCW\n");
+		fbRotate = FB_ROTATE_CCW;
+	}
+	else
+	{
+		printf("???\n");
+	}
+	if (-1 == fbRotate)
+	{
+		printf("\nError: unsupported XRandR rotation = 0x%04x\n",
+			xrrRotate);
 		goto cleanup;
 	}
 
@@ -168,7 +226,6 @@ int main (int argc, char* argv[])
 		goto cleanup;
 	}
 
-	printf ("Press ENTER to exit...\n");
 
 	/* Common properties for EPDC screen update */
 	struct mxcfb_update_data mxcfbUpdateData;
@@ -179,14 +236,11 @@ int main (int argc, char* argv[])
 	mxcfbUpdateData.update_marker = 0;
 
 	int numPanelUpdates = 0;
-	while (!kbhit())
+	while (1)
 	{
 		int numDamageUpdates = 0;
-		struct mxcfb_rect updateRect;
-		updateRect.left = 0;
-		updateRect.top = 0;
-		updateRect.width = 0;
-		updateRect.height = 0;
+		int updateLeft, updateRight;
+		int updateTop, updateBottom;
 
 		while (XPending(xDisplay))
 		{
@@ -197,54 +251,116 @@ int main (int argc, char* argv[])
 				XDamageNotifyEvent* xDamageNotifyEvent =
 					(XDamageNotifyEvent*)&xEvent;
 
-				updateRect.left = xDamageNotifyEvent->area.x;
-				updateRect.top = xDamageNotifyEvent->area.y;
-				updateRect.width = xDamageNotifyEvent->area.width;
-				updateRect.height = xDamageNotifyEvent->area.height;
+				int left = xDamageNotifyEvent->area.x;
+				int top = xDamageNotifyEvent->area.y;
+				int right = left + xDamageNotifyEvent->area.width;
+				int bottom = top + xDamageNotifyEvent->area.height;
 
-				++numDamageUpdates;
+				if (numDamageUpdates++ > 0)
+				{
+					if (left < updateLeft)
+					{
+						updateLeft = left;
+					}
+					if (right > updateRight)
+					{
+						updateRight = right;
+					}
+					if (top < updateTop)
+					{
+						updateTop = top;
+					}
+					if (bottom > updateBottom)
+					{
+						updateBottom = bottom;
+					}
+				}
+				else
+				{
+					updateLeft = left;
+					updateTop = top;
+					updateRight = right;
+					updateBottom = bottom;
+				}
 			}
 		}
 
-		if (numDamageUpdates > 0)
+		if (numDamageUpdates <= 0)
 		{
-			/* Send accum bound rect updates to EPDC */
-			mxcfbUpdateData.update_marker = ++numPanelUpdates;
-#if 0
-			mxcfbUpdateData.update_region = updateRect;
-#else
+			continue;
+		}
+
+		/* Send accum bound rect updates to EPDC */
+		mxcfbUpdateData.update_marker = ++numPanelUpdates;
+
+		if (FB_ROTATE_UR == fbRotate)
+		{
 			mxcfbUpdateData.update_region.left = 0;
 			mxcfbUpdateData.update_region.top = 0;
-			mxcfbUpdateData.update_region.width = updateRect.width + updateRect.left;
-			mxcfbUpdateData.update_region.height = updateRect.height + updateRect.top;
-#endif
-			if (0 > ioctl(fd, MXCFB_SEND_UPDATE, &mxcfbUpdateData))
-			{
-				printf("Error in ioctl(MXCFB_SEND_UPDATE) call\n");
-				perror(fbDevName);
-				goto cleanup;
-			}
 
-			/* Display what got updated */
-			printf("%d: (x,y)=(%d,%d) (w,h)=(%d,%d)\n",
-				numPanelUpdates,
-				(int)updateRect.left,
-				(int)updateRect.top,
-				(int)updateRect.width,
-				(int)updateRect.height);
+			mxcfbUpdateData.update_region.width = updateRight;
+			mxcfbUpdateData.update_region.height = updateBottom;
+		}
+		else if (FB_ROTATE_UD == fbRotate)
+		{
+			mxcfbUpdateData.update_region.left = 0;
+			mxcfbUpdateData.update_region.top = 0;
 
-			/* Clear the damage update bounding box */
-			XDamageSubtract(xDisplay, xDamageScreen, None, None);
+			mxcfbUpdateData.update_region.width =
+				screenWidth - updateLeft;
+			mxcfbUpdateData.update_region.height =
+				screenHeight - updateTop;
+		}
+		else if (FB_ROTATE_CW == fbRotate)
+		{
+			mxcfbUpdateData.update_region.left = 0;
+			mxcfbUpdateData.update_region.top = 0;
 
-			/* Wait for previous EPDC update to finish */
-			if (0 > ioctl(fd, MXCFB_WAIT_FOR_UPDATE_COMPLETE, &mxcfbUpdateData.update_marker))
-			{
-				printf("Error in ioctl(MXCFB_WAIT_FOR_UPDATE_COMPLETE) call\n");
-				perror(fbDevName);
-				goto cleanup;
-			}
+			mxcfbUpdateData.update_region.width =
+				screenWidth - updateTop;
+			mxcfbUpdateData.update_region.height =
+				updateRight;
+		}
+		else if (FB_ROTATE_CCW == fbRotate)
+		{
+			mxcfbUpdateData.update_region.left = 0;
+			mxcfbUpdateData.update_region.top = 0;
+
+			mxcfbUpdateData.update_region.width =
+				updateBottom;
+			mxcfbUpdateData.update_region.height =
+				screenHeight - updateLeft;
+		}
+		else
+		{
+			continue;
 		}
 
+		if (0 > ioctl(fd, MXCFB_SEND_UPDATE, &mxcfbUpdateData))
+		{
+			printf("Error in ioctl(MXCFB_SEND_UPDATE) call\n");
+			perror(fbDevName);
+			goto cleanup;
+		}
+
+		/* Display what getting updated */
+		printf("%d: (x,y)=(%d,%d) (w,h)=(%d,%d)\n",
+			numPanelUpdates,
+			updateLeft, updateTop,
+			updateRight - updateLeft,
+			updateBottom - updateTop);
+
+		/* Clear the damage update bounding box */
+		XDamageSubtract(xDisplay, xDamageScreen, None, None);
+
+		/* Wait for previous EPDC update to finish */
+		if (0 > ioctl(fd, MXCFB_WAIT_FOR_UPDATE_COMPLETE,
+				&mxcfbUpdateData.update_marker))
+		{
+			printf("Error in ioctl(MXCFB_WAIT_FOR_UPDATE_COMPLETE) call\n");
+			perror(fbDevName);
+			goto cleanup;
+		}
 	}
 
 cleanup:
@@ -252,6 +368,12 @@ cleanup:
 	{
 		close(fd);
 		fd = -1;
+	}
+
+	if (NULL != xrrScreenConfig)
+	{
+		XRRFreeScreenConfigInfo(xrrScreenConfig);
+		xrrScreenConfig = NULL;
 	}
 
 	if (0 != xDamageScreen)
