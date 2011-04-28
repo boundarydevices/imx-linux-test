@@ -42,7 +42,7 @@ sahara_test_driver-objs := km_test.o $(SAHARA_TEST_SOURCE)run_tests.o \
                            $(SAHARA_TEST_SOURCE)user_wrap.o
 
 
-obj-m += $(module_list-y)
+obj-m += $(module_list-y) $(module_list-m)
 
 EXTRA_CFLAGS := -DLINUX_KERNEL -DIMX_NEEDS_DEPRECATED_SYMBOLS
 
