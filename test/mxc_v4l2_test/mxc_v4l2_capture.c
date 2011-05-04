@@ -274,7 +274,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
         FILE * fd_y_file = 0;
         int count = g_capture_count;
 
-        if ((fd_y_file = fopen(file, "wb")) < 0)
+        if ((fd_y_file = fopen(file, "wb")) ==NULL)
         {
                 printf("Unable to create y frame recording file\n");
                 return -1;
