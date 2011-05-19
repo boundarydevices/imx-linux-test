@@ -63,12 +63,15 @@ struct uart_t {
 	int  init_speed;
 	int  speed;
 	int  flags;
+	int  pm;
 	char *bdaddr;
 	int  (*init) (int fd, struct uart_t *u, struct termios *ti);
 	int  (*post) (int fd, struct uart_t *u, struct termios *ti);
 };
 
 #define FLOW_CTL	0x0001
+#define ENABLE_PM	1
+#define DISABLE_PM	0
 
 static volatile sig_atomic_t __io_canceled = 0;
 
@@ -141,9 +144,16 @@ static int uart_speed(int s)
 
 int set_speed(int fd, struct termios *ti, int speed)
 {
-	cfsetospeed(ti, uart_speed(speed));
-	cfsetispeed(ti, uart_speed(speed));
-	return tcsetattr(fd, TCSANOW, ti);
+	if (cfsetospeed(ti, uart_speed(speed)) < 0)
+		return -errno;
+
+	if (cfsetispeed(ti, uart_speed(speed)) < 0)
+		return -errno;
+
+	if (tcsetattr(fd, TCSANOW, ti) < 0)
+		return -errno;
+
+	return 0;
 }
 
 /*
@@ -284,7 +294,6 @@ static int digi(int fd, struct uart_t *u, struct termios *ti)
 	return 0;
 }
 
-#if 0
 static int texas(int fd, struct uart_t *u, struct termios *ti)
 {
 	return texas_init(fd, ti);
@@ -299,7 +308,21 @@ static int texasalt(int fd, struct uart_t *u, struct termios *ti)
 {
 	return texasalt_init(fd, u->speed, ti);
 }
-#endif
+
+static int ath3k_ps(int fd, struct uart_t *u, struct termios *ti)
+{
+	return ath3k_init(fd, u->speed, u->init_speed, u->bdaddr, ti);
+}
+
+static int ath3k_pm(int fd, struct uart_t *u, struct termios *ti)
+{
+	return ath3k_post(fd, u->pm);
+}
+
+static int qualcomm(int fd, struct uart_t *u, struct termios *ti)
+{
+	return qualcomm_init(fd, u->speed, ti, u->bdaddr);
+}
 
 static int read_check(int fd, void *buf, int count)
 {
@@ -328,7 +351,8 @@ static int bcsp_max_retries = 10;
 static void bcsp_tshy_sig_alarm(int sig)
 {
 	unsigned char bcsp_sync_pkt[10] = {0xc0,0x00,0x41,0x00,0xbe,0xda,0xdc,0xed,0xed,0xc0};
-	int len, retries = 0;
+	int len;
+	static int retries = 0;
 
 	if (retries < bcsp_max_retries) {
 		retries++;
@@ -345,7 +369,8 @@ static void bcsp_tshy_sig_alarm(int sig)
 static void bcsp_tconf_sig_alarm(int sig)
 {
 	unsigned char bcsp_conf_pkt[10] = {0xc0,0x00,0x41,0x00,0xbe,0xad,0xef,0xac,0xed,0xc0};
-	int len, retries = 0;
+	int len;
+	static int retries = 0;
 
 	if (retries < bcsp_max_retries){
 		retries++;
@@ -982,7 +1007,6 @@ static int st(int fd, struct uart_t *u, struct termios *ti)
 	return 0;
 }
 
-#if 0
 static int stlc2500(int fd, struct uart_t *u, struct termios *ti)
 {
 	bdaddr_t bdaddr;
@@ -1172,83 +1196,109 @@ static int bcm2035(int fd, struct uart_t *u, struct termios *ti)
 
 	return 0;
 }
-#endif
 
 struct uart_t uart[] = {
-	{ "any",        0x0000, 0x0000, HCI_UART_H4,   115200, 115200, FLOW_CTL, NULL, NULL     },
-	{ "ericsson",   0x0000, 0x0000, HCI_UART_H4,   57600,  115200, FLOW_CTL, NULL, ericsson },
-	{ "digi",       0x0000, 0x0000, HCI_UART_H4,   9600,   115200, FLOW_CTL, NULL, digi     },
+	{ "any",        0x0000, 0x0000, HCI_UART_H4,   115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, NULL     },
 
-	{ "bcsp",       0x0000, 0x0000, HCI_UART_BCSP, 115200, 115200, 0,        NULL, bcsp     },
+	{ "ericsson",   0x0000, 0x0000, HCI_UART_H4,   57600,  115200,
+				FLOW_CTL, DISABLE_PM, NULL, ericsson },
+
+	{ "digi",       0x0000, 0x0000, HCI_UART_H4,   9600,   115200,
+				FLOW_CTL, DISABLE_PM, NULL, digi     },
+
+	{ "bcsp",       0x0000, 0x0000, HCI_UART_BCSP, 115200, 115200,
+				0, DISABLE_PM, NULL, bcsp     },
 
 	/* Xircom PCMCIA cards: Credit Card Adapter and Real Port Adapter */
-	{ "xircom",     0x0105, 0x080a, HCI_UART_H4,   115200, 115200, FLOW_CTL, NULL, NULL     },
+	{ "xircom",     0x0105, 0x080a, HCI_UART_H4,   115200, 115200,
+				FLOW_CTL, DISABLE_PM,  NULL, NULL     },
 
 	/* CSR Casira serial adapter or BrainBoxes serial dongle (BL642) */
-	{ "csr",        0x0000, 0x0000, HCI_UART_H4,   115200, 115200, FLOW_CTL, NULL, csr      },
+	{ "csr",        0x0000, 0x0000, HCI_UART_H4,   115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, csr      },
 
 	/* BrainBoxes PCMCIA card (BL620) */
-	{ "bboxes",     0x0160, 0x0002, HCI_UART_H4,   115200, 460800, FLOW_CTL, NULL, csr      },
+	{ "bboxes",     0x0160, 0x0002, HCI_UART_H4,   115200, 460800,
+				FLOW_CTL, DISABLE_PM, NULL, csr      },
 
 	/* Silicon Wave kits */
-	{ "swave",      0x0000, 0x0000, HCI_UART_H4,   115200, 115200, FLOW_CTL, NULL, swave    },
+	{ "swave",      0x0000, 0x0000, HCI_UART_H4,   115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, swave    },
 
 	/* Texas Instruments Bluelink (BRF) modules */
-	//{ "texas",      0x0000, 0x0000, HCI_UART_LL,   115200, 115200, FLOW_CTL, NULL, texas,    texas2 },
-	//{ "texasalt",   0x0000, 0x0000, HCI_UART_LL,   115200, 115200, FLOW_CTL, NULL, texasalt, NULL   },
+	{ "texas",      0x0000, 0x0000, HCI_UART_LL,   115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, texas,    texas2 },
+
+	{ "texasalt",   0x0000, 0x0000, HCI_UART_LL,   115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, texasalt, NULL   },
 
 	/* ST Microelectronics minikits based on STLC2410/STLC2415 */
-	{ "st",         0x0000, 0x0000, HCI_UART_H4,    57600, 115200, FLOW_CTL, NULL, st       },
+	{ "st",         0x0000, 0x0000, HCI_UART_H4,    57600, 115200,
+				FLOW_CTL, DISABLE_PM,  NULL, st       },
 
 	/* ST Microelectronics minikits based on STLC2500 */
-	//{ "stlc2500",   0x0000, 0x0000, HCI_UART_H4,   115200, 115200, FLOW_CTL, "00:80:E1:00:AB:BA", stlc2500 },
+	{ "stlc2500",   0x0000, 0x0000, HCI_UART_H4, 115200, 115200,
+			FLOW_CTL, DISABLE_PM, "00:80:E1:00:AB:BA", stlc2500 },
 
 	/* Philips generic Ericsson IP core based */
-	{ "philips",    0x0000, 0x0000, HCI_UART_H4,   115200, 115200, FLOW_CTL, NULL, NULL     },
+	{ "philips",    0x0000, 0x0000, HCI_UART_H4,   115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, NULL     },
 
 	/* Philips BGB2xx Module */
-	//{ "bgb2xx",    0x0000, 0x0000, HCI_UART_H4,   115200, 115200, FLOW_CTL, "BD:B2:10:00:AB:BA", bgb2xx },
+	{ "bgb2xx",    0x0000, 0x0000, HCI_UART_H4,   115200, 115200,
+			FLOW_CTL, DISABLE_PM, "BD:B2:10:00:AB:BA", bgb2xx },
 
 	/* Sphinx Electronics PICO Card */
-	{ "picocard",   0x025e, 0x1000, HCI_UART_H4,   115200, 115200, FLOW_CTL, NULL, NULL     },
+	{ "picocard",   0x025e, 0x1000, HCI_UART_H4, 115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, NULL     },
 
 	/* Inventel BlueBird Module */
-	{ "inventel",   0x0000, 0x0000, HCI_UART_H4,   115200, 115200, FLOW_CTL, NULL, NULL     },
+	{ "inventel",   0x0000, 0x0000, HCI_UART_H4, 115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, NULL     },
 
 	/* COM One Platinium Bluetooth PC Card */
-	{ "comone",     0xffff, 0x0101, HCI_UART_BCSP, 115200, 115200, 0,        NULL, bcsp     },
+	{ "comone",     0xffff, 0x0101, HCI_UART_BCSP, 115200, 115200,
+				0, DISABLE_PM,  NULL, bcsp     },
 
 	/* TDK Bluetooth PC Card and IBM Bluetooth PC Card II */
-	{ "tdk",        0x0105, 0x4254, HCI_UART_BCSP, 115200, 115200, 0,        NULL, bcsp     },
+	{ "tdk",        0x0105, 0x4254, HCI_UART_BCSP, 115200, 115200,
+				0, DISABLE_PM, NULL, bcsp     },
 
 	/* Socket Bluetooth CF Card (Rev G) */
-	{ "socket",     0x0104, 0x0096, HCI_UART_BCSP, 230400, 230400, 0,        NULL, bcsp     },
+	{ "socket",     0x0104, 0x0096, HCI_UART_BCSP, 230400, 230400,
+				0, DISABLE_PM, NULL, bcsp     },
 
 	/* 3Com Bluetooth Card (Version 3.0) */
-	{ "3com",       0x0101, 0x0041, HCI_UART_H4,   115200, 115200, FLOW_CTL, NULL, csr      },
+	{ "3com",       0x0101, 0x0041, HCI_UART_H4,   115200, 115200,
+				FLOW_CTL, DISABLE_PM, NULL, csr      },
 
 	/* AmbiCom BT2000C Bluetooth PC/CF Card */
-	{ "bt2000c",    0x022d, 0x2000, HCI_UART_H4,    57600, 460800, FLOW_CTL, NULL, csr      },
+	{ "bt2000c",    0x022d, 0x2000, HCI_UART_H4,    57600, 460800,
+				FLOW_CTL, DISABLE_PM, NULL, csr      },
 
 	/* Zoom Bluetooth PCMCIA Card */
-	{ "zoom",       0x0279, 0x950b, HCI_UART_BCSP, 115200, 115200, 0,        NULL, bcsp     },
+	{ "zoom",       0x0279, 0x950b, HCI_UART_BCSP, 115200, 115200,
+				0, DISABLE_PM, NULL, bcsp     },
 
 	/* Sitecom CN-504 PCMCIA Card */
-	{ "sitecom",    0x0279, 0x950b, HCI_UART_BCSP, 115200, 115200, 0,        NULL, bcsp     },
+	{ "sitecom",    0x0279, 0x950b, HCI_UART_BCSP, 115200, 115200,
+				0, DISABLE_PM, NULL, bcsp     },
 
 	/* Billionton PCBTC1 PCMCIA Card */
-	{ "billionton", 0x0279, 0x950b, HCI_UART_BCSP, 115200, 115200, 0,        NULL, bcsp     },
+	{ "billionton", 0x0279, 0x950b, HCI_UART_BCSP, 115200, 115200,
+				0, DISABLE_PM, NULL, bcsp     },
 
 	/* Broadcom BCM2035 */
-	//{ "bcm2035",    0x0A5C, 0x2035, HCI_UART_H4,   115200, 460800, FLOW_CTL, NULL, bcm2035  },
+	{ "bcm2035",    0x0A5C, 0x2035, HCI_UART_H4,   115200, 460800,
+				FLOW_CTL, DISABLE_PM, NULL, bcm2035  },
 
-	/* ATHEROS AR300x */
-	{ "ar3kalt",	 0x0000, 0x0000, HCI_UART_ATH,
-	   115200, 115200, FLOW_CTL, NULL, ar3kinit, ar3kpost  },
+	{ "ath3k",    0x0000, 0x0000, HCI_UART_ATH3K, 115200, 115200,
+			FLOW_CTL, DISABLE_PM, NULL, ath3k_ps, ath3k_pm  },
 
-	{ "ar3k",    0x0000, 0x0000, HCI_UART_ATH,
-	   115200, 115200, FLOW_CTL, NULL, ar3kinit, ar3kpmpost  },
-
+	/* QUALCOMM BTS */
+	{ "qualcomm",   0x0000, 0x0000, HCI_UART_H4,   115200, 115200,
+			FLOW_CTL, DISABLE_PM, NULL, qualcomm, NULL },
 
 	{ NULL, 0 }
 };
@@ -1274,10 +1324,14 @@ static struct uart_t * get_by_type(char *type)
 }
 
 /* Initialize UART driver */
-static int init_uart(char *dev, struct uart_t *u, int send_break)
+static int init_uart(char *dev, struct uart_t *u, int send_break, int raw)
 {
 	struct termios ti;
 	int fd, i;
+	unsigned long flags = 0;
+
+	if (raw)
+		flags |= 1 << HCI_UART_RAW_DEVICE;
 
 	fd = open(dev, O_RDWR | O_NOCTTY);
 	if (fd < 0) {
@@ -1344,6 +1398,11 @@ static int init_uart(char *dev, struct uart_t *u, int send_break)
 	}
 	ATH_INFO("Line discipline is set");
 
+	if (flags && ioctl(fd, HCIUARTSETFLAGS, flags) < 0) {
+		perror("Can't set UART flags");
+		return -1;
+	}
+
 	if (ioctl(fd, HCIUARTSETPROTO, u->proto) < 0) {
 		perror("Can't set device");
 		return -1;
@@ -1361,14 +1420,14 @@ static void usage(void)
 {
 	printf("hciattach - HCI UART driver initialization utility\n");
 	printf("Usage:\n");
-	printf("\thciattach [-n] [-p] [-b] [-t timeout] [-s initial_speed] <tty> <type | id> [speed] [flow|noflow] [bdaddr]\n");
+	printf("\thciattach [-n] [-p] [-b] [-r] [-t timeout] [-s initial_speed] <tty> <type | id> [speed] [flow|noflow] [bdaddr]\n");
 	printf("\thciattach -l\n");
 }
 
 int main(int argc, char *argv[])
 {
 	struct uart_t *u = NULL;
-	int detach, printpid, opt, i, n, ld, err;
+	int detach, printpid, raw, opt, i, n, ld, err;
 	int to = 10;
 	int init_speed = 0;
 	int send_break = 0;
@@ -1380,8 +1439,9 @@ int main(int argc, char *argv[])
 
 	detach = 1;
 	printpid = 0;
+	raw = 0;
 
-	while ((opt=getopt(argc, argv, "bnpt:s:l")) != EOF) {
+	while ((opt=getopt(argc, argv, "bnpt:s:lr")) != EOF) {
 		switch(opt) {
 		case 'b':
 			send_break = 1;
@@ -1409,6 +1469,10 @@ int main(int argc, char *argv[])
 							uart[i].m_id, uart[i].p_id);
 			}
 			exit(0);
+
+		case 'r':
+			raw = 1;
+			break;
 
 		default:
 			usage();
@@ -1463,6 +1527,13 @@ int main(int argc, char *argv[])
 			break;
 
 		case 4:
+			if (!strcmp("sleep", argv[optind]))
+				u->pm = ENABLE_PM;
+			else
+				u->pm = DISABLE_PM;
+			break;
+
+		case 5:
 			u->bdaddr = argv[optind];
 			break;
 		}
@@ -1487,7 +1558,7 @@ int main(int argc, char *argv[])
 	alarm(to);
 	bcsp_max_retries = to;
 
-	n = init_uart(dev, u, send_break);
+	n = init_uart(dev, u, send_break, raw);
 	if (n < 0) {
 		perror("Can't initialize device");
 		exit(1);
