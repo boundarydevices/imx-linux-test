@@ -31,7 +31,7 @@ include ../make.rules
 #all: hciattach-ar3k
 
 #hciattach-ar3k:
-#	$(CC) -Wall -lbluetooth -g hciattach_ar3k.c hciattach.c -o hciattach-ar3k
+#	$(CC) -Wall -lbluetooth -g hciattach_ath3k.c  hciattach.c  hciattach_qualcomm.c  hciattach_st.c  hciattach_tialt.c  hciattach_ti.c -o hciattach-ar3k
 
 #clean:
 #	rm -f hciattach-ar3k *.o
