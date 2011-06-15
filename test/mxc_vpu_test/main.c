@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -252,7 +252,7 @@ parse_args(int argc, char *argv[], int i)
 				input_arg[i].cmd.dst_scheme = PATH_IPU;
 				info_msg("Display through IPU LIB\n");
 			}
-			if (!cpu_is_mx37() && !cpu_is_mx5x() &&
+			if (cpu_is_mx27() &&
 				(input_arg[i].cmd.dst_scheme == PATH_IPU)) {
 				input_arg[i].cmd.dst_scheme = PATH_V4L2;
 				warn_msg("ipu lib disp only support in ipuv3\n");
