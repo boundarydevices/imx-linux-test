@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -617,7 +617,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	if ((disp_width != 0) && (disp_height!= 0 )) {
 		crop.c.width = disp_width;
 		crop.c.height = disp_height;
-	} else if (cpu_is_mx37() || cpu_is_mx5x()) {
+	} else if (cpu_is_mx5x()) {
 		crop.c.width = cropcap.bounds.width;
 		crop.c.height = cropcap.bounds.height;
 	}
