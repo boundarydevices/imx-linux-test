@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -167,7 +167,7 @@ encoder_fill_headers(void)
 
 	/* Must put encode header before encoding */
 	if (enc->cmdl->format == STD_MPEG4) {
-		if (!cpu_is_mx5x()) {
+		if (cpu_is_mx27()) {
 			enchdr_param.headerType = VOS_HEADER;
 			vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
 
