@@ -683,7 +683,7 @@ decoder_start(struct decode *dec)
 			&& (dec->cmdl->ipu_rot_en))
 		rot_en = 0;
 
-	/* deblock_en is zero on mx37 and mx51 since it is cleared in decode_open() function. */
+	/* deblock_en is zero on mx5x since it is cleared in decode_open() function. */
 	if (rot_en || dering_en) {
 		rotid = dec->fbcount;
 		if (deblock_en) {
@@ -807,14 +807,6 @@ decoder_start(struct decode *dec)
 				err_msg("Failed to set user data report, ret %d\n", ret);
 				return -1;
 			}
-		}
-
-		if (cpu_is_mx37()) {
-			DbkOffset dbkOffset;
-			dbkOffset.DbkOffsetEnable = 0;
-			dbkOffset.DbkOffsetA = 7;
-			dbkOffset.DbkOffsetB = 7;
-			vpu_DecGiveCommand(handle, SET_DBK_OFFSET, &dbkOffset);
 		}
 
 		gettimeofday(&tdec_begin, NULL);
@@ -1197,7 +1189,7 @@ decoder_free_framebuffer(struct decode *dec)
 		}
 	}
 
-	/* deblock_en is zero on mx37 and mx51 since it is cleared in decode_open() function. */
+	/* deblock_en is zero on mx5x since it is cleared in decode_open() function. */
 	if (((dec->cmdl->dst_scheme != PATH_V4L2) && (dec->cmdl->dst_scheme != PATH_IPU)) ||
 			(((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
 			 && deblock_en)) {
@@ -1331,7 +1323,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 			fb[i].bufY = pfbpool[i]->addrY;
 			fb[i].bufCb = pfbpool[i]->addrCb;
 			fb[i].bufCr = pfbpool[i]->addrCr;
-			if (cpu_is_mx37() || cpu_is_mx5x()) {
+			if (cpu_is_mx5x()) {
 				fb[i].bufMvCol = pfbpool[i]->mvColBuf;
 			}
 		}
@@ -1367,7 +1359,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		if (deblock_en == 0) {
 			img_size = dec->stride * dec->picheight;
 
-			if (cpu_is_mx37() || cpu_is_mx5x()) {
+			if (cpu_is_mx5x()) {
 				mvcol_md = dec->mvcol_memdesc =
 					calloc(totalfb, sizeof(vpu_mem_desc));
 			}
@@ -1380,7 +1372,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 				fb[i].bufCb = fb[i].bufY + img_size;
 				fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
 				/* allocate MvCol buffer here */
-				if (cpu_is_mx37() || cpu_is_mx5x()) {
+				if (cpu_is_mx5x()) {
 					memset(&mvcol_md[i], 0,
 							sizeof(vpu_mem_desc));
 					mvcol_md[i].size = img_size / divX / divY;
@@ -1777,7 +1769,7 @@ decoder_open(struct decode *dec)
 	 * quality. In other words, mpeg4 deblocking is post processing.
 	 * So, host application need to allocate new frame buffer.
 	 * - On MX27, VPU doesn't support mpeg4 out loop deblocking filtering.
-	 * - On MX37 and MX51, VPU control the buffer internally and return one
+	 * - On MX5X, VPU control the buffer internally and return one
 	 *   more buffer after vpu_DecGetInitialInfo().
 	 * - On MX32, host application need to set frame buffer externally via
 	 *   the command DEC_SET_DEBLOCK_OUTPUT.
@@ -1786,7 +1778,7 @@ decoder_open(struct decode *dec)
 		if (cpu_is_mx27()) {
 			warn_msg("MP4 deblocking NOT supported on MX27 VPU.\n");
 			oparam.mp4DeblkEnable = dec->cmdl->deblock_en = 0;
-		} else if (!cpu_is_mx32()) {	/* do not need extra framebuf */
+		} else {	/* do not need extra framebuf */
 			dec->cmdl->deblock_en = 0;
 		}
 	}
