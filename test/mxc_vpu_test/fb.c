@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -78,7 +78,7 @@ struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int heigh
 
 	memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
 	fb->desc.size = (strideY * height  + strideY / divX * height / divY * 2);
-	if (cpu_is_mx37() || cpu_is_mx5x())
+	if (!cpu_is_mx27())
 		fb->desc.size += strideY / divX * height / divY;
 
 	err = IOGetPhyMem(&fb->desc);
@@ -94,7 +94,7 @@ struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int heigh
 	fb->strideY = strideY;
 	fb->strideC =  strideY / divX;
 
-	if (cpu_is_mx37() || cpu_is_mx5x()) {
+	if (!cpu_is_mx27()) {
 		if (stdMode==STD_MJPG)
 			fb->mvColBuf = fb->addrCr;
 		else
