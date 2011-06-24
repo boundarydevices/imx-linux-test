@@ -717,8 +717,12 @@ decoder_start(struct decode *dec)
 		 * We convert it to clockwise, which is consistent with V4L2
 		 * rotation angle strategy.
 		 */
-		if (rot_angle == 90 || rot_angle == 270)
-			rot_angle = 360 - rot_angle;
+		if (rot_en) {
+			if (rot_angle == 90 || rot_angle == 270)
+				rot_angle = 360 - rot_angle;
+		} else
+			rot_angle = 0;
+
 		vpu_DecGiveCommand(handle, SET_ROTATION_ANGLE,
 					&rot_angle);
 
@@ -726,10 +730,10 @@ decoder_start(struct decode *dec)
 		vpu_DecGiveCommand(handle, SET_MIRROR_DIRECTION,
 					&mirror);
 
-		if (rot_en || dering_en) {
+		if (rot_en)
 			rot_stride = (rot_angle == 90 || rot_angle == 270) ?
 					fheight : fwidth;
-		} else
+		else
 			rot_stride = fwidth;
 		vpu_DecGiveCommand(handle, SET_ROTATOR_STRIDE, &rot_stride);
 	}
