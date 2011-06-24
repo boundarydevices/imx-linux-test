@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -26,8 +26,35 @@
 
 #define TEST_BUFFER_NUM 3
 
+#define OV5642_VGA	    0
+#define OV5642_QVGA	    1
+#define OV5642_NTSC	    2
+#define OV5642_PAL	    3
+#define OV5642_720P	    4
+#define OV5642_1080P	    5
+
 static int cap_fd = -1;
 struct capture_testbuffer cap_buffers[TEST_BUFFER_NUM];
+
+static int getCaptureMode(int width, int height)
+{
+	int mode = 0;
+
+	if (width == 640 && height == 480)
+		mode = OV5642_VGA;
+	else if (width == 320 && height == 240)
+		mode = OV5642_QVGA;
+	else if (width == 720 && height == 480)
+		mode = OV5642_NTSC;
+	else if (width == 720 && height == 576)
+		mode = OV5642_PAL;
+	else if (width == 1280 && height == 720)
+		mode = OV5642_720P;
+	else if (width == 1920 && height == 1080)
+		mode = OV5642_1080P;
+
+	return mode;
+}
 
 int
 v4l_start_capturing(void)
@@ -88,6 +115,8 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 	struct v4l2_streamparm parm = {0};
 	struct v4l2_requestbuffers req = {0};
 	struct v4l2_control ctl;
+	struct v4l2_crop crop;
+	int g_input = 1;
 
 	if (cap_fd > 0) {
 		warn_msg("capture device already opened\n");
@@ -96,25 +125,6 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 
 	if ((cap_fd = open(v4l_device, O_RDWR, 0)) < 0) {
 		err_msg("Unable to open %s\n", v4l_device);
-		return -1;
-	}
-
-	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmt.fmt.pix.width = width;
-	fmt.fmt.pix.height = height;
-	fmt.fmt.pix.bytesperline = width;
-	fmt.fmt.pix.priv = 0;
-	fmt.fmt.pix.sizeimage = 0;
-
-	if (enc->cmdl->chromaInterleave == 0)
-		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-	else
-		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
-
-	if (ioctl(cap_fd, VIDIOC_S_FMT, &fmt) < 0) {
-		err_msg("set format failed\n");
-		close(cap_fd);
-		cap_fd = -1;
 		return -1;
 	}
 
@@ -129,12 +139,44 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	parm.parm.capture.timeperframe.numerator = 1;
 	parm.parm.capture.timeperframe.denominator = fps;
-	parm.parm.capture.capturemode = 0;
-
+	parm.parm.capture.capturemode = getCaptureMode(width, height);
 	if (ioctl(cap_fd, VIDIOC_S_PARM, &parm) < 0) {
 		err_msg("set frame rate failed\n");
 		close(cap_fd);
 		cap_fd = -1;
+		return -1;
+	}
+
+	if (ioctl(cap_fd, VIDIOC_S_INPUT, &g_input) < 0) {
+		printf("VIDIOC_S_INPUT failed\n");
+		close(cap_fd);
+		return -1;
+	}
+
+	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	crop.c.width = width;
+	crop.c.height = height;
+	crop.c.top = 0;
+	crop.c.left = 0;
+	if (ioctl(cap_fd, VIDIOC_S_CROP, &crop) < 0) {
+		printf("VIDIOC_S_CROP failed\n");
+		close(cap_fd);
+		return -1;
+	}
+
+	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	fmt.fmt.pix.width = width;
+	fmt.fmt.pix.height = height;
+	fmt.fmt.pix.bytesperline = width;
+	fmt.fmt.pix.priv = 0;
+	fmt.fmt.pix.sizeimage = 0;
+	if (enc->cmdl->chromaInterleave == 0)
+		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+	else
+		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
+	if (ioctl(cap_fd, VIDIOC_S_FMT, &fmt) < 0) {
+		err_msg("set format failed\n");
+		close(cap_fd);
 		return -1;
 	}
 
