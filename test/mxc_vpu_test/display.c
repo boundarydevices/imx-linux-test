@@ -617,7 +617,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	if ((disp_width != 0) && (disp_height!= 0 )) {
 		crop.c.width = disp_width;
 		crop.c.height = disp_height;
-	} else if (cpu_is_mx5x()) {
+	} else if (!cpu_is_mx27()) {
 		crop.c.width = cropcap.bounds.width;
 		crop.c.height = cropcap.bounds.height;
 	}
