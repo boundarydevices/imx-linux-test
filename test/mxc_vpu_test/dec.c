@@ -35,6 +35,7 @@ static FILE *fpMvLogfile = NULL;
 static FILE *fpUserDataLogfile = NULL;
 
 static int isInterlacedMPEG4 = 0;
+static JpegHeaderBufInfo jpgHeaderInfo;
 
 #define FN_FRAME_BUFFER_STATUS "dec_frame_buf_status.log"
 #define FN_ERR_MAP_DATA "dec_error_map.log"
@@ -42,6 +43,8 @@ static int isInterlacedMPEG4 = 0;
 #define FN_SB_DATA "dec_slice_bnd.log"
 #define FN_MV_DATA "dec_mv.log"
 #define FN_USER_DATA "dec_user_data.log"
+
+#define JPG_HEADER_SIZE	     0x200
 
 #ifdef COMBINED_VIDEO_SUPPORT
 #define MAX_FRAME_WIDTH 720
@@ -683,7 +686,7 @@ decoder_start(struct decode *dec)
 			&& (dec->cmdl->ipu_rot_en))
 		rot_en = 0;
 
-	/* deblock_en is zero on mx5x since it is cleared in decode_open() function. */
+	/* deblock_en is zero on none mx27 since it is cleared in decode_open() function. */
 	if (rot_en || dering_en) {
 		rotid = dec->fbcount;
 		if (deblock_en) {
@@ -1055,7 +1058,7 @@ decoder_start(struct decode *dec)
 							(img_size >> 2);
 			}
 
-			if (cpu_is_mx5x())
+			if (!cpu_is_mx27())
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
 					err = v4l_put_data(disp, actual_display_index, field, dec->cmdl->fps);
 				else
@@ -1193,7 +1196,7 @@ decoder_free_framebuffer(struct decode *dec)
 		}
 	}
 
-	/* deblock_en is zero on mx5x since it is cleared in decode_open() function. */
+	/* deblock_en is zero on none mx27 since it is cleared in decode_open() function. */
 	if (((dec->cmdl->dst_scheme != PATH_V4L2) && (dec->cmdl->dst_scheme != PATH_IPU)) ||
 			(((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
 			 && deblock_en)) {
@@ -1324,10 +1327,11 @@ decoder_allocate_framebuffer(struct decode *dec)
 				goto err;
 			}
 
+			fb[i].myIndex = i;
 			fb[i].bufY = pfbpool[i]->addrY;
 			fb[i].bufCb = pfbpool[i]->addrCb;
 			fb[i].bufCr = pfbpool[i]->addrCr;
-			if (cpu_is_mx5x()) {
+			if (!cpu_is_mx27()) {
 				fb[i].bufMvCol = pfbpool[i]->mvColBuf;
 			}
 		}
@@ -1363,7 +1367,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		if (deblock_en == 0) {
 			img_size = dec->stride * dec->picheight;
 
-			if (cpu_is_mx5x()) {
+			if (!cpu_is_mx27()) {
 				mvcol_md = dec->mvcol_memdesc =
 					calloc(totalfb, sizeof(vpu_mem_desc));
 			}
@@ -1376,7 +1380,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 				fb[i].bufCb = fb[i].bufY + img_size;
 				fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
 				/* allocate MvCol buffer here */
-				if (cpu_is_mx5x()) {
+				if (!cpu_is_mx27()) {
 					memset(&mvcol_md[i], 0,
 							sizeof(vpu_mem_desc));
 					mvcol_md[i].size = img_size / divX / divY;
@@ -1392,8 +1396,14 @@ decoder_allocate_framebuffer(struct decode *dec)
 	}
 
 	stride = ((dec->stride + 15) & ~15);
-	bufinfo.avcSliceBufInfo.sliceSaveBuffer = dec->phy_slice_buf;
-	bufinfo.avcSliceBufInfo.sliceSaveBufferSize = dec->phy_slicebuf_size;
+
+	if (dec->cmdl->format == STD_AVC) {
+		bufinfo.avcSliceBufInfo.bufferBase = dec->phy_slice_buf;
+		bufinfo.avcSliceBufInfo.bufferSize = dec->phy_slicebuf_size;
+	} else if (dec->cmdl->format == STD_VP8) {
+		bufinfo.vp8MbDataBufInfo.bufferBase = dec->phy_slice_buf;
+		bufinfo.vp8MbDataBufInfo.bufferSize = dec->phy_slicebuf_size;
+	}
 
 	/* User needs to fill max suported macro block value of frame as following*/
 	bufinfo.maxDecFrmInfo.maxMbX = dec->stride / 16;
@@ -1477,14 +1487,13 @@ decoder_parse(struct decode *dec)
 			err_msg("malloc_error\n");
 	}
 
-	if(dec->cmdl->format == STD_MJPG) {
+	if(!cpu_is_mx6q() && dec->cmdl->format == STD_MJPG) {
 		ret = vpu_DecGiveCommand(handle,DEC_SET_REPORT_USERDATA, &dec->userData);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("Failed to set user data report, ret %d\n", ret);
 			return -1;
 		}
 	}
-
 
 	/* Parse bitstream and get width/height/framerate etc */
 	vpu_DecSetEscSeqInit(handle, 1);
@@ -1564,7 +1573,7 @@ decoder_parse(struct decode *dec)
 						profile = 1; /* advanced coding efficiency object */
 						break;
 					case 0xF:
-						if (initinfo.level & 8 == 0)
+						if ((initinfo.level & 8) == 0)
 							profile = 2; /* advanced simple object */
 						else
 							profile = 5; /* reserved */
@@ -1626,6 +1635,14 @@ decoder_parse(struct decode *dec)
 		case STD_MJPG:
 			dec->mjpg_fmt = initinfo.mjpg_sourceFormat;
 			info_msg("MJPG SourceFormat: %d\n", initinfo.mjpg_sourceFormat);
+			break;
+
+		case STD_AVS:
+			info_msg("AVS Profile: %d Level: %d\n", initinfo.profile, initinfo.level);
+			break;
+
+		case STD_VP8:
+			info_msg("VP8 Profile: %d Level: %d\n", initinfo.profile, initinfo.level);
 			break;
 
 		default:
@@ -1880,10 +1897,12 @@ decode_test(void *arg)
 	cmdl->complete = 1;
 	if (dec->cmdl->src_scheme == PATH_NET)
 		fillsize = 1024;
+
 	ret = dec_fill_bsbuffer(dec->handle, cmdl,
 			dec->virt_bsbuf_addr,
 		        (dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
 			dec->phy_bsbuf_addr, fillsize, &eos, &fill_end_bs);
+
 	cmdl->complete = 0;
 	if (ret < 0) {
 		err_msg("dec_fill_bsbuffer failed\n");
@@ -1898,7 +1917,7 @@ decode_test(void *arg)
 	}
 
 	/* allocate slice buf */
-	if (cmdl->format == STD_AVC) {
+	if (cmdl->format == STD_AVC || cmdl->format == STD_VP8) {
 		slice_mem_desc.size = dec->phy_slicebuf_size;
 		ret = IOGetPhyMem(&slice_mem_desc);
 		if (ret) {

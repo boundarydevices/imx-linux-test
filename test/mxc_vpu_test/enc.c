@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -283,18 +283,25 @@ int
 encoder_allocate_framebuffer(struct encode *enc)
 {
 	EncHandle handle = enc->handle;
-	int i, enc_stride, src_stride, src_fbid = enc->src_fbid, fbcount = enc->fbcount;
+	int i, enc_stride, src_stride, src_fbid = enc->src_fbid;
+	int needFrameBufCount, fbcount = enc->fbcount;
 	RetCode ret;
 	FrameBuffer *fb;
+	PhysicalAddress subSampBaseA = NULL, subSampBaseB = NULL;
 	struct frame_buf **pfbpool;
 
-	fb = enc->fb = calloc(fbcount + 1, sizeof(FrameBuffer));
+	if (cpu_is_mx6q())
+		needFrameBufCount = fbcount + 3; // minFrameBufferCount + Subsamp buffer [2] + Src frame
+	else
+		needFrameBufCount = fbcount + 1;
+
+	fb = enc->fb = calloc(needFrameBufCount, sizeof(FrameBuffer));
 	if (fb == NULL) {
 		err_msg("Failed to allocate enc->fb\n");
 		return -1;
 	}
 
-	pfbpool = enc->pfbpool = calloc(fbcount + 1,
+	pfbpool = enc->pfbpool = calloc(needFrameBufCount,
 					sizeof(struct frame_buf *));
 	if (pfbpool == NULL) {
 		err_msg("Failed to allocate enc->pfbpool\n");
@@ -303,17 +310,38 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	for (i = 0; i < fbcount; i++) {
-		pfbpool[i] = framebuf_alloc(enc->cmdl->format, MODE420, (enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
+		pfbpool[i] = framebuf_alloc(enc->cmdl->format, MODE420,
+				(enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
 		if (pfbpool[i] == NULL) {
 			fbcount = i;
 			goto err1;
 		}
 
+		fb[i].myIndex = i;
 		fb[i].bufY = pfbpool[i]->addrY;
 		fb[i].bufCb = pfbpool[i]->addrCb;
 		fb[i].bufCr = pfbpool[i]->addrCr;
 		fb[i].strideY = pfbpool[i]->strideY;
 		fb[i].strideC = pfbpool[i]->strideC;
+	}
+
+	if (cpu_is_mx6q() &&  enc->cmdl->format != STD_MJPG) {
+		for (i = fbcount + 1; i < fbcount + 3; i++) {
+			pfbpool[i] = framebuf_alloc(enc->cmdl->format, MODE420,
+					(enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
+			if (pfbpool[i] == NULL) {
+				fbcount = i;
+				goto err1;
+			}
+			fb[i].myIndex = i;
+			fb[i].bufY = pfbpool[i]->addrY;
+			fb[i].bufCb = pfbpool[i]->addrCb;
+			fb[i].bufCr = pfbpool[i]->addrCr;
+			fb[i].strideY = pfbpool[i]->strideY;
+			fb[i].strideC = pfbpool[i]->strideC;
+		}
+		subSampBaseA = fb[fbcount + 1].bufY;
+		subSampBaseB = fb[fbcount + 2].bufY;
 	}
 
 	/* Must be a multiple of 16 */
@@ -325,7 +353,8 @@ encoder_allocate_framebuffer(struct encode *enc)
 		src_stride = (enc->src_picwidth + 15 ) & ~15;
 	}
 
-	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, enc_stride, src_stride);
+	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, enc_stride, src_stride,
+					    subSampBaseA, subSampBaseB);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
 		goto err1;
