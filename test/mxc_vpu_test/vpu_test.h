@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2010 Freescale Semiconductor, Inc.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -279,4 +279,12 @@ void decoder_free_framebuffer(struct decode *dec);
 
 void SaveQpReport(Uint32 *qpReportAddr, int picWidth, int picHeight,
 		  int frameIdx, char *fileName);
+
+static inline int is_mx6q_mjpg(int fmt)
+{
+        if (cpu_is_mx6q() && (fmt == STD_MJPG))
+                return true;
+        else
+                return false;
+}
 #endif
