@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -472,6 +472,15 @@ check_params(struct cmd_line *cmd, int op)
 		break;
 	case STD_MJPG:
 		info_msg("Format: STD_MJPG\n");
+		break;
+	case STD_AVS:
+		info_msg("Format: STD_AVS\n");
+		break;
+	case STD_VP6:
+		info_msg("Format: STD_VP6\n");
+		break;
+	case STD_VP8:
+		info_msg("Format: STD_VP8\n");
 		break;
 	default:
 		err_msg("Unsupported Format!\n");
