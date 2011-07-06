@@ -38,6 +38,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -x <output method> V4l2(0) or IPU lib(1) \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, \n "\
 	       "	4 - MPEG2, 5 - DIV3, 6 - RV, 7 - MJPG, \n "\
+	       "        8 - AVS, 10 - VP6, 11 - VP8\n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
 	       "  -l <mp4Class> 0 - MPEG4, 1 - DIVX 5.0 or higher, 2 - XVID, \n "\
 	       "        5 - DIVX4.0 \n "\
