@@ -8,11 +8,11 @@ source /unit_tests/test-utils.sh
 STATUS=0
 
 echo "$(platform)"
-if [ "$(platform)" == IMX37_3STACK ] || [ "$(platform)" == IMX51 ] \
-    || [ "$(platform)" == IMX53 ] || [ "$(platform)" == IMX50 ]; then
+if [ "$(platform)" != IMX31ADS ] && [ "$(platform)" != IMX32ADS ] \
+    && [ "$(platform)" != IMX25_3STACK ] && [ "$(platform)" != IMX35_3STACK ]; then
 	rtc_test_param=--no-periodic
 	# For kernel version 2.6.38 and higher, number of interrupts expected will be 11
-	VER=`echo $(kernel_version) | cut -d. -f3`
+	VER=`echo $(kernel_version) | cut -d. -f3 | cut -d- -f1`
 	REF_VER=38
 	if [ $VER -ge $REF_VER ]; then
 		RTC_IRQS_EXPECTED=11
@@ -47,7 +47,9 @@ if [ "$RTC_IRQS" != "$RTC_IRQS_EXPECTED" ]; then
 else
 	echo "checking rtc interrupts PASS"
        #RTC wait for time set notification test
-        run_testcase "./rtc_timesetnotification_test.out"
+	if [ "$(platform)" == IMX50 ] || [ "$(platform)" == IMX51 ] || [ "$(platform)" == IMX53 ]; then
+          run_testcase "./rtc_timesetnotification_test.out"
+      fi
 fi
 
 print_status
