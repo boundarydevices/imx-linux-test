@@ -155,6 +155,8 @@ struct cmd_line {
 	int dst_fd;
 	int width;
 	int height;
+	int enc_width;
+	int enc_height;
 	int loff;
 	int toff;
 	int format;
