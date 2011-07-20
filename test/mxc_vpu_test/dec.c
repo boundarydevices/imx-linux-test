@@ -1373,6 +1373,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 			}
 
 			for (i = 0; i < totalfb; i++) {
+				fb[i].myIndex = i;
 				if (dst_scheme == PATH_V4L2)
 					fb[i].bufY = disp->buffers[i]->offset;
 				else

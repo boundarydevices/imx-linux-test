@@ -476,9 +476,6 @@ check_params(struct cmd_line *cmd, int op)
 	case STD_AVS:
 		info_msg("Format: STD_AVS\n");
 		break;
-	case STD_VP6:
-		info_msg("Format: STD_VP6\n");
-		break;
 	case STD_VP8:
 		info_msg("Format: STD_VP8\n");
 		break;
