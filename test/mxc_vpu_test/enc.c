@@ -342,6 +342,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		}
 		subSampBaseA = fb[fbcount + 1].bufY;
 		subSampBaseB = fb[fbcount + 2].bufY;
+		enc->fbcount += 2;
 	}
 
 	/* Must be a multiple of 16 */
@@ -374,6 +375,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 			goto err1;
 		}
 
+		fb[src_fbid].myIndex = i;
 		fb[src_fbid].bufY = pfbpool[src_fbid]->addrY;
 		fb[src_fbid].bufCb = pfbpool[src_fbid]->addrCb;
 		fb[src_fbid].bufCr = pfbpool[src_fbid]->addrCr;
@@ -490,6 +492,7 @@ encoder_start(struct encode *enc)
 				goto err2;
 			}
 
+			fb[src_fbid].myIndex = v4l2_buf.index;
 			fb[src_fbid].bufY = cap_buffers[v4l2_buf.index].offset;
 			fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
 			fb[src_fbid].bufCr = fb[src_fbid].bufCb +
@@ -747,10 +750,14 @@ encoder_open(struct encode *enc)
 		enc->src_picheight = enc->cmdl->height;
 	}
 
-	/* Please change encoded picture width and height per your needs
-           it is same as source picture image normally */
-	enc->enc_picwidth = enc->src_picwidth;
-	enc->enc_picheight = enc->src_picheight;
+	/* enc_width and enc_height in command line means encoder output size */
+	if (enc->cmdl->enc_width && enc->cmdl->enc_height) {
+		enc->enc_picwidth = enc->cmdl->enc_width;
+		enc->enc_picheight = enc->cmdl->enc_height;
+	} else {
+		enc->enc_picwidth = enc->src_picwidth;
+		enc->enc_picheight = enc->src_picheight;
+	}
 
 	/* If rotation angle is 90 or 270, pic width and height are swapped */
 	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270) {
@@ -780,6 +787,10 @@ encoder_open(struct encode *enc)
 	encop.userQpMin = 0;
 	encop.userQpMinEnable = 0;
 	encop.userQpMaxEnable = 0;
+
+	encop.IntraCostWeight = 0;
+	encop.MEUseZeroPmv  = 0;
+	encop.MESearchRange = 0;
 
 	encop.userGamma = (Uint32)(0.75*32768);         /*  (0*32768 <= gamma <= 1*32768) */
 	encop.RcIntervalMode= 1;        /* 0:normal, 1:frame_level, 2:slice_level, 3: user defined Mb_level */
@@ -894,6 +905,7 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.mp4Param.mp4_hecEnable = 0;
 		encop.EncStdParam.mp4Param.mp4_verid = 2;
 	} else if ( enc->cmdl->format == STD_H263) {
+		encop.EncStdParam.h263Param.h263_annexIEnable = 0;
 		encop.EncStdParam.h263Param.h263_annexJEnable = 1;
 		encop.EncStdParam.h263Param.h263_annexKEnable = 0;
 		encop.EncStdParam.h263Param.h263_annexTEnable = 0;
@@ -904,10 +916,31 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.avcParam.avc_deblkFilterOffsetBeta = 0;
 		encop.EncStdParam.avcParam.avc_chromaQpOffset = 10;
 		encop.EncStdParam.avcParam.avc_audEnable = 0;
-		encop.EncStdParam.avcParam.avc_fmoEnable = 0;
-		encop.EncStdParam.avcParam.avc_fmoType = 0;
-		encop.EncStdParam.avcParam.avc_fmoSliceNum = 1;
-		encop.EncStdParam.avcParam.avc_fmoSliceSaveBufSize = 32; /* FMO_SLICE_SAVE_BUF_SIZE */
+		if (cpu_is_mx6q()) {
+			encop.EncStdParam.avcParam.avc_frameCroppingFlag = 0;
+			encop.EncStdParam.avcParam.avc_frameCropLeft = 0;
+			encop.EncStdParam.avcParam.avc_frameCropRight = 0;
+			encop.EncStdParam.avcParam.avc_frameCropTop = 0;
+			encop.EncStdParam.avcParam.avc_frameCropBottom = 0;
+			if (enc->cmdl->rot_angle != 90 &&
+			    enc->cmdl->rot_angle != 270 &&
+			    enc->enc_picheight == 1080) {
+				/*
+				 * In case of AVC encoder, when we want to use
+				 * unaligned display width frameCroppingFlag
+				 * parameters should be adjusted to displayable
+				 * rectangle
+				 */
+				encop.EncStdParam.avcParam.avc_frameCroppingFlag = 1;
+				encop.EncStdParam.avcParam.avc_frameCropBottom = 8;
+			}
+
+		} else {
+			encop.EncStdParam.avcParam.avc_fmoEnable = 0;
+			encop.EncStdParam.avcParam.avc_fmoType = 0;
+			encop.EncStdParam.avcParam.avc_fmoSliceNum = 1;
+			encop.EncStdParam.avcParam.avc_fmoSliceSaveBufSize = 32; /* FMO_SLICE_SAVE_BUF_SIZE */
+		}
 	} else if (enc->cmdl->format == STD_MJPG) {
 		encop.EncStdParam.mjpgParam.mjpg_sourceFormat = 0; /* encConfig.mjpgChromaFormat */
 		encop.EncStdParam.mjpgParam.mjpg_restartInterval = 60;
