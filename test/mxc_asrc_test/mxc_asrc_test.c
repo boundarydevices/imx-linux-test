@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2008-2011 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -30,7 +30,11 @@
 #include <linux/mxc_asrc.h>
 
 #define DMA_BUF_SIZE 10240
-#define BUF_NUM 4
+/*
+ * From 38 kernel, asrc driver only supports one pair of buffer
+ * convertion per time
+ */
+#define BUF_NUM 1
 
 struct audio_info_s {
 	int sample_rate;
@@ -201,6 +205,8 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 	outbuf.length = output_dma_size;
 	if ((err = ioctl(fd_asrc, ASRC_Q_OUTBUF, &outbuf)) < 0)
 		goto ERROR;
+	if ((err = ioctl(fd_asrc, ASRC_START_CONV, &pair_index)) < 0)
+		goto ERROR;
 	i++;
 	while (i < BUF_NUM) {
 		memcpy(input_buf[i].start, input_p, DMA_BUF_SIZE);
@@ -219,13 +225,14 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 		i++;
 	}
 
-	if ((err = ioctl(fd_asrc, ASRC_START_CONV, &pair_index)) < 0)
-		goto ERROR;
 	if ((err = ioctl(fd_asrc, ASRC_DQ_OUTBUF, &outbuf)) < 0)
 		goto ERROR;
-	if ((err = ioctl(fd_asrc, ASRC_Q_OUTBUF, &outbuf)) < 0)
-		goto ERROR;
 	if ((err = ioctl(fd_asrc, ASRC_DQ_INBUF, &inbuf)) < 0)
+		goto ERROR;
+	if ((err = ioctl(fd_asrc, ASRC_STOP_CONV, &pair_index)) < 0)
+		goto ERROR;
+
+	if ((err = ioctl(fd_asrc, ASRC_Q_OUTBUF, &outbuf)) < 0)
 		goto ERROR;
 	inbuf.length =
 	    (info->data_len > DMA_BUF_SIZE) ? DMA_BUF_SIZE : info->data_len;
@@ -238,7 +245,11 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 	if ((err = ioctl(fd_asrc, ASRC_Q_INBUF, &inbuf)) < 0)
 		goto ERROR;
 
-	while (info->data_len > 0) {
+	while (info->data_len >= 0) {
+		if ((err = ioctl(fd_asrc, ASRC_START_CONV, &pair_index)) < 0) {
+			goto ERROR;
+		}
+
 		if ((err = ioctl(fd_asrc, ASRC_STATUS, &flags)) < 0)
 			goto ERROR;
 
@@ -258,10 +269,12 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 		info->output_data_len -= outbuf.length;
 		output_done_bytes = output_done_bytes + outbuf.length;
 
-		if ((err = ioctl(fd_asrc, ASRC_Q_OUTBUF, &outbuf)) < 0)
-			goto ERROR;
 		if ((err = ioctl(fd_asrc, ASRC_DQ_INBUF, &inbuf)) < 0)
 			goto ERROR;
+
+		if (info->data_len == 0)
+			break;
+
 		inbuf.length =
 		    (info->data_len >
 		     DMA_BUF_SIZE) ? DMA_BUF_SIZE : info->data_len;
@@ -271,6 +284,8 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 		info->data_len -= inbuf.length;
 
 		if ((err = ioctl(fd_asrc, ASRC_Q_INBUF, &inbuf)) < 0)
+			goto ERROR;
+		if ((err = ioctl(fd_asrc, ASRC_Q_OUTBUF, &outbuf)) < 0)
 			goto ERROR;
 		y++;
 		i = 0;
