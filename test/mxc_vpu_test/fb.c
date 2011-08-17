@@ -110,6 +110,68 @@ struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int heigh
 	return fb;
 }
 
+struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height)
+{
+	struct frame_buf *fb;
+	int err;
+	int divX, divY;
+	Uint32 lum_top_base, lum_bot_base, chr_top_base, chr_bot_base;
+	Uint32 lum_top_20bits, lum_bot_20bits, chr_top_20bits, chr_bot_20bits;
+	int luma_aligned_size, chroma_aligned_size;
+
+	fb = get_framebuf();
+	if (fb == NULL)
+		return NULL;
+
+	divX = (format == MODE420 || format == MODE422) ? 2 : 1;
+	divY = (format == MODE420 || format == MODE224) ? 2 : 1;
+
+	memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
+
+	/*
+	 * The buffers is luma top, chroma top, luma bottom and chroma bottom for
+	 * tiled map type, and only 20bits for the address description, so we need
+	 * to do 1K page align for each buffer.
+	 */
+	luma_aligned_size = (((strideY * height / 2 + 4095) >> 12) << 12) * 2;
+	chroma_aligned_size = ((strideY / divX * height / divY + 4095) >> 12) << 12;
+	fb->desc.size = luma_aligned_size + chroma_aligned_size * 2;
+	fb->desc.size += strideY / divX * height / divY;
+
+	err = IOGetPhyMem(&fb->desc);
+	if (err) {
+		printf("Frame buffer allocation failure\n");
+		memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
+		return NULL;
+	}
+
+	fb->desc.virt_uaddr = IOGetVirtMem(&(fb->desc));
+	if (fb->desc.virt_uaddr <= 0) {
+		IOFreePhyMem(&fb->desc);
+		memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
+		return NULL;
+	}
+
+	lum_top_base = fb->desc.phy_addr;
+	lum_bot_base = lum_top_base + luma_aligned_size / 2;
+	chr_top_base = lum_top_base + luma_aligned_size;
+	chr_bot_base = chr_top_base + chroma_aligned_size;
+
+	lum_top_20bits = lum_top_base >> 12;
+	lum_bot_20bits = lum_bot_base >> 12;
+	chr_top_20bits = chr_top_base >> 12;
+	chr_bot_20bits = chr_bot_base >> 12;
+
+	fb->addrY = (lum_top_20bits << 12) + (chr_top_20bits >> 8);
+	fb->addrCb = (chr_top_20bits << 24) + (lum_bot_20bits << 4) + (chr_bot_20bits >> 16);
+	fb->addrCr = chr_bot_20bits << 16;
+	fb->strideY = strideY;
+	fb->strideC = strideY / divX;
+	fb->mvColBuf = chr_bot_base + chroma_aligned_size;
+
+    return fb;
+}
+
 void framebuf_free(struct frame_buf *fb)
 {
 	if (fb->desc.virt_uaddr) {
