@@ -182,6 +182,7 @@ struct cmd_line {
 	int mp4Class;
 	char vdi_motion;	/* VDI motion algorithm */
 	int fps;
+	int mapType;
 };
 
 struct decode {
@@ -205,6 +206,7 @@ struct decode {
 	vpu_mem_desc *mvcol_memdesc;
 	Rect picCropRect;
 	int reorderEnable;
+	int tiled2LinearEnable;
 
 	DecReportInfo mbInfo;
 	DecReportInfo mvInfo;
@@ -253,6 +255,7 @@ struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 int v4l_put_data(struct vpu_display *disp, int index, int field, int fps);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height);
+struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height);
 void framebuf_free(struct frame_buf *fb);
 
 struct vpu_display *
