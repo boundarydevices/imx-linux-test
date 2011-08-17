@@ -73,6 +73,9 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "        default is none-interleave(0). \n "\
 	       "  -s <prescan> Enable prescan in decoding - 1. enabled \n "\
 	       "        default is disabled. \n "\
+	       "  -y <maptype> Map type for GDI interface \n "\
+	       "        0 - Linear frame map, 1 - frame MB map, 2 - field MB map \n "\
+	       "        default is 0. \n "\
 	       "\n"\
 	       "encode options \n "\
 	       "  -i <input file> Read input from file (yuv) \n "\
@@ -135,7 +138,7 @@ int encdec_test(void *arg);
 static char *mainopts = "HE:D:L:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:x:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:j:k:a:v:";
+static char *options = "i:o:x:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:j:k:a:v:y:";
 
 int
 parse_config_file(char *file_name)
@@ -328,6 +331,9 @@ parse_args(int argc, char *argv[], int i)
 			break;
 		case 'a':
 			input_arg[i].cmd.fps = atoi(optarg);
+			break;
+		case 'y':
+			input_arg[i].cmd.mapType = atoi(optarg);
 			break;
 		case -1:
 			break;
