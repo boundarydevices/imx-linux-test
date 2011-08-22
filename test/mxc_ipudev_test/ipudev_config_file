@@ -27,22 +27,35 @@
 #	IPU_ROTATE_90_RIGHT_HFLIP = 6,
 #	IPU_ROTATE_90_LEFT = 7,
 #
-# mode ref:
-# 	TASK_ENC = 0x1
-# 	TASK_VF = 0x2
-# 	TASK_PP = 0x4
-# 	TASK_VDI_VF = 0x8
-# 	NORMAL_MODE = 0x10
-# 	STREAM_MODE = 0x20
+# priority ref:
+#	IPU_TASK_PRIORITY_NORMAL = 0
+#	IPU_TASK_PRIORITY_HIGH = 1
 #
-# video de-interlace motion ref:
+# task_id ref:
+#	IPU_TASK_ID_ANY	= 0
+#	IPU_TASK_ID_VF	= 1
+#	IPU_TASK_ID_PP	= 2
+#
+# timeout: ms
+#
+# de-interlace motion ref:
 #	MEDIUM_MOTION = 0
 #	LOW_MOTION = 1
 #	HIGH_MOTION = 2
 #
+# overlay alpha mode ref:
+#	IPU_ALPHA_MODE_GLOBAL =	0
+#	IPU_ALPHA_MODE_LOCAL  =	1
+#
 
-#### mode
-mode=0x24
+#### priority
+priority=0
+
+#### task_id
+task_id=0
+
+#### timeout
+timeout=1000
 
 #### operation frame count
 fcount=50
@@ -57,20 +70,45 @@ in_fmt=I420
 #input crop
 in_posx=0
 in_posy=0
-in_win_w=0
-in_win_h=0
-#input motion(video de-interlace)
+in_crop_w=0
+in_crop_h=0
+#deinterlace
+deinterlace_en=0
 motion_sel=0
+
+#### overlay
+overlay_en=0
+ov_width=320
+ov_height=240
+ov_fmt=I420
+#overlay crop
+ov_posx=0
+ov_posy=0
+ov_crop_w=0
+ov_crop_h=0
+#overlay alpha
+alpha_mode=0
+alpha_value=0
+#overlay colorkey
+colorkey_en=0
+colorkey_value=0x555555
 
 #### output
 out_width=1024
 out_height=768
 out_fmt=UYVY
 out_rot=0
-#output to framebuffer
-out_to_fb=1
-out_fb_num=2
+#output crop
 out_posx=0
 out_posy=0
-#output to file
-out_filename=output.dat
+out_crop_w=0
+out_crop_h=0
+
+#output target
+out_to_fb=1
+#if out_to_fb == 1, then out_filename ref to fb
+#	ipu0 1st display overlay:	ipu0-1st-ovfb
+#	ipu0 2nd display:		ipu0-2nd-fb
+#	ipu1 1st display overlay:	ipu1-1st-ovfb
+#	ipu1 2nd display:		ipu1-2nd-fb
+out_filename=ipu0-1st-ovfb
