@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2009-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -51,17 +51,44 @@ char * skip_unwanted(char *ptr)
 
 int parse_options(char *buf, ipu_test_handle_t *test_handle)
 {
+	struct ipu_task *t = &test_handle->task;
 	char *str;
 
 	/* general */
-	str = strstr(buf, "mode");
+	str = strstr(buf, "priority");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->mode = strtol(str, NULL, 16);
-				printf("mode\t\t= 0x%x\n", test_handle->mode);
+				t->priority = strtol(str, NULL, 10);
+				printf("priority\t= %d\n", t->priority);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "task_id");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->task_id = strtol(str, NULL, 10);
+				printf("task_id\t\t= %d\n", t->task_id);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "timeout");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->timeout = strtol(str, NULL, 10);
+				printf("timeout\t\t= %d\n", t->timeout);
 			}
 			return 0;
 		}
@@ -100,8 +127,8 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->input.width = strtol(str, NULL, 10);
-				printf("in_width\t= %d\n", test_handle->input.width);
+				t->input.width = strtol(str, NULL, 10);
+				printf("in_width\t= %d\n", t->input.width);
 			}
 			return 0;
 		}
@@ -113,8 +140,8 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->input.height = strtol(str, NULL, 10);
-				printf("in_height\t= %d\n", test_handle->input.height);
+				t->input.height = strtol(str, NULL, 10);
+				printf("in_height\t= %d\n", t->input.height);
 			}
 			return 0;
 		}
@@ -126,7 +153,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->input.fmt =
+				t->input.format =
 					v4l2_fourcc(str[0], str[1], str[2], str[3]);
 				printf("in_fmt\t\t= %s\n", str);
 			}
@@ -140,10 +167,10 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->input.input_crop_win.pos.x =
+				t->input.crop.pos.x =
 					strtol(str, NULL, 10);
 				printf("in_posx\t\t= %d\n",
-					test_handle->input.input_crop_win.pos.x);
+					t->input.crop.pos.x);
 			}
 			return 0;
 		}
@@ -155,40 +182,55 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->input.input_crop_win.pos.y =
+				t->input.crop.pos.y =
 					strtol(str, NULL, 10);
 				printf("in_posy\t\t= %d\n",
-					test_handle->input.input_crop_win.pos.y);
+					t->input.crop.pos.y);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "in_win_w");
+	str = strstr(buf, "in_crop_w");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->input.input_crop_win.win_w =
+				t->input.crop.w =
 					strtol(str, NULL, 10);
-				printf("in_win_w\t= %d\n",
-					test_handle->input.input_crop_win.win_w);
+				printf("in_crop_w\t= %d\n",
+					t->input.crop.w);
 			}
 			return 0;
 		}
 	}
 
-	str = strstr(buf, "in_win_h");
+	str = strstr(buf, "in_crop_h");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->input.input_crop_win.win_h =
+				t->input.crop.h =
 					strtol(str, NULL, 10);
-				printf("in_win_h\t= %d\n",
-					test_handle->input.input_crop_win.win_h);
+				printf("in_crop_h\t= %d\n",
+					t->input.crop.h);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "deinterlace_en");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->input.deinterlace.enable =
+					strtol(str, NULL, 10);
+				printf("deinterlace_en\t= %d\n",
+					t->input.deinterlace.enable);
 			}
 			return 0;
 		}
@@ -200,10 +242,184 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->input.motion_sel =
+				t->input.deinterlace.motion =
 					strtol(str, NULL, 10);
 				printf("motion_sel\t= %d\n",
-					test_handle->input.motion_sel);
+					t->input.deinterlace.motion);
+			}
+			return 0;
+		}
+	}
+
+	/* overlay */
+	str = strstr(buf, "overlay_en");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay_en = strtol(str, NULL, 10);
+				printf("overlay_en\t= %d\n", t->overlay_en);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "ov_width");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.width = strtol(str, NULL, 10);
+				printf("ov_width\t= %d\n", t->overlay.width);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "ov_height");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.height = strtol(str, NULL, 10);
+				printf("ov_height\t= %d\n", t->overlay.height);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "ov_fmt");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.format =
+					v4l2_fourcc(str[0], str[1], str[2], str[3]);
+				printf("ov_fmt\t\t= %s\n", str);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "ov_posx");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.crop.pos.x =
+					strtol(str, NULL, 10);
+				printf("ov_posx\t\t= %d\n",
+					t->overlay.crop.pos.x);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "ov_posy");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.crop.pos.y =
+					strtol(str, NULL, 10);
+				printf("ov_posy\t\t= %d\n",
+					t->overlay.crop.pos.y);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "ov_crop_w");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.crop.w =
+					strtol(str, NULL, 10);
+				printf("ov_crop_w\t= %d\n",
+					t->overlay.crop.w);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "ov_crop_h");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.crop.h =
+					strtol(str, NULL, 10);
+				printf("ov_crop_h\t= %d\n",
+					t->overlay.crop.h);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "alpha_mode");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.alpha.mode =
+					strtol(str, NULL, 10);
+				printf("alpha_mode\t= %d\n",
+					t->overlay.alpha.mode);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "alpha_value");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.alpha.gvalue =
+					strtol(str, NULL, 10);
+				printf("alpha_value\t= %d\n",
+					t->overlay.alpha.gvalue);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "colorkey_en");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.colorkey.enable =
+					strtol(str, NULL, 10);
+				printf("colorkey_en\t= %d\n",
+					t->overlay.colorkey.enable);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "colorkey_value");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->overlay.colorkey.value =
+					strtol(str, NULL, 16);
+				printf("colorkey_value\t= 0x%x\n",
+					t->overlay.colorkey.value);
 			}
 			return 0;
 		}
@@ -216,8 +432,8 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output.width = strtol(str, NULL, 10);
-				printf("out_width\t= %d\n", test_handle->output.width);
+				t->output.width = strtol(str, NULL, 10);
+				printf("out_width\t= %d\n", t->output.width);
 			}
 			return 0;
 		}
@@ -229,8 +445,8 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output.height = strtol(str, NULL, 10);
-				printf("out_height\t= %d\n", test_handle->output.height);
+				t->output.height = strtol(str, NULL, 10);
+				printf("out_height\t= %d\n", t->output.height);
 			}
 			return 0;
 		}
@@ -242,7 +458,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output.fmt =
+				t->output.format =
 					v4l2_fourcc(str[0], str[1], str[2], str[3]);
 				printf("out_fmt\t\t= %s\n", str);
 			}
@@ -256,34 +472,8 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output.rot = strtol(str, NULL, 10);
-				printf("out_rot\t\t= %d\n", test_handle->output.rot);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out_to_fb");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output.show_to_fb = strtol(str, NULL, 10);
-				printf("out_to_fb\t= %d\n", test_handle->output.show_to_fb);
-			}
-			return 0;
-		}
-	}
-
-	str = strstr(buf, "out_fb_num");
-	if (str != NULL) {
-		str = index(buf, '=');
-		if (str != NULL) {
-			str++;
-			if (*str != '\0') {
-				test_handle->output.fb_disp.fb_num = strtol(str, NULL, 10);
-				printf("out_fb_num\t= %d\n", test_handle->output.fb_disp.fb_num);
+				t->output.rotate = strtol(str, NULL, 10);
+				printf("out_rot\t\t= %d\n", t->output.rotate);
 			}
 			return 0;
 		}
@@ -295,8 +485,8 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output.fb_disp.pos.x = strtol(str, NULL, 10);
-				printf("out_posx\t= %d\n", test_handle->output.fb_disp.pos.x);
+				t->output.crop.pos.x = strtol(str, NULL, 10);
+				printf("out_posx\t= %d\n", t->output.crop.pos.x);
 			}
 			return 0;
 		}
@@ -308,8 +498,51 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				test_handle->output.fb_disp.pos.y = strtol(str, NULL, 10);
-				printf("out_posy\t= %d\n", test_handle->output.fb_disp.pos.y);
+				t->output.crop.pos.y = strtol(str, NULL, 10);
+				printf("out_posy\t= %d\n", t->output.crop.pos.y);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "out_crop_w");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->output.crop.w =
+					strtol(str, NULL, 10);
+				printf("out_crop_w\t= %d\n",
+					t->output.crop.w);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "out_crop_h");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				t->output.crop.h =
+					strtol(str, NULL, 10);
+				printf("out_crop_h\t= %d\n",
+					t->output.crop.h);
+			}
+			return 0;
+		}
+	}
+
+	str = strstr(buf, "out_to_fb");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				test_handle->show_to_fb = strtol(str, NULL, 10);
+				printf("out_to_fb\t= %d\n", test_handle->show_to_fb);
 			}
 			return 0;
 		}
