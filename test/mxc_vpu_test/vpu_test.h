@@ -51,6 +51,8 @@ typedef unsigned char u8;
 #define STREAM_READ_SIZE	(512 * 8)
 #define STREAM_END_SIZE		0
 #define PS_SAVE_SIZE		0x080000
+#define VP8_MB_SAVE_SIZE	0x080000
+#define MPEG4_SCRATCH_SIZE	0x080000
 
 #define STREAM_ENC_PIC_RESET 	1
 
@@ -172,6 +174,7 @@ struct cmd_line {
 	int save_enc_hdr;
 	int count;
 	int prescan;
+	int bs_mode;
 	char *nbuf; /* network buffer */
 	int nlen; /* remaining data in network buffer */
 	int noffset; /* offset into network buffer */
@@ -179,7 +182,7 @@ struct cmd_line {
 	u16 port; /* udp port number */
 	u16 complete; /* wait for the requested buf to be filled completely */
 	int iframe;
-	int mp4Class;
+	int mp4_h264Class;
 	char vdi_motion;	/* VDI motion algorithm */
 	int fps;
 	int mapType;
@@ -190,7 +193,10 @@ struct decode {
 	PhysicalAddress phy_bsbuf_addr;
 	PhysicalAddress phy_ps_buf;
 	PhysicalAddress phy_slice_buf;
+	PhysicalAddress phy_vp8_mbparam_buf;
+
 	int phy_slicebuf_size;
+	int phy_vp8_mbparam_size;
 	u32 virt_bsbuf_addr;
 	int picwidth;
 	int picheight;
@@ -228,6 +234,9 @@ struct encode {
 	int src_fbid;	/* Index of frame buffer that contains YUV image */
 	FrameBuffer *fb; /* frame buffer base given to encoder */
 	struct frame_buf **pfbpool; /* allocated fb pointers are stored here */
+	ExtBufCfg scratchBuf;
+	int mp4_dataPartitionEnable;
+	int ringBufferEnable;
 
         EncReportInfo mbInfo;
         EncReportInfo mvInfo;
