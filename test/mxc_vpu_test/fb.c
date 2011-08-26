@@ -131,7 +131,7 @@ struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int
 	/*
 	 * The buffers is luma top, chroma top, luma bottom and chroma bottom for
 	 * tiled map type, and only 20bits for the address description, so we need
-	 * to do 1K page align for each buffer.
+	 * to do 4K page align for each buffer.
 	 */
 	luma_aligned_size = (((strideY * height / 2 + 4095) >> 12) << 12) * 2;
 	chroma_aligned_size = ((strideY / divX * height / divY + 4095) >> 12) << 12;

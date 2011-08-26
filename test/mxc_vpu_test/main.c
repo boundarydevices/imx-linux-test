@@ -40,9 +40,11 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	4 - MPEG2, 5 - DIV3, 6 - RV, 7 - MJPG, \n "\
 	       "        8 - AVS, 9 - VP8\n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
-	       "  -l <mp4Class> 0 - MPEG4, 1 - DIVX 5.0 or higher, 2 - XVID, \n "\
-	       "        5 - DIVX4.0 \n "\
-	       "        This flag is effective when 'f' flag is 0 (MPEG4).\n "\
+	       "  -l <mp4Class / h264 type> \n "\
+	       "        When 'f' flag is 0 (MPEG4), it is mp4 class type. \n "\
+	       "        0 - MPEG4, 1 - DIVX 5.0 or higher, 2 - XVID, 5 - DIVX4.0 \n "\
+	       "        When 'f' flag is 2 (H.264), it is h264 type. \n "\
+	       "        0 - normal H.264(AVC), 1 - MVC \n "\
 	       "  -p <port number> UDP port number to bind \n "\
 	       "	If no port number is secified, 5555 is used \n "\
 	       "  -c <count> Number of frames to decode \n "\
@@ -71,8 +73,9 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is 30 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
 	       "        default is none-interleave(0). \n "\
-	       "  -s <prescan> Enable prescan in decoding - 1. enabled \n "\
-	       "        default is disabled. \n "\
+	       "  -s <prescan/bs_mode> Enable prescan in decoding on i.mx5x - 1. enabled \n "\
+	       "        default is disabled. Bitstream mode in decoding on i.mx6  \n "\
+	       "        0. Normal mode, 1. Rollback mode \n "\
 	       "  -y <maptype> Map type for GDI interface \n "\
 	       "        0 - Linear frame map, 1 - frame MB map, 2 - field MB map \n "\
 	       "        default is 0. \n "\
@@ -126,7 +129,7 @@ struct input_argument {
 sigset_t sigset;
 int quitflag;
 
-static struct input_argument input_arg[4];
+static struct input_argument input_arg[MAX_NUM_INSTANCE];
 static int instance;
 static int using_config_file;
 
@@ -155,7 +158,7 @@ parse_config_file(char *file_name)
 	}
 
 	while (fgets(line, MAX_PATH, fp) != NULL) {
-		if (instance > 3) {
+		if (instance > MAX_NUM_INSTANCE) {
 			err_msg("No more instances!!\n");
 			break;
 		}
@@ -221,7 +224,7 @@ parse_main_args(int argc, char *argv[])
 			status = -1;
 			break;
 		}
-	} while ((opt != -1) && (status == 0) && (instance < 4));
+	} while ((opt != -1) && (status == 0) && (instance < MAX_NUM_INSTANCE));
 
 	optind = 1;
 	return status;
@@ -309,7 +312,10 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.gop = atoi(optarg);
 			break;
 		case 's':
-			input_arg[i].cmd.prescan = atoi(optarg);
+			if (cpu_is_mx6q())
+				input_arg[i].cmd.bs_mode = atoi(optarg);
+			else
+				input_arg[i].cmd.prescan = atoi(optarg);
 			break;
 		case 'b':
 			input_arg[i].cmd.bitrate = atoi(optarg);
@@ -327,7 +333,7 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.chromaInterleave = atoi(optarg);
 			break;
 		case 'l':
-		 	input_arg[i].cmd.mp4Class = atoi(optarg);
+			input_arg[i].cmd.mp4_h264Class = atoi(optarg);
 			break;
 		case 'a':
 			input_arg[i].cmd.fps = atoi(optarg);
