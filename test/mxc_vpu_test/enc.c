@@ -115,7 +115,15 @@ void SaveEncSliceInfo(u8 *SliceParaBuf, int size, int EncNum)
 	fflush(fpEncSliceInfo);
 }
 
-#if STREAM_ENC_PIC_RESET == 0
+static int
+enc_readbs_reset_buffer(struct encode *enc, PhysicalAddress paBsBufAddr, int bsBufsize)
+{
+	u32 vbuf;
+
+	vbuf = enc->virt_bsbuf_addr + paBsBufAddr - enc->phy_bsbuf_addr;
+	return vpu_write(enc->cmdl, (void *)vbuf, bsBufsize);
+}
+
 static int
 enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
 		u32 bs_va_startaddr, u32 bs_va_endaddr, u32 bs_pa_startaddr,
@@ -165,7 +173,7 @@ enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
 
 	return space;
 }
-#endif
+
 
 static int
 encoder_fill_headers(struct encode *enc)
@@ -175,15 +183,12 @@ encoder_fill_headers(struct encode *enc)
 	RetCode ret;
 	int mbPicNum;
 
-#if STREAM_ENC_PIC_RESET == 1
-	u32 vbuf;
-	u32 phy_bsbuf  = enc->phy_bsbuf_addr;
-	u32 virt_bsbuf = enc->virt_bsbuf_addr;
-#endif
-
 	/* Must put encode header before encoding */
 	if (enc->cmdl->format == STD_MPEG4) {
 		enchdr_param.headerType = VOS_HEADER;
+
+		if (cpu_is_mx6q())
+			goto put_mp4header;
 		/*
 		 * Please set userProfileLevelEnable to 0 if you need to generate
 	         * user profile and level automaticaly by resolution, here is one
@@ -209,53 +214,46 @@ encoder_fill_headers(struct encode *enc)
 			enchdr_param.userProfileLevelIndication = 5; /* L5 */
 		else
 			enchdr_param.userProfileLevelIndication = 6; /* L6 */
-		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
 
-#if STREAM_ENC_PIC_RESET == 1
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
-#endif
+put_mp4header:
+		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
+		if (enc->ringBufferEnable == 0 ) {
+			ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
+		}
 
 		enchdr_param.headerType = VIS_HEADER;
 		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
-
-#if STREAM_ENC_PIC_RESET == 1
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
-#endif
+		if (enc->ringBufferEnable == 0 ) {
+			ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
+		}
 
 		enchdr_param.headerType = VOL_HEADER;
 		vpu_EncGiveCommand(handle, ENC_PUT_MP4_HEADER, &enchdr_param);
-
-#if STREAM_ENC_PIC_RESET == 1
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
-#endif
+		if (enc->ringBufferEnable == 0 ) {
+			ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
+		}
 	} else if (enc->cmdl->format == STD_AVC) {
 		enchdr_param.headerType = SPS_RBSP;
 		vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
+		if (enc->ringBufferEnable == 0 ) {
+			ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
+		}
 
-#if STREAM_ENC_PIC_RESET == 1
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
-#endif
 		enchdr_param.headerType = PPS_RBSP;
 		vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
-
-#if STREAM_ENC_PIC_RESET == 1
-		vbuf = (virt_bsbuf + enchdr_param.buf - phy_bsbuf);
-		ret = vpu_write(enc->cmdl, (void *)vbuf, enchdr_param.size);
-		if (ret < 0)
-			return -1;
-#endif
+		if (enc->ringBufferEnable == 0 ) {
+			ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+			if (ret < 0)
+				return -1;
+		}
 	} else if (enc->cmdl->format == STD_MJPG) {
 		if (enc->huffTable)
 			free(enc->huffTable);
@@ -287,7 +285,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	int needFrameBufCount, fbcount = enc->fbcount;
 	RetCode ret;
 	FrameBuffer *fb;
-	PhysicalAddress subSampBaseA = NULL, subSampBaseB = NULL;
+	PhysicalAddress subSampBaseA = 0, subSampBaseB = 0;
 	struct frame_buf **pfbpool;
 
 	if (cpu_is_mx6q())
@@ -355,7 +353,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, enc_stride, src_stride,
-					    subSampBaseA, subSampBaseB);
+					    subSampBaseA, subSampBaseB, &enc->scratchBuf);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
 		goto err1;
@@ -416,14 +414,9 @@ encoder_start(struct encode *enc)
 	struct timeval tenc_begin,tenc_end, total_start, total_end;
 	int sec, usec;
 	float tenc_time = 0, total_time=0;
-
-#if STREAM_ENC_PIC_RESET == 0
 	PhysicalAddress phy_bsbuf_start = enc->phy_bsbuf_addr;
 	u32 virt_bsbuf_start = enc->virt_bsbuf_addr;
 	u32 virt_bsbuf_end = virt_bsbuf_start + STREAM_BUF_SIZE;
-#else
-	u32 vbuf;
-#endif
 
 	/* Must put encode header before encoding */
 	ret = encoder_fill_headers(enc);
@@ -515,15 +508,15 @@ encoder_start(struct encode *enc)
 		}
 
 		while (vpu_IsBusy()) {
-#if STREAM_ENC_PIC_RESET == 0
-			ret = enc_readbs_ring_buffer(handle, enc->cmdl,
+			vpu_WaitForInt(200);
+			if (enc->ringBufferEnable == 1) {
+				ret = enc_readbs_ring_buffer(handle, enc->cmdl,
 					virt_bsbuf_start, virt_bsbuf_end,
 					phy_bsbuf_start, STREAM_READ_SIZE);
-			if (ret < 0) {
-				goto err2;
+				if (ret < 0) {
+					goto err2;
+				}
 			}
-#endif
-			vpu_WaitForInt(200);
 		}
 
 		gettimeofday(&tenc_end, NULL);
@@ -570,24 +563,20 @@ encoder_start(struct encode *enc)
 		if (quitflag)
 			break;
 
-#if STREAM_ENC_PIC_RESET == 1
-		vbuf = (enc->virt_bsbuf_addr + outinfo.bitstreamBuffer
-					- enc->phy_bsbuf_addr);
-		ret = vpu_write(enc->cmdl, (void *)vbuf, outinfo.bitstreamSize);
-		if (ret < 0) {
-			err_msg("writing bitstream buffer failed\n");
-			goto err2;
-		}
-#endif
+		if (enc->ringBufferEnable == 0) {
+			ret = enc_readbs_reset_buffer(enc, outinfo.bitstreamBuffer, outinfo.bitstreamSize);
+			if (ret < 0) {
+				err_msg("writing bitstream buffer failed\n");
+				goto err2;
+			}
+		} else
+			enc_readbs_ring_buffer(handle, enc->cmdl, virt_bsbuf_start,
+						virt_bsbuf_end, phy_bsbuf_start, 0);
+
 		frame_id++;
 		if ((count != 0) && (frame_id >= count))
 			break;
 	}
-
-#if STREAM_ENC_PIC_RESET == 0
-	enc_readbs_ring_buffer(handle, enc->cmdl, virt_bsbuf_start,
-			virt_bsbuf_end, phy_bsbuf_start, 0);
-#endif
 
 	gettimeofday(&total_end, NULL);
 	sec = total_end.tv_sec - total_start.tv_sec;
@@ -797,7 +786,7 @@ encoder_open(struct encode *enc)
 	encop.MbInterval = 0;
 	encop.avcIntra16x16OnlyModeEnable = 0;
 
-	encop.ringBufferEnable = 0;
+	encop.ringBufferEnable = enc->ringBufferEnable = 0;
 	encop.dynamicAllocEnable = 0;
 	encop.chromaInterleave = enc->cmdl->chromaInterleave;
 
@@ -900,6 +889,8 @@ encoder_open(struct encode *enc)
 
 	if (enc->cmdl->format == STD_MPEG4) {
 		encop.EncStdParam.mp4Param.mp4_dataPartitionEnable = 0;
+		enc->mp4_dataPartitionEnable =
+			encop.EncStdParam.mp4Param.mp4_dataPartitionEnable;
 		encop.EncStdParam.mp4Param.mp4_reversibleVlcEnable = 0;
 		encop.EncStdParam.mp4Param.mp4_intraDcVlcThr = 0;
 		encop.EncStdParam.mp4Param.mp4_hecEnable = 0;
@@ -970,6 +961,7 @@ encode_test(void *arg)
 {
 	struct cmd_line *cmdl = (struct cmd_line *)arg;
 	vpu_mem_desc	mem_desc = {0};
+	vpu_mem_desc scratch_mem_desc = {0};
 	struct encode *enc;
 	int ret = 0;
 
@@ -1016,6 +1008,18 @@ encode_test(void *arg)
 	if (ret)
 		goto err1;
 
+        /* allocate scratch buf */
+	if (cpu_is_mx6q() && (cmdl->format == STD_MPEG4) && enc->mp4_dataPartitionEnable) {
+		scratch_mem_desc.size = MPEG4_SCRATCH_SIZE;
+                ret = IOGetPhyMem(&scratch_mem_desc);
+                if (ret) {
+                        err_msg("Unable to obtain physical slice save mem\n");
+                        goto err1;
+                }
+		enc->scratchBuf.bufferBase = scratch_mem_desc.phy_addr;
+		enc->scratchBuf.bufferSize = scratch_mem_desc.size;
+        }
+
 	/* allocate memory for the frame buffers */
 	ret = encoder_allocate_framebuffer(enc);
 	if (ret)
@@ -1030,6 +1034,10 @@ err1:
 	/* close the encoder */
 	encoder_close(enc);
 err:
+	if (cpu_is_mx6q() && cmdl->format == STD_MPEG4 && enc->mp4_dataPartitionEnable) {
+		IOFreeVirtMem(&scratch_mem_desc);
+		IOFreePhyMem(&scratch_mem_desc);
+	}
 	/* free the physical memory */
 	IOFreeVirtMem(&mem_desc);
 	IOFreePhyMem(&mem_desc);

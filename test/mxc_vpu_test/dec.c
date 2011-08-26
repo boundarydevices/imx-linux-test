@@ -910,20 +910,18 @@ decoder_start(struct decode *dec)
 			 * Please take care of this for network case since vpu
 			 * interrupt also cannot be received if no enough data.
 			 */
-			if (loop_id == 10) {
+			if (loop_id == 50) {
 				err = vpu_SWReset(handle, 0);
 				return -1;
-				}
-
-			if (!err) {
-				vpu_WaitForInt(500);
-				is_waited_int = 1;
-				loop_id ++;
 			}
+
+			vpu_WaitForInt(100);
+			is_waited_int = 1;
+			loop_id ++;
 		}
 
 		if (!is_waited_int)
-			vpu_WaitForInt(500);
+			vpu_WaitForInt(100);
 
 		gettimeofday(&tdec_end, NULL);
 		sec = tdec_end.tv_sec - tdec_begin.tv_sec;
@@ -953,7 +951,19 @@ decoder_start(struct decode *dec)
 		if (outinfo.decodingSuccess == 0) {
 			warn_msg("Incomplete finish of decoding process.\n"
 				"\tframe_id = %d\n", (int)frame_id);
-			continue;
+			if (quitflag)
+				break;
+			else
+				continue;
+		}
+
+		if (cpu_is_mx6q() && (outinfo.decodingSuccess & 0x10)) {
+			warn_msg("vpu needs more bitstream in rollback mode\n"
+				"\tframe_id = %d\n", (int)frame_id);
+			if (quitflag)
+				break;
+			else
+				continue;
 		}
 
 		if (outinfo.notSufficientPsBuffer) {
@@ -1049,14 +1059,14 @@ decoder_start(struct decode *dec)
 		if (outinfo.indexFrameDisplay == -1)
 			decodefinish = 1;
 		else if ((outinfo.indexFrameDisplay > dec->fbcount) &&
-				(outinfo.prescanresult != 0))
+			 (outinfo.prescanresult != 0) && !cpu_is_mx6q())
 			decodefinish = 1;
 
 		if (decodefinish)
 			break;
 
-		if ((outinfo.prescanresult == 0) &&
-					(decparam.prescanEnable == 1)) {
+		if (!cpu_is_mx6q() && (outinfo.prescanresult == 0) &&
+		    (decparam.prescanEnable == 1)) {
 			if (eos) {
 				break;
 			} else {
@@ -1262,7 +1272,8 @@ decoder_free_framebuffer(struct decode *dec)
 			(((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
 			 && deblock_en)) {
 		for (i = 0; i < totalfb; i++) {
-			framebuf_free(dec->pfbpool[i]);
+			if (dec->pfbpool)
+				framebuf_free(dec->pfbpool[i]);
 		}
 	}
 
@@ -1473,8 +1484,8 @@ decoder_allocate_framebuffer(struct decode *dec)
 		bufinfo.avcSliceBufInfo.bufferBase = dec->phy_slice_buf;
 		bufinfo.avcSliceBufInfo.bufferSize = dec->phy_slicebuf_size;
 	} else if (dec->cmdl->format == STD_VP8) {
-		bufinfo.vp8MbDataBufInfo.bufferBase = dec->phy_slice_buf;
-		bufinfo.vp8MbDataBufInfo.bufferSize = dec->phy_slicebuf_size;
+		bufinfo.vp8MbDataBufInfo.bufferBase = dec->phy_vp8_mbparam_buf;
+		bufinfo.vp8MbDataBufInfo.bufferSize = dec->phy_vp8_mbparam_size;
 	}
 
 	/* User needs to fill max suported macro block value of frame as following*/
@@ -1591,9 +1602,9 @@ decoder_parse(struct decode *dec)
 					aspect_ratio_idc = (initinfo.aspectRateInfo & 0xFF);
 					info_msg("aspect_ratio_idc: %d\n", aspect_ratio_idc);
 				} else {
-					sar_width = (initinfo.aspectRateInfo >> 16);
+					sar_width = (initinfo.aspectRateInfo >> 16) & 0xFFFF;
 					sar_height = (initinfo.aspectRateInfo & 0xFFFF);
-					info_msg("sar_width: %d\nsar_height: %d",
+					info_msg("sar_width: %d, sar_height: %d\n",
 						sar_width, sar_height);
 				}
 			} else {
@@ -1715,6 +1726,9 @@ decoder_parse(struct decode *dec)
 
 		case STD_VP8:
 			info_msg("VP8 Profile: %d Level: %d\n", initinfo.profile, initinfo.level);
+			info_msg("hScaleFactor: %d vScaleFactor:%d\n",
+				    initinfo.vp8ScaleInfo.hScaleFactor,
+				    initinfo.vp8ScaleInfo.vScaleFactor);
 			break;
 
 		default:
@@ -1722,7 +1736,13 @@ decoder_parse(struct decode *dec)
 		}
 	}
 
-	info_msg("Decoder: width = %d, height = %d, fps = %lu, count = %u\n",
+	if (cpu_is_mx6q())
+		info_msg("Decoder: width = %d, height = %d, frameRateRes = %d, frameRateDiv = %d, count = %u\n",
+			initinfo.picWidth, initinfo.picHeight,
+			initinfo.frameRateRes, initinfo.frameRateDiv,
+			initinfo.minFrameBufferCount);
+	else
+		info_msg("Decoder: width = %d, height = %d, fps = %lu, count = %u\n",
 			initinfo.picWidth, initinfo.picHeight,
 			initinfo.frameRateInfo,
 			initinfo.minFrameBufferCount);
@@ -1763,7 +1783,8 @@ decoder_parse(struct decode *dec)
 	align = 16;
 	if ((dec->cmdl->format == STD_MPEG2 ||
 	    dec->cmdl->format == STD_VC1 ||
-	    dec->cmdl->format == STD_AVC) && initinfo.interlace == 1)
+	    dec->cmdl->format == STD_AVC ||
+	    dec->cmdl->format == STD_VP8) && initinfo.interlace == 1)
 		align = 32;
 
 	dec->picheight = ((initinfo.picHeight + align - 1) & ~(align - 1));
@@ -1861,10 +1882,13 @@ decoder_open(struct decode *dec)
 	oparam.reorderEnable = dec->reorderEnable;
 	oparam.mp4DeblkEnable = dec->cmdl->deblock_en;
 	oparam.chromaInterleave = dec->cmdl->chromaInterleave;
-	oparam.mp4Class = dec->cmdl->mp4Class;
+	oparam.mp4Class = dec->cmdl->mp4_h264Class;
+	if (cpu_is_mx6q())
+		oparam.avcExtension = dec->cmdl->mp4_h264Class;
 	oparam.mjpg_thumbNailDecEnable = 0;
 	oparam.mapType = dec->cmdl->mapType;
 	oparam.tiled2LinearEnable = dec->tiled2LinearEnable;
+	oparam.bitstreamMode = dec->cmdl->bs_mode;
 
 	/*
 	 * mp4 deblocking filtering is optional out-loop filtering for image
@@ -1919,6 +1943,7 @@ decode_test(void *arg)
 	vpu_mem_desc mem_desc = {0};
 	vpu_mem_desc ps_mem_desc = {0};
 	vpu_mem_desc slice_mem_desc = {0};
+	vpu_mem_desc vp8_mbparam_mem_desc = {0};
 	struct decode *dec;
 	int ret, eos = 0, fill_end_bs = 0, fillsize = 0;
 
@@ -1999,15 +2024,24 @@ decode_test(void *arg)
 	}
 
 	/* allocate slice buf */
-	if (cmdl->format == STD_AVC || cmdl->format == STD_VP8) {
+	if (cmdl->format == STD_AVC) {
 		slice_mem_desc.size = dec->phy_slicebuf_size;
 		ret = IOGetPhyMem(&slice_mem_desc);
 		if (ret) {
 			err_msg("Unable to obtain physical slice save mem\n");
 			goto err1;
 		}
-
 		dec->phy_slice_buf = slice_mem_desc.phy_addr;
+	}
+
+	if (cmdl->format == STD_VP8) {
+		vp8_mbparam_mem_desc.size = 68 * (dec->stride * dec->picwidth / 256);
+		ret = IOGetPhyMem(&vp8_mbparam_mem_desc);
+		if (ret) {
+			err_msg("Unable to obtain physical vp8 mbparam mem\n");
+			goto err1;
+		}
+		dec->phy_vp8_mbparam_buf = vp8_mbparam_mem_desc.phy_addr;
 	}
 
 	/* allocate frame buffers */
@@ -2023,7 +2057,6 @@ decode_test(void *arg)
 	ret = decoder_start(dec);
 err1:
 	decoder_close(dec);
-
 	/* free the frame buffers */
 	decoder_free_framebuffer(dec);
 err:
@@ -2031,6 +2064,9 @@ err:
 		IOFreePhyMem(&slice_mem_desc);
 		IOFreePhyMem(&ps_mem_desc);
 	}
+
+	if (cmdl->format == STD_VP8)
+		IOFreePhyMem(&vp8_mbparam_mem_desc);
 
 	IOFreeVirtMem(&mem_desc);
 	IOFreePhyMem(&mem_desc);
