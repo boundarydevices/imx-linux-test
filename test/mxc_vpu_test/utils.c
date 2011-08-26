@@ -434,7 +434,7 @@ check_params(struct cmd_line *cmd, int op)
 	switch (cmd->format) {
 	case STD_MPEG4:
 		info_msg("Format: STD_MPEG4\n");
-		switch (cmd->mp4Class) {
+		switch (cmd->mp4_h264Class) {
 		case 0:
 			info_msg("MPEG4 class: MPEG4\n");
 			break;
@@ -457,6 +457,17 @@ check_params(struct cmd_line *cmd, int op)
 		break;
 	case STD_AVC:
 		info_msg("Format: STD_AVC\n");
+		switch (cmd->mp4_h264Class) {
+		case 0:
+			info_msg("AVC\n");
+			break;
+		case 1:
+			info_msg("MVC\n");
+			break;
+		default:
+			err_msg("Unsupported H264 type\n");
+			break;
+		}
 		break;
 	case STD_VC1:
 		info_msg("Format: STD_VC1\n");
@@ -731,7 +742,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				cmd->mp4Class = strtol(str, NULL, 10);
+				cmd->mp4_h264Class = strtol(str, NULL, 10);
 			}
 		}
 
@@ -823,6 +834,8 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 			str++;
 			if (*str != '\0') {
 				cmd->prescan = strtol(str, NULL, 10);
+				if (cpu_is_mx6q() && cmd->prescan)
+					warn_msg("Prescan cannot be enabled on mx6 platform.\n");
 			}
 		}
 
