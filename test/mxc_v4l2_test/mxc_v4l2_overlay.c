@@ -448,12 +448,6 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
 	printf("frame_rate is %d\n",
 	       parm.parm.capture.timeperframe.denominator);
 
-        if (ioctl(fd_v4l, VIDIOC_S_OUTPUT, &g_display_lcd) < 0)
-        {
-                printf("VIDIOC_S_OUTPUT failed\n");
-                return TFAIL;
-        }
-
 	ctl.id = V4L2_CID_PRIVATE_BASE + 2;
 		ctl.value = g_rotate;
         if (ioctl(fd_v4l, VIDIOC_S_CTRL, &ctl) < 0)
@@ -644,6 +638,18 @@ main(int argc, char **argv)
                 close(fd_fb_0);
                 return TFAIL;
         }
+
+	if (strcmp(fb0_fix.id, "DISP3 BG - DI1") == 0)
+		g_display_lcd = 1;
+	else if (strcmp(fb0_fix.id, "DISP3 BG") == 0)
+		g_display_lcd = 0;
+
+        if (ioctl(fd_v4l, VIDIOC_S_OUTPUT, &g_display_lcd) < 0)
+        {
+                printf("VIDIOC_S_OUTPUT failed\n");
+                return TFAIL;
+        }
+
 
 	fb_device_fg = "/dev/fb1";
 	if ((g_fd_fb_fg = open(fb_device_fg, O_RDWR)) < 0) {
