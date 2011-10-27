@@ -115,6 +115,39 @@ void SaveEncSliceInfo(u8 *SliceParaBuf, int size, int EncNum)
 	fflush(fpEncSliceInfo);
 }
 
+void jpgGetHuffTable(EncMjpgParam *param)
+{
+	/* Rearrange and insert pre-defined Huffman table to deticated variable. */
+	memcpy(param->huffBits[DC_TABLE_INDEX0], lumaDcBits, 16);   /* Luma DC BitLength */
+	memcpy(param->huffVal[DC_TABLE_INDEX0], lumaDcValue, 16);   /* Luma DC HuffValue */
+
+	memcpy(param->huffBits[AC_TABLE_INDEX0], lumaAcBits, 16);   /* Luma DC BitLength */
+	memcpy(param->huffVal[AC_TABLE_INDEX0], lumaAcValue, 162);  /* Luma DC HuffValue */
+
+	memcpy(param->huffBits[DC_TABLE_INDEX1], chromaDcBits, 16); /* Chroma DC BitLength */
+	memcpy(param->huffVal[DC_TABLE_INDEX1], chromaDcValue, 16); /* Chroma DC HuffValue */
+
+	memcpy(param->huffBits[AC_TABLE_INDEX1], chromaAcBits, 16); /* Chroma AC BitLength */
+	memcpy(param->huffVal[AC_TABLE_INDEX1], chromaAcValue, 162); /* Chorma AC HuffValue */
+}
+
+void jpgGetQMatrix(EncMjpgParam *param)
+{
+	/* Rearrange and insert pre-defined Q-matrix to deticated variable. */
+	memcpy(param->qMatTab[DC_TABLE_INDEX0], lumaQ2, 64);
+	memcpy(param->qMatTab[AC_TABLE_INDEX0], chromaBQ2, 64);
+
+	memcpy(param->qMatTab[DC_TABLE_INDEX1], param->qMatTab[DC_TABLE_INDEX0], 64);
+	memcpy(param->qMatTab[AC_TABLE_INDEX1], param->qMatTab[AC_TABLE_INDEX0], 64);
+}
+
+void jpgGetCInfoTable(EncMjpgParam *param)
+{
+	int format = param->mjpg_sourceFormat;
+
+	memcpy(param->cInfoTab, cInfoTable[format], 6 * 4);
+}
+
 static int
 enc_readbs_reset_buffer(struct encode *enc, PhysicalAddress paBsBufAddr, int bsBufsize)
 {
@@ -259,6 +292,21 @@ put_mp4header:
 			free(enc->huffTable);
 		if (enc->qMatTable)
 			free(enc->qMatTable);
+		if (cpu_is_mx6q()) {
+			EncParamSet enchdr_param = {0};
+			enchdr_param.size = STREAM_BUF_SIZE;
+			enchdr_param.pParaSet = malloc(STREAM_BUF_SIZE);
+			if (enchdr_param.pParaSet) {
+				vpu_EncGiveCommand(handle,ENC_GET_JPEG_HEADER, &enchdr_param);
+				vpu_write(enc->cmdl, (void *)enchdr_param.pParaSet, enchdr_param.size);
+				if (ret < 0)
+					return -1;
+				free(enchdr_param.pParaSet);
+			} else {
+				err_msg("memory allocate failure\n");
+				return -1;
+			}
+		}
 	}
 
 	return 0;
@@ -289,7 +337,10 @@ encoder_allocate_framebuffer(struct encode *enc)
 	struct frame_buf **pfbpool;
 
 	if (cpu_is_mx6q())
-		needFrameBufCount = fbcount + 3; // minFrameBufferCount + Subsamp buffer [2] + Src frame
+		if (enc->cmdl->format == STD_MJPG)
+			needFrameBufCount = fbcount + 1;
+		else
+			needFrameBufCount = fbcount + 3; /* minFrameBufferCount + Subsamp buffer [2] + Src frame */
 	else
 		needFrameBufCount = fbcount + 1;
 
@@ -308,7 +359,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	for (i = 0; i < fbcount; i++) {
-		pfbpool[i] = framebuf_alloc(enc->cmdl->format, MODE420,
+		pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
 				(enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
 		if (pfbpool[i] == NULL) {
 			fbcount = i;
@@ -323,9 +374,9 @@ encoder_allocate_framebuffer(struct encode *enc)
 		fb[i].strideC = pfbpool[i]->strideC;
 	}
 
-	if (cpu_is_mx6q() &&  enc->cmdl->format != STD_MJPG) {
-		for (i = fbcount + 1; i < fbcount + 3; i++) {
-			pfbpool[i] = framebuf_alloc(enc->cmdl->format, MODE420,
+	if (cpu_is_mx6q() && (enc->cmdl->format != STD_MJPG)) {
+		for (i = fbcount + 1; i < needFrameBufCount; i++) {
+			pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
 					(enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
 			if (pfbpool[i] == NULL) {
 				fbcount = i;
@@ -366,7 +417,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		}
 	} else {
 		/* Allocate a single frame buffer for source frame */
-		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, MODE420, enc->src_picwidth,
+		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt, enc->src_picwidth,
 						   enc->src_picheight);
 		if (pfbpool[src_fbid] == NULL) {
 			err_msg("failed to allocate single framebuf\n");
@@ -473,6 +524,12 @@ encoder_start(struct encode *enc)
 		img_size = enc->src_picwidth * enc->src_picheight;
 	} else {
 		img_size = enc->src_picwidth * enc->src_picheight * 3 / 2;
+		if (enc->cmdl->format == STD_MJPG) {
+			if (enc->mjpg_fmt == MODE422 || enc->mjpg_fmt == MODE224)
+				img_size = enc->src_picwidth * enc->src_picheight * 2;
+			else if (enc->mjpg_fmt == MODE400)
+				img_size = enc->src_picwidth * enc->src_picheight;
+		}
 	}
 
 	gettimeofday(&total_start, NULL);
@@ -488,8 +545,11 @@ encoder_start(struct encode *enc)
 			fb[src_fbid].myIndex = v4l2_buf.index;
 			fb[src_fbid].bufY = cap_buffers[v4l2_buf.index].offset;
 			fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
-			fb[src_fbid].bufCr = fb[src_fbid].bufCb +
-						(img_size >> 2);
+			if ((enc->cmdl->format == STD_MJPG) &&
+			    (enc->mjpg_fmt == MODE422 || enc->mjpg_fmt == MODE224))
+				fb[src_fbid].bufCr = fb[src_fbid].bufCb + (img_size >> 1);
+			else
+				fb[src_fbid].bufCr = fb[src_fbid].bufCb + (img_size >> 2);
 		} else {
 			pfb = pfbpool[src_fbid];
 			yuv_addr = pfb->addrY + pfb->desc.virt_uaddr -
@@ -790,7 +850,7 @@ encoder_open(struct encode *enc)
 	encop.dynamicAllocEnable = 0;
 	encop.chromaInterleave = enc->cmdl->chromaInterleave;
 
-	if( enc->cmdl->format == STD_MJPG )
+	if(!cpu_is_mx6q() &&  enc->cmdl->format == STD_MJPG )
 	{
 		qMatTable = calloc(192,1);
 		if (qMatTable == NULL) {
@@ -933,13 +993,19 @@ encoder_open(struct encode *enc)
 			encop.EncStdParam.avcParam.avc_fmoSliceSaveBufSize = 32; /* FMO_SLICE_SAVE_BUF_SIZE */
 		}
 	} else if (enc->cmdl->format == STD_MJPG) {
-		encop.EncStdParam.mjpgParam.mjpg_sourceFormat = 0; /* encConfig.mjpgChromaFormat */
+		encop.EncStdParam.mjpgParam.mjpg_sourceFormat = enc->mjpg_fmt; /* encConfig.mjpgChromaFormat */
 		encop.EncStdParam.mjpgParam.mjpg_restartInterval = 60;
 		encop.EncStdParam.mjpgParam.mjpg_thumbNailEnable = 0;
 		encop.EncStdParam.mjpgParam.mjpg_thumbNailWidth = 0;
 		encop.EncStdParam.mjpgParam.mjpg_thumbNailHeight = 0;
-		encop.EncStdParam.mjpgParam.mjpg_hufTable = huffTable;
-		encop.EncStdParam.mjpgParam.mjpg_qMatTable = qMatTable;
+		if (cpu_is_mx6q()) {
+			jpgGetHuffTable(&encop.EncStdParam.mjpgParam);
+			jpgGetQMatrix(&encop.EncStdParam.mjpgParam);
+			jpgGetCInfoTable(&encop.EncStdParam.mjpgParam);
+		} else {
+			encop.EncStdParam.mjpgParam.mjpg_hufTable = huffTable;
+			encop.EncStdParam.mjpgParam.mjpg_qMatTable = qMatTable;
+		}
 	}
 
 	ret = vpu_EncOpen(&handle, &encop);
@@ -997,6 +1063,9 @@ encode_test(void *arg)
 
 	enc->phy_bsbuf_addr = mem_desc.phy_addr;
 	enc->cmdl = cmdl;
+
+	if (enc->cmdl->format == STD_MJPG)
+		enc->mjpg_fmt = MODE420;  /* Please change this per your needs */
 
 	/* open the encoder */
 	ret = encoder_open(enc);
