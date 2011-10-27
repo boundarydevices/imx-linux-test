@@ -237,6 +237,7 @@ struct encode {
 	ExtBufCfg scratchBuf;
 	int mp4_dataPartitionEnable;
 	int ringBufferEnable;
+	int mjpg_fmt;
 
         EncReportInfo mbInfo;
         EncReportInfo mvInfo;
