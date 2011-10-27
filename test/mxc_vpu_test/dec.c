@@ -395,6 +395,9 @@ saveCropYuvImageHelper(struct decode *dec, u8 *buf, Rect cropRect)
 		pCropYuv += width;
 	}
 
+	if (dec->cmdl->format == STD_MJPG && dec->mjpg_fmt == MODE400)
+		return;
+
 	cropWidth /= 2;
 	cropHeight /= 2;
 	pCropYuv = buf + (width * height);
@@ -672,7 +675,17 @@ write_to_file(struct decode *dec, Rect cropRect, int index)
 
 	pfb = dec->pfbpool[index];
 	buf = (u8 *)(pfb->addrY + pfb->desc.virt_uaddr - pfb->desc.phy_addr);
+
 	img_size = stride * height * 3 / 2;
+	if (dec->cmdl->format == STD_MJPG) {
+		if (dec->mjpg_fmt == MODE422 || dec->mjpg_fmt == MODE224)
+			img_size = stride * height * 2;
+		else if (dec->mjpg_fmt == MODE400)
+			img_size = stride * height;
+		else if (dec->mjpg_fmt == MODE444)
+			img_size = stride * height * 3;
+	}
+
 	if (chromaInterleave == 0 && cropping == 0) {
 		fwriten(dec->cmdl->dst_fd, buf, img_size);
 		goto out;
@@ -886,8 +899,12 @@ decoder_start(struct decode *dec)
 
 		gettimeofday(&tdec_begin, NULL);
 		ret = vpu_DecStartOneFrame(handle, &decparam);
+		if (ret == RETCODE_JPEG_EOS) {
+			warn_msg(" JPEG bitstream is end\n");
+			return -1;
+		}
 		if (ret != RETCODE_SUCCESS) {
-			err_msg("DecStartOneFrame failed\n");
+			err_msg("DecStartOneFrame failed, ret=%d\n", ret);
 			return -1;
 		}
 
@@ -1494,7 +1511,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	bufinfo.maxDecFrmInfo.maxMbNum = dec->stride * dec->picheight / 256;
 	ret = vpu_DecRegisterFrameBuffer(handle, fb, fbcount, stride, &bufinfo);
 	if (ret != RETCODE_SUCCESS) {
-		err_msg("Register frame buffer failed\n");
+		err_msg("Register frame buffer failed, ret=%d\n", ret);
 		goto err1;
 	}
 
