@@ -329,7 +329,7 @@ int
 encoder_allocate_framebuffer(struct encode *enc)
 {
 	EncHandle handle = enc->handle;
-	int i, enc_stride, src_stride, src_fbid = enc->src_fbid;
+	int i, enc_stride, src_stride, src_fbid;
 	int needFrameBufCount, fbcount = enc->fbcount;
 	RetCode ret;
 	FrameBuffer *fb;
@@ -345,7 +345,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		needFrameBufCount = fbcount + 1;
 
 	/* last framebuffer is used as src frame in the test */
-	enc->src_fbid = needFrameBufCount - 1;
+	enc->src_fbid = src_fbid = needFrameBufCount - 1;
 
 	fb = enc->fb = calloc(needFrameBufCount, sizeof(FrameBuffer));
 	if (fb == NULL) {
