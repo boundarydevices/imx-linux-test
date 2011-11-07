@@ -344,6 +344,9 @@ encoder_allocate_framebuffer(struct encode *enc)
 	else
 		needFrameBufCount = fbcount + 1;
 
+	/* last framebuffer is used as src frame in the test */
+	enc->src_fbid = needFrameBufCount - 1;
+
 	fb = enc->fb = calloc(needFrameBufCount, sizeof(FrameBuffer));
 	if (fb == NULL) {
 		err_msg("Failed to allocate enc->fb\n");
@@ -375,7 +378,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	if (cpu_is_mx6q() && (enc->cmdl->format != STD_MJPG)) {
-		for (i = fbcount + 1; i < needFrameBufCount; i++) {
+		for (i = fbcount; i < needFrameBufCount - 1; i++) {
 			pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
 					(enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
 			if (pfbpool[i] == NULL) {
@@ -389,8 +392,8 @@ encoder_allocate_framebuffer(struct encode *enc)
 			fb[i].strideY = pfbpool[i]->strideY;
 			fb[i].strideC = pfbpool[i]->strideC;
 		}
-		subSampBaseA = fb[fbcount + 1].bufY;
-		subSampBaseB = fb[fbcount + 2].bufY;
+		subSampBaseA = fb[fbcount].bufY;
+		subSampBaseB = fb[fbcount + 1].bufY;
 		enc->fbcount += 2;
 	}
 
@@ -424,7 +427,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 			goto err1;
 		}
 
-		fb[src_fbid].myIndex = i;
+		fb[src_fbid].myIndex = enc->src_fbid;
 		fb[src_fbid].bufY = pfbpool[src_fbid]->addrY;
 		fb[src_fbid].bufCb = pfbpool[src_fbid]->addrCb;
 		fb[src_fbid].bufCr = pfbpool[src_fbid]->addrCr;
@@ -542,7 +545,7 @@ encoder_start(struct encode *enc)
 				goto err2;
 			}
 
-			fb[src_fbid].myIndex = v4l2_buf.index;
+			fb[src_fbid].myIndex = enc->src_fbid + v4l2_buf.index;
 			fb[src_fbid].bufY = cap_buffers[v4l2_buf.index].offset;
 			fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
 			if ((enc->cmdl->format == STD_MJPG) &&
@@ -550,6 +553,8 @@ encoder_start(struct encode *enc)
 				fb[src_fbid].bufCr = fb[src_fbid].bufCb + (img_size >> 1);
 			else
 				fb[src_fbid].bufCr = fb[src_fbid].bufCb + (img_size >> 2);
+			fb[src_fbid].strideY = enc->src_picwidth;
+			fb[src_fbid].strideC = enc->src_picwidth / 2;
 		} else {
 			pfb = pfbpool[src_fbid];
 			yuv_addr = pfb->addrY + pfb->desc.virt_uaddr -
@@ -724,7 +729,7 @@ encoder_configure(struct encode *enc)
 		return -1;
 	}
 
-	enc->fbcount = enc->src_fbid = initinfo.minFrameBufferCount;
+	enc->fbcount = initinfo.minFrameBufferCount;
 
 	if (enc->cmdl->save_enc_hdr) {
 		if (enc->cmdl->format == STD_MPEG4) {
