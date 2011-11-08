@@ -33,5 +33,5 @@ typedef struct {
 } ipu_test_handle_t;
 
 extern int parse_config_file(char *file_name, ipu_test_handle_t *test_handle);
-
+extern int parse_cmd_input(int argc, char ** argv, ipu_test_handle_t *test_handle);
 #endif
