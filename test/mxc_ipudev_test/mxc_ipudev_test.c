@@ -44,6 +44,7 @@ void ctrl_c_handler(int signum, siginfo_t *info, void *myact)
 int process_cmdline(int argc, char **argv, ipu_test_handle_t *test_handle)
 {
 	int i;
+	int pre_set = 0;
 	struct ipu_task *t = &test_handle->task;
 
 	if (argc == 1)
@@ -51,7 +52,13 @@ int process_cmdline(int argc, char **argv, ipu_test_handle_t *test_handle)
 
 	for (i = 1; i < argc; i++)
 		if (strcmp(argv[i], "-C") == 0)
+		{
+			pre_set = 1;
 			parse_config_file(argv[++i], test_handle);
+    }
+
+	 if(pre_set == 0)
+		 parse_cmd_input(argc,argv,test_handle);
 
 	if ((t->input.width == 0) || (t->input.height == 0) ||
 			(t->output.width == 0) ||
