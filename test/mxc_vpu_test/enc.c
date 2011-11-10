@@ -844,7 +844,8 @@ encoder_open(struct encode *enc)
 
 	encop.IntraCostWeight = 0;
 	encop.MEUseZeroPmv  = 0;
-	encop.MESearchRange = 0;
+	/* (3: 16x16, 2:32x16, 1:64x32, 0:128x64, H.263(Short Header : always 3) */
+	encop.MESearchRange = 3;
 
 	encop.userGamma = (Uint32)(0.75*32768);         /*  (0*32768 <= gamma <= 1*32768) */
 	encop.RcIntervalMode= 1;        /* 0:normal, 1:frame_level, 2:slice_level, 3: user defined Mb_level */
