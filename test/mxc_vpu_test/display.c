@@ -878,6 +878,7 @@ err:
 void v4l_display_close(struct vpu_display *disp)
 {
 	int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+	int threshold = 0;
 
 	if (disp) {
 		if (vpu_v4l_performance_test) {
@@ -887,7 +888,11 @@ void v4l_display_close(struct vpu_display *disp)
 			sem_destroy(&disp->avaiable_dequeue_frame);
 		}
 
-		while (disp->queued_count > 0) {
+		/* take care of ENGR00161948 */
+		if (cpu_is_mx6q())
+			threshold = 1;
+
+		while (disp->queued_count > threshold) {
 			disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 			disp->buf.memory = V4L2_MEMORY_MMAP;
 			if (ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf) < 0)
