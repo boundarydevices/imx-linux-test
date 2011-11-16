@@ -889,8 +889,12 @@ void v4l_display_close(struct vpu_display *disp)
 		}
 
 		/* take care of ENGR00161948 */
-		if (cpu_is_mx6q())
-			threshold = 1;
+		if (cpu_is_mx6q()) {
+			if (disp->buf.field == V4L2_FIELD_ANY || disp->buf.field == V4L2_FIELD_NONE)
+				threshold = 1;
+			else
+				threshold = 2;
+		}
 
 		while (disp->queued_count > threshold) {
 			disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
