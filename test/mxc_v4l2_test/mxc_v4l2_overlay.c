@@ -612,20 +612,7 @@ main(int argc, char **argv)
 	}
 	printf("sensor chip is %s\n", chip.match.name);
 
-        fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
-        fmt.fmt.win.w.top=  g_display_top ;
-        fmt.fmt.win.w.left= g_display_left;
-        fmt.fmt.win.w.width=g_display_width;
-        fmt.fmt.win.w.height=g_display_height;
-
-        if (mxc_v4l_overlay_setup(&fmt) < 0) {
-                printf("Setup overlay failed.\n");
-                return TFAIL;
-		}
-
-        memset(&fb_v4l2, 0, sizeof(fb_v4l2));
-
-        if ((fd_fb_0 = open(fb_device_0, O_RDWR )) < 0)	{
+	if ((fd_fb_0 = open(fb_device_0, O_RDWR )) < 0)	{
 		printf("Unable to open frame buffer 0\n");
                 return TFAIL;
         }
@@ -650,6 +637,19 @@ main(int argc, char **argv)
                 return TFAIL;
         }
 
+
+        fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
+        fmt.fmt.win.w.top=  g_display_top ;
+        fmt.fmt.win.w.left= g_display_left;
+        fmt.fmt.win.w.width=g_display_width;
+        fmt.fmt.win.w.height=g_display_height;
+
+        if (mxc_v4l_overlay_setup(&fmt) < 0) {
+                printf("Setup overlay failed.\n");
+                return TFAIL;
+		}
+
+        memset(&fb_v4l2, 0, sizeof(fb_v4l2));
 
 	fb_device_fg = "/dev/fb1";
 	if ((g_fd_fb_fg = open(fb_device_fg, O_RDWR)) < 0) {
