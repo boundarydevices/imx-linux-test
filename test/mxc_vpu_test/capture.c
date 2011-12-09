@@ -25,33 +25,23 @@
 #include "vpu_test.h"
 
 #define TEST_BUFFER_NUM 3
-
-#define OV5642_VGA	    0
-#define OV5642_QVGA	    1
-#define OV5642_NTSC	    2
-#define OV5642_PAL	    3
-#define OV5642_720P	    4
-#define OV5642_1080P	    5
+#define MAX_CAPTURE_MODES   10
 
 static int cap_fd = -1;
 struct capture_testbuffer cap_buffers[TEST_BUFFER_NUM];
+static int sizes_buf[MAX_CAPTURE_MODES][2];
 
 static int getCaptureMode(int width, int height)
 {
-	int mode = 0;
+	int i, mode = -1;
 
-	if (width == 640 && height == 480)
-		mode = OV5642_VGA;
-	else if (width == 320 && height == 240)
-		mode = OV5642_QVGA;
-	else if (width == 720 && height == 480)
-		mode = OV5642_NTSC;
-	else if (width == 720 && height == 576)
-		mode = OV5642_PAL;
-	else if (width == 1280 && height == 720)
-		mode = OV5642_720P;
-	else if (width == 1920 && height == 1080)
-		mode = OV5642_1080P;
+	for (i = 0; i < MAX_CAPTURE_MODES; i++) {
+		if (width == sizes_buf[i][0] &&
+		    height == sizes_buf[i][1]) {
+			mode = i;
+			break;
+		}
+	}
 
 	return mode;
 }
@@ -116,7 +106,9 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 	struct v4l2_requestbuffers req = {0};
 	struct v4l2_control ctl;
 	struct v4l2_crop crop;
-	int g_input = 1;
+	struct v4l2_dbg_chip_ident chip;
+	struct v4l2_frmsizeenum fsize;
+	int i, g_input = 1, mode = 0;
 
 	if (cap_fd > 0) {
 		warn_msg("capture device already opened\n");
@@ -128,6 +120,23 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 		return -1;
 	}
 
+	if (ioctl(cap_fd, VIDIOC_DBG_G_CHIP_IDENT, &chip)) {
+		printf("VIDIOC_DBG_G_CHIP_IDENT failed.\n");
+		return -1;
+	}
+	info_msg("sensor chip is %s\n", chip.match.name);
+
+	memset(sizes_buf, 0, sizeof(sizes_buf));
+	for (i = 0; i < MAX_CAPTURE_MODES; i++) {
+		fsize.index = i;
+		if (ioctl(cap_fd, VIDIOC_ENUM_FRAMESIZES, &fsize))
+			break;
+		else {
+			sizes_buf[i][0] = fsize.discrete.width;
+			sizes_buf[i][1] = fsize.discrete.height;
+		}
+	}
+
 	ctl.id = V4L2_CID_PRIVATE_BASE;
 	ctl.value = 0;
 	if (ioctl(cap_fd, VIDIOC_S_CTRL, &ctl) < 0)
@@ -136,10 +145,18 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 		return -1;
 	}
 
+	mode = getCaptureMode(width, height);
+	if (mode == -1) {
+		printf("Not support the resolution in camera\n");
+		return -1;
+	}
+	info_msg("sensor frame size is %dx%d\n", sizes_buf[mode][0],
+					       sizes_buf[mode][1]);
+
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	parm.parm.capture.timeperframe.numerator = 1;
 	parm.parm.capture.timeperframe.denominator = fps;
-	parm.parm.capture.capturemode = getCaptureMode(width, height);
+	parm.parm.capture.capturemode = mode;
 	if (ioctl(cap_fd, VIDIOC_S_PARM, &parm) < 0) {
 		err_msg("set frame rate failed\n");
 		close(cap_fd);
