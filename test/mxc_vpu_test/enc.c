@@ -299,9 +299,9 @@ put_mp4header:
 			if (enchdr_param.pParaSet) {
 				vpu_EncGiveCommand(handle,ENC_GET_JPEG_HEADER, &enchdr_param);
 				vpu_write(enc->cmdl, (void *)enchdr_param.pParaSet, enchdr_param.size);
+				free(enchdr_param.pParaSet);
 				if (ret < 0)
 					return -1;
-				free(enchdr_param.pParaSet);
 			} else {
 				err_msg("memory allocate failure\n");
 				return -1;
@@ -420,8 +420,9 @@ encoder_allocate_framebuffer(struct encode *enc)
 		}
 	} else {
 		/* Allocate a single frame buffer for source frame */
-		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt, enc->src_picwidth,
-						   enc->src_picheight);
+		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+						   (enc->enc_picwidth + 15) & ~15,
+						   (enc->enc_picheight + 15 ) & ~15);
 		if (pfbpool[src_fbid] == NULL) {
 			err_msg("failed to allocate single framebuf\n");
 			goto err1;
@@ -466,17 +467,19 @@ encoder_start(struct encode *enc)
 	int src_scheme = enc->cmdl->src_scheme;
 	int count = enc->cmdl->count;
 	struct timeval tenc_begin,tenc_end, total_start, total_end;
-	int sec, usec;
+	int sec, usec, loop_id;
 	float tenc_time = 0, total_time=0;
 	PhysicalAddress phy_bsbuf_start = enc->phy_bsbuf_addr;
 	u32 virt_bsbuf_start = enc->virt_bsbuf_addr;
 	u32 virt_bsbuf_end = virt_bsbuf_start + STREAM_BUF_SIZE;
 
-	/* Must put encode header before encoding */
-	ret = encoder_fill_headers(enc);
-	if (ret) {
-		err_msg("Encode fill headers failed\n");
-		return -1;
+	/* Must put encode header here before encoding for all codec, except MX6 MJPG */
+	if (!(cpu_is_mx6q() && (enc->cmdl->format == STD_MJPG))) {
+		ret = encoder_fill_headers(enc);
+		if (ret) {
+			err_msg("Encode fill headers failed\n");
+			return -1;
+		}
 	}
 
 	enc_param.sourceFrame = &enc->fb[src_fbid];
@@ -564,6 +567,15 @@ encoder_start(struct encode *enc)
 				break;
 		}
 
+		/* Must put encode header before each frame encoding for mx6 MJPG */
+		if (cpu_is_mx6q() && (enc->cmdl->format == STD_MJPG)) {
+			ret = encoder_fill_headers(enc);
+			if (ret) {
+				err_msg("Encode fill headers failed\n");
+				goto err2;
+			}
+		}
+
 		gettimeofday(&tenc_begin, NULL);
 		ret = vpu_EncStartOneFrame(handle, &enc_param);
 		if (ret != RETCODE_SUCCESS) {
@@ -572,6 +584,7 @@ encoder_start(struct encode *enc)
 			goto err2;
 		}
 
+		loop_id = 0;
 		while (vpu_IsBusy()) {
 			vpu_WaitForInt(200);
 			if (enc->ringBufferEnable == 1) {
@@ -582,6 +595,11 @@ encoder_start(struct encode *enc)
 					goto err2;
 				}
 			}
+			if (loop_id == 20) {
+				ret = vpu_SWReset(handle, 0);
+				return -1;
+			}
+			loop_id ++;
 		}
 
 		gettimeofday(&tenc_end, NULL);
