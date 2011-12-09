@@ -781,8 +781,10 @@ decoder_start(struct decode *dec)
 
 	decparam.dispReorderBuf = 0;
 
-	decparam.prescanEnable = dec->cmdl->prescan;
-	decparam.prescanMode = 0;
+	if (!cpu_is_mx6q()) {
+		decparam.prescanEnable = dec->cmdl->prescan;
+		decparam.prescanMode = 0;
+	}
 
 	decparam.skipframeMode = 0;
 	decparam.skipframeNum = 0;
@@ -1010,6 +1012,15 @@ decoder_start(struct decode *dec)
 		if (cpu_is_mx6q() && (outinfo.decodingSuccess & 0x10)) {
 			warn_msg("vpu needs more bitstream in rollback mode\n"
 				"\tframe_id = %d\n", (int)frame_id);
+
+			err = dec_fill_bsbuffer(handle,  dec->cmdl, dec->virt_bsbuf_addr,
+					(dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
+					dec->phy_bsbuf_addr, 0, &eos, &fill_end_bs);
+			if (err < 0) {
+				err_msg("dec_fill_bsbuffer failed\n");
+				return -1;
+			}
+
 			if (quitflag)
 				break;
 			else

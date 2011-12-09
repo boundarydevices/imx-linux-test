@@ -523,11 +523,12 @@ check_params(struct cmd_line *cmd, int op)
 					cmd->width);
 		}
 
-		if (cmd->height % 16 != 0) {
-			cmd->height -= cmd->height % 16;
-			warn_msg("height not divisible by 16, adjusted %d\n",
+		if (cmd->height % 8 != 0) {
+			cmd->height -= cmd->height % 8;
+			warn_msg("height not divisible by 8, adjusted %d\n",
 					cmd->height);
 		}
+
 	}
 
 	if (cmd->dst_scheme != PATH_FILE && op == ENCODE) {
@@ -833,9 +834,8 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				cmd->prescan = strtol(str, NULL, 10);
-				if (cpu_is_mx6q() && cmd->prescan)
-					warn_msg("Prescan cannot be enabled on mx6 platform.\n");
+					cmd->bs_mode = strtol(str, NULL, 10);
+					cmd->prescan = strtol(str, NULL, 10);
 			}
 		}
 
