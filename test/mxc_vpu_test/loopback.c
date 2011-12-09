@@ -29,6 +29,7 @@ extern int quitflag;
 extern struct capture_testbuffer cap_buffers[];
 static int disp_clr_index = -1;
 static int frame_id = 0;
+static int rotid;
 
 static int
 decode(void)
@@ -38,20 +39,37 @@ decode(void)
 	DecOutputInfo outinfo = {0};
 	struct vpu_display *disp = dec->disp;
 	RetCode ret;
+	int loop_id = 0, rot_stride = 0;
 
 	/* Suggest to enable prescan in loopback, then decoder performs scanning stream buffers
 	 * to check whether data is enough to prevent decoder hang.
 	 */
-	decparam.prescanEnable = dec->cmdl->prescan;
+	if (!cpu_is_mx6q())
+		decparam.prescanEnable = dec->cmdl->prescan;
+
+	if (dec->cmdl->format == STD_MJPG) {
+		rot_stride = (dec->picwidth + 15) & ~15;
+		vpu_DecGiveCommand(handle, SET_ROTATOR_STRIDE, &rot_stride);
+		vpu_DecGiveCommand(handle, SET_ROTATOR_OUTPUT, (void *)&dec->fb[rotid]);
+	}
 
 	ret = vpu_DecStartOneFrame(handle, &decparam);
-	if (ret != RETCODE_SUCCESS) {
-		err_msg("DecStartOneFrame failed\n");
+	if (ret == RETCODE_JPEG_BIT_EMPTY)
+		goto out;
+	else if (ret != RETCODE_SUCCESS) {
+		err_msg("DecStartOneFrame failed, ret=%d\n", ret);
 		return -1;
 	}
 
+	loop_id = 0;
 	while (vpu_IsBusy()) {
 		vpu_WaitForInt(200);
+		if (loop_id == 10) {
+			ret = vpu_SWReset(handle, 0);
+			warn_msg("vpu_SWReset in dec\n");
+			return -1;
+		}
+		loop_id ++;
 	}
 
 	ret = vpu_DecGetOutputInfo(handle, &outinfo);
@@ -60,6 +78,10 @@ decode(void)
 	} else if (ret != RETCODE_SUCCESS) {
 		err_msg("vpu_DecGetOutputInfo failed %d\n", ret);
 		return -1;
+	}
+
+	if (cpu_is_mx6q() && (outinfo.decodingSuccess & 0x10)) {
+		goto out;
 	}
 
 	if (outinfo.notSufficientPsBuffer) {
@@ -76,7 +98,7 @@ decode(void)
 			(outinfo.indexFrameDisplay > dec->fbcount))
 		return -1;
 
-	if ((outinfo.prescanresult == 0) && (decparam.dispReorderBuf == 0)) {
+	if (!cpu_is_mx6q() && (outinfo.prescanresult == 0) && (decparam.dispReorderBuf == 0)) {
 		warn_msg("Prescan Enable: not enough bs data\n");
 		goto out;
 	}
@@ -93,9 +115,14 @@ decode(void)
 		goto out;
 	}
 
+	if ((dec->cmdl->format == STD_MJPG) && (outinfo.indexFrameDisplay == 0))
+		outinfo.indexFrameDisplay = rotid;
+
 	ret = v4l_put_data(disp, outinfo.indexFrameDisplay, V4L2_FIELD_ANY, 30);
-	if (ret)
+	if (ret) {
+		err_msg("V4L put data failed, ret=%d\n", ret);
 		return -1;
+	}
 
 	if (disp_clr_index >= 0) {
 		ret = vpu_DecClrDispFlag(handle, disp_clr_index);
@@ -104,6 +131,11 @@ decode(void)
 			     " %d\n", ret);
 	}
 	disp_clr_index = disp->buf.index;
+
+	if (dec->cmdl->format == STD_MJPG) {
+		rotid++;
+		rotid %= dec->fbcount;
+	}
 
 out:
 	return 0;
@@ -212,6 +244,21 @@ encoder_fill_headers(void)
 			free(enc->huffTable);
 		if (enc->qMatTable)
 			free(enc->qMatTable);
+		if (cpu_is_mx6q()) {
+			EncParamSet enchdr_param = {0};
+			enchdr_param.size = STREAM_BUF_SIZE;
+			enchdr_param.pParaSet = malloc(STREAM_BUF_SIZE);
+			if (enchdr_param.pParaSet) {
+				vpu_EncGiveCommand(handle,ENC_GET_JPEG_HEADER, &enchdr_param);
+				ret = dec_fill_bsbuffer((void *)enchdr_param.pParaSet, enchdr_param.size);
+				free(enchdr_param.pParaSet);
+				if (ret < 0)
+					return -1;
+			} else {
+				err_msg("memory allocate failure\n");
+				return -1;
+			}
+		}
 	}
 
 	return 0;
@@ -224,10 +271,18 @@ encode(void)
 	EncParam  enc_param = {0};
 	EncOutputInfo outinfo = {0};
 	RetCode ret;
-	int src_fbid = enc->src_fbid, img_size;
+	int src_fbid = enc->src_fbid, img_size, loop_id = 0;
 	FrameBuffer *fb = enc->fb;
 	struct v4l2_buffer v4l2_buf;
 	u32 vbuf;
+
+	if (cpu_is_mx6q() && (dec->cmdl->format == STD_MJPG)) {
+		ret = encoder_fill_headers();
+		if (ret) {
+			err_msg("fill headers failed\n");
+			return -1;
+		}
+	}
 
 	ret = v4l_get_capture_data(&v4l2_buf);
 	if (ret < 0) {
@@ -235,9 +290,12 @@ encode(void)
 	}
 
 	img_size = enc->src_picwidth * enc->src_picheight;
+	fb[src_fbid].myIndex = enc->src_fbid + v4l2_buf.index;
 	fb[src_fbid].bufY = cap_buffers[v4l2_buf.index].offset;
 	fb[src_fbid].bufCb = fb[src_fbid].bufY + img_size;
 	fb[src_fbid].bufCr = fb[src_fbid].bufCb + (img_size >> 2);
+	fb[src_fbid].strideY = enc->src_picwidth;
+	fb[src_fbid].strideC = enc->src_picwidth / 2;
 
 	enc_param.sourceFrame = &enc->fb[src_fbid];
 	enc_param.quantParam = 30;
@@ -254,8 +312,15 @@ encode(void)
 		return -1;
 	}
 
+	loop_id = 0;
 	while (vpu_IsBusy()) {
 		vpu_WaitForInt(200);
+		if (loop_id == 10) {
+			ret = vpu_SWReset(handle, 0);
+			warn_msg("vpu_SWReset in enc\n");
+			return -1;
+		}
+		loop_id ++;
 	}
 
 	ret = vpu_EncGetOutputInfo(handle, &outinfo);
@@ -275,7 +340,7 @@ encode(void)
 	}
 
 	if (ret != outinfo.bitstreamSize) {
-		err_msg("Oops...\n");
+		err_msg("Oops..., ret=%d, bsSize=%d\n", ret, outinfo.bitstreamSize);
 	}
 
 	return 0;
@@ -290,10 +355,6 @@ encdec_test(void *arg)
 	vpu_mem_desc	ps_mem_desc = {0};
 	vpu_mem_desc	slice_mem_desc = {0};
 	int ret, i;
-
-#if STREAM_ENC_PIC_RESET == 0
-	return 0;
-#endif
 
 	/* allocate memory for must remember stuff */
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
@@ -383,10 +444,15 @@ encdec_test(void *arg)
 	if (ret)
 		goto err3;
 
-	ret = encoder_fill_headers();
-	if (ret) {
-		err_msg("fill headers failed\n");
-		goto err4;
+
+	/* For MX6 MJPG, header must be inserted before each frame, only need to
+	 * fill header here once for other codecs */
+	if (!(cpu_is_mx6q() && (enc->cmdl->format == STD_MJPG))) {
+		ret = encoder_fill_headers();
+		if (ret) {
+			err_msg("fill headers failed\n");
+			goto err4;
+		}
 	}
 
 	/* start capture */
@@ -396,8 +462,8 @@ encdec_test(void *arg)
 		goto err4;
 	}
 
-	/* encode 10 frames first */
-	for (i = 0; i < 10; i++) {
+	/* encode 5 frames first */
+	for (i = 0; i < 5; i++) {
 		ret = encode();
 		if (ret)
 			goto err5;
@@ -426,6 +492,9 @@ encdec_test(void *arg)
 	ret = decoder_allocate_framebuffer(dec);
 	if (ret)
 		goto err5;
+
+	if (dec->cmdl->format == STD_MJPG)
+		rotid = 0;
 
 	/* main encode decode loop */
 	while (1) {
