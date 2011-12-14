@@ -238,6 +238,8 @@ struct encode {
 	int mp4_dataPartitionEnable;
 	int ringBufferEnable;
 	int mjpg_fmt;
+	int mvc_paraset_refresh_en;
+	int mvc_extension;
 
         EncReportInfo mbInfo;
         EncReportInfo mvInfo;
