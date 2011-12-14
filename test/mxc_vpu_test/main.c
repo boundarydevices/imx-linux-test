@@ -412,8 +412,8 @@ main(int argc, char *argv[])
 		return -1;
 	}
 
-	info_msg("VPU firmware version: %d.%d.%d\n", ver.fw_major, ver.fw_minor,
-						ver.fw_release);
+	info_msg("VPU firmware version: %d.%d.%d_r%d\n", ver.fw_major, ver.fw_minor,
+						ver.fw_release, ver.fw_code);
 	info_msg("VPU library version: %d.%d.%d\n", ver.lib_major, ver.lib_minor,
 						ver.lib_release);
 
