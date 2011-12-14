@@ -434,6 +434,7 @@ task_begin:
 		}
 
 		if (test_handle.show_to_fb) {
+			fb_var.vmode &= ~FB_VMODE_YWRAP;
 			fb_var.yoffset = (done_cnt % FB_BUFS) * fb_var.yres;
 			ret = ioctl(fd_fb, FBIOPAN_DISPLAY, &fb_var);
 			if (ret < 0) {
