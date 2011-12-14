@@ -154,7 +154,7 @@ dec_fill_bsbuffer(char *buf, int size)
 	int room;
 
 	ret = vpu_DecGetBitstreamBuffer(handle, &pa_read_ptr, &pa_write_ptr,
-					&space);
+					(Uint32 *)&space);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("vpu_DecGetBitstreamBuffer failed\n");
 		return -1;
@@ -340,7 +340,7 @@ encode(void)
 	}
 
 	if (ret != outinfo.bitstreamSize) {
-		err_msg("Oops..., ret=%d, bsSize=%d\n", ret, outinfo.bitstreamSize);
+		err_msg("Oops..., ret=%d, bsSize=%d\n", (int)ret, (int)outinfo.bitstreamSize);
 	}
 
 	return 0;

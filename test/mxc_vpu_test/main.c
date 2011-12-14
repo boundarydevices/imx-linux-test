@@ -91,6 +91,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	If no port number is secified, 5555 is used \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
+	       "  -l <h264 type> 0 - normal H.264(AVC), 1 - MVC\n "\
 	       "  -c <count> Number of frames to encode \n "\
 	       "  -r <rotation angle> 0, 90, 180, 270 \n "\
 	       "	default rotation is disabled (0) \n "\
