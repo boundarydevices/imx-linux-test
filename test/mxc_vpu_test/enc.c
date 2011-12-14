@@ -168,7 +168,7 @@ enc_readbs_ring_buffer(EncHandle handle, struct cmd_line *cmd,
 	u32 target_addr, size;
 
 	ret = vpu_EncGetBitstreamBuffer(handle, &pa_read_ptr, &pa_write_ptr,
-					&size);
+					(Uint32 *)&size);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("EncGetBitstreamBuffer failed\n");
 		return -1;
@@ -272,12 +272,24 @@ put_mp4header:
 				return -1;
 		}
 	} else if (enc->cmdl->format == STD_AVC) {
-		enchdr_param.headerType = SPS_RBSP;
-		vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
-		if (enc->ringBufferEnable == 0 ) {
-			ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
-			if (ret < 0)
-				return -1;
+		if (!enc->mvc_extension || !enc->mvc_paraset_refresh_en) {
+			enchdr_param.headerType = SPS_RBSP;
+			vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
+			if (enc->ringBufferEnable == 0 ) {
+				ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+				if (ret < 0)
+					return -1;
+			}
+		}
+
+		if (enc->mvc_extension) {
+			enchdr_param.headerType = SPS_RBSP_MVC;
+			vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
+			if (enc->ringBufferEnable == 0 ) {
+				ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+				if (ret < 0)
+					return -1;
+			}
 		}
 
 		enchdr_param.headerType = PPS_RBSP;
@@ -286,6 +298,16 @@ put_mp4header:
 			ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
 			if (ret < 0)
 				return -1;
+		}
+
+		if (enc->mvc_extension) { /* MVC */
+			enchdr_param.headerType = PPS_RBSP_MVC;
+			vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
+			if (enc->ringBufferEnable == 0 ) {
+				ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+				if (ret < 0)
+					return -1;
+			}
 		}
 	} else if (enc->cmdl->format == STD_MJPG) {
 		if (enc->huffTable)
@@ -300,8 +322,6 @@ put_mp4header:
 				vpu_EncGiveCommand(handle,ENC_GET_JPEG_HEADER, &enchdr_param);
 				vpu_write(enc->cmdl, (void *)enchdr_param.pParaSet, enchdr_param.size);
 				free(enchdr_param.pParaSet);
-				if (ret < 0)
-					return -1;
 			} else {
 				err_msg("memory allocate failure\n");
 				return -1;
@@ -334,11 +354,15 @@ encoder_allocate_framebuffer(struct encode *enc)
 	RetCode ret;
 	FrameBuffer *fb;
 	PhysicalAddress subSampBaseA = 0, subSampBaseB = 0;
+	PhysicalAddress	subSampBaseAMvc = 0, subSampBaseBMvc = 0;
 	struct frame_buf **pfbpool;
+	EncExtBufInfo extbufinfo = {0};
 
 	if (cpu_is_mx6q())
 		if (enc->cmdl->format == STD_MJPG)
 			needFrameBufCount = fbcount + 1;
+		else if (enc->cmdl->format == STD_AVC && enc->mvc_extension) /* MVC */
+			 needFrameBufCount = fbcount + 3 + 2;
 		else
 			needFrameBufCount = fbcount + 3; /* minFrameBufferCount + Subsamp buffer [2] + Src frame */
 	else
@@ -395,6 +419,12 @@ encoder_allocate_framebuffer(struct encode *enc)
 		subSampBaseA = fb[fbcount].bufY;
 		subSampBaseB = fb[fbcount + 1].bufY;
 		enc->fbcount += 2;
+
+		if (enc->cmdl->format == STD_AVC && enc->mvc_extension) { /* MVC */
+			extbufinfo.subSampBaseAMvc = fb[fbcount].bufY;
+			extbufinfo.subSampBaseBMvc = fb[fbcount + 1].bufY;
+			enc->fbcount += 2;
+		}
 	}
 
 	/* Must be a multiple of 16 */
@@ -404,8 +434,9 @@ encoder_allocate_framebuffer(struct encode *enc)
 		enc_stride = (enc->enc_picwidth + 15) & ~15;
 	src_stride = (enc->src_picwidth + 15 ) & ~15;
 
+	extbufinfo.scratchBuf = enc->scratchBuf;
 	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, enc_stride, src_stride,
-					    subSampBaseA, subSampBaseB, &enc->scratchBuf);
+					    subSampBaseA, subSampBaseB, &extbufinfo);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
 		goto err1;
@@ -990,6 +1021,11 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.avcParam.avc_chromaQpOffset = 10;
 		encop.EncStdParam.avcParam.avc_audEnable = 0;
 		if (cpu_is_mx6q()) {
+			encop.EncStdParam.avcParam.interview_en = 0;
+			encop.EncStdParam.avcParam.paraset_refresh_en = enc->mvc_paraset_refresh_en = 0;
+			encop.EncStdParam.avcParam.prefix_nal_en = 0;
+			encop.EncStdParam.avcParam.mvc_extension = enc->cmdl->mp4_h264Class;
+			enc->mvc_extension = enc->cmdl->mp4_h264Class;
 			encop.EncStdParam.avcParam.avc_frameCroppingFlag = 0;
 			encop.EncStdParam.avcParam.avc_frameCropLeft = 0;
 			encop.EncStdParam.avcParam.avc_frameCropRight = 0;
