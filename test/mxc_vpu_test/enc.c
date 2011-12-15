@@ -398,13 +398,11 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	/* Must be a multiple of 16 */
-	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270) {
+	if (enc->cmdl->rot_angle == 90 || enc->cmdl->rot_angle == 270)
 		enc_stride = (enc->enc_picheight + 15 ) & ~15;
-		src_stride = (enc->src_picheight + 15 ) & ~15;
-	} else {
+	else
 		enc_stride = (enc->enc_picwidth + 15) & ~15;
-		src_stride = (enc->src_picwidth + 15 ) & ~15;
-	}
+	src_stride = (enc->src_picwidth + 15 ) & ~15;
 
 	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, enc_stride, src_stride,
 					    subSampBaseA, subSampBaseB, &enc->scratchBuf);
