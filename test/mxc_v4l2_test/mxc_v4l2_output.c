@@ -316,7 +316,7 @@ mxc_v4l_output_test(FILE *in)
 					}
 					break;
 				}
-				count = 100;
+				count = 30;
 			}
                         gen_fill_pattern(buffers[buf.index].start, i);
                 }
