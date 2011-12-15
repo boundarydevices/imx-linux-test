@@ -252,6 +252,8 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 
 		if ((err = ioctl(fd_asrc, ASRC_STATUS, &flags)) < 0)
 			goto ERROR;
+		if (info->data_len == 0)
+			break;
 
 		if ((err = ioctl(fd_asrc, ASRC_DQ_OUTBUF, &outbuf)) < 0)
 			goto ERROR;
@@ -348,6 +350,8 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 		memcpy(output_p, p, outbuf.length);
 		output_p = output_p + outbuf.length;
 		info->output_data_len -= outbuf.length;
+		if (info->output_data_len == 0)
+			break;
 		if ((err = ioctl(fd_asrc, ASRC_Q_OUTBUF, &outbuf)) < 0)
 			goto ERROR;
 		if ((err = ioctl(fd_asrc, ASRC_DQ_INBUF, &inbuf)) < 0)
@@ -356,6 +360,8 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 		memset(input_buf[inbuf.index].start, 0, inbuf.length);
 
 		if ((err = ioctl(fd_asrc, ASRC_Q_INBUF, &inbuf)) < 0)
+			goto ERROR;
+		if ((err = ioctl(fd_asrc, ASRC_START_CONV, &inbuf)) < 0)
 			goto ERROR;
 	}
 	err = ioctl(fd_asrc, ASRC_STOP_CONV, &pair_index);
