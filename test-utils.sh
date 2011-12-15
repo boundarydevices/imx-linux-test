@@ -174,6 +174,7 @@ platform()
 		MX51* )       		plat=IMX51 ;;
 		MX53* )       		plat=IMX53 ;;
 		MX50* )       		plat=IMX50 ;;
+		*MX6* )       		plat=IMX6 ;;
 
 		* )     ;;
 	esac
