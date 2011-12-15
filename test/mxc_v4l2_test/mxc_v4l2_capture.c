@@ -83,7 +83,8 @@ int start_capturing(int fd_v4l)
         {
                 memset(&buf, 0, sizeof (buf));
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                buf.index = i;
+                buf.memory = V4L2_MEMORY_MMAP;
+		buf.index = i;
                 if (ioctl(fd_v4l, VIDIOC_QUERYBUF, &buf) < 0)
                 {
                         printf("VIDIOC_QUERYBUF error\n");
