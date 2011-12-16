@@ -95,7 +95,7 @@ decode(void)
 	}
 
 	if ((outinfo.indexFrameDisplay == -1) ||
-			(outinfo.indexFrameDisplay > dec->fbcount))
+			(outinfo.indexFrameDisplay > dec->regfbcount))
 		return -1;
 
 	if (!cpu_is_mx6q() && (outinfo.prescanresult == 0) && (decparam.dispReorderBuf == 0)) {
@@ -134,7 +134,7 @@ decode(void)
 
 	if (dec->cmdl->format == STD_MJPG) {
 		rotid++;
-		rotid %= dec->fbcount;
+		rotid %= dec->regfbcount;
 	}
 
 out:

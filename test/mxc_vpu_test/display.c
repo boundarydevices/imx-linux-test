@@ -860,7 +860,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	if (vpu_v4l_performance_test) {
 		dec->disp = disp;
 		sem_init(&disp->avaiable_decoding_frame, 0,
-			    dec->fbcount - dec->minFrameBufferCount);
+			    dec->regfbcount - dec->minfbcount);
 		sem_init(&disp->avaiable_dequeue_frame, 0, 0);
 		pthread_mutex_init(&v4l_mutex, NULL);
 		/* start v4l disp loop thread */
