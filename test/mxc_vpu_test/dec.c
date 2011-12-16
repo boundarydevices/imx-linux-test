@@ -451,7 +451,7 @@ int SaveTiledYuvImageHelper(struct decode *dec, int yuvFp,
 
 	for (y = 0; y < nY; y++) {
 		for (x = 0; x < picWidth; x += 8) {
-			pix_addr = vpu_GetXY2AXIAddr(0, y, x, picWidth,
+			pix_addr = vpu_GetXY2AXIAddr(dec->handle, 0, y, x, picWidth,
                                         addrY, addrCb, addrCr);
 			pix_addr += offset;
 			memcpy(puc + y * picWidth + x, (Uint8 *)pix_addr, 8);
@@ -463,7 +463,7 @@ int SaveTiledYuvImageHelper(struct decode *dec, int yuvFp,
 
 	for (y = 0; y < nCb ; y++) {
 		for (x = 0; x < picWidth; x += 8) {
-			pix_addr = vpu_GetXY2AXIAddr(2, y, x, picWidth,
+			pix_addr = vpu_GetXY2AXIAddr(dec->handle, 2, y, x, picWidth,
 					addrY, addrCb, addrCr);
 			pix_addr += offset;
 			memcpy(temp_buf, (Uint8 *)pix_addr, 8);
@@ -655,7 +655,7 @@ swapCropRect(struct decode *dec, Rect *rotCrop)
 static void
 write_to_file(struct decode *dec, Rect cropRect, int index)
 {
-	int height = dec->picheight;
+	int height = (dec->picheight + 15) & ~15 ;
 	int stride = dec->stride;
 	int chromaInterleave = dec->cmdl->chromaInterleave;
 	int img_size;
@@ -668,7 +668,7 @@ write_to_file(struct decode *dec, Rect cropRect, int index)
 	cropping = cropRect.left | cropRect.top | cropRect.bottom | cropRect.right;
 
 	if (cpu_is_mx6q() && (dec->cmdl->mapType != LINEAR_FRAME_MAP) &&
-	    !dec->tiled2LinearEnable) {
+	    !dec->tiled2LinearEnable && !dec->cmdl->rot_en) {
 		SaveTiledYuvImageHelper(dec, dec->cmdl->dst_fd, stride, height, index);
 		goto out;
 	}
@@ -769,12 +769,12 @@ decoder_start(struct decode *dec)
 
 	/* deblock_en is zero on none mx27 since it is cleared in decode_open() function. */
 	if (rot_en || dering_en || tiled2LinearEnable) {
-		rotid = dec->fbcount;
+		rotid = dec->regfbcount;
 		if (deblock_en) {
-			dblkid = dec->fbcount + dec->rot_buf_count;
+			dblkid = dec->regfbcount + dec->rot_buf_count;
 		}
 	} else if (deblock_en) {
-		dblkid = dec->fbcount;
+		dblkid = dec->regfbcount;
 	}
 	if (dec->cmdl->format == STD_MJPG)
 		rotid = 0;
@@ -1119,7 +1119,7 @@ decoder_start(struct decode *dec)
 
 		if (outinfo.indexFrameDisplay == -1)
 			decodefinish = 1;
-		else if ((outinfo.indexFrameDisplay > dec->fbcount) &&
+		else if ((outinfo.indexFrameDisplay > dec->regfbcount) &&
 			 (outinfo.prescanresult != 0) && !cpu_is_mx6q())
 			decodefinish = 1;
 
@@ -1222,7 +1222,7 @@ decoder_start(struct decode *dec)
 
 				if (dec->cmdl->format == STD_MJPG) {
 					rotid++;
-					rotid %= dec->fbcount;
+					rotid %= dec->regfbcount;
 				} else if (rot_en || dering_en || tiled2LinearEnable) {
 					disp_clr_index = outinfo.indexFrameDisplay;
 					if (disp->buf.index != -1)
@@ -1310,7 +1310,7 @@ decoder_free_framebuffer(struct decode *dec)
 	vpu_mem_desc *mvcol_md = dec->mvcol_memdesc;
 	int deblock_en = dec->cmdl->deblock_en;
 
-	totalfb = dec->fbcount + dec->extrafb;
+	totalfb = dec->regfbcount + dec->extrafb;
 
 	if ((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU)) {
 		if (dec->disp) {
@@ -1400,7 +1400,7 @@ int
 decoder_allocate_framebuffer(struct decode *dec)
 {
 	DecBufInfo bufinfo;
-	int i, fbcount = dec->fbcount, totalfb, img_size;
+	int i, regfbcount = dec->regfbcount, totalfb, img_size;
        	int dst_scheme = dec->cmdl->dst_scheme, rot_en = dec->cmdl->rot_en;
 	int deblock_en = dec->cmdl->deblock_en;
 	int dering_en = dec->cmdl->dering_en;
@@ -1439,7 +1439,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		dec->extrafb++;
 	}
 
-	totalfb = fbcount + dec->extrafb;
+	totalfb = regfbcount + dec->extrafb;
 
 	fb = dec->fb = calloc(totalfb, sizeof(FrameBuffer));
 	if (fb == NULL) {
@@ -1457,24 +1457,32 @@ decoder_allocate_framebuffer(struct decode *dec)
 
 	if (((dst_scheme != PATH_V4L2) && (dst_scheme != PATH_IPU)) ||
 			(((dst_scheme == PATH_V4L2) || (dst_scheme == PATH_IPU)) && deblock_en)) {
+		if (dec->cmdl->mapType == LINEAR_FRAME_MAP) {
+			/* All buffers are linear */
+			for (i = 0; i < totalfb; i++) {
+				pfbpool[i] = framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
+						    dec->stride, dec->picheight, 1);
+				if (pfbpool[i] == NULL)
+					goto err;
+			}
+                } else {
+			/* decoded buffers are tiled */
+			for (i = 0; i < regfbcount; i++) {
+				pfbpool[i] = tiled_framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
+						    dec->stride, dec->picheight, 1);
+				if (pfbpool[i] == NULL)
+					goto err;
+			}
+			/* deblock and rotation is linear */
+			for (i = regfbcount; i < totalfb; i++) {
+				pfbpool[i] = tiled_framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
+						    dec->stride, dec->picheight, 1);
+				if (pfbpool[i] == NULL)
+					goto err1;
+			}
+		 }
 
 		for (i = 0; i < totalfb; i++) {
-			/*
-			 * Tiled framebuffer allocation is needed for decoding
-			 * buffers for none linear frame map type on mx6q platform.
-			 */
-			if (cpu_is_mx6q() && (i < fbcount) &&
-			    (dec->cmdl->mapType != LINEAR_FRAME_MAP))
-				pfbpool[i] = tiled_framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
-							dec->stride, dec->picheight);
-			else
-				pfbpool[i] = framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
-						    dec->stride, dec->picheight);
-			if (pfbpool[i] == NULL) {
-				totalfb = i;
-				goto err;
-			}
-
 			fb[i].myIndex = i;
 			fb[i].bufY = pfbpool[i]->addrY;
 			fb[i].bufCb = pfbpool[i]->addrCb;
@@ -1558,7 +1566,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	bufinfo.maxDecFrmInfo.maxMbX = dec->stride / 16;
 	bufinfo.maxDecFrmInfo.maxMbY = dec->picheight / 16;
 	bufinfo.maxDecFrmInfo.maxMbNum = dec->stride * dec->picheight / 256;
-	ret = vpu_DecRegisterFrameBuffer(handle, fb, fbcount, stride, &bufinfo);
+	ret = vpu_DecRegisterFrameBuffer(handle, fb, dec->regfbcount, stride, &bufinfo);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed, ret=%d\n", ret);
 		goto err1;
@@ -1832,7 +1840,7 @@ decoder_parse(struct decode *dec)
 	 *
 	 * Two more buffers may be needed for interlace stream from IPU DVI view
 	 */
-	dec->minFrameBufferCount = initinfo.minFrameBufferCount;
+	dec->minfbcount = initinfo.minFrameBufferCount;
 	count = getenv("VPU_EXTENDED_BUFFER_COUNT");
 	if (count)
 		extended_fbcount = atoi(count);
@@ -1840,9 +1848,9 @@ decoder_parse(struct decode *dec)
 		extended_fbcount = 2;
 
 	if (initinfo.interlace)
-		dec->fbcount = initinfo.minFrameBufferCount + extended_fbcount + 2;
+		dec->regfbcount = dec->minfbcount + extended_fbcount + 2;
 	else
-		dec->fbcount = initinfo.minFrameBufferCount + extended_fbcount;
+		dec->regfbcount = dec->minfbcount + extended_fbcount;
 
 	dec->picwidth = ((initinfo.picWidth + 15) & ~15);
 
