@@ -337,7 +337,7 @@ encoder_free_framebuffer(struct encode *enc)
 {
 	int i;
 
-	for (i = 0; i < enc->fbcount; i++) {
+	for (i = 0; i < enc->totalfb; i++) {
 		framebuf_free(enc->pfbpool[i]);
 	}
 
@@ -350,34 +350,44 @@ encoder_allocate_framebuffer(struct encode *enc)
 {
 	EncHandle handle = enc->handle;
 	int i, enc_stride, src_stride, src_fbid;
-	int needFrameBufCount, fbcount = enc->fbcount;
+	int totalfb, minfbcount, srcfbcount, regfbcount;
 	RetCode ret;
 	FrameBuffer *fb;
 	PhysicalAddress subSampBaseA = 0, subSampBaseB = 0;
-	PhysicalAddress	subSampBaseAMvc = 0, subSampBaseBMvc = 0;
 	struct frame_buf **pfbpool;
 	EncExtBufInfo extbufinfo = {0};
+	int enc_fbwidth, enc_fbheight, src_fbwidth, src_fbheight;
 
-	if (cpu_is_mx6q())
-		if (enc->cmdl->format == STD_MJPG)
-			needFrameBufCount = fbcount + 1;
-		else if (enc->cmdl->format == STD_AVC && enc->mvc_extension) /* MVC */
-			 needFrameBufCount = fbcount + 3 + 2;
+	minfbcount = enc->minFrameBufferCount;
+	srcfbcount = 1;
+
+	enc_fbwidth = (enc->enc_picwidth + 15) & ~15;
+	enc_fbheight = (enc->enc_picheight + 15) & ~15;
+	src_fbwidth = (enc->src_picwidth + 15) & ~15;
+	src_fbheight = (enc->src_picheight + 15) & ~15;
+
+	if (cpu_is_mx6q()) {
+		if (enc->cmdl->format == STD_AVC && enc->mvc_extension) /* MVC */
+			regfbcount = minfbcount + 2 + 2; /* min + Subsamp buffer [2] */
+		else if (enc->cmdl->format == STD_MJPG)
+			regfbcount = minfbcount; /* min */
 		else
-			needFrameBufCount = fbcount + 3; /* minFrameBufferCount + Subsamp buffer [2] + Src frame */
-	else
-		needFrameBufCount = fbcount + 1;
+			regfbcount = minfbcount + 2; /* min +  Subsamp buffer [2] */
+	} else
+		regfbcount = minfbcount; /* min */
+
+	enc->totalfb = totalfb = regfbcount + srcfbcount;
 
 	/* last framebuffer is used as src frame in the test */
-	enc->src_fbid = src_fbid = needFrameBufCount - 1;
+	enc->src_fbid = src_fbid = totalfb - 1;
 
-	fb = enc->fb = calloc(needFrameBufCount, sizeof(FrameBuffer));
+	fb = enc->fb = calloc(totalfb, sizeof(FrameBuffer));
 	if (fb == NULL) {
 		err_msg("Failed to allocate enc->fb\n");
 		return -1;
 	}
 
-	pfbpool = enc->pfbpool = calloc(needFrameBufCount,
+	pfbpool = enc->pfbpool = calloc(totalfb,
 					sizeof(struct frame_buf *));
 	if (pfbpool == NULL) {
 		err_msg("Failed to allocate enc->pfbpool\n");
@@ -385,14 +395,33 @@ encoder_allocate_framebuffer(struct encode *enc)
 		return -1;
 	}
 
-	for (i = 0; i < fbcount; i++) {
-		pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
-				(enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
-		if (pfbpool[i] == NULL) {
-			fbcount = i;
-			goto err1;
+	if (enc->cmdl->mapType == LINEAR_FRAME_MAP) {
+		/* All buffers are linear */
+		for (i = 0; i < regfbcount; i++) {
+			pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+						    enc_fbwidth, enc_fbheight, 0);
+			if (pfbpool[i] == NULL) {
+				goto err1;
+			}
 		}
+	 } else {
+		/* Encoded buffers are tiled */
+		for (i = 0; i < minfbcount; i++) {
+			pfbpool[i] = tiled_framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+					    enc_fbwidth, enc_fbheight, 0);
+			if (pfbpool[i] == NULL)
+				goto err1;
+		}
+		/* sub frames are linear */
+		for (i = minfbcount; i < regfbcount; i++) {
+			pfbpool[i] = tiled_framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+						    enc_fbwidth, enc_fbheight, 0);
+			if (pfbpool[i] == NULL)
+				goto err1;
+		}
+	}
 
+	for (i = 0; i < regfbcount; i++) {
 		fb[i].myIndex = i;
 		fb[i].bufY = pfbpool[i]->addrY;
 		fb[i].bufCb = pfbpool[i]->addrCb;
@@ -402,28 +431,11 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	if (cpu_is_mx6q() && (enc->cmdl->format != STD_MJPG)) {
-		for (i = fbcount; i < needFrameBufCount - 1; i++) {
-			pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
-					(enc->enc_picwidth + 15) & ~15,  (enc->enc_picheight + 15) & ~15);
-			if (pfbpool[i] == NULL) {
-				fbcount = i;
-				goto err1;
-			}
-			fb[i].myIndex = i;
-			fb[i].bufY = pfbpool[i]->addrY;
-			fb[i].bufCb = pfbpool[i]->addrCb;
-			fb[i].bufCr = pfbpool[i]->addrCr;
-			fb[i].strideY = pfbpool[i]->strideY;
-			fb[i].strideC = pfbpool[i]->strideC;
-		}
-		subSampBaseA = fb[fbcount].bufY;
-		subSampBaseB = fb[fbcount + 1].bufY;
-		enc->fbcount += 2;
-
+		subSampBaseA = fb[minfbcount].bufY;
+		subSampBaseB = fb[minfbcount + 1].bufY;
 		if (enc->cmdl->format == STD_AVC && enc->mvc_extension) { /* MVC */
-			extbufinfo.subSampBaseAMvc = fb[fbcount].bufY;
-			extbufinfo.subSampBaseBMvc = fb[fbcount + 1].bufY;
-			enc->fbcount += 2;
+			extbufinfo.subSampBaseAMvc = fb[minfbcount + 2].bufY;
+			extbufinfo.subSampBaseBMvc = fb[minfbcount + 3].bufY;
 		}
 	}
 
@@ -435,7 +447,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	src_stride = (enc->src_picwidth + 15 ) & ~15;
 
 	extbufinfo.scratchBuf = enc->scratchBuf;
-	ret = vpu_EncRegisterFrameBuffer(handle, fb, fbcount, enc_stride, src_stride,
+	ret = vpu_EncRegisterFrameBuffer(handle, fb, regfbcount, enc_stride, src_stride,
 					    subSampBaseA, subSampBaseB, &extbufinfo);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
@@ -450,8 +462,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	} else {
 		/* Allocate a single frame buffer for source frame */
 		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
-						   (enc->enc_picwidth + 15) & ~15,
-						   (enc->enc_picheight + 15 ) & ~15);
+						   src_fbwidth, src_fbheight, 0);
 		if (pfbpool[src_fbid] == NULL) {
 			err_msg("failed to allocate single framebuf\n");
 			goto err1;
@@ -463,13 +474,12 @@ encoder_allocate_framebuffer(struct encode *enc)
 		fb[src_fbid].bufCr = pfbpool[src_fbid]->addrCr;
 		fb[src_fbid].strideY = pfbpool[src_fbid]->strideY;
 		fb[src_fbid].strideC = pfbpool[src_fbid]->strideC;
-		enc->fbcount++;
 	}
 
 	return 0;
 
 err1:
-	for (i = 0; i < fbcount; i++) {
+	for (i = 0; i < totalfb; i++) {
 		framebuf_free(pfbpool[i]);
 	}
 
@@ -776,8 +786,7 @@ encoder_configure(struct encode *enc)
 		return -1;
 	}
 
-	enc->fbcount = initinfo.minFrameBufferCount;
-
+	enc->minFrameBufferCount = initinfo.minFrameBufferCount;
 	if (enc->cmdl->save_enc_hdr) {
 		if (enc->cmdl->format == STD_MPEG4) {
 			SaveGetEncodeHeader(handle, ENC_GET_VOS_HEADER,
@@ -844,7 +853,8 @@ encoder_open(struct encode *enc)
 	encop.bitstreamBuffer = enc->phy_bsbuf_addr;
 	encop.bitstreamBufferSize = STREAM_BUF_SIZE;
 	encop.bitstreamFormat = enc->cmdl->format;
-
+	encop.mapType = enc->cmdl->mapType;
+	encop.linear2TiledEnable = enc->linear2TiledEnable;
 	/* width and height in command line means source image size */
 	if (enc->cmdl->width && enc->cmdl->height) {
 		enc->src_picwidth = enc->cmdl->width;
@@ -1125,6 +1135,12 @@ encode_test(void *arg)
 	if (enc->cmdl->format == STD_MJPG)
 		enc->mjpg_fmt = MODE420;  /* Please change this per your needs */
 
+	if (enc->cmdl->mapType) {
+                enc->linear2TiledEnable = 1;
+		enc->cmdl->chromaInterleave = 1; /* Must be CbCrInterleave for tiled */
+        } else
+		enc->linear2TiledEnable = 0;
+
 	/* open the encoder */
 	ret = encoder_open(enc);
 	if (ret)
@@ -1154,7 +1170,7 @@ encode_test(void *arg)
 
 	/* start encoding */
 	ret = encoder_start(enc);
-
+	printf("222\n");
 	/* free the allocated framebuffers */
 	encoder_free_framebuffer(enc);
 err1:

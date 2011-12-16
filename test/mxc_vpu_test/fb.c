@@ -63,7 +63,7 @@ void put_framebuf(struct frame_buf *fb)
 	fbarray[fb_index] = fb;
 }
 
-struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height)
+struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height, int mvCol)
 {
 	struct frame_buf *fb;
 	int err;
@@ -78,7 +78,7 @@ struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int heigh
 
 	memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
 	fb->desc.size = (strideY * height  + strideY / divX * height / divY * 2);
-	if (!cpu_is_mx27())
+	if (mvCol)
 		fb->desc.size += strideY / divX * height / divY;
 
 	err = IOGetPhyMem(&fb->desc);
@@ -93,13 +93,9 @@ struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int heigh
 	fb->addrCr = fb->addrCb + strideY / divX * height / divY;
 	fb->strideY = strideY;
 	fb->strideC =  strideY / divX;
+	if (mvCol)
+		fb->mvColBuf = fb->addrCr + strideY / divX * height / divY;
 
-	if (!cpu_is_mx27()) {
-		if (stdMode==STD_MJPG)
-			fb->mvColBuf = fb->addrCr;
-		else
-			fb->mvColBuf = fb->addrCr + strideY / divX * height / divY;
-	}
 	fb->desc.virt_uaddr = IOGetVirtMem(&(fb->desc));
 	if (fb->desc.virt_uaddr <= 0) {
 		IOFreePhyMem(&fb->desc);
@@ -110,7 +106,7 @@ struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int heigh
 	return fb;
 }
 
-struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height)
+struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height, int mvCol)
 {
 	struct frame_buf *fb;
 	int err;
@@ -136,7 +132,9 @@ struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int
 	luma_aligned_size = (((strideY * height / 2 + 4095) >> 12) << 12) * 2;
 	chroma_aligned_size = ((strideY / divX * height / divY + 4095) >> 12) << 12;
 	fb->desc.size = luma_aligned_size + chroma_aligned_size * 2;
-	fb->desc.size += strideY / divX * height / divY;
+
+	if (mvCol)
+		fb->desc.size += strideY / divX * height / divY;
 
 	err = IOGetPhyMem(&fb->desc);
 	if (err) {
@@ -167,13 +165,17 @@ struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int
 	fb->addrCr = chr_bot_20bits << 16;
 	fb->strideY = strideY;
 	fb->strideC = strideY / divX;
-	fb->mvColBuf = chr_bot_base + chroma_aligned_size;
+	if (mvCol)
+		fb->mvColBuf = chr_bot_base + chroma_aligned_size;
 
     return fb;
 }
 
 void framebuf_free(struct frame_buf *fb)
 {
+	if (fb == NULL)
+		return;
+
 	if (fb->desc.virt_uaddr) {
 		IOFreeVirtMem(&fb->desc);
 	}
