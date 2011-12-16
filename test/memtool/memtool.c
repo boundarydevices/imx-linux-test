@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2006-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 	else
 		printf("Reading 0x%X count starting at address 0x%08X\n", g_count, g_paddr);
 
-	if ((fd = open("/dev/mem", O_RDWR, 0)) < 0)
+	if ((fd = open("/dev/mem", O_RDWR | O_SYNC, 0)) < 0)
 		return 1;
 
 	aligned_vaddr = mmap(NULL, aligned_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, aligned_paddr);
