@@ -202,8 +202,8 @@ struct decode {
 	int picheight;
 	int stride;
 	int mjpg_fmt;
-	int fbcount;
-	int minFrameBufferCount;
+	int regfbcount;
+	int minfbcount;
 	int rot_buf_count;
 	int extrafb;
 	FrameBuffer *fb;
@@ -230,7 +230,7 @@ struct encode {
 	int enc_picheight;	/* Encoded Picture height */
 	int src_picwidth;        /* Source Picture width */
 	int src_picheight;       /* Source Picture height */
-	int fbcount;	/* Total number of framebuffers allocated */
+	int totalfb;	/* Total number of framebuffers allocated */
 	int src_fbid;	/* Index of frame buffer that contains YUV image */
 	FrameBuffer *fb; /* frame buffer base given to encoder */
 	struct frame_buf **pfbpool; /* allocated fb pointers are stored here */
@@ -240,6 +240,8 @@ struct encode {
 	int mjpg_fmt;
 	int mvc_paraset_refresh_en;
 	int mvc_extension;
+	int linear2TiledEnable;
+	int minFrameBufferCount;
 
         EncReportInfo mbInfo;
         EncReportInfo mvInfo;
@@ -266,8 +268,8 @@ struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 					struct rot rotation, Rect rotCrop);
 int v4l_put_data(struct vpu_display *disp, int index, int field, int fps);
 void v4l_display_close(struct vpu_display *disp);
-struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height);
-struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height);
+struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol);
+struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol);
 void framebuf_free(struct frame_buf *fb);
 
 struct vpu_display *
