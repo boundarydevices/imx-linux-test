@@ -619,163 +619,163 @@ int parse_config_file(char *file_name, ipu_test_handle_t *test_handle)
 
 int parse_cmd_input(int argc, char ** argv, ipu_test_handle_t *test_handle)
 {
- char opt;
- char fourcc[5];
- struct ipu_task *t = &test_handle->task;
+	char opt;
+	char fourcc[5];
+	struct ipu_task *t = &test_handle->task;
 
- printf("pass cmdline %d, %s\n", argc, argv[0]);
+	printf("pass cmdline %d, %s\n", argc, argv[0]);
 
- /*default settings*/
- t->priority = 0;
- t->task_id = 0;
- t->timeout = 1000;
- test_handle->fcount = 50;
- test_handle->loop_cnt = 1;
- t->input.width = 320;
- t->input.height = 240;
- t->input.format =  v4l2_fourcc('I', '4','2', '0');
- t->input.crop.pos.x = 0;
- t->input.crop.pos.y = 0;
- t->input.crop.w = 0;
- t->input.crop.h = 0;
- t->input.deinterlace.enable = 0;
- t->input.deinterlace.motion = 0;
+	/*default settings*/
+	t->priority = 0;
+	t->task_id = 0;
+	t->timeout = 1000;
+	test_handle->fcount = 50;
+	test_handle->loop_cnt = 1;
+	t->input.width = 320;
+	t->input.height = 240;
+	t->input.format =  v4l2_fourcc('I', '4','2', '0');
+	t->input.crop.pos.x = 0;
+	t->input.crop.pos.y = 0;
+	t->input.crop.w = 0;
+	t->input.crop.h = 0;
+	t->input.deinterlace.enable = 0;
+	t->input.deinterlace.motion = 0;
 
- t->overlay_en = 0;
- t->overlay.width = 320;
- t->overlay.height = 240;
- t->overlay.format = v4l2_fourcc('I', '4','2', '0');
- t->overlay.crop.pos.x = 0;
- t->overlay.crop.pos.y = 0;
- t->overlay.crop.w = 0;
- t->overlay.crop.h = 0;
- t->overlay.alpha.mode = 0;
- t->overlay.alpha.gvalue = 0;
- t->overlay.colorkey.enable = 0;
- t->overlay.colorkey.value = 0x555555;
+	t->overlay_en = 0;
+	t->overlay.width = 320;
+	t->overlay.height = 240;
+	t->overlay.format = v4l2_fourcc('I', '4','2', '0');
+	t->overlay.crop.pos.x = 0;
+	t->overlay.crop.pos.y = 0;
+	t->overlay.crop.w = 0;
+	t->overlay.crop.h = 0;
+	t->overlay.alpha.mode = 0;
+	t->overlay.alpha.gvalue = 0;
+	t->overlay.colorkey.enable = 0;
+	t->overlay.colorkey.value = 0x555555;
 
- t->output.width = 1024;
- t->output.height = 768;
- t->output.format = v4l2_fourcc('U', 'Y','V', 'Y');
- t->output.rotate = 0;
- t->output.crop.pos.x = 0;
- t->output.crop.pos.y = 0;
- t->output.crop.w = 0;
- t->output.crop.h = 0;
+	t->output.width = 1024;
+	t->output.height = 768;
+	t->output.format = v4l2_fourcc('U', 'Y','V', 'Y');
+	t->output.rotate = 0;
+	t->output.crop.pos.x = 0;
+	t->output.crop.pos.y = 0;
+	t->output.crop.w = 0;
+	t->output.crop.h = 0;
 
- test_handle->show_to_fb = 1;
- memcpy(test_handle->outfile,"ipu0-1st-ovfb",13);
+	test_handle->show_to_fb = 1;
+	memcpy(test_handle->outfile,"ipu0-1st-ovfb",13);
 
- while((opt = getopt(argc, argv, options)) > 0)
- {
-  deb_printf("new option : %c \n", opt);
-  switch(opt)
-  {
-   case 'p':/*mode*/
-     if(NULL == optarg)
-       break;
-      t->priority = strtol(optarg, NULL, 10);
-      deb_printf("mod set %d \n",t->priority);
-      break;
-   case 'd': /*frame count*/
-     if(NULL == optarg)
-       break;
-      t->task_id = strtol(optarg, NULL, 10);
-      deb_printf("frame count set %d \n",t->task_id);
-      break;
-	 case 't':
-     if(NULL == optarg)
-       break;
-	   t->timeout = strtol(optarg, NULL, 10);
-   case 'c':
-     if(NULL == optarg)
-       break;
-			 test_handle->fcount = strtol(optarg, NULL, 10);
-      deb_printf("frame count set %d \n",test_handle->fcount);
-      break;
-	 case 'l':
-     if(NULL == optarg)
-       break;
-			test_handle->loop_cnt = strtol(optarg, NULL, 10);
-      deb_printf("loop count set %d \n",test_handle->loop_cnt);
-			break;
-   case 'i': /*input param*/
-     if(NULL == optarg)
-       break;
-      memset(fourcc,0,sizeof(fourcc));
-      sscanf(optarg,"%d,%d,%c%c%c%c,%d,%d,%d,%d,%d,%d",
-			 &(t->input.width),&(t->input.height),
-			 &(fourcc[0]),&(fourcc[1]), &(fourcc[2]), &(fourcc[3]),
-			 &(t->input.crop.pos.x),&(t->input.crop.pos.y),
-			 &(t->input.crop.w), &(t->input.crop.h),
-			 (int *)&(t->input.deinterlace.enable), (int *)&(t->input.deinterlace.motion));
-       t->input.format = v4l2_fourcc(fourcc[0], fourcc[1],
-       fourcc[2], fourcc[3]);
-      deb_printf("input w=%d,h=%d,fucc=%s,cpx=%d,cpy=%d,cpw=%d,cph=%d,de=%d,dm=%d\n",
-			 t->input.width,t->input.height,
-			 fourcc,t->input.crop.pos.x,t->input.crop.pos.y,
-			 t->input.crop.w, t->input.crop.h,
-			 t->input.deinterlace.enable, t->input.deinterlace.motion);
-      break;
-   case 'o':/*overlay setting*/
-     if(NULL == optarg)
-       break;
-		 memset(fourcc,0,sizeof(fourcc));
-     sscanf(optarg,"%d,%d,%d,%c%c%c%c,%d,%d,%d,%d,%d,%d,%d,%x",
-			 (int *)&(t->overlay_en),&(t->overlay.width),&(t->overlay.height),
-			 &(fourcc[0]),&(fourcc[1]), &(fourcc[2]), &(fourcc[3]),
-			 &(t->overlay.crop.pos.x),&(t->overlay.crop.pos.y),
-			 &(t->overlay.crop.w), &(t->overlay.crop.h),
-			 (int *)&(t->overlay.alpha.mode), (int *)&(t->overlay.alpha.gvalue),
-			 (int *)&(t->overlay.colorkey.enable),&(t->overlay.colorkey.value));
-       t->overlay.format = v4l2_fourcc(fourcc[0], fourcc[1],
-       fourcc[2], fourcc[3]);
-      deb_printf("overlay en=%d,w=%d,h=%d,fourcc=%c%c%c%c,cpx=%d,\
-cpy=%d,cw=%d,ch=%d,am=%c,ag=%d,ce=%d,cv=%x\n",
-			 t->overlay_en, t->overlay.width,t->overlay.height,
-			 fourcc[0],fourcc[1], fourcc[2], fourcc[3],
-			 t->overlay.crop.pos.x,t->overlay.crop.pos.y,
-			 t->overlay.crop.w, t->overlay.crop.h,
-			 t->overlay.alpha.mode, t->overlay.alpha.gvalue,
-			 t->overlay.colorkey.enable,t->overlay.colorkey.value);
-      break;
-   case 'O':/*output setting*/
-		 memset(fourcc,0,sizeof(fourcc));
-     if(NULL == optarg)
-       break;
-			 sscanf(optarg,"%d,%d,%c%c%c%c,%d,%d,%d,%d,%d",
-       &(t->output.width),&(t->output.height),
-			 &(fourcc[0]),&(fourcc[1]), &(fourcc[2]), &(fourcc[3]),
-			 (int *)&(t->output.rotate),&(t->output.crop.pos.x),
-			 &(t->output.crop.pos.y),&(t->output.crop.w),
-			 &(t->output.crop.h));
-       t->output.format = v4l2_fourcc(fourcc[0],
-       fourcc[1],fourcc[2], fourcc[3]);
-			 deb_printf(optarg,"%d,%d,%s,%d,%d,%d,%d,%d\n",
-       t->output.width,t->output.height,
-			 fourcc,t->output.rotate,t->output.crop.pos.x,
-			 t->output.crop.pos.y,t->output.crop.w,
-			 t->output.crop.h);
-       break;
-   case 's':/*fb setting*/
-     if(NULL == optarg)
-       break;
-			 test_handle->show_to_fb = strtol(optarg, NULL, 10);
-       deb_printf("show to fb %d\n", test_handle->show_to_fb);
-      break;
-   case 'f':/*output0 file name*/
-     if(NULL == optarg)
-       break;
-			memset(test_handle->outfile,0,sizeof(test_handle->outfile));
-      sscanf(optarg,"%s",test_handle->outfile);
-      deb_printf("output file name %s \n",test_handle->outfile);
-      break;
-	case 'h':
-	    util_help();
-			break;
-   default:
-      return 0;
-  }
- }
- return 0;
+	while((opt = getopt(argc, argv, options)) > 0)
+	{
+		deb_printf("\nnew option : %c \n", opt);
+		switch(opt)
+		{
+			case 'p':/*priority*/
+				if(NULL == optarg)
+					break;
+				t->priority = strtol(optarg, NULL, 10);
+				deb_printf("priority set %d \n",t->priority);
+				break;
+			case 'd': /*task id*/
+				if(NULL == optarg)
+					break;
+				t->task_id = strtol(optarg, NULL, 10);
+				deb_printf("task id set %d \n",t->task_id);
+				break;
+			case 't':
+				if(NULL == optarg)
+					break;
+				t->timeout = strtol(optarg, NULL, 10);
+			case 'c':
+				if(NULL == optarg)
+					break;
+				test_handle->fcount = strtol(optarg, NULL, 10);
+				deb_printf("frame count set %d \n",test_handle->fcount);
+				break;
+			case 'l':
+				if(NULL == optarg)
+					break;
+				test_handle->loop_cnt = strtol(optarg, NULL, 10);
+				deb_printf("loop count set %d \n",test_handle->loop_cnt);
+				break;
+			case 'i': /*input param*/
+				if(NULL == optarg)
+					break;
+				memset(fourcc,0,sizeof(fourcc));
+				sscanf(optarg,"%d,%d,%c%c%c%c,%d,%d,%d,%d,%d,%d",
+						&(t->input.width),&(t->input.height),
+						&(fourcc[0]),&(fourcc[1]), &(fourcc[2]), &(fourcc[3]),
+						&(t->input.crop.pos.x),&(t->input.crop.pos.y),
+						&(t->input.crop.w), &(t->input.crop.h),
+						(int *)&(t->input.deinterlace.enable), (int *)&(t->input.deinterlace.motion));
+				t->input.format = v4l2_fourcc(fourcc[0], fourcc[1],
+						fourcc[2], fourcc[3]);
+				deb_printf("input w=%d,h=%d,fucc=%s,cpx=%d,cpy=%d,cpw=%d,cph=%d,de=%d,dm=%d\n",
+						t->input.width,t->input.height,
+						fourcc,t->input.crop.pos.x,t->input.crop.pos.y,
+						t->input.crop.w, t->input.crop.h,
+						t->input.deinterlace.enable, t->input.deinterlace.motion);
+				break;
+			case 'o':/*overlay setting*/
+				if(NULL == optarg)
+					break;
+				memset(fourcc,0,sizeof(fourcc));
+				sscanf(optarg,"%d,%d,%d,%c%c%c%c,%d,%d,%d,%d,%d,%d,%d,%x",
+						(int *)&(t->overlay_en),&(t->overlay.width),&(t->overlay.height),
+						&(fourcc[0]),&(fourcc[1]), &(fourcc[2]), &(fourcc[3]),
+						&(t->overlay.crop.pos.x),&(t->overlay.crop.pos.y),
+						&(t->overlay.crop.w), &(t->overlay.crop.h),
+						(int *)&(t->overlay.alpha.mode), (int *)&(t->overlay.alpha.gvalue),
+						(int *)&(t->overlay.colorkey.enable),&(t->overlay.colorkey.value));
+				t->overlay.format = v4l2_fourcc(fourcc[0], fourcc[1],
+						fourcc[2], fourcc[3]);
+				deb_printf("overlay en=%d,w=%d,h=%d,fourcc=%c%c%c%c,cpx=%d,\
+						cpy=%d,cw=%d,ch=%d,am=%c,ag=%d,ce=%d,cv=%x\n",
+						t->overlay_en, t->overlay.width,t->overlay.height,
+						fourcc[0],fourcc[1], fourcc[2], fourcc[3],
+						t->overlay.crop.pos.x,t->overlay.crop.pos.y,
+						t->overlay.crop.w, t->overlay.crop.h,
+						t->overlay.alpha.mode, t->overlay.alpha.gvalue,
+						t->overlay.colorkey.enable,t->overlay.colorkey.value);
+				break;
+			case 'O':/*output setting*/
+				memset(fourcc,0,sizeof(fourcc));
+				if(NULL == optarg)
+					break;
+				sscanf(optarg,"%d,%d,%c%c%c%c,%d,%d,%d,%d,%d",
+						&(t->output.width),&(t->output.height),
+						&(fourcc[0]),&(fourcc[1]), &(fourcc[2]), &(fourcc[3]),
+						(int *)&(t->output.rotate),&(t->output.crop.pos.x),
+						&(t->output.crop.pos.y),&(t->output.crop.w),
+						&(t->output.crop.h));
+				t->output.format = v4l2_fourcc(fourcc[0],
+						fourcc[1],fourcc[2], fourcc[3]);
+				deb_printf(optarg,"%d,%d,%s,%d,%d,%d,%d,%d\n",
+						t->output.width,t->output.height,
+						fourcc,t->output.rotate,t->output.crop.pos.x,
+						t->output.crop.pos.y,t->output.crop.w,
+						t->output.crop.h);
+				break;
+			case 's':/*fb setting*/
+				if(NULL == optarg)
+					break;
+				test_handle->show_to_fb = strtol(optarg, NULL, 10);
+				deb_printf("show to fb %d\n", test_handle->show_to_fb);
+				break;
+			case 'f':/*output0 file name*/
+				if(NULL == optarg)
+					break;
+				memset(test_handle->outfile,0,sizeof(test_handle->outfile));
+				sscanf(optarg,"%s",test_handle->outfile);
+				deb_printf("output file name %s \n",test_handle->outfile);
+				break;
+			case 'h':
+				util_help();
+				break;
+			default:
+				return 0;
+		}
+	}
+	return 0;
 }
