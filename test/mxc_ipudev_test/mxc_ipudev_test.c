@@ -393,7 +393,7 @@ again:
 				t->output.crop.h -= 8;
 				goto again;
 			}
-			ret = -1;
+			ret = 0;
 			printf("ipu task check fail\n");
 			goto err13;
 		}
@@ -404,7 +404,7 @@ task_begin:
 	if (t->input.deinterlace.enable &&
 		(t->input.deinterlace.motion != HIGH_MOTION))
 		if (fread(vdibuf, 1, isize, file_in) < isize) {
-			ret = -1;
+			ret = 0;
 			printf("Can not read enough data from input file\n");
 			goto err13;
 		}
@@ -419,7 +419,7 @@ task_begin:
 		} else
 			ret = fread(inbuf, 1, isize, file_in);
 		if (ret < isize) {
-			ret = -1;
+			ret = 0;
 			printf("Can not read enough data from input file\n");
 			break;
 		}
