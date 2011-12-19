@@ -10,6 +10,8 @@ $(OBJS): $(SRCS)
 	mkdir -p $(OBJDIR)
 	$(VERBOSE) $(CC) -g $(INC) $(CFLAGS) $^ $(LIBS) -o $@
 	cp ipudev_config_file $(OBJDIR)
+	cp autorun-ipu.sh $(OBJDIR)
+	cp stefan_interlaced_320x240_5frames.yv12 $(OBJDIR)
 else
 OBJS =
 endif
