@@ -57,54 +57,53 @@ fi
 
 if ([ "$(platform)" = IMX51 ] || [ "$(platform)" = IMX53 ] \
 	|| [ "$(platform)" = IMX6 ]); then
-DISPW=`cat /sys/class/graphics/fb0/mode | awk -F ':' '{print $2}' | awk -F 'x' '{print $1}'`
-DISPH=`cat /sys/class/graphics/fb0/mode | awk -F ':' '{print $2}' | awk -F 'x' '{print $2}' | awk -F 'p' '{print $1}'`
-DISPW_DIV_2=`expr $DISPW / 2`
-DISPW_DIV_8=`expr $DISPW / 8`
-DISPH_DIV_2=`expr $DISPH / 2`
-DISPH_DIV_8=`expr $DISPH / 8`
 
 if [ "$FULLTEST" = '1' ]; then
-IWCASE="$DISPW_DIV_8 $DISPW_DIV_2 $DISPW"
-IHCASE="$DISPH_DIV_8 $DISPH_DIV_2 $DISPH"
-OWCASE="$DISPW_DIV_8 $DISPW_DIV_2 $DISPW"
-OHCASE="$DISPH_DIV_8 $DISPH_DIV_2 $DISPH"
+	CASES="176x144 320x240 640x480 720x480 720x576 800x600 1024x768 1024x800 1152x864 1280x720 1280x800 1280x1024 1366x768 1600x1200 1920x1080"
 else
-IWCASE="$DISPW"
-IHCASE="$DISPH"
-OWCASE="$DISPW"
-OHCASE="$DISPH"
+	CASES="1024x768"
 fi
 
-echo =========== do test on display $DISPW $DISPH ====================
-for IW in $IWCASE; do
-for IH in $IHCASE; do
-for OW in $OWCASE; do
-for OH in $OHCASE; do
-for ROT in 0 90; do
-for VF in 0 1; do
-for HF in 0 1; do
-	ICW=`expr $IW / 4`
-	ICH=`expr $IH / 4`
-	OCW=`expr $OW / 4`
-	OCH=`expr $OH / 4`
-	# resizing, rotation, flip test
-	run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -ow $OW -oh $OH -d $DISPLAY -r $ROT -vf $VF -hf $HF -fr 60"
-	# resizing, rotation, flip with crop test
-	run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -cr $ICW $ICH $ICW $ICH 0 -ow $OW -oh $OH -ol $OCW -ot $OCH -d $DISPLAY -r $ROT -vf $VF -hf $HF -fr 60"
-	# resizing, rotation, flip test for deinterlacing
-	run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -ow $OW -oh $OH -d $DISPLAY -r $ROT -vf $VF -hf $HF -v 0 -fr 60"
-	run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -ow $OW -oh $OH -d $DISPLAY -r $ROT -vf $VF -hf $HF -v 2 -fr 60"
-	# resizing, rotation, flip with crop test for deinterlacing
-	run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -cr $ICW $ICH $ICW $ICH 0 -ow $OW -oh $OH -ol $OCW -ot $OCH -d $DISPLAY -r $ROT -vf $VF -hf $HF -v 0 -fr 60"
-done
-done
-done
-done
-done
-done
+MODES=`cat /sys/class/graphics/fb0/modes`
+if [ "$MODES" = "" ]; then
+	MODES=`cat /sys/class/graphics/fb0/mode`
+fi
+
+for MODE in $MODES; do
+	echo $MODE > /sys/class/graphics/fb0/mode
+	echo Display in $MODE
+	sleep 3
+	DISPW=`cat /sys/class/graphics/fb0/mode | awk -F ':' '{print $2}' | awk -F 'x' '{print $1}'`
+	DISPH=`cat /sys/class/graphics/fb0/mode | awk -F ':' '{print $2}' | awk -F 'x' '{print $2}' | awk -F 'p' '{print $1}'`
+	for INPUT in $CASES; do
+	for ROT in 0 90; do
+	for VF in 0 1; do
+	for HF in 0 1; do
+		IW=`echo $INPUT | awk -F 'x' '{print $1}'`
+		IH=`echo $INPUT | awk -F 'x' '{print $2}'`
+		OW=$DISPW
+		OH=$DISPH
+		ICW=`expr $IW / 4`
+		ICH=`expr $IH / 4`
+		OCW=`expr $OW / 4`
+		OCH=`expr $OH / 4`
+		# resizing, rotation, flip test
+		run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -ow $OW -oh $OH -d $DISPLAY -r $ROT -vf $VF -hf $HF -fr 60"
+		# resizing, rotation, flip with crop test
+		run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -cr $ICW $ICH $ICW $ICH 0 -ow $OW -oh $OH -ol $OCW -ot $OCH -d $DISPLAY -r $ROT -vf $VF -hf $HF -fr 60"
+		# resizing, rotation, flip test for deinterlacing
+		run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -ow $OW -oh $OH -d $DISPLAY -r $ROT -vf $VF -hf $HF -v 0 -fr 60"
+		run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -ow $OW -oh $OH -d $DISPLAY -r $ROT -vf $VF -hf $HF -v 2 -fr 60"
+		# resizing, rotation, flip with crop test for deinterlacing
+		run_testcase "./mxc_v4l2_output.out -iw $IW -ih $IH -cr $ICW $ICH $ICW $ICH 0 -ow $OW -oh $OH -ol $OCW -ot $OCH -d $DISPLAY -r $ROT -vf $VF -hf $HF -v 0 -fr 60"
+	done
+	done
+	done
+	done
 done
 
+DISPW_DIV_2=`expr $DISPW / 2`
+DISPH_DIV_2=`expr $DISPH / 2`
 # user pointer test
 run_testcase "./mxc_v4l2_output.out -iw $DISPW_DIV_2 -ih $DISPH_DIV_2 -ow $DISPW -oh $DISPH -d $DISPLAY -u"
 run_testcase "./mxc_v4l2_output.out -iw $DISPW_DIV_2 -ih $DISPH_DIV_2 -ow $DISPW_DIV_2 -oh $DISPH_DIV_2 -d $DISPLAY -u"
