@@ -498,7 +498,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	int disp_left =  dec->cmdl->loff;
 	int disp_top =  dec->cmdl->toff;
 	int fd = -1, err = 0, out = 0, i = 0;
-	char v4l_device[80];
+	char v4l_device[80], node[8];
 	struct v4l2_cropcap cropcap = {0};
 	struct v4l2_crop crop = {0};
 	struct v4l2_framebuffer fb = {0};
@@ -580,16 +580,23 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		return NULL;
 	}
 
-	if (cpu_is_mx6q())
-		strcpy(v4l_device, "/dev/video17");   /* fg for mx6q */
-	else
-		strcpy(v4l_device, "/dev/video16");
+	if (!dec->cmdl->video_node) {
+		if (cpu_is_mx6q())
+			dec->cmdl->video_node = 17; /* fg for mx6q */
+		else
+			dec->cmdl->video_node = 16;
+	}
+	sprintf(node, "%d", dec->cmdl->video_node);
+	strcpy(v4l_device, "/dev/video");
+	strcat(v4l_device, node);
 
 	fd = open(v4l_device, O_RDWR, 0);
 	if (fd < 0) {
 		err_msg("unable to open %s\n", v4l_device);
 		goto err;
 	}
+
+	info_msg("v4l output to %s\n", v4l_device);
 
 	if (!cpu_is_mx6q()) {
 		err = ioctl(fd, VIDIOC_S_OUTPUT, &out);
