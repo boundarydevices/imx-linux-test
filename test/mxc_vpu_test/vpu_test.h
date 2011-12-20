@@ -153,6 +153,7 @@ struct cmd_line {
 	char output[MAX_PATH];  /* Output file name */
 	int src_scheme;
 	int dst_scheme;
+	int video_node;
 	int src_fd;
 	int dst_fd;
 	int width;
