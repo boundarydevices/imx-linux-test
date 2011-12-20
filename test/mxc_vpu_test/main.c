@@ -35,7 +35,10 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	If no input file is specified, default is network \n "\
 	       "  -o <output file> Write output to file \n "\
 	       "	If no output is specified, default is LCD \n "\
-	       "  -x <output method> V4l2(0) or IPU lib(1) \n "\
+	       "  -x <output method> output mode V4l2(0) or IPU lib(1) \n "\
+	       "        0 - V4L2 of FG device, 1 - IPU lib path \n "\
+	       "        Other value means V4L2 with other video node\n "\
+	       "        16 - /dev/video16, 17 - /dev/video17, and so on \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, \n "\
 	       "	4 - MPEG2, 5 - DIV3, 6 - RV, 7 - MJPG, \n "\
 	       "        8 - AVS, 9 - VP8\n "\
@@ -234,7 +237,7 @@ parse_main_args(int argc, char *argv[])
 int
 parse_args(int argc, char *argv[], int i)
 {
-	int status = 0, opt;
+	int status = 0, opt, val;
 
 	do {
 		opt = getopt(argc, argv, options);
@@ -253,12 +256,14 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.dst_scheme = PATH_FILE;
 			break;
 		case 'x':
-			if (atoi(optarg) == 0) {
-				input_arg[i].cmd.dst_scheme = PATH_V4L2;
-				info_msg("Display through V4L2\n");
-			} else {
+			val = atoi(optarg);
+			if (val == 1) {
 				input_arg[i].cmd.dst_scheme = PATH_IPU;
 				info_msg("Display through IPU LIB\n");
+			} else {
+				input_arg[i].cmd.dst_scheme = PATH_V4L2;
+				info_msg("Display through V4L2\n");
+				input_arg[i].cmd.video_node = val;
 			}
 			if (cpu_is_mx27() &&
 				(input_arg[i].cmd.dst_scheme == PATH_IPU)) {
