@@ -441,6 +441,12 @@ int SaveTiledYuvImageHelper(struct decode *dec, int yuvFp,
 		return -1;
 	}
 
+	if (dec->cmdl->rot_en && (dec->cmdl->rot_angle == 90 || dec->cmdl->rot_angle == 270)) {
+                j = picWidth;
+                picWidth = picHeight;
+                picHeight = j;
+        }
+
 	puc = pYuv;
 	nY = picHeight;
 	nCb = picHeight / 2;
@@ -668,7 +674,7 @@ write_to_file(struct decode *dec, Rect cropRect, int index)
 	cropping = cropRect.left | cropRect.top | cropRect.bottom | cropRect.right;
 
 	if (cpu_is_mx6q() && (dec->cmdl->mapType != LINEAR_FRAME_MAP) &&
-	    !dec->tiled2LinearEnable && !dec->cmdl->rot_en) {
+	    !dec->tiled2LinearEnable) {
 		SaveTiledYuvImageHelper(dec, dec->cmdl->dst_fd, stride, height, index);
 		goto out;
 	}
@@ -1469,14 +1475,20 @@ decoder_allocate_framebuffer(struct decode *dec)
 			/* decoded buffers are tiled */
 			for (i = 0; i < regfbcount; i++) {
 				pfbpool[i] = tiled_framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
-						    dec->stride, dec->picheight, 1);
+						    dec->stride, dec->picheight, 1, dec->cmdl->mapType);
 				if (pfbpool[i] == NULL)
 					goto err;
 			}
-			/* deblock and rotation is linear */
+
 			for (i = regfbcount; i < totalfb; i++) {
-				pfbpool[i] = tiled_framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
-						    dec->stride, dec->picheight, 1);
+				/* if tiled2LinearEnable == 1, post processing buffer is linear,
+				 * otherwise, the buffer is tiled */
+				if (dec->tiled2LinearEnable)
+					pfbpool[i] = framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
+							dec->stride, dec->picheight, 1);
+				else
+					pfbpool[i] = tiled_framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
+						    dec->stride, dec->picheight, 1, dec->cmdl->mapType);
 				if (pfbpool[i] == NULL)
 					goto err1;
 			}
