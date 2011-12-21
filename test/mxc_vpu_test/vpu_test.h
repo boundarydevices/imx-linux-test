@@ -46,6 +46,8 @@
 typedef unsigned short u16;
 typedef unsigned char u8;
 
+#define SZ_4K			4 * 1024
+
 #define STREAM_BUF_SIZE		0x200000
 #define STREAM_FILL_SIZE	0x40000
 #define STREAM_READ_SIZE	(512 * 8)
@@ -270,7 +272,7 @@ struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 int v4l_put_data(struct vpu_display *disp, int index, int field, int fps);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol);
-struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol);
+struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol, int mapType);
 void framebuf_free(struct frame_buf *fb);
 
 struct vpu_display *
