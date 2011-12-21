@@ -350,7 +350,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 {
 	EncHandle handle = enc->handle;
 	int i, enc_stride, src_stride, src_fbid;
-	int totalfb, minfbcount, srcfbcount, regfbcount;
+	int totalfb, minfbcount, srcfbcount, extrafbcount;
 	RetCode ret;
 	FrameBuffer *fb;
 	PhysicalAddress subSampBaseA = 0, subSampBaseB = 0;
@@ -368,15 +368,15 @@ encoder_allocate_framebuffer(struct encode *enc)
 
 	if (cpu_is_mx6q()) {
 		if (enc->cmdl->format == STD_AVC && enc->mvc_extension) /* MVC */
-			regfbcount = minfbcount + 2 + 2; /* min + Subsamp buffer [2] */
+			extrafbcount = 2 + 2; /* Subsamp [2] + Subsamp MVC [2] */
 		else if (enc->cmdl->format == STD_MJPG)
-			regfbcount = minfbcount; /* min */
+			extrafbcount = 0;
 		else
-			regfbcount = minfbcount + 2; /* min +  Subsamp buffer [2] */
+			extrafbcount = 2; /* Subsamp buffer [2] */
 	} else
-		regfbcount = minfbcount; /* min */
+		extrafbcount = 0;
 
-	enc->totalfb = totalfb = regfbcount + srcfbcount;
+	enc->totalfb = totalfb = minfbcount + extrafbcount + srcfbcount;
 
 	/* last framebuffer is used as src frame in the test */
 	enc->src_fbid = src_fbid = totalfb - 1;
@@ -397,7 +397,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 
 	if (enc->cmdl->mapType == LINEAR_FRAME_MAP) {
 		/* All buffers are linear */
-		for (i = 0; i < regfbcount; i++) {
+		for (i = 0; i < minfbcount + extrafbcount; i++) {
 			pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
 						    enc_fbwidth, enc_fbheight, 0);
 			if (pfbpool[i] == NULL) {
@@ -408,20 +408,20 @@ encoder_allocate_framebuffer(struct encode *enc)
 		/* Encoded buffers are tiled */
 		for (i = 0; i < minfbcount; i++) {
 			pfbpool[i] = tiled_framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
-					    enc_fbwidth, enc_fbheight, 0);
+					    enc_fbwidth, enc_fbheight, 0, enc->cmdl->mapType);
 			if (pfbpool[i] == NULL)
 				goto err1;
 		}
 		/* sub frames are linear */
-		for (i = minfbcount; i < regfbcount; i++) {
-			pfbpool[i] = tiled_framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+		for (i = minfbcount; i < minfbcount + extrafbcount; i++) {
+			pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
 						    enc_fbwidth, enc_fbheight, 0);
 			if (pfbpool[i] == NULL)
 				goto err1;
 		}
 	}
 
-	for (i = 0; i < regfbcount; i++) {
+	for (i = 0; i < minfbcount + extrafbcount; i++) {
 		fb[i].myIndex = i;
 		fb[i].bufY = pfbpool[i]->addrY;
 		fb[i].bufCb = pfbpool[i]->addrCb;
@@ -447,7 +447,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	src_stride = (enc->src_picwidth + 15 ) & ~15;
 
 	extbufinfo.scratchBuf = enc->scratchBuf;
-	ret = vpu_EncRegisterFrameBuffer(handle, fb, regfbcount, enc_stride, src_stride,
+	ret = vpu_EncRegisterFrameBuffer(handle, fb, minfbcount, enc_stride, src_stride,
 					    subSampBaseA, subSampBaseB, &extbufinfo);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed\n");
@@ -1138,6 +1138,10 @@ encode_test(void *arg)
 	if (enc->cmdl->mapType) {
                 enc->linear2TiledEnable = 1;
 		enc->cmdl->chromaInterleave = 1; /* Must be CbCrInterleave for tiled */
+		if (cmdl->format == STD_MJPG) {
+			err_msg("MJPG encoder cannot support tiled format\n");
+			return -1;
+		}
         } else
 		enc->linear2TiledEnable = 0;
 
@@ -1170,7 +1174,7 @@ encode_test(void *arg)
 
 	/* start encoding */
 	ret = encoder_start(enc);
-	printf("222\n");
+
 	/* free the allocated framebuffers */
 	encoder_free_framebuffer(enc);
 err1:
