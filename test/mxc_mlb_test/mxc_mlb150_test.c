@@ -25,8 +25,7 @@
 #include <errno.h>
 #include <string.h>
 
-//#include <linux/mxc_mlb.h>
-#include "mxc_mlb.h"
+#include <linux/mxc_mlb.h>
 
 #define MLB_SYNC_DEV	"/dev/sync"
 #define MLB_CTRL_DEV	"/dev/ctrl"
