@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2011 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -296,15 +296,6 @@ main(int argc, char **argv)
         {
                 goto err1;
         }
-	if (strcmp(fb_fix.id, "DISP3 FG") != 0) {
-		close(fd_fb1);
-		if ((fd_fb1 = open("/dev/fb2", O_RDWR, 0)) < 0)
-		{
-			printf("Unable to open /dev/fb2\n");
-			retval = TFAIL;
-			goto err0;
-		}
-	}
         retval = ioctl(fd_fb1, FBIOBLANK, FB_BLANK_UNBLANK);
         if (retval < 0)
         {
