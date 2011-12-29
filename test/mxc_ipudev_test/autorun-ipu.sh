@@ -18,6 +18,7 @@ fi
 
 # Turn off fb blanking
 echo -e "\033[9;0]" > /dev/tty0
+echo 0 > /sys/class/graphics/fb1/blank
 
 #
 # IPU Tests
@@ -25,6 +26,12 @@ echo -e "\033[9;0]" > /dev/tty0
 
 if ([ "$(platform)" = IMX51 ] || [ "$(platform)" = IMX53 ] \
 	|| [ "$(platform)" = IMX6 ]); then
+IPU_NO=`cat /sys/class/graphics/fb0/name`
+SHOW_ON_FBDEV="ipu0-1st-ovfb"
+if ([[ $IPU_NO == "DISP4 BG" ]] || [[ $IPU_NO == "DISP4 BG - DI1" ]]); then
+SHOW_ON_FBDEV="ipu1-1st-ovfb"
+fi
+
 DISPW=`cat /sys/class/graphics/fb0/mode | awk -F ':' '{print $2}' | awk -F 'x' '{print $1}'`
 DISPH=`cat /sys/class/graphics/fb0/mode | awk -F ':' '{print $2}' | awk -F 'x' '{print $2}' | awk -F 'p' '{print $1}'`
 DISPW_DIV_2=`expr $DISPW / 2`
@@ -104,15 +111,15 @@ OCH=`expr $OCH - $OCH % 8`
 
 if [ "$VDI" = 1 ]; then
 	#low motion test
-	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,0,0,0,0,1,0 -O $OW,$OH,$OFMT,$OROT,0,0,0,0 -s 1 $FILE"
+	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,0,0,0,0,1,0 -O $OW,$OH,$OFMT,$OROT,0,0,0,0 -s 1 -f $SHOW_ON_FBDEV $FILE"
 	#high motion test
-	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,0,0,0,0,1,2 -O $OW,$OH,$OFMT,$OROT,0,0,0,0 -s 1 $FILE"
+	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,0,0,0,0,1,2 -O $OW,$OH,$OFMT,$OROT,0,0,0,0 -s 1 -f $SHOW_ON_FBDEV $FILE"
 	cat /dev/zero > /dev/fb1
 	# crop test
-	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,$ICW,$ICH,$ICW,$ICH,1,0 -O $OW,$OH,$OFMT,$OROT,$OCW,$OCH,$OCW,$OCH -s 1 $FILE"
+	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,$ICW,$ICH,$ICW,$ICH,1,0 -O $OW,$OH,$OFMT,$OROT,$OCW,$OCH,$OCW,$OCH -s 1 -f $SHOW_ON_FBDEV $FILE"
 else
 	# normal case
-	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,0,0,0,0,0,0 -O $OW,$OH,$OFMT,$OROT,0,0,0,0 -s 1 $FILE"
+	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,0,0,0,0,0,0 -O $OW,$OH,$OFMT,$OROT,0,0,0,0 -s 1 -f $SHOW_ON_FBDEV $FILE"
 	# overlay + crop test
 	# ipudev unit test fill non-interleaved format to overlay with incorrect data, so ignore such test
 	if ([ "$OFMT" = I420 ] || [ "$OFMT" = NV12 ] || [ "$OFMT" = YV12 ]); then
@@ -129,9 +136,9 @@ else
 	fi
 	cat /dev/zero > /dev/fb1
 	# test with global alpha
-	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,$ICW,$ICH,$ICW,$ICH,0,0 -o $OV_EN,$OVW,$OVH,$OFMT,0,0,0,0,0,128,1,0xffffff -O $OW,$OH,$OFMT,$OROT,$OCW,$OCH,$OCW,$OCH -s 1 $FILE"
+	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,$ICW,$ICH,$ICW,$ICH,0,0 -o $OV_EN,$OVW,$OVH,$OFMT,0,0,0,0,0,128,1,0xffffff -O $OW,$OH,$OFMT,$OROT,$OCW,$OCH,$OCW,$OCH -s 1 -f $SHOW_ON_FBDEV $FILE"
 	# test with local alpha
-	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,$ICW,$ICH,$ICW,$ICH,0,0 -o $OV_EN,$OVW,$OVH,$OFMT,0,0,0,0,1,128,1,0xffffff -O $OW,$OH,$OFMT,$OROT,$OCW,$OCH,$OCW,$OCH -s 1 $FILE"
+	run_testcase "./mxc_ipudev_test.out -c $FCN -l $LOOP -i $IW,$IH,$IFMT,$ICW,$ICH,$ICW,$ICH,0,0 -o $OV_EN,$OVW,$OVH,$OFMT,0,0,0,0,1,128,1,0xffffff -O $OW,$OH,$OFMT,$OROT,$OCW,$OCH,$OCW,$OCH -s 1 -f $SHOW_ON_FBDEV $FILE"
 fi
 done
 done
