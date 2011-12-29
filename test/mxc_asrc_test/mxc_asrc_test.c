@@ -133,7 +133,7 @@ int configure_asrc_channel(int fd_asrc, struct audio_info_s *info)
 	config.inclk = inclk;
 	config.outclk = outclk;
 	pair_index = req.index;
-	if (err = ioctl(fd_asrc, ASRC_CONFIG_PAIR, &config) < 0)
+	if ((err = ioctl(fd_asrc, ASRC_CONFIG_PAIR, &config)) < 0)
 		return err;
 
 	for (i = 0; i < config.buffer_num; i++) {
