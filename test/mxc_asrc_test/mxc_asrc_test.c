@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2008-2012 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -29,7 +29,7 @@
 #include <sys/time.h>
 #include <linux/mxc_asrc.h>
 
-#define DMA_BUF_SIZE 10240
+#define DMA_BUF_SIZE 4096
 /*
  * From 38 kernel, asrc driver only supports one pair of buffer
  * convertion per time
