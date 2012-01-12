@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright 2004-2012 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -1204,12 +1204,12 @@ decoder_start(struct decode *dec)
 
 			if (!cpu_is_mx27())
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
-					err = v4l_put_data(disp, actual_display_index, field, dec->cmdl->fps);
+					err = v4l_put_data(dec, actual_display_index, field, dec->cmdl->fps);
 				else
 					err = ipu_put_data(disp, actual_display_index, field, dec->cmdl->fps);
 			else
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
-					err = v4l_put_data(disp, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
+					err = v4l_put_data(dec, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
 				else
 					err = ipu_put_data(disp, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
 

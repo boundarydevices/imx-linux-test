@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright 2004-2012 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -917,11 +917,14 @@ void v4l_display_close(struct vpu_display *disp)
 	}
 }
 
-int v4l_put_data(struct vpu_display *disp, int index, int field, int fps)
+int v4l_put_data(struct decode *dec, int index, int field, int fps)
 {
 	struct timeval tv;
 	int err, type, threshold;
 	struct v4l2_format fmt = {0};
+	struct vpu_display *disp;
+
+	disp = dec->disp;
 
 	if (disp->ncount == 0) {
 		gettimeofday(&tv, 0);
@@ -1011,9 +1014,7 @@ int v4l_put_data(struct vpu_display *disp, int index, int field, int fps)
 
 	disp->ncount++;
 
-	threshold = 2;
-	if (disp->buf.field == V4L2_FIELD_ANY || disp->buf.field == V4L2_FIELD_NONE)
-		threshold = 1;
+	threshold = dec->regfbcount - dec->minfbcount;
 	if (disp->queued_count > threshold) {
 		if (vpu_v4l_performance_test) {
 			sem_post(&disp->avaiable_dequeue_frame);
