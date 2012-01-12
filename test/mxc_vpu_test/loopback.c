@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright 2004-2012 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -118,7 +118,7 @@ decode(void)
 	if ((dec->cmdl->format == STD_MJPG) && (outinfo.indexFrameDisplay == 0))
 		outinfo.indexFrameDisplay = rotid;
 
-	ret = v4l_put_data(disp, outinfo.indexFrameDisplay, V4L2_FIELD_ANY, 30);
+	ret = v4l_put_data(dec, outinfo.indexFrameDisplay, V4L2_FIELD_ANY, 30);
 	if (ret) {
 		err_msg("V4L put data failed, ret=%d\n", ret);
 		return -1;
