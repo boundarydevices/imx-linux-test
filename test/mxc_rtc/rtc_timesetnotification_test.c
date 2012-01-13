@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -64,6 +64,11 @@
 
 #include <linux/rtc.h>
 #include <linux/mxc_srtc.h>
+#define __USE_GNU
+#include<sched.h>
+#include<ctype.h>
+#include<string.h>
+
 
 /* Nice value (inverse of priority): between -20 and 19 */
 #define CHILD_PROC_NICE_VAL	15
@@ -75,6 +80,7 @@ int main(int argc, char **argv)
 	long long time_diff;
 	struct rtc_time rtc_tm;
 	int retval = 0;
+	cpu_set_t mask;
 
 	fd_srtc = open("/dev/rtc0", O_RDONLY);
 
@@ -99,7 +105,12 @@ int main(int argc, char **argv)
 		perror("Error! RTC_READ_TIME_47BIT");
 		exit(errno);
 	}
-
+	CPU_ZERO(&mask);
+	CPU_SET(0, &mask);
+    if (sched_setaffinity(0, sizeof(mask), &mask) == -1)
+    {
+         fprintf(stderr,"warning: could not set CPU affinity\n");
+    }
 	/* fork a child process that will call the ioctl that waits for time set */
 	pid_t pID = fork();
 
