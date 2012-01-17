@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright 2004-2012 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -136,6 +136,8 @@ int quitflag;
 static struct input_argument input_arg[MAX_NUM_INSTANCE];
 static int instance;
 static int using_config_file;
+
+int vpu_test_dbg_level;
 
 int decode_test(void *arg);
 int encode_test(void *arg);
@@ -384,9 +386,15 @@ int
 main(int argc, char *argv[])
 {
 	int err, nargc, i, ret = 0;
-	char *pargv[32] = {0};
+	char *pargv[32] = {0}, *dbg_env;
 	pthread_t sigtid;
 	vpu_versioninfo ver;
+
+	dbg_env=getenv("VPU_TEST_DBG");
+	if (dbg_env)
+		vpu_test_dbg_level = atoi(dbg_env);
+	else
+		vpu_test_dbg_level = 0;
 
 	err = parse_main_args(argc, argv);
 	if (err) {
