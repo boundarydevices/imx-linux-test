@@ -25,20 +25,20 @@
 #include "vpu_lib.h"
 #include "vpu_io.h"
 
-#define	DEBUG_LEVEL	0
+extern int vpu_test_dbg_level;
 
-#define dprintf(level, fmt, arg...)     if (DEBUG_LEVEL >= level) \
+#define dprintf(level, fmt, arg...)     if (vpu_test_dbg_level >= level) \
         printf("[DEBUG]\t%s:%d " fmt, __FILE__, __LINE__, ## arg)
 
-#define err_msg(fmt, arg...) do { if (DEBUG_LEVEL >= 1)		\
+#define err_msg(fmt, arg...) do { if (vpu_test_dbg_level >= 1)		\
 	printf("[ERR]\t%s:%d " fmt,  __FILE__, __LINE__, ## arg); else \
 	printf("[ERR]\t" fmt, ## arg);	\
 	} while (0)
-#define info_msg(fmt, arg...) do { if (DEBUG_LEVEL >= 1)		\
+#define info_msg(fmt, arg...) do { if (vpu_test_dbg_level >= 1)		\
 	printf("[INFO]\t%s:%d " fmt,  __FILE__, __LINE__, ## arg); else \
 	printf("[INFO]\t" fmt, ## arg);	\
 	} while (0)
-#define warn_msg(fmt, arg...) do { if (DEBUG_LEVEL >= 1)		\
+#define warn_msg(fmt, arg...) do { if (vpu_test_dbg_level >= 1)		\
 	printf("[WARN]\t%s:%d " fmt,  __FILE__, __LINE__, ## arg); else \
 	printf("[WARN]\t" fmt, ## arg);	\
 	} while (0)
