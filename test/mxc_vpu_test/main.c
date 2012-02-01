@@ -320,7 +320,7 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.gop = atoi(optarg);
 			break;
 		case 's':
-			if (cpu_is_mx6q())
+			if (cpu_is_mx6x())
 				input_arg[i].cmd.bs_mode = atoi(optarg);
 			else
 				input_arg[i].cmd.prescan = atoi(optarg);

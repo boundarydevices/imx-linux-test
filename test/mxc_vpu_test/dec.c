@@ -673,7 +673,7 @@ write_to_file(struct decode *dec, Rect cropRect, int index)
 			cropRect.top, cropRect.right, cropRect.bottom);
 	cropping = cropRect.left | cropRect.top | cropRect.bottom | cropRect.right;
 
-	if (cpu_is_mx6q() && (dec->cmdl->mapType != LINEAR_FRAME_MAP) &&
+	if (cpu_is_mx6x() && (dec->cmdl->mapType != LINEAR_FRAME_MAP) &&
 	    !dec->tiled2LinearEnable) {
 		SaveTiledYuvImageHelper(dec, dec->cmdl->dst_fd, stride, height, index);
 		goto out;
@@ -787,7 +787,7 @@ decoder_start(struct decode *dec)
 
 	decparam.dispReorderBuf = 0;
 
-	if (!cpu_is_mx6q()) {
+	if (!cpu_is_mx6x()) {
 		decparam.prescanEnable = dec->cmdl->prescan;
 		decparam.prescanMode = 0;
 	}
@@ -906,14 +906,14 @@ decoder_start(struct decode *dec)
 		}
 
 		/*
-		 * FIXME for mx6q MJPG decoding with streaming mode
+		 * FIXME for mx6x MJPG decoding with streaming mode
 		 * Currently bitstream buffer filling cannot be done when JPU is in decoding,
 		 * there are three places can do this:
 		 * 1. before vpu_DecStartOneFrame;
 		 * 2. in the case of RETCODE_JPEG_BIT_EMPTY returned in DecStartOneFrame() func;
 		 * 3. after vpu_DecGetOutputInfo.
 		 */
-		if (cpu_is_mx6q() && (dec->cmdl->format == STD_MJPG)) {
+		if (cpu_is_mx6x() && (dec->cmdl->format == STD_MJPG)) {
 			err = dec_fill_bsbuffer(handle, dec->cmdl,
 				    dec->virt_bsbuf_addr,
 				    (dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
@@ -951,7 +951,7 @@ decoder_start(struct decode *dec)
 		is_waited_int = 0;
 		loop_id = 0;
 		while (vpu_IsBusy()) {
-			if (!(cpu_is_mx6q() && (dec->cmdl->format == STD_MJPG))) {
+			if (!(cpu_is_mx6x() && (dec->cmdl->format == STD_MJPG))) {
 				err = dec_fill_bsbuffer(handle, dec->cmdl,
 					dec->virt_bsbuf_addr,
 					(dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
@@ -1015,7 +1015,7 @@ decoder_start(struct decode *dec)
 				continue;
 		}
 
-		if (cpu_is_mx6q() && (outinfo.decodingSuccess & 0x10)) {
+		if (cpu_is_mx6x() && (outinfo.decodingSuccess & 0x10)) {
 			warn_msg("vpu needs more bitstream in rollback mode\n"
 				"\tframe_id = %d\n", (int)frame_id);
 
@@ -1126,13 +1126,13 @@ decoder_start(struct decode *dec)
 		if (outinfo.indexFrameDisplay == -1)
 			decodefinish = 1;
 		else if ((outinfo.indexFrameDisplay > dec->regfbcount) &&
-			 (outinfo.prescanresult != 0) && !cpu_is_mx6q())
+			 (outinfo.prescanresult != 0) && !cpu_is_mx6x())
 			decodefinish = 1;
 
 		if (decodefinish)
 			break;
 
-		if (!cpu_is_mx6q() && (outinfo.prescanresult == 0) &&
+		if (!cpu_is_mx6x() && (outinfo.prescanresult == 0) &&
 		    (decparam.prescanEnable == 1)) {
 			if (eos) {
 				break;
@@ -1258,7 +1258,7 @@ decoder_start(struct decode *dec)
 		}
 
 		if (outinfo.numOfErrMBs) {
-			if (cpu_is_mx6q() && dec->cmdl->format == STD_MJPG)
+			if (cpu_is_mx6x() && dec->cmdl->format == STD_MJPG)
 				info_msg("Error Mb info:0x%x, in Frame : %d\n",
 					    outinfo.numOfErrMBs, (int)frame_id);
 			else {
@@ -1656,7 +1656,7 @@ decoder_parse(struct decode *dec)
 			err_msg("malloc_error\n");
 	}
 
-	if(!cpu_is_mx6q() && dec->cmdl->format == STD_MJPG) {
+	if(!cpu_is_mx6x() && dec->cmdl->format == STD_MJPG) {
 		ret = vpu_DecGiveCommand(handle,DEC_SET_REPORT_USERDATA, &dec->userData);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("Failed to set user data report, ret %d\n", ret);
@@ -1822,7 +1822,7 @@ decoder_parse(struct decode *dec)
 		}
 	}
 
-	if (cpu_is_mx6q())
+	if (cpu_is_mx6x())
 		info_msg("Decoder: width = %d, height = %d, frameRateRes = %d, frameRateDiv = %d, count = %u\n",
 			initinfo.picWidth, initinfo.picHeight,
 			initinfo.frameRateRes, initinfo.frameRateDiv,
@@ -1970,7 +1970,7 @@ decoder_open(struct decode *dec)
 	oparam.mp4DeblkEnable = dec->cmdl->deblock_en;
 	oparam.chromaInterleave = dec->cmdl->chromaInterleave;
 	oparam.mp4Class = dec->cmdl->mp4_h264Class;
-	if (cpu_is_mx6q())
+	if (cpu_is_mx6x())
 		oparam.avcExtension = dec->cmdl->mp4_h264Class;
 	oparam.mjpg_thumbNailDecEnable = 0;
 	oparam.mapType = dec->cmdl->mapType;
