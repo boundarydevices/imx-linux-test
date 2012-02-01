@@ -302,9 +302,9 @@ void decoder_free_framebuffer(struct decode *dec);
 void SaveQpReport(Uint32 *qpReportAddr, int picWidth, int picHeight,
 		  int frameIdx, char *fileName);
 
-static inline int is_mx6q_mjpg(int fmt)
+static inline int is_mx6x_mjpg(int fmt)
 {
-        if (cpu_is_mx6q() && (fmt == STD_MJPG))
+        if (cpu_is_mx6x() && (fmt == STD_MJPG))
                 return true;
         else
                 return false;
