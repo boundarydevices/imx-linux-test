@@ -581,8 +581,8 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	}
 
 	if (!dec->cmdl->video_node) {
-		if (cpu_is_mx6q())
-			dec->cmdl->video_node = 17; /* fg for mx6q */
+		if (cpu_is_mx6x())
+			dec->cmdl->video_node = 17; /* fg for mx6x */
 		else
 			dec->cmdl->video_node = 16;
 	}
@@ -598,7 +598,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 
 	info_msg("v4l output to %s\n", v4l_device);
 
-	if (!cpu_is_mx6q()) {
+	if (!cpu_is_mx6x()) {
 		err = ioctl(fd, VIDIOC_S_OUTPUT, &out);
 		if (err < 0) {
 			err_msg("VIDIOC_S_OUTPUT failed\n");
@@ -669,7 +669,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		}
 	}
 
-	if (cpu_is_mx6q()) {
+	if (cpu_is_mx6x()) {
 		/* Set rotation via new V4L2 interface on 2.6.38 kernel */
 		struct v4l2_control ctrl;
 
@@ -732,7 +732,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 			"top/left = %d/%d\n", top, left);
 		goto err;
 	} else if (right || bottom) {
-		if (cpu_is_mx6q()) {
+		if (cpu_is_mx6x()) {
 			/* This is aligned with new V4L interface on 2.6.38 kernel */
 			fmt.fmt.pix.width = width;
 			fmt.fmt.pix.height = height;
@@ -824,7 +824,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		buf->start = mmap(NULL, buffer.length, PROT_READ | PROT_WRITE,
 				MAP_SHARED, fd, buffer.m.offset);
 
-		if (cpu_is_mx6q()) {
+		if (cpu_is_mx6x()) {
 			/*
 			 * Workaround for new V4L interface change, this change
 			 * will be removed after V4L driver is updated for this.
@@ -896,7 +896,7 @@ void v4l_display_close(struct vpu_display *disp)
 		}
 
 		/* take care of ENGR00161948 */
-		if (cpu_is_mx6q()) {
+		if (cpu_is_mx6x()) {
 			if (disp->buf.field == V4L2_FIELD_ANY || disp->buf.field == V4L2_FIELD_NONE)
 				threshold = 1;
 			else
