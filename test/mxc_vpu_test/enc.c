@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright 2004-2012 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -220,7 +220,7 @@ encoder_fill_headers(struct encode *enc)
 	if (enc->cmdl->format == STD_MPEG4) {
 		enchdr_param.headerType = VOS_HEADER;
 
-		if (cpu_is_mx6q())
+		if (cpu_is_mx6x())
 			goto put_mp4header;
 		/*
 		 * Please set userProfileLevelEnable to 0 if you need to generate
@@ -314,7 +314,7 @@ put_mp4header:
 			free(enc->huffTable);
 		if (enc->qMatTable)
 			free(enc->qMatTable);
-		if (cpu_is_mx6q()) {
+		if (cpu_is_mx6x()) {
 			EncParamSet enchdr_param = {0};
 			enchdr_param.size = STREAM_BUF_SIZE;
 			enchdr_param.pParaSet = malloc(STREAM_BUF_SIZE);
@@ -366,7 +366,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	src_fbwidth = (enc->src_picwidth + 15) & ~15;
 	src_fbheight = (enc->src_picheight + 15) & ~15;
 
-	if (cpu_is_mx6q()) {
+	if (cpu_is_mx6x()) {
 		if (enc->cmdl->format == STD_AVC && enc->mvc_extension) /* MVC */
 			extrafbcount = 2 + 2; /* Subsamp [2] + Subsamp MVC [2] */
 		else if (enc->cmdl->format == STD_MJPG)
@@ -430,7 +430,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		fb[i].strideC = pfbpool[i]->strideC;
 	}
 
-	if (cpu_is_mx6q() && (enc->cmdl->format != STD_MJPG)) {
+	if (cpu_is_mx6x() && (enc->cmdl->format != STD_MJPG)) {
 		subSampBaseA = fb[minfbcount].bufY;
 		subSampBaseB = fb[minfbcount + 1].bufY;
 		if (enc->cmdl->format == STD_AVC && enc->mvc_extension) { /* MVC */
@@ -513,7 +513,7 @@ encoder_start(struct encode *enc)
 	u32 virt_bsbuf_end = virt_bsbuf_start + STREAM_BUF_SIZE;
 
 	/* Must put encode header here before encoding for all codec, except MX6 MJPG */
-	if (!(cpu_is_mx6q() && (enc->cmdl->format == STD_MJPG))) {
+	if (!(cpu_is_mx6x() && (enc->cmdl->format == STD_MJPG))) {
 		ret = encoder_fill_headers(enc);
 		if (ret) {
 			err_msg("Encode fill headers failed\n");
@@ -607,7 +607,7 @@ encoder_start(struct encode *enc)
 		}
 
 		/* Must put encode header before each frame encoding for mx6 MJPG */
-		if (cpu_is_mx6q() && (enc->cmdl->format == STD_MJPG)) {
+		if (cpu_is_mx6x() && (enc->cmdl->format == STD_MJPG)) {
 			ret = encoder_fill_headers(enc);
 			if (ret) {
 				err_msg("Encode fill headers failed\n");
@@ -913,7 +913,7 @@ encoder_open(struct encode *enc)
 	encop.dynamicAllocEnable = 0;
 	encop.chromaInterleave = enc->cmdl->chromaInterleave;
 
-	if(!cpu_is_mx6q() &&  enc->cmdl->format == STD_MJPG )
+	if(!cpu_is_mx6x() &&  enc->cmdl->format == STD_MJPG )
 	{
 		qMatTable = calloc(192,1);
 		if (qMatTable == NULL) {
@@ -1030,7 +1030,7 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.avcParam.avc_deblkFilterOffsetBeta = 0;
 		encop.EncStdParam.avcParam.avc_chromaQpOffset = 10;
 		encop.EncStdParam.avcParam.avc_audEnable = 0;
-		if (cpu_is_mx6q()) {
+		if (cpu_is_mx6x()) {
 			encop.EncStdParam.avcParam.interview_en = 0;
 			encop.EncStdParam.avcParam.paraset_refresh_en = enc->mvc_paraset_refresh_en = 0;
 			encop.EncStdParam.avcParam.prefix_nal_en = 0;
@@ -1066,7 +1066,7 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.mjpgParam.mjpg_thumbNailEnable = 0;
 		encop.EncStdParam.mjpgParam.mjpg_thumbNailWidth = 0;
 		encop.EncStdParam.mjpgParam.mjpg_thumbNailHeight = 0;
-		if (cpu_is_mx6q()) {
+		if (cpu_is_mx6x()) {
 			jpgGetHuffTable(&encop.EncStdParam.mjpgParam);
 			jpgGetQMatrix(&encop.EncStdParam.mjpgParam);
 			jpgGetCInfoTable(&encop.EncStdParam.mjpgParam);
@@ -1156,7 +1156,7 @@ encode_test(void *arg)
 		goto err1;
 
         /* allocate scratch buf */
-	if (cpu_is_mx6q() && (cmdl->format == STD_MPEG4) && enc->mp4_dataPartitionEnable) {
+	if (cpu_is_mx6x() && (cmdl->format == STD_MPEG4) && enc->mp4_dataPartitionEnable) {
 		scratch_mem_desc.size = MPEG4_SCRATCH_SIZE;
                 ret = IOGetPhyMem(&scratch_mem_desc);
                 if (ret) {
@@ -1181,7 +1181,7 @@ err1:
 	/* close the encoder */
 	encoder_close(enc);
 err:
-	if (cpu_is_mx6q() && cmdl->format == STD_MPEG4 && enc->mp4_dataPartitionEnable) {
+	if (cpu_is_mx6x() && cmdl->format == STD_MPEG4 && enc->mp4_dataPartitionEnable) {
 		IOFreeVirtMem(&scratch_mem_desc);
 		IOFreePhyMem(&scratch_mem_desc);
 	}
