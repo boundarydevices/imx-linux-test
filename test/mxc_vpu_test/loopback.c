@@ -44,7 +44,7 @@ decode(void)
 	/* Suggest to enable prescan in loopback, then decoder performs scanning stream buffers
 	 * to check whether data is enough to prevent decoder hang.
 	 */
-	if (!cpu_is_mx6q())
+	if (!cpu_is_mx6x())
 		decparam.prescanEnable = dec->cmdl->prescan;
 
 	if (dec->cmdl->format == STD_MJPG) {
@@ -80,7 +80,7 @@ decode(void)
 		return -1;
 	}
 
-	if (cpu_is_mx6q() && (outinfo.decodingSuccess & 0x10)) {
+	if (cpu_is_mx6x() && (outinfo.decodingSuccess & 0x10)) {
 		goto out;
 	}
 
@@ -98,7 +98,7 @@ decode(void)
 			(outinfo.indexFrameDisplay > dec->regfbcount))
 		return -1;
 
-	if (!cpu_is_mx6q() && (outinfo.prescanresult == 0) && (decparam.dispReorderBuf == 0)) {
+	if (!cpu_is_mx6x() && (outinfo.prescanresult == 0) && (decparam.dispReorderBuf == 0)) {
 		warn_msg("Prescan Enable: not enough bs data\n");
 		goto out;
 	}
@@ -244,7 +244,7 @@ encoder_fill_headers(void)
 			free(enc->huffTable);
 		if (enc->qMatTable)
 			free(enc->qMatTable);
-		if (cpu_is_mx6q()) {
+		if (cpu_is_mx6x()) {
 			EncParamSet enchdr_param = {0};
 			enchdr_param.size = STREAM_BUF_SIZE;
 			enchdr_param.pParaSet = malloc(STREAM_BUF_SIZE);
@@ -276,7 +276,7 @@ encode(void)
 	struct v4l2_buffer v4l2_buf;
 	u32 vbuf;
 
-	if (cpu_is_mx6q() && (dec->cmdl->format == STD_MJPG)) {
+	if (cpu_is_mx6x() && (dec->cmdl->format == STD_MJPG)) {
 		ret = encoder_fill_headers();
 		if (ret) {
 			err_msg("fill headers failed\n");
@@ -447,7 +447,7 @@ encdec_test(void *arg)
 
 	/* For MX6 MJPG, header must be inserted before each frame, only need to
 	 * fill header here once for other codecs */
-	if (!(cpu_is_mx6q() && (enc->cmdl->format == STD_MJPG))) {
+	if (!(cpu_is_mx6x() && (enc->cmdl->format == STD_MJPG))) {
 		ret = encoder_fill_headers();
 		if (ret) {
 			err_msg("fill headers failed\n");
