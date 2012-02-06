@@ -1233,8 +1233,11 @@ decoder_start(struct decode *dec)
 					disp_clr_index = outinfo.indexFrameDisplay;
 					if (disp->buf.index != -1)
 						rotid = disp->buf.index; /* de-queued buffer as next rotation buffer */
-					else
+					else {
 						rotid++;
+						rotid = (rotid - dec->regfbcount) % dec->extrafb;
+						rotid += dec->regfbcount;
+					}
 				}
 				else
 					disp_clr_index = disp->buf.index;
