@@ -1014,7 +1014,10 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 
 	disp->ncount++;
 
-	threshold = dec->regfbcount - dec->minfbcount;
+	if (dec->post_processing)
+		threshold = dec->rot_buf_count - 1;
+	else
+		threshold = dec->regfbcount - dec->minfbcount;
 	if (disp->queued_count > threshold) {
 		if (vpu_v4l_performance_test) {
 			sem_post(&disp->avaiable_dequeue_frame);
