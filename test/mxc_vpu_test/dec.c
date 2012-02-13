@@ -1437,6 +1437,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 		dec->rot_buf_count = ((dec->cmdl->dst_scheme == PATH_V4L2) ||
 				(dec->cmdl->dst_scheme == PATH_IPU)) ? 2 : 1;
 		dec->extrafb += dec->rot_buf_count;
+		dec->post_processing = 1;
 	}
 
 	/*
