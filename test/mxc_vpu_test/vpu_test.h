@@ -216,6 +216,7 @@ struct decode {
 	Rect picCropRect;
 	int reorderEnable;
 	int tiled2LinearEnable;
+	int post_processing;
 
 	DecReportInfo mbInfo;
 	DecReportInfo mvInfo;
