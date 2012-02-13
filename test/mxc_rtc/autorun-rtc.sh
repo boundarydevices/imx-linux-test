@@ -11,14 +11,7 @@ echo "$(platform)"
 if [ "$(platform)" != IMX31ADS ] && [ "$(platform)" != IMX32ADS ] \
     && [ "$(platform)" != IMX25_3STACK ] && [ "$(platform)" != IMX35_3STACK ]; then
 	rtc_test_param=--no-periodic
-	# For kernel version 2.6.38 and higher, number of interrupts expected will be 11
-	VER=`echo $(kernel_version) | cut -d. -f3 | cut -d- -f1`
-	REF_VER=38
-	if [ $VER -ge $REF_VER ]; then
 		RTC_IRQS_EXPECTED=11
-	else
-		RTC_IRQS_EXPECTED=1
-	fi
 else
 	rtc_test_param=--full
 	RTC_IRQS_EXPECTED=131
