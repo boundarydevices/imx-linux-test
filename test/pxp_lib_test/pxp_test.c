@@ -1,7 +1,7 @@
 /*
  * pxp_test - test application for the PxP DMA ENGINE lib
  *
- * Copyright (C) 2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -343,6 +343,12 @@ int pxp_test(void *arg)
 	pxp_conf->out_param.width = WIDTH;
 	pxp_conf->out_param.height = HEIGHT;
 	pxp_conf->out_param.pixel_fmt = PXP_PIX_FMT_GREY;
+	if (proc_data->rotate % 180)
+		pxp_conf->out_param.stride = HEIGHT;
+	else
+		pxp_conf->out_param.stride = WIDTH;
+
+
 	if (cmdl->dst_scheme != PATH_FILE) {
 		while (1) {
 			fb_dev[7] = '0' + fb_num;
