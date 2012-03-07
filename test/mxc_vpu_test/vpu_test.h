@@ -67,6 +67,7 @@ typedef unsigned char u8;
 #define ENCODE		1
 #define DECODE		2
 #define LOOPBACK	3
+#define TRANSCODE	4
 
 #define DEFAULT_PORT		5555
 #define DEFAULT_PKT_SIZE	0x28000
@@ -189,6 +190,7 @@ struct cmd_line {
 	char vdi_motion;	/* VDI motion algorithm */
 	int fps;
 	int mapType;
+	int quantParam;
 };
 
 struct decode {

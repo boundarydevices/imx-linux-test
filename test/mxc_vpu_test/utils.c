@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright 2004-2012 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -854,6 +854,19 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 		return 0;
 	}
+
+	str = strstr(buf, "quantParam");
+	if (str != NULL) {
+		str = index(buf, '=');
+		if (str != NULL) {
+			str++;
+			if (*str != '\0') {
+				cmd->quantParam = strtol(str, NULL, 10);
+			}
+		}
+
+		return 0;
+        }
 
 	return 0;
 }
