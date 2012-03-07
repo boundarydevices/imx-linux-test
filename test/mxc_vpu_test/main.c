@@ -28,6 +28,7 @@
 char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "-E \"<encode options>\" "\
 	       "-L \"<loopback options>\" -C <config file> "\
+	       "-T \"<transcode options>\" -C <config file> "\
 	       "-H display this help \n "
 	       "\n"\
 	       "decode options \n "\
@@ -110,6 +111,8 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is 0 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
 	       "        default is none-interleave(0). \n "\
+	       "  -q <quantization parameter> \n "\
+	       "	default is 20 \n "\
 	       "\n"\
 	       "loopback options \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG \n "\
@@ -120,6 +123,57 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is 144 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
                "        default is none-interleave(0). \n "\
+	       "\n"\
+	       "transcode options, encoder set to h264 720p now \n "\
+	       "  -i <input file> Read input from file \n "\
+	       "        If no input file is specified, default is network \n "\
+	       "  -o <output file> Write output to file \n "\
+	       "        If no output is specified, default is LCD \n "\
+	       "  -x <output method> V4l2(0) or IPU lib(1) \n "\
+	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, \n "\
+	       "        4 - MPEG2, 5 - DIV3, 6 - RV, 7 - MJPG, \n "\
+	       "        8 - AVS, 9 - VP8\n "\
+	       "        If no format specified, default is 0 (MPEG4) \n "\
+	       "  -l <mp4Class / h264 type> \n "\
+	       "        When 'f' flag is 0 (MPEG4), it is mp4 class type. \n "\
+	       "        0 - MPEG4, 1 - DIVX 5.0 or higher, 2 - XVID, 5 - DIVX4.0 \n "\
+	       "        When 'f' flag is 2 (H.264), it is h264 type. \n "\
+	       "        0 - normal H.264(AVC), 1 - MVC \n "\
+	       "  -p <port number> UDP port number to bind \n "\
+	       "        If no port number is secified, 5555 is used \n "\
+	       "  -c <count> Number of frames to decode \n "\
+	       "  -d <deblocking> Enable deblock - 1. enabled \n "\
+	       "        default deblock is disabled (0). \n "\
+	       "  -e <dering> Enable dering - 1. enabled \n "\
+	       "        default dering is disabled (0). \n "\
+	       "  -r <rotation angle> 0, 90, 180, 270 \n "\
+	       "        default rotation is disabled (0) \n "\
+	       "  -m <mirror direction> 0, 1, 2, 3 \n "\
+	       "        default no mirroring (0) \n "\
+	       "  -u <ipu rotation> Using IPU rotation for display - 1. IPU rotation \n "\
+	       "        default is VPU rotation(0).\n "\
+	       "        This flag is effective when 'r' flag is specified.\n "\
+	       "  -v <vdi motion> set IPU VDI motion algorithm l, m, h.\n "\
+	       "        default is m-medium. \n "\
+	       "  -w <width> display picture width \n "\
+	       "        default is source picture width. \n "\
+	       "  -h <height> display picture height \n "\
+	       "        default is source picture height \n "\
+	       "  -j <left offset> display picture left offset \n "\
+	       "        default is 0. \n "\
+	       "  -k <top offset> display picture top offset \n "\
+	       "        default is 0 \n "\
+	       "  -a <frame rate> display framerate \n "\
+	       "        default is 30 \n "\
+	       "  -t <chromaInterleave> CbCr interleaved \n "\
+	       "        default is none-interleave(0). \n "\
+	       "  -s <prescan/bs_mode> Enable prescan in decoding on i.mx5x - 1. enabled \n "\
+	       "        default is disabled. Bitstream mode in decoding on i.mx6  \n "\
+	       "        0. Normal mode, 1. Rollback mode \n "\
+	       "  -y <maptype> Map type for GDI interface \n "\
+	       "        0 - Linear frame map, 1 - frame MB map, 2 - field MB map \n "\
+	       "  -q <quantization parameter> \n "\
+	       "	default is 20 \n "\
 	       "\n"\
 	       "config file - Use config file for specifying options \n";
 
@@ -142,12 +196,13 @@ int vpu_test_dbg_level;
 int decode_test(void *arg);
 int encode_test(void *arg);
 int encdec_test(void *arg);
+int transcode_test(void *arg);
 
 /* Encode or Decode or Loopback */
-static char *mainopts = "HE:D:L:C:";
+static char *mainopts = "H:E:D:L:T:C:";
 
 /* Options for encode and decode */
-static char *options = "i:o:x:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:j:k:a:v:y:";
+static char *options = "i:o:x:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:j:k:a:v:y:q:";
 
 int
 parse_config_file(char *file_name)
@@ -211,6 +266,13 @@ parse_main_args(int argc, char *argv[])
 			strncat(input_arg[instance].line, optarg, 200);
 			instance++;
 			break;
+                case 'T':
+                        input_arg[instance].mode = TRANSCODE;
+                        strncpy(input_arg[instance].line, argv[0], 26);
+                        strncat(input_arg[instance].line, " ", 2);
+                        strncat(input_arg[instance].line, optarg, 200);
+                        instance++;
+                        break;
 		case 'C':
 			if (instance > 0) {
 			 	warn_msg("-C option not selected because of"
@@ -349,6 +411,9 @@ parse_args(int argc, char *argv[], int i)
 		case 'y':
 			input_arg[i].cmd.mapType = atoi(optarg);
 			break;
+		case 'q':
+			input_arg[i].cmd.quantParam = atoi(optarg);
+			break;
 		case -1:
 			break;
 		default:
@@ -477,6 +542,8 @@ main(int argc, char *argv[])
 					ret = decode_test(&input_arg[0].cmd);
 				} else if (input_arg[0].mode == ENCODE) {
 					ret = encode_test(&input_arg[0].cmd);
+                                } else if (input_arg[0].mode == TRANSCODE) {
+                                        ret = transcode_test(&input_arg[0].cmd);
 				}
 
 				close_files(&input_arg[0].cmd);
