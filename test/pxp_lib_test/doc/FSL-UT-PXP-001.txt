@@ -1,0 +1,38 @@
+FSL-UT-PXP-001
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test multiple instances of PxP DMAENGINE clients
+
+| Automated |
+YES
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_PXP=y
+ CONFIG_MXC_PXP_V2=y
+ CONFIG_MXC_PXP_CLIENT_DEVICE=y
+ CONFIG_DMA_ENGINE=y
+
+| Software Dependency |
+Need /usr/lib/libpxp.so
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ /unit_tests/autorun-pxp.sh
+
+| Expected Result |
+Should get the following message:
+
+ autorun-pxp.sh: Exiting PASS
+
+|====================================================================
+
+<<<
