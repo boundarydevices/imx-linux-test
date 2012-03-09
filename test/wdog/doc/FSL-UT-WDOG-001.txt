@@ -1,0 +1,35 @@
+FSL-UT-WDOG-001
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Check WatchDog device node
+
+| Automated |
+YES
+
+| Kernel Config Option |
+CONFIG_WATCHDOG=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ /unit_tests/autorun-wdog.sh
+
+| Expected Result |
+Should get the following message:
+
+ autorun-wdog.sh: Exiting PASS
+
+|====================================================================
+
+<<<
