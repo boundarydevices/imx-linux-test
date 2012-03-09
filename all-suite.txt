@@ -1,0 +1,11 @@
+# all-suite.txt
+#
+# There are three fields, delimited by ':'
+# <UT ID>:<SCRIPT NAME>:<PLATFORM LISTS>
+# If <SCRIPT NAME> is prefixed with "autorun", it will get run
+# every night when we run autorun.sh.
+# Refer to linux-test/test-utils.sh for available <PLATFORM LISTS>
+#
+FSL-UT-PXP-0001:autorun-pxp.sh:IMX6
+FSL-UT-PXP-0002:pxp_v4l2_out_test.sh:
+FSL-UT-WDOG-0001:autorun-wdog.sh:IMX6
