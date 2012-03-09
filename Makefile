@@ -31,7 +31,7 @@ endif
 #
 export INC CROSS_COMPILE LINUXPATH PLATFORM TOPDIR OBJDIR
 
-.PHONY: test module_test clean distclean pkg install
+.PHONY: test module_test doc clean distclean pkg install
 
 all : test module_test
 
@@ -45,6 +45,11 @@ module_test:
 	@echo Building test modules...
 	$(MAKE) -C $(TOPDIR)/module_test OBJDIR=$(OBJDIR)/modules
 
+doc:
+	@echo
+	@echo Generating user manual...
+	$(MAKE) -C $(TOPDIR)/doc
+
 install: $(install_target)
 
 install_dummy:
@@ -56,7 +61,7 @@ install_actual:
 	mkdir -p $(DESTDIR)
 	-rm -rf $(DESTDIR)/*
 	cp -rf $(OBJDIR)/* $(DESTDIR)
-	cp autorun.sh test-utils.sh autorun-suite.txt $(DESTDIR)
+	cp autorun.sh test-utils.sh all-suite.txt $(DESTDIR)
 
 distclean: clean
 

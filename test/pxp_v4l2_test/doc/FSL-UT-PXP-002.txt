@@ -1,0 +1,46 @@
+FSL-UT-PXP-002
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+PxP function test (via V4L2 interface)
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_MXC_PXP=y
+ CONFIG_DMA_ENGINE=y
+ CONFIG_VIDEO_MXC_PXP_V4L2=y
+ CONFIG_VIDEO_V4L2=y
+ ...
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+ifdef::imx50[]
+Use SEIKO LCD panel on J13 or J12, or use use CLAA LCD panel on J12.
+
+Please refer to release note for kernel cmdline setting.
+endif::[]
+ifdef::imx6q[]
+TBD
+endif::[]
+
+| Test Procedure |
+. run ./pxp_v4l2_test.out -h for available test parameters.
+. run a real case, for example (or refer to pxp_v4l2_out_test.sh in rootfs)
+
+  $ cd /unit_tests/
+  $ ./pxp_v4l2_test.out -sx 480 -sy 272 -res 352:240 -a 100 fb-352x240.yuv BLANK
+
+| Expected Result |
+The video streaming can be viewed on LCD
+
+|====================================================================
+
+<<<
