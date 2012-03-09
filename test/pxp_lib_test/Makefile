@@ -5,7 +5,8 @@ SRCS = pxp_test.c utils.c
 CFLAGS += -lpxp -lpthread
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
-OBJS = $(OBJDIR)/pxp_test.out
+OBJS = $(OBJDIR)/pxp_test.out \
+	$(OBJDIR)/autorun-pxp.sh
 $(OBJS): $(SRCS)
 	mkdir -p $(OBJDIR)
 	$(VERBOSE) $(CC) -g $(INC) $(CFLAGS) $^ $(LIBS) -o $@
