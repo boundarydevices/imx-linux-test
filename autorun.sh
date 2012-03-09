@@ -58,6 +58,9 @@ run_test_id()
 make_clean_todo_list()
 {
     rm -f /unit_tests/autorun-todo.txt
+    rm -f /unit_tests/autorun-suite.txt
+    grep 'FSL-UT-' /unit_tests/all-suite.txt|egrep -v '#' | grep 'autorun' | grep "$(platform)" | \
+	cut -d: -f1-2 > /unit_tests/autorun-suite.txt
     grep 'FSL-UT-' /unit_tests/autorun-suite.txt|egrep -v '#'| \
 	cut -d: -f1|cut -d' ' -f1|sed -r 's,(FSL-UT-.*),\1 TODO,' > /unit_tests/autorun-todo.txt
 }
@@ -76,7 +79,7 @@ run_todo_list()
 			fi
 		fi
 	done < /unit_tests/autorun-todo.txt
-	echo "autorun.sh: completed test suite"
+	echo "autorun.sh: completed test suite - run_todo_list"
 }
 
 # If we are running on read-only rootfs, can't make todo list.
@@ -86,7 +89,7 @@ run_autorun_suite()
 		id=$(echo "$id"|cut -d\  -f1)
 		run_test_id $id
 	done < /unit_tests/autorun-suite.txt
-	echo "autorun.sh: completed test suite"
+	echo "autorun.sh: completed test suite - run_autorun_suite"
 }
 
 #=================================================================
@@ -121,6 +124,12 @@ printf "Test cases run: %d  Pass: %d  Fail: %d\n\n" \
 
 if [ $pass_count -ne 0 ] && [ $pass_count -eq $total_count ]; then
 	echo "imx-test suite: PASS"
+	exit 0
+fi
+
+if [ $total_count -eq 0 ]; then
+	echo "imx-test suite: ALREADY DONE BEFORE."
+	echo "Remove /unit_tests/autorun-todo.txt, and re-run autorun.sh"
 	exit 0
 fi
 

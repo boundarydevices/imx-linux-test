@@ -1,0 +1,14 @@
+// modules listed in alphabetical order
+include::def.cfg[]
+
+{chip} Linux BSP Unit Test User Manual
+======================================
+
+PXP
+---
+include::../pxp_lib_test/doc/FSL-UT-PXP-001.txt[]
+include::../pxp_v4l2_test/doc/FSL-UT-PXP-002.txt[]
+
+WDOG
+----
+include::../wdog/doc/FSL-UT-WDOG-001.txt[]
