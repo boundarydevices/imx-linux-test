@@ -80,7 +80,7 @@ extern "C"{
 #define NUM_TESTS		14
 
 __u32 pwrdown_delay = 0;
-__u32 scheme = UPDATE_SCHEME_SNAPSHOT;
+__u32 scheme = UPDATE_SCHEME_QUEUE_AND_MERGE;
 int test_map[NUM_TESTS];
 typedef int (*testfunc)(void);
 testfunc testfunc_array[NUM_TESTS] = {NULL};
@@ -1871,6 +1871,11 @@ static int test_stress(void)
 	0x738E, 0x8410, 0x9492, 0xA514, 0xB596, 0xC618, 0xD69A, 0xE71C, 0xFFFF};
 	uint flags;
 
+	if (scheme == UPDATE_SCHEME_SNAPSHOT) {
+		printf("Unable to run stress test with SNAPSHOT scheme.\n");
+		return TPASS;
+	}
+
 	printf("Blank screen\n");
 	memset(fb, 0xFF, screen_info.xres_virtual*screen_info.yres*2);
 	update_to_display(0, 0, screen_info.xres, screen_info.yres,
@@ -1953,9 +1958,8 @@ void usage(char *app)
 	printf("10 - Partial to Full Update Transitions\n");
 	printf("11 - Test Pixel Shifting Effect\n");
 	printf("12 - Colormap Updates\n");
-	printf("13 - Minimal Collision Resubmission\n");
-	printf("14 - Collision Test Mode\n");
-	printf("15 - Stress Test\n");
+	printf("13 - Collision Test Mode\n");
+	printf("14 - Stress Test\n");
 }
 
 int parse_test_nums(char *num_str)
