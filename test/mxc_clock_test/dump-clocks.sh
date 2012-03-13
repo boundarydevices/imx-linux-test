@@ -15,7 +15,7 @@ for foo in $(find /sys/kernel/debug/clock -type d); do
 
     cd $foo
 
-    ec="$(cat enable_count)"
+    use="$(cat usecount)"
     rate="$(cat rate)"
 
     clk="$(basename $foo)"
@@ -26,7 +26,7 @@ for foo in $(find /sys/kernel/debug/clock -type d); do
         parent="   ---"
     fi
 
-    printf "%-24s %-24s %2d %10d\n" "$clk" "$parent" "$ec" "$rate"
+    printf "%-24s %-24s %2d %10d\n" "$clk" "$parent" "$use" "$rate"
 
     cd $saved_path
 done
