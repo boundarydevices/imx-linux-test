@@ -692,7 +692,7 @@ write_to_file(struct decode *dec, Rect cropRect, int index)
 			img_size = stride * height * 3;
 	}
 
-	if (chromaInterleave == 0 && cropping == 0) {
+	if ((chromaInterleave == 0 && cropping == 0) || dec->cmdl->format == STD_MJPG) {
 		fwriten(dec->cmdl->dst_fd, buf, img_size);
 		goto out;
 	}
@@ -1409,7 +1409,7 @@ int
 decoder_allocate_framebuffer(struct decode *dec)
 {
 	DecBufInfo bufinfo;
-	int i, regfbcount = dec->regfbcount, totalfb, img_size;
+	int i, regfbcount = dec->regfbcount, totalfb, img_size, mvCol;
        	int dst_scheme = dec->cmdl->dst_scheme, rot_en = dec->cmdl->rot_en;
 	int deblock_en = dec->cmdl->deblock_en;
 	int dering_en = dec->cmdl->dering_en;
@@ -1465,13 +1465,18 @@ decoder_allocate_framebuffer(struct decode *dec)
 		return -1;
 	}
 
+	if (dec->cmdl->format == STD_MJPG)
+		mvCol = 0;
+	else
+		mvCol = 1;
+
 	if (((dst_scheme != PATH_V4L2) && (dst_scheme != PATH_IPU)) ||
 			(((dst_scheme == PATH_V4L2) || (dst_scheme == PATH_IPU)) && deblock_en)) {
 		if (dec->cmdl->mapType == LINEAR_FRAME_MAP) {
 			/* All buffers are linear */
 			for (i = 0; i < totalfb; i++) {
 				pfbpool[i] = framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
-						    dec->stride, dec->picheight, 1);
+						    dec->stride, dec->picheight, mvCol);
 				if (pfbpool[i] == NULL)
 					goto err;
 			}
@@ -1479,7 +1484,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 			/* decoded buffers are tiled */
 			for (i = 0; i < regfbcount; i++) {
 				pfbpool[i] = tiled_framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
-						    dec->stride, dec->picheight, 1, dec->cmdl->mapType);
+						dec->stride, dec->picheight, mvCol, dec->cmdl->mapType);
 				if (pfbpool[i] == NULL)
 					goto err;
 			}
@@ -1489,10 +1494,10 @@ decoder_allocate_framebuffer(struct decode *dec)
 				 * otherwise, the buffer is tiled */
 				if (dec->tiled2LinearEnable)
 					pfbpool[i] = framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
-							dec->stride, dec->picheight, 1);
+							dec->stride, dec->picheight, mvCol);
 				else
 					pfbpool[i] = tiled_framebuf_alloc(dec->cmdl->format, dec->mjpg_fmt,
-						    dec->stride, dec->picheight, 1, dec->cmdl->mapType);
+						    dec->stride, dec->picheight, mvCol, dec->cmdl->mapType);
 				if (pfbpool[i] == NULL)
 					goto err1;
 			}
