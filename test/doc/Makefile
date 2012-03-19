@@ -1,19 +1,23 @@
 DOCMAIN :=$(wildcard *.toc)
-PLATFORMLOWER := $(shell echo $(PLATFORM) | tr A-Z a-z)
 
-all: chunked single
+all: pre-build chunked single
+
+pre-build:
+	./gen_conf.sh $(PLATFORM)
 
 chunked: $(DOCMAIN)
-	echo "// Don't edit it manually!" > def.cfg
-	echo ":chip: $(PLATFORM)" >> def.cfg
-	echo ":$(PLATFORMLOWER):" >> def.cfg
 	asciidoc -a toc $<
+ifneq ($(OBJDIR),)
 	cp -f *.html $(OBJDIR)
+endif
+
 single:
 
 pdf: $(DOCMAIN)
 	a2x -dbook -f pdf $<
+ifneq ($(OBJDIR),)
 	cp -f *.pdf $(OBJDIR)
+endif
 
 .PHONY: clean
 clean:
