@@ -12,3 +12,7 @@ include::../pxp_v4l2_test/doc/FSL-UT-PXP-002.txt[]
 WDOG
 ----
 include::../wdog/doc/FSL-UT-WDOG-001.txt[]
+
+EPDC
+---
+include::../mxc_fb_test/doc/FSL-UT-EPDC-001.txt[]
