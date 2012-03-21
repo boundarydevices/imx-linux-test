@@ -17,7 +17,7 @@
 #include <fcntl.h>
 
 #include <errno.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include <string.h>
 #include <malloc.h>
 

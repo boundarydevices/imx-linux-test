@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright 2004-2012 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include "vpu_test.h"
 
 #define TEST_BUFFER_NUM 3

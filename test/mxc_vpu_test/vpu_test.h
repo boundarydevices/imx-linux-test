@@ -16,7 +16,7 @@
 #ifndef _DEC_H
 #define _DEC_H
 
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include <pthread.h>
 #include <errno.h>
 #include <stdint.h>
