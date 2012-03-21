@@ -37,7 +37,6 @@ extern "C"{
 #include <sys/time.h>
 #include <unistd.h>
 #include <asm/types.h>
-#include <linux/videodev.h>
 #include <linux/videodev2.h>
 #include <sys/mman.h>
 #include <math.h>
