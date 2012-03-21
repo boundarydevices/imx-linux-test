@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2009-2012 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -39,7 +39,7 @@ extern "C"{
 #include <stdlib.h>
 #include <asm/types.h>
 #include <linux/fb.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <string.h>

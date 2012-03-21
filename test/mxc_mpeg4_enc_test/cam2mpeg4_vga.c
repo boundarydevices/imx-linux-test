@@ -14,7 +14,7 @@
 /* For linear memory allocation */
 #include "memalloc.h"
 
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #define TEST_BUFFER_NUM 3
 
 struct cmd_line
