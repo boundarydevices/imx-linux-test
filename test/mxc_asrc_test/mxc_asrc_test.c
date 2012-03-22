@@ -533,7 +533,7 @@ void convert_data(FILE * dst, struct audio_info_s *info)
 		fwrite(&header[i], 1, 1, dst);
 		i++;
 	}
-
+	i = 0;
 	do {
 		data = output_buffer[i++];
 		data = (data << 8) & 0xFFFF0000;
