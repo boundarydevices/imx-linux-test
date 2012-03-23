@@ -1,0 +1,45 @@
+FSL-UT-GPU-001
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+GPU function test
+
+- tutorial3: test OpenGL ES 1.1 basic function
+- tutorial4_es20: test OpenGL ES 2.0 basic function
+- tiger: test OpenVG 1.1 basic function
+- tvui: test Raster 2D and LibVivanteDK API
+
+| Automated |
+NO
+
+| Kernel Config Option |
+CONFIG_MXC_GPU=m
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+LVDS Display Panel
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ /unit_tests/gpu.sh
+
+| Expected Result |
+Should get the following message:
+
+The frames can be drawn properly on screen
+
+- tutorial3: a cube with texture rotating in the middle of the screen.
+- tutorial4_es20: draws a glass sphere inside a big sphere (enviroment mapping). The glass sphere shows both reflection and refraction effects.
+- tiger: a tiger spinning on the screen.
+- tvui: draws several movie clips and a tv control panel.
+
+|====================================================================
+
+<<<

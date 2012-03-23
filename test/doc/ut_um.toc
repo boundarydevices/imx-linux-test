@@ -16,3 +16,7 @@ include::../wdog/doc/FSL-UT-WDOG-001.txt[]
 EPDC
 ---
 include::../mxc_fb_test/doc/FSL-UT-EPDC-001.txt[]
+
+GPU
+---
+include::../gpu/doc/FSL-UT-GPU-001.txt[]
