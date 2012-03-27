@@ -3,9 +3,6 @@ INCLUDE_LIST:=IMX6Q
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 OBJS = $(OBJDIR)/gpu.sh
-$(OBJS): $(SRCS)
-	mkdir -p $(OBJDIR)
-	cp gpu.sh $(OBJDIR)
 else
 OBJS =
 endif
