@@ -4,6 +4,8 @@
 # list of platforms which did not want this test case
 EXCLUDE_LIST:= IMX21ADS IMX27ADS IMX31ADS IMX32ADS IMX37_3STACK IMX25_3STACK
 
+CFLAGS += -lpthread
+
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = \
 	$(OBJDIR)/mxc_asrc_test.out \
