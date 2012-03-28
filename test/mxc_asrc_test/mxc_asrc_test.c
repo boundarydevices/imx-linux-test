@@ -202,13 +202,9 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 {
 	int err = 0;
 	int i = 0;
-	int y = 0;
 	struct asrc_buffer inbuf, outbuf;
-	char *p;
 	char *input_p;
 	char *output_p;
-	struct asrc_status_flags flags;
-	int flush_done = 0;
 
 	info->output_dma_size =
 	       	asrc_get_output_buffer_size(DMA_BUF_SIZE,
@@ -216,9 +212,7 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 					info->output_sample_rate);
 	info->output_dma_size = DMA_BUF_SIZE;
 
-	flags.index = pair_index;
 	input_p = (char *)input_buffer;
-	output_p = (char *)output_buffer;
 
 	for (i = 0;i < BUF_NUM; i++) {
 		input_p = (char *)input_buffer + info->input_used;
@@ -493,7 +487,7 @@ int main(int ac, char *av[])
 			    break;
 			default:
 			    printf("Incorrect clock source\n");
-			    return;
+			    return 1;
 		}
 
 		i = atoi(av[6]);
@@ -545,7 +539,7 @@ int main(int ac, char *av[])
 			    break;
 			default:
 			    printf("Incorrect clock source\n");
-			    return ;
+			    return 1;
 		}
 	}
 
@@ -631,8 +625,8 @@ void *asrc_output_thread(void *info)
 {
 	int err;
 	struct audio_info_s *pinfo = (struct audio_info_s *)info;
-	struct asrc_buffer outbuf,inbuf;
-	char *output_p, *input_p;
+	struct asrc_buffer outbuf;
+	char *output_p;
 	unsigned int len;
 	int output_dma_si = pinfo->output_dma_size;
 
