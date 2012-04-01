@@ -1,0 +1,31 @@
+FSL-UT-RTC-002
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test RTC resume system
+
+| Automated |
+YES
+
+| Kernel Config Option |
+ CONFIG_RTC_DRV_SNVS
+
+| Software Dependency |
+System suspend/resume function ready
+
+| Test Procedure |
+Test whether target is able to resume from standyby by RTC wakeup
+.Run below command
+
+ $ /unit_tests/rtcwakeup.out -d rtc0 -m mem -s 10
+
+| Expected Result |
+System is wakeup after 10s.
+
+|=====================================================================
+
+<<<

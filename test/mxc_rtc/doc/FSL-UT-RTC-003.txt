@@ -1,0 +1,37 @@
+FSL-UT-RTC-003
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+RTC time is reserved in system off state
+
+| Automated |
+No
+
+| Kernel Config Option |
+ CONFIG_RTC_DRV_SNVS
+
+| Hardware Dependency |
+The voltage of coin-cell battery is enough to keep RTC alive.
+
+| Test Procedure |
+Test whether target is able to resume from standyby by RTC wakeup
+
+.Test steps
+. Boot-up Linux kernel.
+. Type the command "date". It should return something like this "Thu Jan 1 00:00:30 UTC 1970".
+. Set the date to the current date and time. The command is "date yyyyMMDDhhmm" such as "date 201012091453" for 12/03/2010 14:53
+. Set the HW clock to current date and time by using the command "hwclock --systohc"
+. Make sure the new date and time are set by issuing "date" and then "hwclock --show"
+. Shutdown the system, including a power-cycle. You can use "poweroff" command
+. Restart the system with the Linux kernel. Run "date" command.
+
+| Expected Result |
+Check whether the date is reserved and right.
+
+|=====================================================================
+
+<<<
