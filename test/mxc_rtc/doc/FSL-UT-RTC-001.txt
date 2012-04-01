@@ -1,0 +1,27 @@
+FSL-UT-RTC-001
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test RTC function
+
+| Automated |
+YES
+
+| Kernel Config Option |
+ CONFIG_RTC_DRV_SNVS
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ /unit_tests/autorun-rtc.sh
+
+| Expected Result |
+Exit with PASS results
+
+|=====================================================================
+
+<<<
