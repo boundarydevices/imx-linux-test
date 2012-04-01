@@ -4,10 +4,22 @@ include::def.cfg[]
 {chip} Linux BSP Unit Test User Manual
 ======================================
 
+Power Management
+----------------
+include::../pm/doc/FSL-UT-PM-001.txt[]
+include::../pm/doc/FSL-UT-PM-002.txt[]
+include::../pm/doc/FSL-UT-PM-003.txt[]
+
 PXP
 ---
 include::../pxp_lib_test/doc/FSL-UT-PXP-001.txt[]
 include::../pxp_v4l2_test/doc/FSL-UT-PXP-002.txt[]
+
+RTC
+---
+include::../mxc_rtc/doc/FSL-UT-RTC-001.txt[]
+include::../mxc_rtc/doc/FSL-UT-RTC-002.txt[]
+include::../mxc_rtc/doc/FSL-UT-RTC-003.txt[]
 
 WDOG
 ----
