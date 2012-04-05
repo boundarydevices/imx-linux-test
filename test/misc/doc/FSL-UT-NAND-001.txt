@@ -1,0 +1,64 @@
+FSL-UT-NAND-001
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+NAND TEST
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+After the system boots up with the NAND MTD driver,
+it may be tested as follows (note that mtd-utils package is needed):
+
+UBIFS :
+add the following to kernel parameter line when it boots:
+    "mtdparts=gpmi-nfc:20m(boot),200m(test),-(user)"
+Find out the available partition(s) in the running Linux system.
+So user can opt to test partition after this. For example:
+
+   root@freescale ~$ cat /proc/mtd
+   dev:  size   erasesize  name
+   mtd0: 00140000 00020000 "boot"
+   mtd1: 00140000 00020000 "test"
+   mtd2: 0001f000 00008000 "user"
+
+Erase one of the NAND Flash partitions using flash_eraseall.
+Take /dev/mtd2 for example:
+
+  $flash_eraseall /dev/mtd2
+
+Create a ubi node:
+
+  $ubiattach /dev/ubi_ctrl -m 2
+
+create a ubi partition in this ubi node:
+
+ $ubimkvol /dev/ubi0 -N testnode -m
+
+Mount the NAND partition and read the files:
+
+ $mkdir -p /tmp/mtdX
+ $mount -t ubifs ubi0:testnode /tmp/mtdX
+ $bonnie++ -d /tmp/mtdX -u 0 -s 2 -r 1
+ $umount /tmp/mtdX
+ $ubidettach /dev/ubi_ctrl -m 2
+
+| Expected Result |
+Those operations should be successful.
+
+|====================================================================
+
+<<<
