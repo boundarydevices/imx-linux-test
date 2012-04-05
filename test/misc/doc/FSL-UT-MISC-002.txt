@@ -1,0 +1,33 @@
+FSL-UT-MISC-002-Vmalloc-info
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Check vmalloc info
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ check vmalloc info
+
+
+| Expected Result |
+No abnormal large memory is requested.
+
+|====================================================================
+
+<<<
