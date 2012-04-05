@@ -1,0 +1,34 @@
+FSL-UT-NAND-002
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+NAND suspend and resume
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. Ensure NAND can enter suspend
+
+   $echo mem > /sys/power/state
+2. Press one key to resume
+3. Retest NAND function again
+
+| Expected Result |
+NAND can work normally after resume.
+
+|====================================================================
+
+<<<
