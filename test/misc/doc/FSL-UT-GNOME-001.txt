@@ -1,0 +1,33 @@
+FSL-UT-GNOME-001-Lanuch
+~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Gnome-mobile lanuch
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.Steps
+. By using default nightly build rootfs, see whether gnome-mobile can be launched well.
+. See whether totem can run well.
+
+| Expected Result |
+Gnome-mobile can run well Pass
+
+|====================================================================
+
+<<<

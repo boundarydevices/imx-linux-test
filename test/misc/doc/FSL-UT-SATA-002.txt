@@ -1,0 +1,31 @@
+FSL-UT-SATA-001-Suspend-Resume
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Sata can work after suspend resume
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.Test Steps:
+. Suspend/Resume SATA when data transactions are on-going on SATA disks.
+
+| Expected Result |
+The data transactions can be continued after system resume back when there are data transaction on going before
+
+|====================================================================
+
+<<<

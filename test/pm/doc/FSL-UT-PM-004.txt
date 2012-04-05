@@ -1,0 +1,30 @@
+FSL-UT-PM-004-Power Off
+~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Power Off System
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ poweroff
+
+or
+
+ $ poweroff -f
+
+| Expected Result |
+The whole board can be power off
+
+|=====================================================================
+
+<<<
