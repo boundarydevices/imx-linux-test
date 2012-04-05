@@ -1,0 +1,33 @@
+FSL-UT-SATA-001-Bonnie++
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Run Bonniee++ for SATA disk
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.Test Steps:
+. Connect SATA disk.
+. After booting up the board, the system can find the SATA disk device such as /dev/sda on the SATA interface.
+. run bonnie++ tool to do the kinds of tests on the SATA disk.
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<

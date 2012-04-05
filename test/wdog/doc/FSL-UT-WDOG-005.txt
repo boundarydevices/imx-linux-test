@@ -1,0 +1,32 @@
+FSL-UT-WDOG-005
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+The system can reboot well
+
+| Automated |
+
+| Kernel Config Option |
+CONFIG_WATCHDOG=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.Test Steps
+
+ reboot
+
+| Expected Result |
+reboot
+
+|====================================================================
+
+<<<
