@@ -1,0 +1,37 @@
+FSL-UT-WDOG-003
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+WatchDog doesn't reset when timeout
+
+| Automated |
+
+| Kernel Config Option |
+CONFIG_WATCHDOG=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.Test Steps
+. run the following command on target board,
+
+ $ /unit_tests/wdt_driver_test.out 2 1 0
+
+. The system should keep running without being reset. This test requires the kernel to be executed with the "jtag=on" on some platforms.
+. Press "Ctrl+C" to terminate this test program.
+
+| Expected Result |
+The system reset after 3 seconds
+
+
+|====================================================================
+
+<<<

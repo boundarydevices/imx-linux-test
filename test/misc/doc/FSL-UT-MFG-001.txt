@@ -1,0 +1,37 @@
+FSL-UT-MFG-001
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Mfgtools burn image
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.Mfgtools burn image to sd card:
+. Change the board to USB boot mode.
+. Connect the board with USB line.
+. Start Mfgtool.exe on the Windows.
+. Select the board type: "Options" --> "Configuration" --> "Profiles" : Select "SD" in the "Options" of "Operations" section; Press "OK" button.
+. After the Mfgtool detects your board, press "Start" to begin the burning.
+. Change the board to SD board mode
+. Reboot.
+
+| Expected Result |
+System success boot.
+
+|====================================================================
+
+<<<
