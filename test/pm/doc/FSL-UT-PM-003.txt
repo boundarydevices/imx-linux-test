@@ -1,0 +1,26 @@
+FSL-UT-PM-003-Random-Stree-Suspend-Resume
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test system suspend resume stress test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ /unit_test/suspend_random_auto.sh
+
+| Expected Result |
+Pass 48 hours test
+
+|=====================================================================
+
+<<<

@@ -4,11 +4,35 @@ include::def.cfg[]
 {chip} Linux BSP Unit Test User Manual
 ======================================
 
+EPDC
+---
+include::../mxc_fb_test/doc/FSL-UT-EPDC-001.txt[]
+
+GNOME
+-----
+include::../misc/doc/FSL-UT-GNOME-001.txt[]
+
+GPU
+---
+include::../gpu/doc/FSL-UT-GPU-001.txt[]
+
+
+MISC
+----
+include::../misc/doc/FSL-UT-MISC-001.txt[]
+include::../misc/doc/FSL-UT-MISC-002.txt[]
+
+Mfgtool
+-------
+include::../misc/doc/FSL-UT-MFG-001.txt[]
+
+
 Power Management
 ----------------
 include::../pm/doc/FSL-UT-PM-001.txt[]
 include::../pm/doc/FSL-UT-PM-002.txt[]
 include::../pm/doc/FSL-UT-PM-003.txt[]
+include::../pm/doc/FSL-UT-PM-004.txt[]
 
 PXP
 ---
@@ -24,11 +48,15 @@ include::../mxc_rtc/doc/FSL-UT-RTC-003.txt[]
 WDOG
 ----
 include::../wdog/doc/FSL-UT-WDOG-001.txt[]
+include::../wdog/doc/FSL-UT-WDOG-002.txt[]
+include::../wdog/doc/FSL-UT-WDOG-003.txt[]
+include::../wdog/doc/FSL-UT-WDOG-004.txt[]
+include::../wdog/doc/FSL-UT-WDOG-005.txt[]
 
-EPDC
----
-include::../mxc_fb_test/doc/FSL-UT-EPDC-001.txt[]
+SATA
+----
+include::../misc/doc/FSL-UT-SATA-001.txt[]
+include::../misc/doc/FSL-UT-SATA-002.txt[]
+include::../misc/doc/FSL-UT-SATA-003.txt[]
 
-GPU
----
-include::../gpu/doc/FSL-UT-GPU-001.txt[]
+
