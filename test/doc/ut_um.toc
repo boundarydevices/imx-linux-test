@@ -26,6 +26,10 @@ Mfgtool
 -------
 include::../misc/doc/FSL-UT-MFG-001.txt[]
 
+NAND
+----
+include::../misc/doc/FSL-UT-NAND-001.txt[]
+include::../misc/doc/FSL-UT-NAND-002.txt[]
 
 Power Management
 ----------------
