@@ -1,0 +1,32 @@
+FSL-UT-SATA-003-SATA-Boot
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Boot from Sata
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.Test Steps:
+. Program uBOOT to SATA disk
+. Boot system from SATA.
+
+| Expected Result |
+Boot system from SATA.
+
+|====================================================================
+
+<<<

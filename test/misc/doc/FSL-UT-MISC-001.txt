@@ -1,0 +1,36 @@
+FSL-UT-MISC-001-PWM-Backlight
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+PWM Backlight
+
+| Automated |
+No
+
+| Kernel Config Option |
+CONFIG_WATCHDOG=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. run the following command on target board,
+
+the intensity ranges from 0 to 255.
+
+ $ echo intensity > /sys/class/backlight/pwm-backlight.1/brightness
+
+
+| Expected Result |
+The backlight changes accordingly, when the brightness is altered.
+
+|====================================================================
+
+<<<
