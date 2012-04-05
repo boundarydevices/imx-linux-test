@@ -1,0 +1,32 @@
+FSL-UT-WDOG-002
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+WatchDog reset when timeout
+
+| Automated |
+
+| Kernel Config Option |
+CONFIG_WATCHDOG=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ /unit_tests/wdt_driver_test.out 1 2 0 &
+
+| Expected Result |
+This should generate a reset after 3 seconds (a 1 second time-out and a 2 second sleep).
+
+|====================================================================
+
+<<<

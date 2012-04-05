@@ -1,0 +1,28 @@
+FSL-UT-PM-001-Basic-Suspend-Resume
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test system base suspend resume
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ echo mem >/sys/power/state
+
+. press power button
+
+| Expected Result |
+System can wake up
+
+|=====================================================================
+
+<<<

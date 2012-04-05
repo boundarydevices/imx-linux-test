@@ -1,0 +1,36 @@
+FSL-UT-WDOG-004
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Watchdog suspend and resume
+
+| Automated |
+
+| Kernel Config Option |
+CONFIG_WATCHDOG=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.Test Steps
+. Ensure Watchdog can enter suspend
+
+ echo mem > /sys/power/state
+
+. Press one key to resume
+. Retest Watchdog function again
+
+| Expected Result |
+Watchdog can work normally after resume
+
+|====================================================================
+
+<<<
