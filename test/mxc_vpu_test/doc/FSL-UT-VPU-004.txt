@@ -1,0 +1,47 @@
+FSL-UT-VPU-004
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Encode a YUV stream and save to a file
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+To test MPEG-4 encode:
+
+ ./mxc_vpu_test.out -E "-i file.yuv -w 240 -h 320 -f 0 -o file.mpeg4"
+
+To test H.263 encode:
+
+ ./mxc_vpu_test.out -E "-i file.yuv -w 240 -h 320 -f 1 -o file.263"
+
+To test H.264 encode:
+
+ ./mxc_vpu_test.out -E "-i file.yuv -w 240 -h 320 -f 2 -o file.264"
+
+To test MJPEG encode (i.MX51 VPU only):
+
+ ./mxc_vpu_test.out -E "-i file.yuv -w 240 -h 320 -f 7 -o file.mjpg"
+
+| Expected Result |
+Stream can be encoded successfully.
+
+We can use VPU decoder command to check encoded data is correct or not.
+
+|====================================================================
+
+<<<

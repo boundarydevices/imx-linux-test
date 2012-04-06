@@ -1,0 +1,53 @@
+FSL-UT-VPU-002
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Decode a stream and save to a file
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+To test MPEG-4 decode:
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.m4v -f 0 -o out.yuv"
+
+To test H.263 decode:
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.263 -f 1 -o out.yuv"
+
+To test H.264 decode:
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.264 -f 2 -o out.yuv"
+
+To test VC1 decode (i.MX37 and i.MX51 VPU only):
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.rcv -f 3 -o out.yuv"
+
+To test MPEG2 decode (i.MX37 and i.MX51 VPU only):
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.mpg -f 4 -o out.yuv"
+
+To test MJPEG decode (i.MX51 VPU only):
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.mjpg -f 7 -o out.yuv"
+
+| Expected Result |
+Stream is saved to file correctly.
+
+|====================================================================
+
+<<<
