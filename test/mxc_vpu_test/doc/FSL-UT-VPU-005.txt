@@ -1,0 +1,45 @@
+FSL-UT-VPU-005
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Encode an image from the camera and decode it to display on the LCD
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+To encode an MPEG4 image from the camera and display on the LCD.
+
+ ./mxc_vpu_test.out -L "-f 0 -w 240 -h 320"
+
+To encode an H263 image from the camera and display on the LCD.
+
+ ./mxc_vpu_test.out -L "-f 1 -w 240 -h 320"
+
+To encode an H264 image from the camera and display on the LCD.
+
+ ./mxc_vpu_test.out -L "-f 2 -w 240 -h 320"
+
+To encode an MJPG image from the camera and display on the LCD (i.MX51 VPU only).
+
+ ./mxc_vpu_test.out -L "-f 7 -w 240 -h 320"
+
+| Expected Result |
+Captured image can be displayed on the LCD correctly.
+
+|====================================================================
+
+<<<
