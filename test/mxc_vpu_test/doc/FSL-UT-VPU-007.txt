@@ -1,0 +1,33 @@
+FSL-UT-VPU-007
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Decode and encode simultaneously
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+To decode and encode simultaneously. For example, encode one MPEG-4 stream and decode one H.264 stream simultaneously.
+
+ ./mxc_vpu_test.out -E "-w 176 -h 144 -f 0 -o enc.m4v" -D "-i/vectors/file.264 -f 2"
+
+| Expected Result |
+Streams can be encoded/decoded correctly.
+
+|====================================================================
+
+<<<
