@@ -85,3 +85,14 @@ ASRC
 include::../mxc_asrc_test/doc/FSL-UT-ASRC-001.txt[]
 include::../mxc_asrc_test/doc/FSL-UT-ASRC-002.txt[]
 
+FEC
+----
+include::../misc/doc/FSL-UT-FEC-001.txt[]
+include::../misc/doc/FSL-UT-FEC-002.txt[]
+include::../misc/doc/FSL-UT-FEC-003.txt[]
+include::../misc/doc/FSL-UT-FEC-004.txt[]
+include::../misc/doc/FSL-UT-FEC-005.txt[]
+
+I2C
+----
+include::../misc/doc/FSL-UT-I2C-001.txt[]
