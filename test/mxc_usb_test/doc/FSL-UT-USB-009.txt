@@ -1,0 +1,45 @@
+FSL-UT-USB-009-CV-TEST
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB CV test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. Visit http://www.usb.org/developers/tools/
+
+2. Download USBCV R1.3.2. USBCV revision 1.3.2 is the official test tool for
+device framework testing. As of April 2007, the mass storage class tests and
+the video class tests are official and mandatory. This software is provided
+courtesy of Intel Corporation.
+
+3. load drivers modprobe arcotg_udc modprobe g_file_storage file=test storage
+e.g. modprobe g_file_storage file="/dev/ramdisk" //enable ram disk support
+first modprobe g_file_storage file="/dev/mmcblk0" //enable sd host driver
+first connect board to PC with USB cable,start to test.
+
+4. test case: ch9 test and msc test.
+
+Note: for kernel version after 2.6.38, must add a parameter serial with 12
+digital char as the value
+
+| Expected Result |
+Pass USBCV test
+
+|====================================================================
+
+<<<
