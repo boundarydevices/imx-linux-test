@@ -116,3 +116,17 @@ include::../mxc_usb_test/doc/FSL-UT-USB-010.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-011.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-012.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-013.txt[]
+
+VPU
+---
+include::../mxc_vpu_test/doc/FSL-UT-VPU-001.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-002.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-003.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-004.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-005.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-006.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-007.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-008.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-009.txt[]
+include::../mxc_vpu_test/doc/FSL-UT-VPU-010.txt[]
+
