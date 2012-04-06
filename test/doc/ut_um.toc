@@ -37,6 +37,7 @@ include::../pm/doc/FSL-UT-PM-001.txt[]
 include::../pm/doc/FSL-UT-PM-002.txt[]
 include::../pm/doc/FSL-UT-PM-003.txt[]
 include::../pm/doc/FSL-UT-PM-004.txt[]
+include::../pm/doc/FSL-UT-PM-005.txt[]
 
 PXP
 ---
