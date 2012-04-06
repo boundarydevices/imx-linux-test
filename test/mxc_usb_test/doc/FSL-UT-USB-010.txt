@@ -1,0 +1,57 @@
+FSL-UT-USB-010-UVC-TEST
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB UVC test(USB webcam support)
+
+| Automated |
+No
+
+| Kernel Config Option |
+CONFIG_USB_VIDEO_CLASS
+
+| Software Dependency |
+Ubuntu 9.04 or later
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+In order to test the USB UVC(USB Video Class) that is supported in Linux
+kernel 2.6.24 and ongoing, please follow these procedures.
+
+Required HW:
+
+1. A USB camera that is supported in the UVC class. A list ofthese cameras can be
+found at this URL: http://linux-uvc.berlios.de/
+
+2. The test system should have a display of some type(DVI, VGA, or LCD).
+
+Required SW:
+
+1. The Linux kernel must have CONFIG_USB_VIDEO_CLASS and CONFIG_USB_EHCI_HCD selected.
+
+2. The rootfs should a Ubuntu 9.04 or later.
+
+Test Procedure:
+
+1. Boot up the Linux kernel with the Ubuntu file system.
+
+2. Use the Apps search tool to download and install a webcam application
+(such as xawtv or cheese).
+
+3. Plug in the webcam into a USB host port on the development system.
+
+4. Launch the webcam application and use the viewfinder. The application
+should find the USB webcam automatically
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
