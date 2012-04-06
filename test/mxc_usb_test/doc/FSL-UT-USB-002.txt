@@ -1,0 +1,71 @@
+FSL-UT-USB-002-HOST-HID
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB Host HID test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1.modprobe ehci-hcd
+
+2.modprobe usbhid
+
+3.Plug in USB mouse or USB keyboard.
+
+4.evtest /dev/input/event2
+
+If this function is not used, unload the following drivers.
+
+rmmod usbhid
+
+rmmod ehci-hcd
+
+Notes:
+
+For HID build as module:
+
+USB support --> USB Human Interface Device (full HID) support. Select it as a module.
+
+CONFIG_USB_HID=m
+
+USB support --> HID input layer support. Select as built in.
+
+CONFIG_USB_HIDINPUT = y.
+
+then
+
+modprobe ehci-hcd
+
+insmod usbhid.ko
+
+About evtest tools, find evtest.c and compile under the current platform.
+The evtest tool is a popular Linux open source tool, and can be found on the
+internet .
+
+Note1: this test should be appled to all the ports exist on the board, for
+example, OTG port, H1 port, H2 port, etc; and if there is internal hub
+attached to some Host ports, for example, a internal hub is attached to Host1
+, this test should be applied to the all the ports on the hub.
+
+Note2: this test should be done for at least 10 times on every port
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
