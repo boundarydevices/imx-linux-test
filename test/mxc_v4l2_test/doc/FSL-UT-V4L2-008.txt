@@ -1,0 +1,71 @@
+FSL-UT-V4L2-008
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+MIPI CSI preview
+
+| Automated |
+NO
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+ov5640 sensor and MIPI extention board are requried display screen also is needed
+
+| Test Procedure |
+Check that /dev/video0 exists. If it does not exist, load the camera driver with the command:
+
+modprobe mxc_v4l2_capture
+
+modprobe CAMERA_MODULE (CAMERA_MODULE should be replaced by the camera module on the related platform, e.g. ov5640_camera_mipi should be used here on MX6Q?)
+
+Check again for /dev/video0. If it is not there, the camera driver has not loaded successfully and the test has failed.
+
+Type commands to direct preview the camera to the foreground/background, and set the frame rate to 30 fps, the preview size is 640 X 480 with a starting offset of (0,0). Use mxc_v4l2_overlay.out -help to see usage.
+
+Test foreground display:
+
+Test 1. mxc_v4l2_capture.out -iw 640 -ih 480 -ow 640 -oh 480 -m 0 -fg
+
+Test 2. mxc_v4l2_capture.out -iw 320 -ih 240 -ow 640 -oh 480 -m 1 -fg
+
+Test 3. mxc_v4l2_capture.out -iw 720 -ih 480 -ow 640 -oh 480 -m 2 -fg
+
+Test 4. mxc_v4l2_capture.out -iw 720 -ih 576 -ow 640 -oh 480 -m 3 -fg
+
+Test 5. mxc_v4l2_capture.out -iw 1280 -ih 720 -ow 640 -oh 480 -m 4 -fg
+
+Test 6. mxc_v4l2_capture.out -iw 1920 -ih 1080 -ow 640 -oh 480 -m 5 -fg
+
+Test 7. mxc_v4l2_capture.out -iw 2592 -ih 1944 -ow 640 -oh 480 -m 6 -fg
+
+Test background display:
+
+Test 8. mxc_v4l2_capture.out -iw 640 -ih 480 -ow 640 -oh 480 -m 0 -bg
+
+Test 9. mxc_v4l2_capture.out -iw 320 -ih 240 -ow 640 -oh 480 -m 1 -bg
+
+Test 10. mxc_v4l2_capture.out -iw 720 -ih 480 -ow 640 -oh 480 -m 2 -bg
+
+Test 11. mxc_v4l2_capture.out -iw 720 -ih 576 -ow 640 -oh 480 -m 3 -bg
+
+Test 12. mxc_v4l2_capture.out -iw 1280 -ih 720 -ow 640 -oh 480 -m 4 -bg
+
+Test 13. mxc_v4l2_capture.out -iw 1920 -ih 1080 -ow 640 -oh 480 -m 5 -bg
+
+Test 14. mxc_v4l2_capture.out -iw 2592 -ih 1944 -ow 640 -oh 480 -m 6 -bg
+
+| Expected Result |
+The image from the camera is displayed on the screen. Colors and image should be correct.
+
+|====================================================================
+
+<<<
