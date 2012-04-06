@@ -1,0 +1,40 @@
+FSL-UT-FEC-003
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+NFS root connection
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+A connection via ethernet cable. A server with an NFS file system.
+
+| Test Procedure |
+The FEC driver shall support full duplex operation and link status detect.
+
+.Test steps:
+. Build kernel with FEC on, SMSC911X? off and boot NFS root.
+. Disconnect ethernet from FEC and reconnect.
+. Observe kernel messages.
+
+To boot an NFS root the command line may look something like this:
+exec -c "noinitrd console=ttymxc0,115200 root=/dev/nfs nfsroot=10.1.49.15: \
+/u_tmp/name/ltib-mx25/rootfs rw ip=dhcp"
+
+| Expected Result |
+eth0: status: link down
+eth0: status: link up
+
+|====================================================================
+
+<<<

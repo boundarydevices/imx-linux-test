@@ -1,0 +1,43 @@
+FSL-UT-FEC-002
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+FEC-ifconfig test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+A connection via ethernet cable to hub/switcher.
+
+| Test Procedure |
+The FEC driver shall support obtaining statistics from the device
+such as transmit collisions.
+
+.Test_Procedure:
+. Boot default kernel
+. Execute "ifconfig eth1"
+. Note statistics displayed
+
+| Expected Result |
+ifconfig eth0
+eth0      Link encap:Ethernet  HWaddr 00:00:00:00:00:00
+          BROADCAST MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)
+          Base address:0x8000
+
+|====================================================================
+
+<<<
