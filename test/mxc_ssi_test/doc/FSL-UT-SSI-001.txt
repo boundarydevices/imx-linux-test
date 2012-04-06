@@ -1,0 +1,40 @@
+FSL-UT-SSI-001
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test playback for alsa driver with SSI interface
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_SSI=y
+ CONFIG_IMX_HAVE_PLATFORM_IMX_I2C=y
+ CONFIG_SND_SOC_IMX_WM8962=y
+ CONFIG_SND_SOC_WM8962=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+SabreSD rev.B
+
+| Test Procedure |
+. run the following command on target board,
+and wav file is mono or stereo stream and may be
+found in mxc_ssi_test/sound_samples
+
+ $ amixer sset 'Headphone' 100
+ $ aplay *.wav
+
+| Expected Result |
+The sound is heard clearly and properly
+
+|====================================================================
+
+<<<
+

@@ -1,0 +1,41 @@
+FSL-UT-ESAI-001
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test playback for alsa driver with ESAI interface
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_ESAI=y
+ CONFIG_IMX_HAVE_PLATFORM_IMX_I2C=y
+ CONFIG_SND_SOC_IMX_CS42888=y
+ CONFIG_SND_SOC_CS42888=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+SabreAI
+
+| Test Procedure |
+. check the esai sound card number, and adjust the n to 0 or 1...
+
+ $ aplay -l
+
+. file.wav may be 2 to 6 channel stream
+
+ $ aplay -Dhw:n,0 file.wav
+
+| Expected Result |
+The sound is heard clearly and properly
+
+|====================================================================
+
+<<<
+
