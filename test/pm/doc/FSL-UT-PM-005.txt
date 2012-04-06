@@ -1,0 +1,30 @@
+FSL-UT-PM-004-Stress-Power-Off-RTC-ALAM-Power-On
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Stree test for power off and power on boot by RTC alam
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Test Procedure |
+.steps
+. copy below code into the begin of /etc/rc.d/init.d/udev
+
+ date
+ echo +10 > /sys/class/rtc/rtc0/wakealarm
+ poweroff -f
+
+| Expected Result |
+The board can power off and power on after 10s.
+Pass over night test.
+
+|=====================================================================
+
+<<<
