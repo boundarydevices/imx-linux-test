@@ -1,0 +1,44 @@
+FSL-UT-V4L2-003
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+camera preview
+
+| Automated |
+NO
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+A camera and display are required.
+
+| Test Procedure |
+
+Check that /dev/video0 exists. If it does not exist, load the camera driver with the command:
+
+ modprobe mxc_v4l2_capture
+
+modprobe CAMERA_MODULE (CAMERA_MODULE should be replaced by the camera module on the related platform, e.g. ov3640_camera should be used here on MX51)
+
+Check again for /dev/video0. If it is not there, the camera driver has not loaded successfully and the test has failed.
+
+Type the following command.
+
+ mxc_v4l2_overlay.out -iw 640 -ih 480 -it 0 -il 0 -ow 160 -oh 160 -ot 20 -ol 20 -r 0 -t 50 -d 0 -fg -fr 30
+
+Direct preview the camera to the foreground, and set the frame rate to 30 fps, the window of interest is 640 X 480 with a starting offset of (0,0), the preview size is 160 X 160 with a starting offset of (20,20). Use mxc_v4l2_overlay.out -help to see usage.
+
+| Expected Result |
+The image from the camera is displayed on the screen. Colors and image should be correct.
+
+|====================================================================
+
+<<<
