@@ -1,0 +1,43 @@
+FSL-UT-V4L2-004
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+camera preview - rotated
+
+| Automated |
+NO
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+camera and display required.
+
+| Test Procedure |
+Check that /dev/video0 exists. If it does not exist, load the camera driver with the command:
+
+ modprobe mxc_v4l2_capture
+
+modprobe CAMERA_MODULE (CAMERA_MODULE should be replaced by the camera module on the related platform, e.g. ov3640_camera should be used here on MX51)
+
+Check again for /dev/video0. If it is not there, the camera driver has not loaded successfully and the test has failed.
+
+Type the following command.
+
+ mxc_v4l2_overlay.out -iw 640 -ih 480 -it 0 -il 0 -ow 160 -oh 160 -ot 20 -ol 20 -r 4 -t 50 -d 0 -fr 30
+
+Direct preview (90 degree rotation) the camera to the background, and set frame rate to 30 fps.
+
+| Expected Result |
+The image from the camera is displayed on the screen rotated by 90 degrees. Colors and image should be correct.
+
+|====================================================================
+
+<<<
