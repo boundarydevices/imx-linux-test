@@ -1,0 +1,154 @@
+FSL-UT-USB-003-HOST-PTP
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB HOST PTP test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+How to build?
+
+enter ptp directory. Make the PTP driver module.
+
+make CROSS_COMPILE=${CROSS_COMPILE}
+
+Output: usbstillimage.ko
+
+ct ptp/test
+
+make CROSS_COMPILE=${CROSS_COMPILE}
+
+Ouput: ptp_test
+
+Material: One Digital Camera (DC). Set the DC's USB mode to PTP mode.
+
+Step:
+
+1. modprobe ehci-hcd
+
+2. insmod usbstillimage.ko
+
+3. Power on DC, and connect it to the board with USB cable.
+
+4. Download the ptp_test to the board.
+
+chmod 777 ptp_test
+
+/./ptp_test
+
+If this function is not used, unload the following drivers
+
+rmmod usbstillimage
+
+rmmod ehci-hcd
+
+Display: Please input command:
+
+0: Exit
+
+1: Display device information
+
+2: Display storage information
+
+3: Display file information
+
+4: Get file
+
+5: Get file thumbnail
+
+6: Send a file
+
+7: Set file protection
+
+8: Delete file
+
+9: Format storage
+
+Input 1 and press Enter. It will display the device list and display the
+detailed device information such as the manufacturer/model/serial number/
+operations supported.
+
+Press 2 and press Enter. It will display the detailed information of all
+the storage media in the device.
+
+Press 3 and press Enter. It will display the detailed information of all
+the files (objects) in the device. The file ID for each file may be seen.
+This file ID can be used in the followed file test.
+
+Press 4 and press Enter. You will be asked to input the ID of the file to
+get. Just input the hex value (no 0xprefix needed), press Enter. It will
+start to get the file/object from the device, and save it to test.jpg in the
+current directory on the platform. For robust test, unplug the device during
+the file reading process. It will show some error message, but will not crash
+. Notice that you cannot get a directory, such as MISC.
+
+Press 5 and press Enter. You will be asked to input the ID of the file to
+get the thumbnail. Just input the hex value (no 0x prefix needed), press
+Enter. It will start to get the file/object thumbnail from the device, and
+save it to thumb.jpg in the current directory on the platform. For robust test
+, unplug the device during the file reading process. It will show some error
+message but will not crash.
+
+Press 6 and press Enter. You will be asked to input the name of the source
+file to be sent from the platform to the device. Just enter the file's full
+path and name and press Enter.
+
+Then you will be asked to input the directory handle where the file is to be
+put. The folder is the object with the object Association Type 1. Choose a
+folder, for example "CIM" input its object handle, and press Enter. It
+will start to send the file.
+
+To keep the best compatibility, the file will be forced into the picture
+format. This means that the device will treat it as a picture file and
+arrange another sequence file name for it, not the source file name. After it
+finishes sending the file, press 3 to show all the files, and see that a
+new file has been added.
+If the device is unplugged during the write process, the driver will not crash
+, but sometimes the storage information on the target device will be damaged.
+This is because of a design limitation of the target device. Under Windows XP/
+2000 a USB device may not be unplugged when it is writing. Therefore, it is
+recommended that the device not be unplugged during the write process.
+
+Press 7 and press Enter. You will be asked to input the ID of the file to
+set/clear file protection. Just input the hex value (no 0x refix needed)
+and press Enter. You will be asked to input the clear or set command.
+
+Press 1 and press Enter to set file protection (or press 0 and press
+Enter to clear file protection).
+
+Press 8 and press Enter. You will be asked to input the ID of the file to
+delete. Just input the hex value (no 0x prefix needed) and press Enter. It
+will try to delete the file. If the file is protected, it will show the
+delete fail information.
+
+Press 9 and press Enter. You will be asked to input the ID of the storage
+to format. Just input the hex value (no 0x prefix needed) and press Enter.
+It will try to format the target storage media.
+
+To quit the test, input 0 and press Enter.
+
+Notes: Some DCs only support read operation and don't support write operation.
+On this type of DC steps 6 - 9 can't be executed, and the DC won't be able
+to send a file, set file protection, delete a file or format storage.
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
+
