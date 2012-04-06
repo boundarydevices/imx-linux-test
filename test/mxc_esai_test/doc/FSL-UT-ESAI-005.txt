@@ -1,0 +1,37 @@
+FSL-UT-ESAI-005
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test playback continuously for alsa driver with ESAI interface
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_ESAI=y
+ CONFIG_IMX_HAVE_PLATFORM_IMX_I2C=y
+ CONFIG_SND_SOC_IMX_CS42888=y
+ CONFIG_SND_SOC_CS42888=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+SabreAI
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ while true; do aplay -Dplughw:0 file.wav; done
+
+| Expected Result |
+The sound is heard continuously
+
+|====================================================================
+
+<<<
+
