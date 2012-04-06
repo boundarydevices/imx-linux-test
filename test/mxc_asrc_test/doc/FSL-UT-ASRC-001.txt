@@ -1,0 +1,35 @@
+FSL-UT-ASRC-001
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test sample rate converter for ASRC driver
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_ASRC=y
+ CONFIG_MXC_ASRC=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. run the following command
+
+ $ unit_tests/autorun-asrc.sh
+
+| Expected Result |
+. log output: All tests passed with success
+. The sound is heard clearly and properly from headphone of SSI or ESAI interface
+|====================================================================
+
+<<<
+

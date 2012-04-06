@@ -1,0 +1,41 @@
+FSL-UT-SSI-002
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test record for alsa driver with SSI interface
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_SSI=y
+ CONFIG_IMX_HAVE_PLATFORM_IMX_I2C=y
+ CONFIG_SND_SOC_IMX_WM8962=y
+ CONFIG_SND_SOC_WM8962=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+SabreSD rev.B
+
+| Test Procedure |
+. run the following command on target board,
+
+ $ amixer cset numid=10,iface=MIXER,name='Capture Switch' on
+ $ amixer sset 'Capture' 120
+ $ amixer sset 'INPGAR IN3R' on
+ $ amixer sset 'MIXINR IN3R' on
+ $ arecord -r 44100 -f S16_LE -c 2 -d 5 record.wav
+ $ aplay record.wav
+| Expected Result |
+The recorded sound is heard clearly and properly
+
+|====================================================================
+
+<<<
+
