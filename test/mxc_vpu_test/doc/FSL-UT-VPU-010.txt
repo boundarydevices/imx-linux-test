@@ -1,0 +1,49 @@
+FSL-UT-VPU-010
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test VPU with VDI (HW deinterlace via IPU)
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. Select one stream with top and bottem filelds are interlaced.
+
+ av_stress2_dsmcc4m_1_C1_V11_A6.mp4_track1.h264
+
+2. Decode the stream and display on LCD with command:
+
+ /unit_tests/mxc_vpu_test.out -D "-i av_stress2_dsmcc4m_1_C1_V11_A6.mp4_track1.h264 -f2"
+
+3. Decode the stream and display on LCD using high motion stream video De Interlacing algorithm with command:
+
+ /unit_tests/mxc_vpu_test.out -D "-i av_stress2_dsmcc4m_1_C1_V11_A6.mp4_track1.h264 -v h -f2"
+
+4. Decode the stream and display on LCD using low motion stream video De Interlacing algorithm with command:
+
+ /unit_tests/mxc_vpu_test.out -D "-i av_stress2_dsmcc4m_1_C1_V11_A6.mp4_track1.h264 -v l -f2"
+
+5. Decode the stream and display on LCD having input in NV12 pixel format with command:
+
+ /unit_tests/mxc_vpu_test.out -D "-i av_stress2_dsmcc4m_1_C1_V11_A6.mp4_track1.h264 -v l -t 1 -f2"
+
+| Expected Result |
+The video is smooth and there is no field sawtooth for moving objects
+
+|====================================================================
+
+<<<
