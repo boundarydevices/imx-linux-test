@@ -1,0 +1,105 @@
+FSL-UT-USB-012-HOST-Remote-Wakeup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB Host: Remote Wakeup system
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+
+Take usb otg host as an example:
+
+Plug a mouse to the otg port (take otg as an example)
+
+cat /sys/device/platform/fsl-usb2-otg/power/wakeup
+
+disabled
+
+cat /sys/bus/usb/device/1-1/power/wakeup
+
+disabled
+
+echo mem > /sys/power/state
+
+	......
+
+press the button on the mouse, system can not be waked up
+
+echo enabled > /sys/devices/platform/fsl-usb2-otg/power/wakeup
+
+echo enabled > /sys/devices/platform/fsl-ehci.0/power/wakeup
+
+echo mem > /sys/power/state
+
+press the button on the mouse, system can not be waked up if 2.6.35 kernel is
+used, and system can be waked up with 2.6.31
+
+below is for 2.6.35
+
+	......
+
+echo enabled > /sys/device/platform/fsl-usb2-otg/power/wakeup
+
+echo enabled > /sys/devices/platform/fsl-ehci.0/power/wakeup
+
+echo enabled > /sys/bus/usb/device/1-1/power/wakeup
+
+echo mem > /sys/power/state
+
+press the button on the mouse, system can be waked up
+
+Take usb host1 as an example
+
+cat /sys/device/platform/fsl-ehci.1/power/wakeup
+
+disabled
+
+echo mem > /sys/power/state
+
+	......
+
+insert a udisk, system can not be waked up.
+
+echo enabled > /sys/device/platform/fsl-ehci.1/power/wakeup
+
+cat /sys/device/platform/fsl-usb2-udc/power/wakeup
+
+enabled
+
+echo mem > /sys/power/state
+
+	......
+
+insert a udisk, system can be waked up.
+
+
+echo mem > /sys/power/state
+
+	......
+
+remove the udisk, system can be waked up
+
+same tests need to be done on any other host port, for example, the
+internal hub attached to the Host1 port on mx53, mx6q, so all the exported
+port on the internal hub need to test.
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
