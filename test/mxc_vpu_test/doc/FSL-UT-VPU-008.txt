@@ -1,0 +1,36 @@
+FSL-UT-VPU-008
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+VPU suspend and resume
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. Ensure VPU can enter suspend
+
+ echo standby > /sys/power/state
+
+2. Press one key to resume
+3. Retest VPU function again
+
+| Expected Result |
+VPU can work normally after resume
+
+|====================================================================
+
+<<<
