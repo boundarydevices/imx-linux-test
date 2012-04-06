@@ -1,0 +1,111 @@
+FSL-UT-USB-008-OTG-ID
+~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB OTG pin detect
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1) reboot the board with a cable only attached to OTG port
+
+1.1 verify the host mode can work -- insert UDisk to the cable, UDisk can work
+
+1.2 plug out the cable
+
+1.3 verify the device mode can work -- modprobe g_file_storage file="" , and
+then connect to PC, on PC side, a storage can be found.
+
+1.4 disconnect
+
+1.5 insert USB mouse to OTG Host, USB mouse can work
+
+2) reboot the board with a cable only attached to OTG port
+
+2.1 verify the device mode can work -- modprobe g_file_storage file="" , and
+then connect to PC, on PC side, a storage can be found.
+
+2.2 plug out the cable
+
+2.3 verify the host mode can work -- insert UDisk to the cable, UDisk can work
+
+2.4 insert USB mouse to OTG Host, USB mouse can work
+
+3) reboot the board with UDisk attached to OTG port
+
+3.1 plug out the cable
+
+3.2 verify the device mode can work -- modprobe g_file_storage file="" , and
+then connect to PC, on PC side, a storage can be found.
+
+3.3 disconnect
+
+3.4 insert USB mouse to OTG Host, USB mouse can work
+
+4) reboot the board with USB mouse attached to OTG port
+
+4.1 plug out the cable
+
+4.2 verify the device mode can work -- modprobe g_file_storage file="" , and
+then connect to PC, on PC side, a storage can be found.
+
+4.3 disconnect
+
+4.4 insert USB UDisk to OTG Host, USB mouse can work
+
+5) reboot the board with no cable attached to OTG port
+
+5.1 verify the host mode can work -- insert UDisk to the cable, UDisk can work
+
+5.2 plug out the cable
+
+5.3 verify the device mode can work -- modprobe g_file_storage file="" , and
+then connect to PC, on PC side, a storage can be found.
+
+5.4 disconnect
+
+5.5 insert USB mouse to OTG Host, USB mouse can work
+
+6) reboot the board with a cable connected to PC
+
+6.1 verify the host mode can work -- insert UDisk to the cable, UDisk can work
+
+6.2 plug out the cable
+
+6.3 verify the device mode can work -- modprobe g_file_storage file="" , and
+then connect to PC, on PC side, a storage can be found.
+
+6.4 disconnect
+
+6.5 insert USB mouse to OTG Host, USB mouse can work
+
+7) reboot the board with a cable connected to PC
+
+7.1 verify the device mode can work -- modprobe g_file_storage file="" , and
+then connect to PC, on PC side, a storage can be found.
+
+7.2 plug out the cable
+
+7.3 verify the host mode can work -- insert UDisk to the cable, UDisk can work
+
+7.4 insert USB mouse to OTG Host, USB mouse can work
+
+| Expected Result |
+Host mode and device mode can work well
+
+|====================================================================
+
+<<<
