@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2009-2012 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -35,6 +35,7 @@
 #include "mxc_ipudev_test.h"
 
 #define FB_BUFS 3
+#define PAGE_ALIGN(x) (((x) + 4095) & ~4095)
 int ctrl_c_rev = 0;
 void ctrl_c_handler(int signum, siginfo_t *info, void *myact)
 {
@@ -101,6 +102,7 @@ static unsigned int fmt_to_bpp(unsigned int pixelformat)
                 case IPU_PIX_FMT_YVU420P:
                 case IPU_PIX_FMT_YUV420P2:
                 case IPU_PIX_FMT_NV12:
+		case IPU_PIX_FMT_TILED_NV12:
                         bpp = 12;
                         break;
                 default:
@@ -210,9 +212,14 @@ int main(int argc, char *argv[])
 		goto err1;
 	}
 
-	isize = t->input.paddr =
-		t->input.width * t->input.height
-		* fmt_to_bpp(t->input.format)/8;
+	if (IPU_PIX_FMT_TILED_NV12F == t->input.format) {
+		isize = PAGE_ALIGN(t->input.width * t->input.height/2) +
+			PAGE_ALIGN(t->input.width * t->input.height/4);
+		isize = t->input.paddr = isize * 2;
+	} else
+		isize = t->input.paddr =
+			t->input.width * t->input.height
+			* fmt_to_bpp(t->input.format)/8;
 	ret = ioctl(fd_ipu, IPU_ALLOC, &t->input.paddr);
 	if (ret < 0) {
 		printf("ioctl IPU_ALLOC fail\n");
