@@ -1,0 +1,37 @@
+FSL-UT-V4L2-005
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+V4L2 auto-test
+
+| Automated |
+YES
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+Go to unit test dir, run ./autorun-v4l2.sh > log
+
+This test auto test v4l2 features.
+
+Note: there are some cases which v4l2 output can not support by IPU, which will return error by v4l2 set format fail or set crop fail etc, pls check the log for this except case.
+
+If need full test, please run test after export FULLTEST=1
+
+| Expected Result |
+"PASS test case:xxxx" should be print.
+
+|====================================================================
+
+<<<

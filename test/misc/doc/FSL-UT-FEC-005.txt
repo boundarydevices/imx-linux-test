@@ -31,15 +31,16 @@ via the kernel command line.
 
 
 | Expected Result |
-Kernel command line: noinitrd console=ttymxc0,115200 root=/dev/nfs
-nfsroot=10.19 3.20.190:/tftpboot/10.193.20.181 init=/linuxrc
-ip=dhcp fec_mac=00:04:9f:00:98:2c
+ Kernel command line: noinitrd console=ttymxc0,115200 root=/dev/nfs
+ nfsroot=10.19 3.20.190:/tftpboot/10.193.20.181 init=/linuxrc
+ ip=dhcp fec_mac=00:04:9f:00:98:2c
 
-ifconfig eth0:
-eth0 Link encap:Ethernet  HWaddr 00:04:9f:00:98:2c
-inet addr:10.192.242.12  Bcast:10.192.242.255  Mask:255.255.255.0
-......
+ ifconfig eth0:
+ eth0 Link encap:Ethernet  HWaddr 00:04:9f:00:98:2c
+ inet addr:10.192.242.12  Bcast:10.192.242.255  Mask:255.255.255.0
+ ......
 
 |====================================================================
 
 <<<
+

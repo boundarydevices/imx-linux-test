@@ -130,3 +130,14 @@ include::../mxc_vpu_test/doc/FSL-UT-VPU-008.txt[]
 include::../mxc_vpu_test/doc/FSL-UT-VPU-009.txt[]
 include::../mxc_vpu_test/doc/FSL-UT-VPU-010.txt[]
 
+V4L2
+----
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-001.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-002.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-003.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-004.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-005.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-006.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-007.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-008.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-009.txt[]
