@@ -1,0 +1,37 @@
+FSL-UT-PM-008-DVFS suspend resume
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+DVFS suspend/resume
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. Ensure DVFS can enter suspend :
+
+ echo mem > /sys/power/state
+
+. Press one key to resume
+
+. Retest DVFS function again
+
+| Expected Result |
+DVFS can work normally after resume
+
+|====================================================================
+
+<<<

@@ -1,0 +1,42 @@
+FSL-UT-PM-006-DVFS
+~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+DVFS TEST
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+ CONFIG_IMX_HAVE_PLATFORM_IMX_DVFS=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+.To Enable DVFS:
+
+ echo 1 > /sys/devices/platform/imx_dvfscore.0/enable
+
+.To Disable DVFS:
+ echo 0 > /sys/devices/platform/imx_dvfscore.0/enable
+
+| Expected Result |
+When DVFS core enabled,
+CPU voltage should be around 1.225 V when Freq is 996 MHz;
+CPU voltage should be around 1.10 V when Freq is 792 MHz;
+CPU voltage should be around 0.95 V when Freq is 396 MHz;
+Voltage should be around 0.85 V when Freq is 198 MHz.
+When DVFS core disabled, voltage should be around 1.225 V all the time with freq of 996 MHz.
+
+|====================================================================
+
+<<<
