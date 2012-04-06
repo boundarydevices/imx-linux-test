@@ -1,0 +1,94 @@
+FSL-UT-PM-007-CPUFREQ
+~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+CPUFREQ TEST
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. Make sure if CPUFREQ governor is userspace:
+
+ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+ userspace
+
+. If yes, go to step 3. otherwise, do the following:
+
+ echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+
+. To show current CPU frequency in KHz (e.g. 392727 KHz):
+
+ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
+ 392727
+
+. To show current CPU voltage in uV (e.g. 1450000 uV):
+
+ cat /sys/class/regulator/regulator.0/microvolts
+ 1450000
+
+. To show the minimum CPU frequency (e.g. 261818 KHz) can be changed:
+
+ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
+ 261818
+
+. To change CPU frequency to the minimum frequency (e.g. 261818 KHz):
+
+ echo 261818 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
+
+.  To show current CPU frequency in KHz (e.g. 261818 KHz):
+
+ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
+ 261818
+
+. To show current CPU voltage in uV (e.g. 1275000 uV):
+
+ cat /sys/class/regulator/regulator.0/microvolts
+ 1275000
+
+. To show the maximum CPU frequency (e.g. 454736 KHz) can be changed:
+
+ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+ 454736
+
+. To change CPU frequency to the maximum frequency (e.g. 454736 KHz):
+
+ echo 454736 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
+
+. To show current CPU frequency in KHz (e.g. 454736 KHz):
+
+ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
+ 454736
+
+. To show current CPU voltage in uV (e.g. 1550000 uV):
+
+ cat /sys/class/regulator/regulator.0/microvolts
+ 1550000
+
+. To show what values of CPU frequency can be changed in KHz (The first value of each row is the frequency value can be changed into):
+
+ cat /sys/devices/system/cpu/cpu0/cpufreq/stats/time_in_state
+
+| Expected Result |
+.The CPU frequency should be changed to the value requested. The CPU voltage should be changed.
+
+. After changing CPU frequency to the value listed by using the thirteenth command above (ex. 996 MHz), the CPU voltage should be around 1.225V by measuring VDDARM on CPU card and ground. To see the current cpu freq you can use the third command above.
+
+. After changing CPU frequency to to the value listed by using the thirteenth command above (ex. 198MHz), the CPU voltage should be around 0.85V (1.00V for i.MX6DL-ARM2) by measuring VDDARM on CPU card and ground. To see the current cpu freq you can use the third command above.
+
+|====================================================================
+
+<<<
