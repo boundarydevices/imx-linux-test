@@ -38,6 +38,10 @@ include::../pm/doc/FSL-UT-PM-002.txt[]
 include::../pm/doc/FSL-UT-PM-003.txt[]
 include::../pm/doc/FSL-UT-PM-004.txt[]
 include::../pm/doc/FSL-UT-PM-005.txt[]
+include::../pm/doc/FSL-UT-PM-006.txt[]
+include::../pm/doc/FSL-UT-PM-007.txt[]
+include::../pm/doc/FSL-UT-PM-008.txt[]
+include::../pm/doc/FSL-UT-PM-009.txt[]
 
 PXP
 ---
