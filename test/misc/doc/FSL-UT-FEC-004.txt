@@ -1,0 +1,45 @@
+FSL-UT-FEC-004
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Ethernet connection interruption.
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+An ethernet cable connection. A server with an NFS root file system.
+
+| Test Procedure |
+The FEC driver shall support transmit features like automatic retransmission
+on collision and automatic CRC generation.
+
+.Test_Procedure:
+. Build kernel with FEC on, SMSC911X? off and boot NFS root
+. Execute "while true ; do du / ; done"
+. Disconnect and reconnect FEC ethernet
+. Observe kernel messages and that it recovers and continues.
+
+To boot an NFS root the command line may look something like this:
+exec -c "noinitrd console=ttymxc0,115200 root=/dev/nfs nfsroot=10.1.49.15: \
+/u_tmp/name/ltib-mx25/rootfs rw ip=dhcp"
+
+| Expected Result |
+Sample_Log:
+eth0: status: link down
+nfs: server 172.16.1.2 not responding, still trying
+eth0: status: link up
+nfs: server 172.16.1.2 OK.
+
+|====================================================================
+
+<<<
