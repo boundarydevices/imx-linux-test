@@ -1,0 +1,53 @@
+FSL-UT-USB-001-HOST-Mass-Storage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB HOST Mass-Storage Class test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. modprobe ehci-hcd if it's built as module. No need for MX5.
+
+2. mkdir /mnt/udisk
+
+3. Plug in a U-disk
+
+4. cat /proc/partitions, e.g. major minor #blocks name 31 0 256 mtdblock0
+ 8 16 127744 sdb find partitions with a major that is 8, this example ,the sdb
+ is U-disk partition.
+
+5. mount -t vfat /dev/sdb /mnt/udisk
+
+If this function is not used, unload the following drivers
+
+umount /mnt/udisk
+
+rmmod ehci-hcd
+
+Note1: this test should be appled to all the ports exist on the board, for
+example, OTG port, H1 port, H2 port, etc; and if there is internal hub
+attached to some Host ports, for example, a internal hub is attached to Host1
+, this test should be applied to the all the ports on the hub.
+
+Note2: this test should be done for at least 10 times on every port
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<

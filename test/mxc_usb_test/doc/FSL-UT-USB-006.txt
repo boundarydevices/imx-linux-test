@@ -1,0 +1,78 @@
+FSL-UT-USB-006-Gadget-serial
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB serial gadget test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+Testing the serial gadget requires windows ACM driver to be installed. This
+requires gserial.inf and usbser.sys. gserial.inf can be obtained from
+Documentation/usb/gadget_serial.txt. usbser.sys can be obtained using:
+
+Expand "C:\WINDOWS\Driver Cache\i386\driver.cab" -F:usbser.sys . CAUTION: Don'
+t drop the last word "." in the instructions above
+
+Copy gserial.inf and usbser.sys to a single directory.
+
+1. modprobe arcotg_udc
+
+2. mknod /dev/ttyGS0 c 253 0
+
+3. modprobe g_serial use_acm=1
+
+	gs_bind: Gadget Serial v2.2 bound
+
+	arcotg_udc: gadget arc_udc bound to driver g_serial
+
+	gs_module_init: Gadget Serial v22 loaded
+
+4. Connect the board to the PC with a USB cable.
+
+	gs_disconnect: Gadget Serial disconnected
+
+	gs_disconnect: Gadget Serial disconnected
+
+	gs_set_config: Gadget Serial configured, high speed CDC-ACM config
+
+5. Windows will recognize the serial gadget. Choose to install a driver from
+a specific location and select gserial.inf. This will install usbser.sys as
+the ACM driver in windows.
+
+6. On a Windows host configure a new HyperTerminal? session to use the COM
+port assigned to Gadget Serial. The "Port Settings" will be set automatically
+when HyperTerminal? connects to the gadget serial device, so you can leave
+them set to the default values--these settings mostly do not matter.
+
+7. echo "hi" > /dev/ttyGS0
+
+	String "hi" should be displayed in Gadget Serial terminal
+
+8. cat /dev/ttyGS0
+
+Anything you type on the Gadget Serial terminal should appear in serial port
+terminal window. For further details refer to linux documentation for serial
+gadget in Documentation/usb/gadget_serial.txt.
+
+Note: Please run command "modprobe fsl_otg_arc" before step1 on MX25.
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
