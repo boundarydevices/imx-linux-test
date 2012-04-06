@@ -1,0 +1,47 @@
+FSL-UT-PM-009-CPU hotplug
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+CPU hotplug test
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. run bonnie++ back ground as below:
+
+ x=1
+ while [1]
+ do
+	 /unit_tests/bonnie\+\+ -f -u root -r 5 -s 10 -d /tmp
+	 echo
+	 echo
+	 echo bonnie++ test passed: $x times
+	 echo
+	 echo
+	 let x=x+1
+ done
+
+. run cpu hotplug test command as below:
+
+ i=0; while [ "$i" -lt 10000 ]; do echo 0 > /sys/devices/system/cpu/cpu3/online;echo 0 > /sys/devices/system/cpu/cpu2/online;echo 0 > /sys/devices/system/cpu/cpu1/online;sleep 1;echo 1 > /sys/devices/system/cpu/cpu1/online;echo 1 > /sys/devices/system/cpu/cpu2/online;echo 1 > /sys/devices/system/cpu/cpu3/online; echo Pass $i times ;i=`expr $i + 1`; done
+
+| Expected Result |
+pass
+
+|====================================================================
+
+<<<
