@@ -1,0 +1,43 @@
+FSL-UT-VPU-009
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test VPU with TV out
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+Connect board to TV with correct lines.
+
+| Test Procedure |
+1. Set environment per TV mode
+
+ NTSC mode: export VPU_TV_MODE=NTSC
+ PAL mode: export VPU_TV_MODE=PAL
+ 720P mode (This is avaiable on MX51): export VPU_TV_MODE=720P
+
+2. Decoder one stream as normal vpu test. For exmaple, H264 video stream
+
+ /unit_tests/mxc_vpu_test.out -D "-i filename -f 2"
+
+Note
+
+Please make sure input stream is 1280 * 720 when TV mode is 720P.
+
+| Expected Result |
+Video is displayed correctly on TV
+
+|====================================================================
+
+<<<
