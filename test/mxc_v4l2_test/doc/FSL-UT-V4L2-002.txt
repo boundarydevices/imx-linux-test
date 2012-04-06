@@ -1,0 +1,55 @@
+FSL-UT-V4L2-002
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+v4l2 still image capture and display test
+
+| Automated |
+NO
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+camera and display required.
+
+| Test Procedure |
+
+Check that /dev/video0 exists. If it does not exist, load the camera driver with the command:
+
+ modprobe mxc_v4l2_capture
+
+modprobe CAMERA_MODULE (CAMERA_MODULE should be replaced by the camera module on the related platform, e.g. ov3640_camera should be used here on MX51)
+
+Check again for /dev/video0. If it is not there, the camera driver has not loaded successfully and the test has failed.
+
+Type the following command line in a writable directory. A still image at the resolution of 640x480 will be saved in the file "still.yuv" in the format YUV422 planar.
+
+ mxc_v4l2_still.out -w 640 -h 480 -f YUV422P?
+
+
+Note: YUV420 is the fommat defined by sensor(UYVY,YY), and needs to convert to YV12 format, then it can be viewed by common tool.
+
+| Expected Result |
+No errors or warnings seen.
+
+
+The file "still.yuv" is created with the size of 614400.
+
+The image can be viewed with:
+
+ mxc_v4l2_output.out -iw 640 -ih 480 -ow 176 -oh 144 -l 100 -f 422P still.yuv
+
+The image should be the correct image, clear and with the correct colors.
+
+
+|====================================================================
+
+<<<

@@ -1,0 +1,47 @@
+FSL-UT-V4L2-001
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+v4l2 video capture and display test
+
+| Automated |
+NO
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+camera and display required.
+
+| Test Procedure |
+Check that /dev/video0 exists. If it does not exist, load the camera driver with the command:
+
+modprobe mxc_v4l2_capture
+
+modprobe CAMERA_MODULE (CAMERA_MODULE should be replaced by the camera module on the related platform, e.g. ov3640_camera should be used here on MX51)
+
+Check again for /dev/video0. If it is not there, the camera driver has not loaded successfully and the test has failed.
+
+Type the following command line in a writable directory. The 50 frames of video from the camera will be captured in the file "test.yuv" at a resolution of 352x288 with no rotation and a frame rate of 30 fps. The format will be YUV420.
+
+ mxc_v4l2_capture.out -iw 352 -ih 288 -ow 352 -oh 288 -r 0 -c 50 -fr 30 test.yuv
+
+| Expected Result |
+There should be no errors or warnings. The file "test.yuv" will be created with a size of 7603200.
+
+To display the video at the resolution of 176x144, use the command line below (a different resolution may be used depending on display size):
+
+ mxc_v4l2_output.out -iw 352 -ih 288 -ow 176 -oh 144 -r 0 -fr 30 test.yuv
+
+Verify captured file contents match viewfinder and that the image is clear and the colors correct.
+
+|====================================================================
+
+<<<
