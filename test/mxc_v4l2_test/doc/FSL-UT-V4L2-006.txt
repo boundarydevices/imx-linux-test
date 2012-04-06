@@ -1,0 +1,46 @@
+FSL-UT-V4L2-006
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+TV-Out test
+
+| Automated |
+NO
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. test PAL mode:
+#>echo U:720x576i-50 > /sys/class/graphics/fb1/mode
+#>echo 0 > /sys/class/graphics/fb1/blank
+#>/unit_tests/mxc_v4l2_output.out -iw 320 -ih 240 -ow 720 -oh 576 -d 5
+
+2. test NTSC mode:
+#>echo U:720x480i-60 > /sys/class/graphics/fb1/mode
+#>echo 0 > /sys/class/graphics/fb1/blank
+#>/unit_tests/mxc_v4l2_output.out -iw 320 -ih 240 -ow 720 -oh 480 -d 5
+
+3. test 720p mode:
+1) Add "hdtv" in the boot command line;
+2) After the system boot up, execute:
+#>echo U:1280x720p-60 > /sys/class/graphics/fb1/mode
+#>echo 0 > /sys/class/graphics/fb1/blank
+#>/unit_tests/mxc_v4l2_output.out -iw 320 -ih 240 -ow 720 -oh 480 -d 5
+
+| Expected Result |
+Color bar display on the TV.
+
+|====================================================================
+
+<<<
