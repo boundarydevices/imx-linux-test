@@ -1,0 +1,64 @@
+FSL-UT-USB-011-DEVICE-Wakeup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB device: wakeup the system
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+modprobe fsl_otg_arc
+
+modprobe ehci-hcd
+
+modprobe arcotg_udc
+
+modprobe g_file_storage file=/dev/xxxx
+
+cat /sys/devices/platform/fsl-usb2-udc/power/wakeup
+
+disabled
+
+echo mem > /sys/power/state
+
+	......
+
+connect to host(PC), system can not be waked up.
+
+echo enabled > /sys/devices/platform/fsl-usb2-otg/power/wakeup
+
+echo enabled > /sys/devices/platform/fsl-usb2-udc/power/wakeup
+
+cat /sys/devices/platform/fsl-usb2-otg/power/wakeup
+
+enabled
+
+cat /sys/devices/platform/fsl-usb2-udc/power/wakeup
+
+enabled
+
+echo mem > /sys/power/state
+
+	......
+
+connect to host(PC), system can be waked up.
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<

@@ -1,0 +1,70 @@
+FSL-UT-USB-005-Gadget-Ethernet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB Gadget Ethernet test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. insmod arcotg_udc
+
+2. insmod g_ether
+
+3. ifconfig usb0
+
+4. ifconfig usb0 192.168.0.2 up When first using the USB Ethernet, and the PC
+OS is Windows XP, a driver must be installed. Use the BSP file: linux\
+Documentation\usb\linux.inf to install the driver.
+
+
+5. On the PC (if running Windows), find a device named Linux USB Ethernet/
+RNDIS Gadget
+
+6. Configure it with a fixed IP.
+
+7. Press the right button on the mouse, and click on TCP/IP Properties
+
+8. Use the following IP address and settings:
+
+	192.168.0.1
+
+	255.255.255.0
+
+	192.168.0.1
+
+9.  Save these settings.
+
+10.  From the PC, ping 192.168.0.2.
+
+If this function is not used
+
+ifconfig usb0 down
+
+If this function is not used, unload the following drivers
+
+rmmod g_ether
+
+rmmod arcotg_udc
+
+Note: Please run command "modprobe fsl_otg_arc" before step1 on MX25.
+
+| Expected Result |
+Basic network functions(such as Ping...) can work ok.
+
+|====================================================================
+
+<<<
