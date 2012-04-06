@@ -1,0 +1,36 @@
+FSL-UT-ASRC-002
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test suspend/resume for ASRC driver
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_ASRC=y
+ CONFIG_MXC_ASRC=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. make OS into suspend mode
+
+ $ /unit_tests/rtcwakeup.out -d rtc0 -m mem -s 6
+
+. after resume, re-run ASRC test cases
+
+| Expected Result |
+all ASRC test cases pass
+|====================================================================
+
+<<<
+
