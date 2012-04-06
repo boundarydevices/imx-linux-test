@@ -1,0 +1,152 @@
+FSL-UT-USB-004-Gadget-Mass-Storage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB gadget Mass-Storage Class test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+*If NAND is to be used as a USB peripheral:
+
+1. Plug a NAND Flash card into the board if nand flash is not used.
+
+2. Boot the board.
+
+3. Select a NAND Flash "data/user" partition as USB peripheral, e.g. /dev/
+mtdblock4,Assume this partition is 100MB size. Perform the following action only once.
+
+4. dd bs=1M count=100 if=/dev/zero of=/dev/mtdblock4 If using it as a U-disk,
+skip this step.
+
+5. modprobe arcotg_udc modprobe g_file_storage file="/dev/mtdblock4"
+
+6. Connect the board to the PC with a USB cable.
+
+7. The PC should recognize the U-disk. If this is the first time it has been
+used, it will have to be formatted. On a PC, enter Computer Management tools,
+storage-> Disk Management. Following the PC tutor, get a raw disk, create a
+partition on it, and format it with FAT or FAT32.
+
+8. Files can now be transferred between the PC and the board.
+
+*To use a partition of the hard disk as a U disk:
+
+1. Get a "raw" hard disk, and connect it to the ATA interface of board.
+
+2. dd if=/dev/zero of=/dev/hda bs=1M count=100
+
+3. Reboot this board.
+
+4. modprobe arcotg_udc
+
+5. modprobe g_file_storage file="/dev/hda"
+
+6. Use the PC to create a partition table, and format every partition. On a
+PC using Windows, open "Computer Management", enter storage -> Disk
+Management Enter Initialize and Convert Disk Wizard. Everything should be set
+to the default. Create a partition table using the PC with Windows. After
+creating a partition table, input the "sync" command in the Linux console.
+
+7. Reboot this board, and look at the partition table (fdisk -l )
+
+root@10 ~$ fdisk -l
+
+Disk /dev/hda: 20.0 GB, 20003880960 bytes
+
+255 heads, 63 sectors/track, 2432 cylinders
+
+Units = cylinders of 16065 * 512 = 8225280 bytes
+
+Device Boot Start End Blocks Id System
+
+/dev/hda1 1 127 1020096 b W95 FAT32
+
+/dev/hda2 128 2431 18506880 f W95 Ext'd (LBA)
+
+/dev/hda5 128 254 1020096 6 FAT16
+
+/dev/hda6 255 636 3068383+ b W95 FAT32
+
+The above steps need to be done only once.
+
+Each time it is used, perform the following steps:
+
+1. modprobe arcotg_udc
+
+2. Set the hard disk partition as a USB disk. modprobe g_file_storage file="/
+dev/hda"
+
+
+3. Files may now be transferred between the PC and the board.
+
+4. After finishing the file transfer, it can mounted:
+
+5. mount -t vfat /dev/hda6 /mnt/test
+
+6. ls /mnt/test, everything here.
+
+after finish the test:
+
+umount /mnt/test
+
+rmmod g_file_storage
+
+rmmod arcotg_udc
+
+Notes:
+
+1. Do not use the Linux format command (e.g. fdisk) to create a hard disk
+partition table. PC Windows must be used to create it if one partition is to
+be used as a U disk.
+
+
+2. Do not use this partition on the PC and the board at the same time.
+
+
+*If MMC/SD card is to be used as a USB peripheral:
+
+1. Plug a MMC/SD card into the board.
+
+2. Boot the board.
+
+3. Load MMC/SD modules insmod mx_sdhci OR (for mx31) insmod mxc_mmc
+
+4. Load USB modules
+
+	modprobe arcotg_udc
+
+	modprobe g_file_storage file=dev/mmcblk0
+
+5. Connect the board to the PC with a USB cable.
+
+The PC should recognize the U-disk.If this is the first time it has been used, it will have to
+be formatted.On a PC, enter Computer Management tools, storage-> Disk Management.
+Following the PC tutor, get a raw disk, create a partition on it, andformat it with
+FAT or FAT32.
+
+Files can now be transferred between the PC and the board.
+
+Note: Please modprobe fsl_otg_arc before step 4 and step 5 on MX25.
+
+Note: This test should be done at least for 5 times
+
+| Expected Result |
+Files may now be transferred between the PC and the board.
+
+|====================================================================
+
+<<<

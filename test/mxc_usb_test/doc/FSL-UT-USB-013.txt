@@ -1,0 +1,41 @@
+FSL-UT-USB-013-HUB-AUTO-suspend/resume
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB Hub auto-suspend/resume
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+
+1. Attach a hub to OTG port or use the internal hub attached to Host1 (if exist)
+
+2. Wait 2s to make host and hub enter into suspend mode
+
+3. Insert USB device into hub port, the USB bus should resume, the new device
+can be enumerated. No hub detach before new device enumerated.
+
+4. Try to increase/decrease the wait time to make host and hub enter intosuspend
+mode, and try again.
+
+5. Such test case should be test for at least 20 times.
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
