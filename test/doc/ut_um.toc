@@ -64,4 +64,24 @@ include::../misc/doc/FSL-UT-SATA-001.txt[]
 include::../misc/doc/FSL-UT-SATA-002.txt[]
 include::../misc/doc/FSL-UT-SATA-003.txt[]
 
+ESAI
+----
+include::../mxc_esai_test/doc/FSL-UT-ESAI-001.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-002.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-003.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-004.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-005.txt[]
+
+SSI
+----
+include::../mxc_ssi_test/doc/FSL-UT-SSI-001.txt[]
+include::../mxc_ssi_test/doc/FSL-UT-SSI-002.txt[]
+include::../mxc_ssi_test/doc/FSL-UT-SSI-003.txt[]
+include::../mxc_ssi_test/doc/FSL-UT-SSI-004.txt[]
+include::../mxc_ssi_test/doc/FSL-UT-SSI-005.txt[]
+
+ASRC
+----
+include::../mxc_asrc_test/doc/FSL-UT-ASRC-001.txt[]
+include::../mxc_asrc_test/doc/FSL-UT-ASRC-002.txt[]
 
