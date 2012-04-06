@@ -1,0 +1,45 @@
+FSL-UT-FEC-005
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Change MAC address.
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+An ethernet connection A server with an NFS root file system.
+
+| Test Procedure |
+The FEC driver shall support changing the default MAC address
+via the kernel command line.
+
+.Test steps:
+. Configure kernel with SMSC911X? off, and FEC on.
+. Boot kernel with "fec_mac=00:00:02:19:19:61"
+   added to kernel command line.
+. Examine boot log for "eth0: ethernet 00:00:02:19:19:61".
+
+
+| Expected Result |
+Kernel command line: noinitrd console=ttymxc0,115200 root=/dev/nfs
+nfsroot=10.19 3.20.190:/tftpboot/10.193.20.181 init=/linuxrc
+ip=dhcp fec_mac=00:04:9f:00:98:2c
+
+ifconfig eth0:
+eth0 Link encap:Ethernet  HWaddr 00:04:9f:00:98:2c
+inet addr:10.192.242.12  Bcast:10.192.242.255  Mask:255.255.255.0
+......
+
+|====================================================================
+
+<<<
