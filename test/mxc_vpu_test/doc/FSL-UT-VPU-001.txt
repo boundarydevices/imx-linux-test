@@ -1,0 +1,55 @@
+FSL-UT-VPU-001
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Decode one stream and display on the LCD
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+The test files are not in unit_tests. The test files must be procured by the person running the test.
+
+| Test Procedure |
+To test MPEG-4 decode:
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.m4v -f 0"
+
+To test H.263 decode:
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.263 -f 1"
+
+To test H.264 decode:
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.264 -f 2"
+
+To test VC1 decode (i.MX37 and i.MX51 VPU only):
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.rcv -f 3"
+
+To test MPEG2 decode (i.MX37 and i.MX51 VPU only):
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.mpg -f 4"
+
+To test MJPEG decode (i.MX51 VPU only):
+
+ ./mxc_vpu_test.out -D "-i /usr/vectors/file.mjpg -f 7"
+
+You can get the mp4 test file from this location the linux-test.git server. It is located under [linux-test.git]/test/mxc_vpu_test/configs/akiyo.mp4
+
+| Expected Result |
+Stream is displayed on the LCD correctly.
+
+|====================================================================
+
+<<<
