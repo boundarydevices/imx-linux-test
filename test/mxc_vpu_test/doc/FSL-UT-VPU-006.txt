@@ -1,0 +1,33 @@
+FSL-UT-VPU-006
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Decode multiple streams with different formats simultaneously
+
+| Automated |
+No
+
+| Kernel Config Option |
+N/A
+
+| Software Dependency |
+Need /usr/lib/libvpu.so
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+To decode multiple streams with different formats simultaneously. For example, decoder one H264 and one MPEG4 streams.
+
+ ./mxc_vpu_test.out -D "-i/vectors/file.264 -f 2" -D "-i ./akiyo.mp4 -f 0 -o akiyo.yuv"
+
+| Expected Result |
+Streams can be decoded correctly.
+
+|====================================================================
+
+<<<
