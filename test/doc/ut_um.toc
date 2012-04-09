@@ -97,6 +97,10 @@ include::../misc/doc/FSL-UT-FEC-003.txt[]
 include::../misc/doc/FSL-UT-FEC-004.txt[]
 include::../misc/doc/FSL-UT-FEC-005.txt[]
 
+IEEE1588
+--------
+include::../misc/doc/FSL-UT-IEEE1588-001.txt[]
+
 I2C
 ----
 include::../misc/doc/FSL-UT-I2C-001.txt[]
