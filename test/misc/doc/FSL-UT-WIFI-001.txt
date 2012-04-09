@@ -1,0 +1,40 @@
+FSL-UT-WIFI-001-Basci-Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+WIFI Basci test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+
+| Test Procedure |
+
+.For Atheros AR6003
+. iwconfig wlan0
+. iwlist wlan0 scan (search APs)
+. iwconfig wlan0 essid XXX (associate with AP, XXX is the AP name)
+. ifconfig wlan0 192.168.1. xx
+
+  or get IP address dynamicly:
+  dhclient wlan0
+
+. Ping 192.168.1.1
+. scp root@192.168.1.1:/xx/xx .
+
+| Expected Result |
+Ping and SCP pass
+
+|====================================================================
+
+<<<
