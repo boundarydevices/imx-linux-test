@@ -1,0 +1,36 @@
+FSL-UT-CAN-001
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+CAN driver suspend and resume
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. Ensure CAN can enter suspend
+
+  echo standby > /sys/power/state
+
+. Press one key to resume
+
+. Retest CAN function again
+
+| Expected Result |
+Those operations should be successful.
+
+|====================================================================
+
+<<<
