@@ -1,0 +1,56 @@
+FSL-UT-CAN-004
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+CAN receive message
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+
+.Note
+. If there's no KVASER CAN, can protocal analyzer, user can use procedure B for test.
+
+. For kernel earlier than 2.6.38, user still needs use the old way as
+before to test can.
+
+.Procedure A
+. Connect CAN interface(can0) on board with KVASER CAN
+
+. Active CAN interface
+
+  ip link set can0 up type can bitrate 125000
+
+. Running cantest to receive messages
+
+  cantest can0&
+
+. Configure KVASER CAN to send data to can0
+
+. Check the data received.
+
+  The can0 should output the data received.
+
+.Procedure B
+
+The same as FSL-UT-CAN-003 procedure B.
+
+| Expected Result |
+The can should receive data successfully.
+
+|====================================================================
+
+<<<
