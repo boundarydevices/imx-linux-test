@@ -96,6 +96,11 @@ include::../misc/doc/FSL-UT-SATA-001.txt[]
 include::../misc/doc/FSL-UT-SATA-002.txt[]
 include::../misc/doc/FSL-UT-SATA-003.txt[]
 
+SPDIF
+----
+include::../mxc_spdif_test/doc/FSL-UT-SPDIF-001.txt[]
+include::../mxc_spdif_test/doc/FSL-UT-SPDIF-002.txt[]
+
 SSI
 ----
 include::../mxc_ssi_test/doc/FSL-UT-SSI-001.txt[]
