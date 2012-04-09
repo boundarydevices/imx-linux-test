@@ -1,0 +1,68 @@
+FSL-UT-CAN-003
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+CAN send message
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+
+.Note
+. If there's no KVASER CAN, can protocal analyzer, user can use
+procedure B for test.
+
+. For kernel earlier than 2.6.38, user still needs use the old way as
+before to test can.
+
+.Procedure A
+
+. Connect CAN interface(can0) on board with KVASER CAN
+
+. Active CAN interface
+
+  ip link set can0 up type can bitrate 125000
+
+. Run cansend to transmit one message.
+
+  cantest can0 1F334455#1122334455667788
+
+. Check the data that KVASER CAN recieved.
+
+.Procedure B
+. Get a FlexCAN loop-back connector or cable lines and connect it between CAN1 and CAN2.
+
+. Active CAN interface
+
+  ip link set can0 up type can bitrate 125000
+
+  ip link set can1 up type can bitrate 125000
+
+. Put can0 into receive mode in a background process
+
+  cantest can0&
+
+. Send test packet from CAN1 to CAN0
+
+  cantest can1 1F334455#1122334455667788
+
+| Expected Result |
+The can0 should print the received frame 1F334455#1122334455667788
+from can1.
+
+|====================================================================
+
+<<<

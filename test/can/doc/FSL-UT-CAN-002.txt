@@ -1,0 +1,43 @@
+FSL-UT-CAN-002
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+CAN wakeup
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+
+Note: The CAN self-wakeup function is enabled by default.
+
+. Active CAN interface
+
+  ip link set can0 up type can bitrate 125000
+
+. Enter Low power mode
+
+  echo mem > /sys/power/state
+
+. Tie CAN's Tx to GND to wakeup the systerm.
+
+  Alternatively user can use another CAN to send frames to the sleep can to wakeup it.
+
+| Expected Result |
+Those operations should be successful.
+
+|====================================================================
+
+<<<
