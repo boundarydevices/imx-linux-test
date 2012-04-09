@@ -145,3 +145,10 @@ include::../mxc_v4l2_test/doc/FSL-UT-V4L2-006.txt[]
 include::../mxc_v4l2_test/doc/FSL-UT-V4L2-007.txt[]
 include::../mxc_v4l2_test/doc/FSL-UT-V4L2-008.txt[]
 include::../mxc_v4l2_test/doc/FSL-UT-V4L2-009.txt[]
+
+CAN
+---
+include::../can/doc/FSL-UT-CAN-001.txt[]
+include::../can/doc/FSL-UT-CAN-002.txt[]
+include::../can/doc/FSL-UT-CAN-003.txt[]
+include::../can/doc/FSL-UT-CAN-004.txt[]
