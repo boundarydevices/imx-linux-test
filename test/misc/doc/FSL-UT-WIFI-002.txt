@@ -1,0 +1,36 @@
+FSL-UT-WIFI-001-Suspend Resume
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+WIFI Suspend Resume
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+
+| Test Procedure |
+
+.Steps
+. Ensure WIFI can enter suspend
+
+  echo mem > /sys/power/state
+
+. Press one key to resume
+. retest WIFI function
+
+| Expected Result |
+WIFI can work normally after resume
+
+|====================================================================
+
+<<<
