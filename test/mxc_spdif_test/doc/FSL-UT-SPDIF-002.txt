@@ -1,0 +1,39 @@
+FSL-UT-SPDIF-002
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test suspend/resume for alsa driver with SPDIF interface
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_SPDIF=y
+ CONFIG_SND_MXC_SOC_SPDIF_DAI=y
+ CONFIG_SND_SOC_IMX_SPDIF=y
+ CONFIG_SND_SOC_MXC_SPDIF=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+M-Audio Transit USB sound card
+
+| Test Procedure |
+. suspend up to 6s, then resume
+
+ $ /unit_tests/rtcwakeup.out -d rtc0 -m mem -s 6
+
+. after resume, retest SPDIF function
+
+| Expected Result |
+The SPDIF funtion should be OK after resume
+
+|====================================================================
+
+<<<
+
