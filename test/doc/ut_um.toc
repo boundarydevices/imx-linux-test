@@ -4,9 +4,37 @@ include::def.cfg[]
 {chip} Linux BSP Unit Test User Manual
 ======================================
 
-EPDC
+ASRC
+----
+include::../mxc_asrc_test/doc/FSL-UT-ASRC-001.txt[]
+include::../mxc_asrc_test/doc/FSL-UT-ASRC-002.txt[]
+
+CAN
 ---
+include::../can/doc/FSL-UT-CAN-001.txt[]
+include::../can/doc/FSL-UT-CAN-002.txt[]
+include::../can/doc/FSL-UT-CAN-003.txt[]
+include::../can/doc/FSL-UT-CAN-004.txt[]
+
+EPDC
+----
 include::../mxc_fb_test/doc/FSL-UT-EPDC-001.txt[]
+
+ESAI
+----
+include::../mxc_esai_test/doc/FSL-UT-ESAI-001.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-002.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-003.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-004.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-005.txt[]
+
+FEC
+---
+include::../misc/doc/FSL-UT-FEC-001.txt[]
+include::../misc/doc/FSL-UT-FEC-002.txt[]
+include::../misc/doc/FSL-UT-FEC-003.txt[]
+include::../misc/doc/FSL-UT-FEC-004.txt[]
+include::../misc/doc/FSL-UT-FEC-005.txt[]
 
 GNOME
 -----
@@ -16,6 +44,14 @@ GPU
 ---
 include::../gpu/doc/FSL-UT-GPU-001.txt[]
 
+HDMI
+----
+include::../mxc_fb_test/doc/FSL-UT-HDMI-001.txt[]
+include::../mxc_fb_test/doc/FSL-UT-HDMI-002.txt[]
+
+I2C
+----
+include::../misc/doc/FSL-UT-I2C-001.txt[]
 
 MISC
 ----
@@ -54,27 +90,11 @@ include::../mxc_rtc/doc/FSL-UT-RTC-001.txt[]
 include::../mxc_rtc/doc/FSL-UT-RTC-002.txt[]
 include::../mxc_rtc/doc/FSL-UT-RTC-003.txt[]
 
-WDOG
-----
-include::../wdog/doc/FSL-UT-WDOG-001.txt[]
-include::../wdog/doc/FSL-UT-WDOG-002.txt[]
-include::../wdog/doc/FSL-UT-WDOG-003.txt[]
-include::../wdog/doc/FSL-UT-WDOG-004.txt[]
-include::../wdog/doc/FSL-UT-WDOG-005.txt[]
-
 SATA
 ----
 include::../misc/doc/FSL-UT-SATA-001.txt[]
 include::../misc/doc/FSL-UT-SATA-002.txt[]
 include::../misc/doc/FSL-UT-SATA-003.txt[]
-
-ESAI
-----
-include::../mxc_esai_test/doc/FSL-UT-ESAI-001.txt[]
-include::../mxc_esai_test/doc/FSL-UT-ESAI-002.txt[]
-include::../mxc_esai_test/doc/FSL-UT-ESAI-003.txt[]
-include::../mxc_esai_test/doc/FSL-UT-ESAI-004.txt[]
-include::../mxc_esai_test/doc/FSL-UT-ESAI-005.txt[]
 
 SSI
 ----
@@ -84,29 +104,8 @@ include::../mxc_ssi_test/doc/FSL-UT-SSI-003.txt[]
 include::../mxc_ssi_test/doc/FSL-UT-SSI-004.txt[]
 include::../mxc_ssi_test/doc/FSL-UT-SSI-005.txt[]
 
-ASRC
-----
-include::../mxc_asrc_test/doc/FSL-UT-ASRC-001.txt[]
-include::../mxc_asrc_test/doc/FSL-UT-ASRC-002.txt[]
-
-FEC
-----
-include::../misc/doc/FSL-UT-FEC-001.txt[]
-include::../misc/doc/FSL-UT-FEC-002.txt[]
-include::../misc/doc/FSL-UT-FEC-003.txt[]
-include::../misc/doc/FSL-UT-FEC-004.txt[]
-include::../misc/doc/FSL-UT-FEC-005.txt[]
-
-IEEE1588
---------
-include::../misc/doc/FSL-UT-IEEE1588-001.txt[]
-
-I2C
-----
-include::../misc/doc/FSL-UT-I2C-001.txt[]
-
 USB
-----
+---
 include::../mxc_usb_test/doc/FSL-UT-USB-001.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-002.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-003.txt[]
@@ -121,6 +120,18 @@ include::../mxc_usb_test/doc/FSL-UT-USB-011.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-012.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-013.txt[]
 
+V4L2
+----
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-001.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-002.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-003.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-004.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-005.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-006.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-007.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-008.txt[]
+include::../mxc_v4l2_test/doc/FSL-UT-V4L2-009.txt[]
+
 VPU
 ---
 include::../mxc_vpu_test/doc/FSL-UT-VPU-001.txt[]
@@ -134,21 +145,15 @@ include::../mxc_vpu_test/doc/FSL-UT-VPU-008.txt[]
 include::../mxc_vpu_test/doc/FSL-UT-VPU-009.txt[]
 include::../mxc_vpu_test/doc/FSL-UT-VPU-010.txt[]
 
-V4L2
+WDOG
 ----
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-001.txt[]
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-002.txt[]
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-003.txt[]
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-004.txt[]
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-005.txt[]
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-006.txt[]
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-007.txt[]
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-008.txt[]
-include::../mxc_v4l2_test/doc/FSL-UT-V4L2-009.txt[]
+include::../wdog/doc/FSL-UT-WDOG-001.txt[]
+include::../wdog/doc/FSL-UT-WDOG-002.txt[]
+include::../wdog/doc/FSL-UT-WDOG-003.txt[]
+include::../wdog/doc/FSL-UT-WDOG-004.txt[]
+include::../wdog/doc/FSL-UT-WDOG-005.txt[]
 
-CAN
----
-include::../can/doc/FSL-UT-CAN-001.txt[]
-include::../can/doc/FSL-UT-CAN-002.txt[]
-include::../can/doc/FSL-UT-CAN-003.txt[]
-include::../can/doc/FSL-UT-CAN-004.txt[]
+WIFI
+----
+include::../misc/doc/FSL-UT-WIFI-001.txt[]
+include::../misc/doc/FSL-UT-WIFI-002.txt[]
