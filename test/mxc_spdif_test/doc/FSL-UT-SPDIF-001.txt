@@ -1,0 +1,50 @@
+FSL-UT-SPDIF-001
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test record for alsa driver with SPDIF interface
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_SPDIF=y
+ CONFIG_SND_MXC_SOC_SPDIF_DAI=y
+ CONFIG_SND_SOC_IMX_SPDIF=y
+ CONFIG_SND_SOC_MXC_SPDIF=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+M-Audio Transit USB sound card
+
+| Test Procedure |
+
+. Setup M-Audio Transit USB sound card and install M-Audio Transit driver on PC
+. Connect coaxial line between ARD and M-Audio transit
+. Startup WaveLab, open a test wav file: audioXXkYYS.wav to play in loop
+. call amixer to get rx sample rate by "RX Sample Rate" sound controller.
+command as:
+amixer cget numid=6,iface=PCM,name='RX Sample Rate',device=1
+. Meanwhile, on board use following command to record one wave file, and
+play it back on the audio stereo codec device (the recorded stream will be
+heard from headset)
+
+ $ arecord -D hw:[card id],[pcm id] -t wav -c 2 -r [sample rate in Hz] -f
+S24_LE \| aplay -D "plughw:0,0" -t wav
+
+Note: The sample rate argument in the arecord command must be consistent with
+wav file playing on WaveLab.
+
+| Expected Result |
+Hear audio that is captured from S/PDIF being looped back out stereo codec.
+
+|====================================================================
+
+<<<
+
