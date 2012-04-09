@@ -1,0 +1,51 @@
+FSL-UT-HDMI-001-Basic
+~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+EPDC frame buffer test for display updates
+
+| Automated |
+YES (But manual observation is required to confirming correct updates on display panel)
+
+| Kernel Config Option |
+
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+
+| Test Procedure |
+Basic boot testing involves modifying the kernel command line video parameter to test for several different framebuffer/display resolutions.
+The resolutions to be test depends on whether the HDMI output goes to an HDTV (supporting CEA TV modes)or through an HDMI->DVI converter to a PC monitor (usually not supporting TV modes, but rather supporting VESA monitor modes)
+
+.For HDMI->HDMI (output device is HDMI compatible), set the video parameter on the kernel command line:
+. video=mxcfb0:dev=hdmi,RGB24,640x480@60
+. video=mxcfb0:dev=hdmi,RGB24,1920x1080@60
+. video=mxcfb0:dev=hdmi,RGB24,1280x720@60
+
+.For HDMI->DVI, set the video parameter on the kernel command line:
+. video=mxcfb0:dev=hdmi,RGB24,640x480@60
+. video=mxcfb0:dev=hdmi,RGB24,1280x1024@60
+. video=mxcfb0:dev=hdmi,RGB24,1024x768@75
+
+| Expected Result |
+The UI should come up correctly on the display and appear in the mode that was set in the command line. If the command line mode is not supported by the display, the mode that is shown should be the mode supported by the display that is nearest to the command line mode.
+
+Note: The HDMI initialization routine calls for changing the video mode to 640x480 before ultimately changing to the desired mode. As a result, the fb console shows the tux logo during the first mode, and then does not re-show it when the mode is set to its ultimate video mode. Therefore, when using HDMI, the tux logo will not appear on the display.
+
+.If the screen is blank and confirmation is needed that the framebuffer is operating correctly, follow these steps to display an image to the FB:
+. Login to the rfs
+. cat /sys/class/graphics/fb0/mode The display resolution will be displayed.
+. Find the rgb image in the /unit_tests directory for display resolution.
+. cat image > /dev/fb0
+You should see a clear image filling the entire screen with correct colors.
+
+
+|====================================================================
+
+<<<
