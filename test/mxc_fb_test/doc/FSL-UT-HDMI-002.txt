@@ -1,0 +1,34 @@
+FSL-UT-HDMI-002-Hotplug
+~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+EPDC frame buffer test for display updates
+
+| Automated |
+YES (But manual observation is required to confirming correct updates on display panel)
+
+| Kernel Config Option |
+
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+
+| Test Procedure |
+.These tests cover HDMI driver state changes and ensure that the driver can properly handle hotplug events, video mode change events, and suspend/resume events.
+. Boot with HDMI unplugged. Once system has booted to command prompt, connect (hotplug) HDMI cable.
+. With HDMI display up and running, unplug HDMI cable and then reconnect.
+. With HDMI display up and running, unplug HDMI cable and reconnect a different HDMI cable which connects to a different HDMI displa
+
+| Expected Result |
+The UI should come up correctly on the display in each case.
+For the unplug-replug case, the video mode should be the same as before the cable was unplugged.
+
+|====================================================================
+
+<<<
