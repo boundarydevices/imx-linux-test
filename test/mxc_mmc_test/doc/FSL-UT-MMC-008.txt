@@ -1,5 +1,5 @@
 FSL-UT-MMC-008
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 [cols=">s,6a",frame="topbot",options="header"]
 |====================================================================
@@ -20,14 +20,13 @@ N/A
 N/A
 
 | Test Procedure |
-1. Ensure MMC/SD/SDIO can enter suspend.
+.Steps
+. Ensure MMC/SD/SDIO can enter suspend.
 
-$ echo standby > /sys/power/state
+ $ echo mem > /sys/power/state
 
-2. Press one key to resume.
-
-3. Retest MMC/SD/SDIO function.
-
+. Press one key to resume.
+. Retest MMC/SD/SDIO function.
 
 | Expected Result |
 MMC/SD/SDIO functionality works well after resume.
