@@ -1,0 +1,30 @@
+FSL-UT-MMC-006
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+MMC/SD mkfs test
+
+| Automated |
+Yes
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+run 'autorun-mmc-fs.sh'
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
