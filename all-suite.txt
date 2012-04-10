@@ -13,3 +13,8 @@ FSL-UT-WDOG-0001:autorun-wdog.sh:IMX6
 FSL-UT-GPU-0001:gpu.sh:IMX6
 FSL-UT-RTC-0001:autorun-rtc.sh:IMX6
 FSL-UT-VPU-0001:autorun-vpu.sh:IMX6
+FSL-UT-MMC-0010:autorun-mmc.sh:IMX6
+FSL-UT-MMC-0020:autorun-mmc-blockrw.sh:IMX6
+FSL-UT-MMC-0050:autorun-mmc-fdisk.sh:IMX6
+FSL-UT-MMC-0060:autorun-mmc-mkfs.sh:IMX6
+FSL-UT-MMC-0070:autorun-mmc-fs.sh:IMX6
