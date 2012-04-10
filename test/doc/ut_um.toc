@@ -62,6 +62,15 @@ Mfgtool
 -------
 include::../misc/doc/FSL-UT-MFG-001.txt[]
 
+MMC
+-------
+include::../mxc_mmc_test/doc/FSL-UT-MMC-001.txt[]
+include::../mxc_mmc_test/doc/FSL-UT-MMC-002.txt[]
+include::../mxc_mmc_test/doc/FSL-UT-MMC-005.txt[]
+include::../mxc_mmc_test/doc/FSL-UT-MMC-006.txt[]
+include::../mxc_mmc_test/doc/FSL-UT-MMC-007.txt[]
+include::../mxc_mmc_test/doc/FSL-UT-MMC-008.txt[]
+
 NAND
 ----
 include::../misc/doc/FSL-UT-NAND-001.txt[]
