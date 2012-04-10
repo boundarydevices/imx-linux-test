@@ -1,0 +1,37 @@
+FSL-UT-MMC-008
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+MMC/SD power management test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. Ensure MMC/SD/SDIO can enter suspend.
+
+$ echo standby > /sys/power/state
+
+2. Press one key to resume.
+
+3. Retest MMC/SD/SDIO function.
+
+
+| Expected Result |
+MMC/SD/SDIO functionality works well after resume.
+
+|====================================================================
+
+<<<
