@@ -1551,12 +1551,30 @@ decoder_allocate_framebuffer(struct decode *dec)
 
 			for (i = 0; i < totalfb; i++) {
 				fb[i].myIndex = i;
-				if (dst_scheme == PATH_V4L2)
-					fb[i].bufY = disp->buffers[i]->offset;
-				else
-					fb[i].bufY = disp->ipu_bufs[i].ipu_paddr;
-				fb[i].bufCb = fb[i].bufY + img_size;
-				fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
+
+                if (dec->cmdl->mapType == LINEAR_FRAME_MAP) {
+                    if (dst_scheme == PATH_V4L2)
+                        fb[i].bufY = disp->buffers[i]->offset;
+                    else
+                        fb[i].bufY = disp->ipu_bufs[i].ipu_paddr;
+                    fb[i].bufCb = fb[i].bufY + img_size;
+                    fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
+                }
+                else if ((dec->cmdl->mapType == TILED_FRAME_MB_RASTER_MAP)
+                        ||(dec->cmdl->mapType == TILED_FIELD_MB_RASTER_MAP)){
+                    if (dst_scheme == PATH_V4L2)
+                        tiled_framebuf_base(&fb[i], disp->buffers[i]->offset,
+                                dec->stride, dec->picheight, dec->cmdl->mapType);
+                    else {
+                        fb[i].bufY = disp->ipu_bufs[i].ipu_paddr;
+                        fb[i].bufCb = fb[i].bufY + img_size;
+                        fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
+                    }
+                } else {
+                    err_msg("undefined mapType = %d\n", dec->cmdl->mapType);
+                    goto err1;
+                }
+
 				/* allocate MvCol buffer here */
 				if (!cpu_is_mx27()) {
 					memset(&mvcol_md[i], 0,
