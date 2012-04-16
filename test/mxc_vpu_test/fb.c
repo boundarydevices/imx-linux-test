@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2011 Freescale Semiconductor, Inc.
+ * Copyright 2004-2012 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -104,6 +104,66 @@ struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int heigh
 	}
 
 	return fb;
+}
+
+int tiled_framebuf_base(FrameBuffer *fb, Uint32 frame_base, int strideY, int height, int mapType)
+{
+	int align;
+	int divX, divY;
+	Uint32 lum_top_base, lum_bot_base, chr_top_base, chr_bot_base;
+	Uint32 lum_top_20bits, lum_bot_20bits, chr_top_20bits, chr_bot_20bits;
+	int luma_top_size, luma_bot_size, chroma_top_size, chroma_bot_size;
+
+	divX = 2;
+	divY = 2;
+
+	/*
+	 * The buffers is luma top, chroma top, luma bottom and chroma bottom for
+	 * tiled map type, and only 20bits for the address description, so we need
+	 * to do 4K page align for each buffer.
+	 */
+	align = SZ_4K;
+	if (mapType == TILED_FRAME_MB_RASTER_MAP) {
+		/* luma_top_size means the Y size of one frame, chroma_top_size
+		 * means the interleaved UV size of one frame in frame tiled map type*/
+		luma_top_size = (strideY * height + align - 1) & ~(align - 1);
+		chroma_top_size = (strideY / divX * height / divY * 2 + align - 1) & ~(align - 1);
+		luma_bot_size = chroma_bot_size = 0;
+	} else {
+		/* This is FIELD_FRAME_MB_RASTER_MAP case, there are two fields */
+		luma_top_size = (strideY * height / 2 + align - 1) & ~(align - 1);
+		luma_bot_size = luma_top_size;
+		chroma_top_size = (strideY / divX * height / divY + align - 1) & ~(align - 1);
+		chroma_bot_size = chroma_top_size;
+	}
+
+	lum_top_base = (frame_base + align - 1) & ~(align -1);
+	chr_top_base = lum_top_base + luma_top_size;
+	if (mapType == TILED_FRAME_MB_RASTER_MAP) {
+		lum_bot_base = 0;
+		chr_bot_base = 0;
+	} else {
+		lum_bot_base = chr_top_base + chroma_top_size;
+		chr_bot_base = lum_bot_base + luma_bot_size;
+	}
+
+	lum_top_20bits = lum_top_base >> 12;
+	lum_bot_20bits = lum_bot_base >> 12;
+	chr_top_20bits = chr_top_base >> 12;
+	chr_bot_20bits = chr_bot_base >> 12;
+
+	/*
+	 * In tiled map format the construction of the buffer pointers is as follows:
+	 * 20bit = addrY [31:12]: lum_top_20bits
+	 * 20bit = addrY [11: 0], addrCb[31:24]: chr_top_20bits
+	 * 20bit = addrCb[23: 4]: lum_bot_20bits
+	 * 20bit = addrCb[ 3: 0], addrCr[31:16]: chr_bot_20bits
+	 */
+	fb->bufY = (lum_top_20bits << 12) + (chr_top_20bits >> 8);
+	fb->bufCb = (chr_top_20bits << 24) + (lum_bot_20bits << 4) + (chr_bot_20bits >> 16);
+	fb->bufCr = chr_bot_20bits << 16;
+
+    return 0;
 }
 
 struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height, int mvCol, int mapType)
