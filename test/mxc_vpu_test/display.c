@@ -759,19 +759,32 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 				fmt.fmt.pix.width, fmt.fmt.pix.height);
 
 	fmt.fmt.pix.field = V4L2_FIELD_ANY;
-	if (dec->cmdl->chromaInterleave == 0) {
-		if (dec->mjpg_fmt == MODE420)
-			fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-		else if (dec->mjpg_fmt == MODE422)
-			fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV422P;
-		else {
-			err_msg(" Display cannot support this MJPG format\n");
-			goto err;
-		}
-	} else {
-		info_msg("Display: NV12\n");
-		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
-	}
+
+    if (dec->cmdl->mapType == LINEAR_FRAME_MAP) {
+        if (dec->cmdl->chromaInterleave == 0) {
+            if (dec->mjpg_fmt == MODE420)
+                fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+            else if (dec->mjpg_fmt == MODE422)
+                fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV422P;
+            else {
+                err_msg(" Display cannot support this MJPG format\n");
+                goto err;
+            }
+        } else {
+            info_msg("Display: NV12\n");
+            fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
+        }
+    }
+    else if (dec->cmdl->mapType == TILED_FRAME_MB_RASTER_MAP) {
+        fmt.fmt.pix.pixelformat = IPU_PIX_FMT_TILED_NV12;
+    }
+    else if (dec->cmdl->mapType == TILED_FIELD_MB_RASTER_MAP) {
+        fmt.fmt.pix.pixelformat = IPU_PIX_FMT_TILED_NV12F;
+    }
+    else {
+        err_msg(" Display cannot support mapType = %d\n", dec->cmdl->mapType);
+        goto err;
+    }
 	err = ioctl(fd, VIDIOC_S_FMT, &fmt);
 	if (err < 0) {
 		err_msg("VIDIOC_S_FMT failed\n");
