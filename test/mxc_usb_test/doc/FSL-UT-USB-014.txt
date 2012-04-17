@@ -1,0 +1,38 @@
+FSL-UT-USB-014-UDISK-AS-MSC-Storage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Udisk as MSC storage
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+
+1. Attach a udisk to host1 port, and wait a device created, assuming this device
+is /dev/sdb1
+
+2. modprobe g_storage file=/dev/sdb1 removable=1 serial="123456789012"
+
+3. connect OTG port with PC, on PC side, one removable storage can be found
+
+4. read/write data from/to this removable storage and verify
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
