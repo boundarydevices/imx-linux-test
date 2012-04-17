@@ -133,6 +133,8 @@ include::../mxc_usb_test/doc/FSL-UT-USB-010.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-011.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-012.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-013.txt[]
+include::../mxc_usb_test/doc/FSL-UT-USB-014.txt[]
+include::../mxc_usb_test/doc/FSL-UT-USB-015.txt[]
 
 V4L2
 ----
