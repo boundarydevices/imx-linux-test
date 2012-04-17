@@ -1,0 +1,43 @@
+FSL-UT-USB-015-SUSPNED-RESUME-WHILE-OTG-CONNECTED-WITH-USB-CHARGER
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+system suspend/resume test while OTG port connected with usb charger
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+
+1. modprobe g_serial
+
+2. connect OTG port to USB charger
+
+3. echo enabled > /sys/devices/platform/imx-uart.0/tty/ttymxc0/power/wakeup
+
+4. echo mem > /sys/power/state
+
+5. after system suspended, resume system with UART port
+
+6. repeat step 4,5 for at least 5 times, no system hang should be found
+
+7. disconnect OTG port to USB charger, check USB clock, it should be turned off
+
+| Expected Result |
+Pass
+
+|====================================================================
+
+<<<
