@@ -1,0 +1,40 @@
+FSL-UT-ESAI-006
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test concurrent playback/record for alsa driver with ESAI interface;
+Play wav file and send process to background, record new audio file.
+
+| Automated |
+NO
+
+| Kernel Config Option |
+ CONFIG_IMX_HAVE_PLATFORM_IMX_ESAI=y
+ CONFIG_IMX_HAVE_PLATFORM_IMX_I2C=y
+ CONFIG_SND_SOC_IMX_CS42888=y
+ CONFIG_SND_SOC_CS42888=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+SabreAI
+
+| Test Procedure |
+. run the following commands on target board,
+
+ $ aplay -Dhw:0,0 file.wav >& /dev/null \| arecord -Dhw:0,0 -f S16_LE -r 48000 -c 2 rec-S16LE-48k.wav
+ $ aplay -Dhw:0,0 rec-S16LE-48k.wav
+
+| Expected Result |
+The sound is heard clearly while recording an additional audio file.
+The record sound file is heard clearly and properly.
+
+|====================================================================
+
+<<<
+
