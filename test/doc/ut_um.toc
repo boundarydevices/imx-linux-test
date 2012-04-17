@@ -27,6 +27,7 @@ include::../mxc_esai_test/doc/FSL-UT-ESAI-002.txt[]
 include::../mxc_esai_test/doc/FSL-UT-ESAI-003.txt[]
 include::../mxc_esai_test/doc/FSL-UT-ESAI-004.txt[]
 include::../mxc_esai_test/doc/FSL-UT-ESAI-005.txt[]
+include::../mxc_esai_test/doc/FSL-UT-ESAI-006.txt[]
 
 FEC
 ---
