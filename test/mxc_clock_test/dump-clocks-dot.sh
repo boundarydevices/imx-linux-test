@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ $# -gt 0 ]; then
+	echo "Usage:"
+	echo "	1. run '$0 > d.txt' on Target Board"
+	echo "	2. run 'dot -Tpng -O d.txt' on Host PC to generate a PNG file."
+	exit 0
+fi
+
 if ! mount|grep -sq '/sys/kernel/debug'; then
 	mount -t debugfs none /sys/kernel/debug
 fi
