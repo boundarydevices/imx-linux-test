@@ -241,6 +241,28 @@ error:
 	return err;
 }
 
+
+int update_datachunk_length(struct audio_info_s *info, int format_size)
+{
+	*(int *)&header[24 + format_size] = info->output_data_len;
+	*(int *)&header[4] = info->output_data_len + 20 + format_size;
+	return 0;
+}
+
+int update_blockalign(struct audio_info_s *info)
+{
+	*(unsigned short *)&header[32] = info->blockalign;
+	*(int *)&header[28] =
+		info->output_sample_rate * info->blockalign;
+	return 0;
+}
+
+int update_sample_bitdepth(struct audio_info_s *info)
+{
+	*(unsigned short *)&header[34] = info->frame_bits;
+	return 0;
+}
+
 void bitshift(FILE * src, struct audio_info_s *info)
 {
 
@@ -249,51 +271,57 @@ void bitshift(FILE * src, struct audio_info_s *info)
 	int nleft;
 	int format_size;
 	int i = 0;
+	int bitdepth = info->frame_bits;
 	format_size = *(int *)&header[16];
 
-	if (info->frame_bits <= 16) {
+	/*caculate the input buffer size*/
+	if (bitdepth <= 16)
 		nleft = (info->input_data_len >> 1);
-		input_buffer = (int *)malloc(sizeof(int) * nleft);
-		if (input_buffer == NULL) {
-			printf("allocate input buffer error\n");
-		}
+	else
+		nleft = (info->input_data_len >> 2);
+	/*allocate input buffer*/
+	input_buffer = (int *)malloc(sizeof(int) * nleft);
+	if (input_buffer == NULL)
+		printf("allocate input buffer error\n");
+
+	if (info->frame_bits <= 16) {
+		/*change data format*/
 		do {
 			fread(&data, 2, 1, src);
+			/*change data bit from 16bit to 24bit*/
 			zero = ((data << 8) & 0xFFFF00);
 			input_buffer[i++] = zero;
 		} while (--nleft);
-
+		/*change data length*/
 		info->input_data_len = info->input_data_len << 1;
 		info->output_data_len = info->output_data_len << 1;
-		info->frame_bits = 32;
+		update_datachunk_length(info, format_size);
+		/*change block align*/
 		info->blockalign = 8;
-
-		*(int *)&header[24 + format_size] = info->output_data_len;
-
-		*(int *)&header[4] = info->output_data_len + 20 + format_size;
-
-		*(int *)&header[28] =
-		    info->output_sample_rate * info->channel *
-		    (info->frame_bits / 8);
-
-		*(unsigned short *)&header[32] = info->blockalign;
-		*(unsigned short *)&header[34] = info->frame_bits;
-	} else {
-		nleft = (info->input_data_len >> 2);
-		input_buffer = (int *)malloc(sizeof(int) * nleft);
-		if (input_buffer == NULL) {
-			printf("allocate input buffer error\n");
-		}
+		update_blockalign(info);
+	} else if (info->frame_bits == 24) {
+		/*change data format*/
 		do {
 			fread(&data, 4, 1, src);
-			zero = ((data >> 8) & 0xFFFF00);
+			input_buffer[i++] = data;
+		} while (--nleft);
+	} else if (info->frame_bits == 32) {
+		/*change data format*/
+		do {
+			fread(&data, 4, 1, src);
+			/*change data bit from 32bit to 24bit*/
+			zero = (data >> 8) & 0x00FFFFFF;
 			input_buffer[i++] = zero;
 		} while (--nleft);
 	}
+
+	/*All output format is fixed to 24bit*/
+	info->frame_bits = 24;
+	update_sample_bitdepth(info);
+	/*allocate input buffer*/
 	output_buffer = (int *)malloc(info->output_data_len);
-	if (output_buffer == NULL) {
+	if (output_buffer == NULL)
 		printf("output buffer allocate error\n");
-	}
 }
 
 int header_parser(FILE * src, struct audio_info_s *info)
@@ -403,7 +431,7 @@ void convert_data(FILE * dst, struct audio_info_s *info)
 	i = 0;
 	do {
 		data = output_buffer[i++];
-		data = (data << 8) & 0xFFFF0000;
+		data &= 0x00FFFFFF;
 		fwrite(&data, 4, 1, dst);
 		size -= 4;
 	} while (size > 0);
