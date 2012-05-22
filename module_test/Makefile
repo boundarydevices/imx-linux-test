@@ -21,6 +21,9 @@ endif
 ifeq ($(CONFIG_FB_MXC_EINK_PANEL),y)
 module_list-y += epdc_test_driver.o
 endif
+ifeq ($(CONFIG_FB_MXC_SIPIX_PANEL),y)
+module_list-y += spdc_test_driver.o
+endif
 
 # sahara uses common files for both test application and test module
 SAHARA_TEST_SOURCE=../test/mxc_sahara_test/
