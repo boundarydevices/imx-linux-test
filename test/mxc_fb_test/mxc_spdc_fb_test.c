@@ -64,10 +64,10 @@ extern "C"{
 #define BUFFER_OVERLAY		1
 
 #define WAVEFORM_MODE_INIT	0x0	/* Screen goes to white (clears) */
-#define WAVEFORM_MODE_DU	0x4	/* Grey->white/grey->black */
+#define WAVEFORM_MODE_DU	0x2	/* Grey->white/grey->black */
 #define WAVEFORM_MODE_GC16	0x1	/* High fidelity (flashing) */
 #define WAVEFORM_MODE_GC4	0x2	/* Lower fidelity */
-#define WAVEFORM_MODE_A2	0x4	/* Fast black/white animation */
+#define WAVEFORM_MODE_A2	0x2	/* Fast black/white animation */
 
 #define SPDC_STR_ID		"imx_spdc_fb"
 
@@ -780,7 +780,7 @@ static int test_auto_update(void)
 	printf("Blank screen\n");
 	memset(fb, 0x0, screen_info.xres_virtual*screen_info.yres*screen_info.bits_per_pixel/8);
 	update_to_display(0, 0, screen_info.xres, screen_info.yres,
-		WAVEFORM_MODE_DU, TRUE, 0);
+		WAVEFORM_MODE_INIT, TRUE, 0);
 
 	printf("Change to auto-update mode\n");
 	auto_update_mode = AUTO_UPDATE_MODE_AUTOMATIC_MODE;
@@ -792,16 +792,16 @@ static int test_auto_update(void)
 
 	printf("Auto-update 1st 5 lines\n");
 	for (i = 0; i < 5; i++) {
-		memset(fb, 0x00, screen_info.xres_virtual*5*screen_info.bits_per_pixel/8);
+		memset(fb, 0xFF, screen_info.xres_virtual*5*screen_info.bits_per_pixel/8);
 	}
 
 	sleep(6);
 
 	printf("Auto-update middle and lower stripes\n");
 	for (i = 0; i < 5; i++)
-		memset(fb + screen_info.xres_virtual*300*screen_info.bits_per_pixel/8/2, 0x00, screen_info.xres_virtual*5*screen_info.bits_per_pixel/8);
+		memset(fb + screen_info.xres_virtual*300*screen_info.bits_per_pixel/8/2, 0xFF, screen_info.xres_virtual*5*screen_info.bits_per_pixel/8);
 	for (i = 0; i < 5; i++)
-		memset(fb + screen_info.xres_virtual*500*screen_info.bits_per_pixel/8/2, 0x00, screen_info.xres_virtual*5*screen_info.bits_per_pixel/8);
+		memset(fb + screen_info.xres_virtual*500*screen_info.bits_per_pixel/8/2, 0xFF, screen_info.xres_virtual*5*screen_info.bits_per_pixel/8);
 
 	sleep(6);
 	printf("Auto-update blank screen\n");
