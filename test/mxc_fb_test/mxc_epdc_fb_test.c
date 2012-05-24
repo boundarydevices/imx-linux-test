@@ -1849,6 +1849,8 @@ static int test_dry_run(void)
 	draw_rectangle(fb, 0, 0, 300, 250, 0x8410);
 	update_to_display(0, 0, 300, 250, WAVEFORM_MODE_AUTO, FALSE, 0);
 
+	usleep(400);
+
 	/* Draw overlapping rectangle, use dry-run test to check for collision */
 	draw_rectangle(fb, 250, 200, 300, 250, 0x4104);
 	coll = update_to_display(250, 200, 300, 250, WAVEFORM_MODE_AUTO, FALSE, EPDC_FLAG_TEST_COLLISION);
