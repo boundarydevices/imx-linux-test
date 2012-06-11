@@ -49,6 +49,8 @@ struct audio_info_s {
 	int output_dma_size;
 	unsigned short frame_bits;
 	unsigned short blockalign;
+	enum asrc_word_width input_word_width;
+	enum asrc_word_width output_word_width;
 };
 struct audio_buf {
 	char *start;
@@ -141,7 +143,8 @@ int configure_asrc_channel(int fd_asrc, struct audio_info_s *info)
 	config.input_sample_rate = info->sample_rate;
 	config.output_sample_rate = info->output_sample_rate;
 	config.buffer_num = BUF_NUM;
-	config.word_width = 32;
+	config.input_word_width = info->input_word_width;
+	config.output_word_width = info->output_word_width;
 	config.inclk = inclk;
 	config.outclk = outclk;
 	pair_index = req.index;
@@ -317,6 +320,7 @@ void bitshift(FILE * src, struct audio_info_s *info)
 
 	/*All output format is fixed to 24bit*/
 	info->frame_bits = 24;
+	info->input_word_width = ASRC_WIDTH_24_BIT;
 	update_sample_bitdepth(info);
 	/*allocate input buffer*/
 	output_buffer = (int *)malloc(info->output_data_len);
@@ -462,6 +466,14 @@ int main(int ac, char *av[])
 	for (i = 1; i < ac; i++) {
 		if (strcmp(av[i], "-to") == 0)
 			audio_info.output_sample_rate = atoi(av[++i]);
+	}
+
+	for (i = 1; i < ac; i++) {
+		if (strcmp(av[i], "-wid") == 0) {
+			if (atoi(av[++i]) != 24)
+				printf("Only 24bit output is support!\n");
+			audio_info.output_word_width = ASRC_WIDTH_24_BIT;
+		}
 	}
 
 	if (ac > 5)
