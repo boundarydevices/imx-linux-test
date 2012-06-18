@@ -129,19 +129,19 @@ USB
 ---
 include::../mxc_usb_test/doc/FSL-UT-USB-001.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-002.txt[]
-include::../mxc_usb_test/doc/FSL-UT-USB-003.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-004.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-005.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-006.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-007.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-008.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-009.txt[]
-include::../mxc_usb_test/doc/FSL-UT-USB-010.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-011.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-012.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-013.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-014.txt[]
 include::../mxc_usb_test/doc/FSL-UT-USB-015.txt[]
+include::../mxc_usb_test/doc/FSL-UT-USB-016.txt[]
+include::../mxc_usb_test/doc/FSL-UT-USB-017.txt[]
 
 V4L2
 ----

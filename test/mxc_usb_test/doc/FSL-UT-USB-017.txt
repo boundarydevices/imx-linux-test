@@ -1,0 +1,56 @@
+FSL-UT-USB-017-3G-Modem-Basic-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB 3G modem basic test
+
+| Automated |
+Yes
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. make menuconfig
+   select "USB serial Converter support"
+   and the "USB Generic Serial Driver" & "USB driver for GSM and CDMA modems" under item
+   "USB serial Converter support"
+2. make uImage
+3. board power up and load kernel
+4. verify ttyUSB* exist under /dev
+5. run the following to receive 3G modem's response
+   cat /dev/ttyUSB0 &
+   cat /dev/ttyUSB1 &
+6. send AT command to 3G modem
+   echo "ATI^M" > /dev/ttyUSB1
+7. some response will be received like below:
+"ATI
+
+Manufacturer: huawei
+
+Model: EM770W
+
+Revision: 11.126.10.85.00
+
+IMEI: 357030027133509
+
++GCAP: +CGSM,+DS,+ES"
+
+Note: the detailed further AT command can refer to http://www.roman10.net/how-to-use-modem-at-commands-for-usb-modem-at-linux/
+   currently, only ATI command is OK
+
+| Expected Result |
+Some response can be received.
+
+|====================================================================
+
+<<<
