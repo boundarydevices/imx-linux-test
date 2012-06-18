@@ -1,0 +1,47 @@
+FSL-UT-USB-016-Suspend-Resume-Stress-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB suspend and resume stress test
+
+| Automated |
+Yes
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. USB gadget is built in kernel
+2. a hub attached to Host1,
+3. a USB mouse attached to the hub which attached to Host1, and enable auto suspend by
+   echo auto > /sys/devices/platform/fsl-ehci.1/usb2/2-1/2-1.x/power/control
+4. another device(any other board running g_zero gadget driver) attached to OTG
+5. enable remote wake up feature for the device attached to OTG by
+   echo enabled > /sys/devices/platform/fsl-ehci.0/power/wakeup
+   echo enabled > /sys/devices/platform/fsl-usb2-otg/power/wakeup
+   echo enabled > /sys/devices/platform/fsl-ehci.0/usb1/1-1/power/wakeup
+6. no the device side which attached to OTG, set the start, end, interval parameter
+
+7. use the attached script to run suspend/resume overnight
+
+#!/bin/sh
+# This will only run the quickhit tests.
+# i=0; while [ "$i" -lt 20000 ]; do /unit_tests/rtcwakeup.out -d rtc0 -m mem -s 2; i=`expr $i + 1`; done
+i=0; t=50; d=5; r=0; while [ "$i" -lt 200000 ]; do echo mem > /sys/power/state; sleep 2;
+echo ******suspend $i times**********; i=`expr $i + 1`; r=`date +%s`; t=`expr $r % 10 + 50`; d=`expr $r % 30 + 1`; done
+
+| Expected Result |
+USB can work normally after resume
+
+|====================================================================
+
+<<<
