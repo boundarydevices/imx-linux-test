@@ -68,6 +68,8 @@ static unsigned long g_pixelformat = IPU_PIX_FMT_YUYV;
 static int g_bpp = 16;
 static int g_camera_framerate = 30;
 static int g_capture_mode = 0;
+static char g_v4l_device[100] = "/dev/video0";
+
 
 void usage(void)
 {
@@ -80,6 +82,7 @@ void usage(void)
                 "-c    Convert to YUV420P. This option is valid for interleaved pixel\n"
                 "      formats only - YUYV, UYVY, YUV444\n"
 		"-m    Capture mode, 0-low resolution(default), 1-high resolution \n"
+		"-d    camera select, /dev/video0, /dev/video1 \n"
 		"-fr   Capture frame rate, 30fps by default\n"
                 "The output is saved in ./still.yuv\n"
 		"MX25(CSI) driver supports RGB565, YUV420 and UYVY\n"
@@ -164,15 +167,14 @@ int bytes_per_pixel(int fmt)
 
 int v4l_capture_setup(int * fd_v4l)
 {
-        char v4l_device[100] = "/dev/video0";
         struct v4l2_streamparm parm;
         struct v4l2_format fmt;
         struct v4l2_crop crop;
         int ret = 0;
 
-        if ((*fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
+        if ((*fd_v4l = open(g_v4l_device, O_RDWR, 0)) < 0)
         {
-                printf("Unable to open %s\n", v4l_device);
+                printf("Unable to open %s\n", g_v4l_device);
                 return -1;
         }
 
@@ -299,6 +301,9 @@ int main(int argc, char **argv)
                 }
 		else if (strcmp(argv[i], "-m") == 0) {
 			g_capture_mode = atoi(argv[++i]);
+		}
+		else if (strcmp(argv[i], "-d") == 0) {
+			strcpy(g_v4l_device, argv[++i]);
 		}
 		else if (strcmp(argv[i], "-fr") == 0) {
 			g_camera_framerate = atoi(argv[++i]);
