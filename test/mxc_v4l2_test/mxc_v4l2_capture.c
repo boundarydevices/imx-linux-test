@@ -72,6 +72,8 @@ int g_cap_fmt = V4L2_PIX_FMT_YUV420;
 int g_camera_framerate = 30;
 int g_extra_pixel = 0;
 int g_capture_mode = 0;
+char g_v4l_device[100] = "/dev/video0";
+
 
 int start_capturing(int fd_v4l)
 {
@@ -135,7 +137,6 @@ int stop_capturing(int fd_v4l)
 
 int v4l_capture_setup(void)
 {
-        char v4l_device[100] = "/dev/video0";
         struct v4l2_format fmt;
         struct v4l2_control ctrl;
         struct v4l2_streamparm parm;
@@ -146,9 +147,9 @@ int v4l_capture_setup(void)
 	struct v4l2_frmsizeenum fsize;
 	struct v4l2_fmtdesc ffmt;
 
-        if ((fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
+        if ((fd_v4l = open(g_v4l_device, O_RDWR, 0)) < 0)
         {
-                printf("Unable to open %s\n", v4l_device);
+                printf("Unable to open %s\n", g_v4l_device);
                 return 0;
         }
 
@@ -390,6 +391,9 @@ int process_cmdline(int argc, char **argv)
 		else if (strcmp(argv[i], "-m") == 0) {
 			g_capture_mode = atoi(argv[++i]);
 		}
+		else if (strcmp(argv[i], "-d") == 0) {
+			strcpy(g_v4l_device, argv[++i]);
+		}
                 else if (strcmp(argv[i], "-f") == 0) {
                         i++;
                         g_cap_fmt = v4l2_fourcc(argv[i][0], argv[i][1],argv[i][2],argv[i][3]);
@@ -418,6 +422,7 @@ int process_cmdline(int argc, char **argv)
                                " -r <rotation> -c <capture counter> \n"
                                " -e <destination cropping: extra pixels> \n" \
 			       " -m <capture mode, 0-low resolution, 1-high resolution> \n" \
+			       " -d <camera select, /dev/video0, /dev/video1> \n" \
 			       " -f <format> -fr <frame rate, 30fps by default> \n");
                         return -1;
                }
