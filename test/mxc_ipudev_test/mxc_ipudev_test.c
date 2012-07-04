@@ -87,6 +87,7 @@ static unsigned int fmt_to_bpp(unsigned int pixelformat)
                 case IPU_PIX_FMT_BGR24:
                 case IPU_PIX_FMT_RGB24:
                 case IPU_PIX_FMT_YUV444:
+                case IPU_PIX_FMT_YUV444P:
                         bpp = 24;
                         break;
                 case IPU_PIX_FMT_BGR32:
