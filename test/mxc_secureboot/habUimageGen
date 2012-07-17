@@ -1,0 +1,19 @@
+#! /bin/bash
+
+echo "extend uImage to 0x3FDFE0..."
+objcopy -I binary -O binary --pad-to 0x3fdfe0 --gap-fill=0xff uImage uImage-pad.bin
+
+echo "generate IVT"
+./genIVT
+
+echo "attach IVT..."
+cat uImage-pad.bin ivt.bin > uImage-pad-ivt.bin
+
+echo "generate csf data..."
+../linux/cst --o uImage_csf.bin < uImage.csf
+
+echo "merge image and csf data..."
+cat uImage-pad-ivt.bin uImage_csf.bin > uImage-signed.bin
+
+echo "extend final image to 0x400000..."
+objcopy -I binary -O binary --pad-to 0x400000 --gap-fill=0xff uImage-signed.bin uImage-signed-pad.bin
