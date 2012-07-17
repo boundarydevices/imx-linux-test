@@ -252,8 +252,13 @@ struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int
 	fb->addrCr = chr_bot_20bits << 16;
 	fb->strideY = strideY;
 	fb->strideC = strideY / divX;
-	if (mvCol)
-		fb->mvColBuf = chr_bot_base + chroma_bot_size;
+	if (mvCol) {
+		if (mapType == TILED_FRAME_MB_RASTER_MAP) {
+			fb->mvColBuf = chr_top_base + chroma_top_size;
+		} else {
+			fb->mvColBuf = chr_bot_base + chroma_bot_size;
+		}
+	}
 
     return fb;
 }
