@@ -1,0 +1,28 @@
+These files are for convinience for secure boot testers
+
+File Description
+------------------------------------
+"gen_fuse" :
+	This script should be copied to "BLN_CST_MAIN_01.00.00/crts" and
+        run to generate SRK footprint file "SRK_1_2_3_4_fuse.bin"
+	The footprint value is also dumped out, they should be written to
+	SRK fuse later
+
+"habimagegen"
+"<chip>/u-boot.csf" :
+	These 2 files should be copied to "BLN_CST_MAIN_01.00.00/u-boot"
+	the first one is the signing script, the second one is the
+	signing configuration. Note that u-boot.csf is different for
+	MX6Q/MX6DL and MX6SoloLite
+
+"habUimagegen"
+"<chip>/genIVT"
+"<chip>/uImage.csf
+	These 3 files should be copied to "BLN_CST_MAIN_01.00.00/uImage"
+	the first one is the signing script, the second one is used to
+	generate the "IVT" for uImage. the third one is the signing
+	configuration. Note that genIVT and uImage.csf is different for
+	MX6Q/MX6DL and MX6SoloLite
+
+Please refer to "MX6 Linux High Assurance Boot (HAB) User Guide" for
+detailed test steps.
