@@ -1,0 +1,31 @@
+[Header]
+    Version = 4.0
+    Security Configuration = Open
+    Hash Algorithm = sha256
+    Engine Configuration = 0
+    Certificate Format = X509
+    Signature Format = CMS
+
+[Install SRK]
+    File = "../crts/SRK_1_2_3_4_table.bin"
+    Source index = 0
+
+[Install CSFK]
+    File = "../crts/CSF1_1_sha256_2048_65537_v3_usr_crt.pem"
+
+[Authenticate CSF]
+
+[Install Key]
+    Verification index = 0
+    Target index = 2
+    File = "../crts/IMG1_1_sha256_2048_65537_v3_usr_crt.pem"
+
+# Sign padded uImage start at address 0x10800000
+# length = 0x3FE0000
+# This covers the essential parts: original uImage and the attached IVT
+# Blocks have the following definition:
+#    Image block start address on i.MX, Offset from start of image file,
+#    Length of block in bytes, image data file
+[Authenticate Data]
+    Verification index = 2
+    Blocks = 0x10800000 0x0 0x003FE000 "uImage-pad-ivt.bin"
