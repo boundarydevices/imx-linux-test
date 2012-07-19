@@ -1,0 +1,35 @@
+CC=$(CROSS_COMPILE)gcc
+LINK=$(CROSS_COMPILE)gcc
+
+OBJ = main.o \
+      dec.o \
+      enc.o \
+      capture.o \
+      display.o \
+      fb.o \
+      utils.o \
+      loopback.o \
+      transcode.o
+
+# list of platforms which want this test case
+INCLUDE_LIST:=IMX27ADS IMX51 IMX53 IMX6Q
+
+ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
+TARGET = lib_vpu_dut.so
+else
+TARGET =
+endif
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(LINK) -lpthread -s -shared -fPIC -o $(TARGET) $(OBJ) ${LIBS} -lvpu -lipu -lrt -ldl
+
+%.o: %.c
+	$(CC) -D_FSL_VTS_ -DTGT_OS_ELINUX $(INC) -fPIC -Wall -O2 -c $^ -o $@
+
+.PHONY: clean
+clean:
+	rm -f $(TARGET) $(OBJ)
+
+include ../make.rules
