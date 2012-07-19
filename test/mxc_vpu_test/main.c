@@ -448,7 +448,11 @@ signal_thread(void *arg)
 }
 
 int
+#ifdef _FSL_VTS_
+vputest_main(int argc, char *argv[])
+#else
 main(int argc, char *argv[])
+#endif
 {
 	int err, nargc, i, ret = 0;
 	char *pargv[32] = {0}, *dbg_env;
@@ -471,10 +475,12 @@ main(int argc, char *argv[])
 	}
 
 	info_msg("VPU test program built on %s %s\n", __DATE__, __TIME__);
+#ifndef _FSL_VTS_
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
 	pthread_create(&sigtid, NULL, (void *)&signal_thread, NULL);
+#endif
 
 	framebuf_init();
 
@@ -576,3 +582,155 @@ usage:
 	return -1;
 }
 
+#ifdef _FSL_VTS_
+#include "dut_api_vts.h"
+
+
+#define MAX_CMD_LINE_LEN    1024
+
+typedef struct _tagVideoDecoder
+{
+    unsigned char * strStream;          /* input video stream file */
+    int             iPicWidth;          /* frame width */
+    int             iPicHeight;         /* frame height */
+    DUT_TYPE        eDutType;           /* DUT type */
+    FuncProbeDut    pfnProbe;           /* VTS probe for DUT */
+} VDECODER;
+
+
+FuncProbeDut g_pfnVTSProbe = NULL;
+unsigned char *g_strInStream = NULL;
+
+
+DEC_RETURN_DUT VideoDecInit( void ** _ppDecObj, void *  _psInitContxt )
+{
+    DEC_RETURN_DUT eRetVal = E_DEC_INIT_OK_DUT;
+    DUT_INIT_CONTXT_2_1 * psInitContxt = _psInitContxt;
+    VDECODER * psDecObj = NULL;
+
+    do
+    {
+        psDecObj = malloc( sizeof(VDECODER) );
+        if ( NULL == psDecObj )
+        {
+            eRetVal = E_DEC_INIT_ERROR_DUT;
+            break;
+        }
+        *_ppDecObj = psDecObj;
+        psDecObj->pfnProbe   = psInitContxt->pfProbe;
+        psDecObj->strStream  = psInitContxt->strInFile;
+        psDecObj->iPicWidth  = (int)psInitContxt->uiWidth;
+        psDecObj->iPicHeight = (int)psInitContxt->uiHeight;
+        psDecObj->eDutType   = psInitContxt->eDutType;
+
+        g_pfnVTSProbe = psInitContxt->pfProbe;
+        g_strInStream = psInitContxt->strInFile;
+    } while (0);
+
+    return eRetVal;
+}
+
+DEC_RETURN_DUT VideoDecRun( void * _pDecObj, void * _pParam )
+{
+    VDECODER * psDecObj = (VDECODER *)_pDecObj;
+    char * strCmdLine = NULL;
+    char * argv[3];
+    int argc = 3;
+    int iDecID = 0;
+    int iMPEG4Class = 0;
+    DEC_RETURN_DUT eRetVal = E_DEC_ALLOUT_DUT;
+
+    do
+    {
+
+        strCmdLine = malloc( MAX_CMD_LINE_LEN );
+        if ( NULL == strCmdLine )
+        {
+            fprintf( stderr, "Failed to allocate memory for command line." );
+            eRetVal = E_DEC_ERROR_DUT;
+            break;
+        }
+
+        argv[0] = "./mxc_vpu_test.out";
+        argv[1] = "-D";
+        argv[2] = strCmdLine;
+
+        /* get decoder file name */
+        switch (psDecObj->eDutType)
+        {
+        case E_DUT_TYPE_H264:
+            iDecID = 2;
+            break;
+        case E_DUT_TYPE_DIV3:
+            iDecID = 5;
+            break;
+        case E_DUT_TYPE_MPG4:
+            iMPEG4Class = 0;
+            break;
+        case E_DUT_TYPE_DIVX:
+        case E_DUT_TYPE_DX50:
+            iMPEG4Class = 1;
+            break;
+        case E_DUT_TYPE_XVID:
+            iMPEG4Class = 2;
+            break;
+        case E_DUT_TYPE_DIV4:
+            iMPEG4Class = 5;
+            break;
+        case E_DUT_TYPE_MPG2:
+            iDecID = 4;
+            break;
+        case E_DUT_TYPE_RV20:
+        case E_DUT_TYPE_RV30:
+        case E_DUT_TYPE_RV40:
+        case E_DUT_TYPE_RV89:
+            iDecID = 6;
+            break;
+        case E_DUT_TYPE_WMV9:
+        case E_DUT_TYPE_WMV3:
+        case E_DUT_TYPE_WVC1:
+            iDecID = 3;
+            break;
+        default:
+            perror( "DUT type %d is not supported.\n" );
+            iDecID = -1;
+        }
+
+        if ( -1 == iDecID )
+        {
+            eRetVal = E_DEC_ERROR_DUT;
+            break;
+        }
+
+        /* run decoder */
+        sprintf( strCmdLine, "-i %s -f %d -l %d -o vts",
+                 psDecObj->strStream, iDecID, iMPEG4Class );
+
+        vputest_main(argc, argv);
+    } while (0);
+
+    if ( strCmdLine )
+    {
+        free( strCmdLine );
+    }
+
+    return eRetVal;
+}
+
+DEC_RETURN_DUT VideoDecRelease( void * _pDecObj )
+{
+    DEC_RETURN_DUT eRetVal = E_DEC_REL_OK_DUT;
+
+    if ( _pDecObj )
+    {
+        free( _pDecObj );
+    }
+
+    return eRetVal;
+}
+
+void QueryAPIVersion( long * _piAPIVersion )
+{
+    *_piAPIVersion = WRAPPER_API_VERSION;
+}
+#endif

@@ -27,6 +27,11 @@
 #include "vpu_test.h"
 
 extern int quitflag;
+#ifdef _FSL_VTS_
+#include "dut_probes_vts.h"
+extern FuncProbeDut g_pfnVTSProbe;
+extern unsigned char *g_strInStream;
+#endif
 
 /* Our custom header */
 struct nethdr {
@@ -252,7 +257,22 @@ vpu_read(struct cmd_line *cmd, char *buf, int n)
 		return udp_recv(cmd, fd, buf, n);
 	}
 
+#ifdef _FSL_VTS_
+    if ( NULL != g_pfnVTSProbe )
+    {
+        DUT_STREAM_READ sFileRead;
+        sFileRead.hBitstream = fd;
+        sFileRead.pBitstreamBuf = buf;
+        sFileRead.iLength = n;
+        return g_pfnVTSProbe( E_READ_BITSTREAM, &sFileRead );
+    }
+    else
+    {
+        return 0;
+    }
+#else
 	return freadn(fd, buf, n);
+#endif
 }
 
 int
@@ -366,12 +386,27 @@ int
 open_files(struct cmd_line *cmd)
 {
 	if (cmd->src_scheme == PATH_FILE) {
+#ifdef _FSL_VTS_
+    if ( NULL != g_pfnVTSProbe )
+    {
+        DUT_STREAM_OPEN sFileOpen;
+        sFileOpen.strBitstream = g_strInStream;
+        sFileOpen.strMode = "rb";
+        cmd->src_fd = NULL;
+        cmd->src_fd = g_pfnVTSProbe( E_OPEN_BITSTREAM, &sFileOpen );
+		if (NULL == cmd->src_fd ) {
+			perror("file open");
+			return -1;
+		}
+    }
+#else
 		cmd->src_fd = open(cmd->input, O_RDONLY, 0);
 		if (cmd->src_fd < 0) {
 			perror("file open");
 			return -1;
 		}
 		info_msg("Input file \"%s\" opened.\n", cmd->input);
+#endif
 	} else if (cmd->src_scheme == PATH_NET) {
 		/* open udp port for receive */
 		cmd->src_fd = udp_open(cmd);
@@ -383,6 +418,7 @@ open_files(struct cmd_line *cmd)
 	}
 
 	if (cmd->dst_scheme == PATH_FILE) {
+#ifndef _FSL_VTS_
 		cmd->dst_fd = open(cmd->output, O_CREAT | O_RDWR | O_TRUNC,
 					S_IRWXU | S_IRWXG | S_IRWXO);
 		if (cmd->dst_fd < 0) {
@@ -394,6 +430,7 @@ open_files(struct cmd_line *cmd)
 			return -1;
 		}
 		info_msg("Output file \"%s\" opened.\n", cmd->output);
+#endif
 	} else if (cmd->dst_scheme == PATH_NET) {
 		/* open udp port for send path */
 		cmd->dst_fd = udp_open(cmd);
@@ -412,15 +449,25 @@ open_files(struct cmd_line *cmd)
 void
 close_files(struct cmd_line *cmd)
 {
+#ifdef _FSL_VTS_
+    if ( NULL != g_pfnVTSProbe )
+    {
+        g_pfnVTSProbe( E_CLOSE_BITSTREAM, &cmd->src_fd );
+        cmd->src_fd = NULL;
+    }
+#else
 	if ((cmd->src_fd > 0)) {
 		close(cmd->src_fd);
 		cmd->src_fd = -1;
 	}
+#endif
 
+#ifndef _FSL_VTS_
 	if ((cmd->dst_fd > 0)) {
 		close(cmd->dst_fd);
 		cmd->dst_fd = -1;
 	}
+#endif
 
 	if (cmd->nbuf) {
 		free(cmd->nbuf);
