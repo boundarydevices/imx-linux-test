@@ -11,9 +11,9 @@ include::../mxc_asrc_test/doc/FSL-UT-ASRC-002.txt[]
 
 CAAM
 ----
-include::../can/doc/FSL-UT-CAAM-001.txt[]
-include::../can/doc/FSL-UT-CAAM-002.txt[]
-include::../can/doc/FSL-UT-CAAM-003.txt[]
+include::../caam/doc/FSL-UT-CAAM-001.txt[]
+include::../caam/doc/FSL-UT-CAAM-002.txt[]
+include::../caam/doc/FSL-UT-CAAM-003.txt[]
 
 CAN
 ---
