@@ -24,6 +24,10 @@
 #include "vpu_test.h"
 
 extern int quitflag;
+#ifdef _FSL_VTS_
+#include "dut_probes_vts.h"
+extern FuncProbeDut g_pfnVTSProbe;
+#endif
 
 int vpu_v4l_performance_test;
 
@@ -368,6 +372,9 @@ saveCropYuvImageHelper(struct decode *dec, u8 *buf, Rect cropRect)
 	int height = dec->picheight;
 	int rot_en = dec->cmdl->rot_en;
 	int rot_angle = dec->cmdl->rot_angle;
+#ifdef _FSL_VTS_
+	FRAME_COPY_INFO sFrmCpInfo;
+#endif
 
 	if (!buf) {
 		err_msg("buffer point should not be NULL.\n");
@@ -390,11 +397,17 @@ saveCropYuvImageHelper(struct decode *dec, u8 *buf, Rect cropRect)
 	pCropYuv += width * cropRect.top;
 	pCropYuv += cropRect.left;
 
+#ifdef _FSL_VTS_
+	sFrmCpInfo.puchLumY = pCropYuv;
+	sFrmCpInfo.iFrmWidth = cropWidth;
+	sFrmCpInfo.iFrmHeight = cropHeight;
+	sFrmCpInfo.iBufStrideY = width;
+#else
 	for (i = 0; i < cropHeight; i++) {
 		fwriten(dec->cmdl->dst_fd, pCropYuv, cropWidth);
 		pCropYuv += width;
 	}
-
+#endif
 	if (dec->cmdl->format == STD_MJPG && dec->mjpg_fmt == MODE400)
 		return;
 
@@ -404,19 +417,31 @@ saveCropYuvImageHelper(struct decode *dec, u8 *buf, Rect cropRect)
 	pCropYuv += (width / 2) * (cropRect.top / 2);
 	pCropYuv += cropRect.left / 2;
 
+#ifdef _FSL_VTS_
+	sFrmCpInfo.puchChrU = pCropYuv;
+	sFrmCpInfo.iBufStrideUV = width >> 1;
+#else
 	for (i = 0; i < cropHeight; i++) {
 		fwriten(dec->cmdl->dst_fd, pCropYuv, cropWidth);
 		pCropYuv += width / 2;
 	}
+#endif
 
 	pCropYuv = buf + (width * height) * 5 / 4;
 	pCropYuv += (width / 2) * (cropRect.top / 2);
 	pCropYuv += cropRect.left / 2;
 
+#ifdef _FSL_VTS_
+	sFrmCpInfo.puchChrV = pCropYuv;
+#else
 	for (i = 0; i < cropHeight; i++) {
 		fwriten(dec->cmdl->dst_fd, pCropYuv, cropWidth);
 		pCropYuv += width / 2;
 	}
+#endif
+#ifdef _FSL_VTS_
+	g_pfnVTSProbe( E_OUTPUT_FRAME, &sFrmCpInfo );
+#endif
 }
 
 /*
@@ -693,7 +718,22 @@ write_to_file(struct decode *dec, Rect cropRect, int index)
 	}
 
 	if ((chromaInterleave == 0 && cropping == 0) || dec->cmdl->format == STD_MJPG) {
+#ifdef _FSL_VTS_
+		FRAME_COPY_INFO sFrmCpInfo;
+		int iOffsetY = stride * height;
+		int iOffsetUV = iOffsetY >> 2;
+
+		sFrmCpInfo.puchLumY = buf;
+		sFrmCpInfo.puchChrU = buf + iOffsetY;
+		sFrmCpInfo.puchChrV = buf + iOffsetY + iOffsetUV;
+		sFrmCpInfo.iFrmWidth = stride;
+		sFrmCpInfo.iFrmHeight = height;
+		sFrmCpInfo.iBufStrideY = stride;
+		sFrmCpInfo.iBufStrideUV = stride >> 1;
+		g_pfnVTSProbe( E_OUTPUT_FRAME, &sFrmCpInfo );
+#else
 		fwriten(dec->cmdl->dst_fd, buf, img_size);
+#endif
 		goto out;
 	}
 
@@ -726,7 +766,22 @@ write_to_file(struct decode *dec, Rect cropRect, int index)
 		}
 
 	} else {
+#ifdef _FSL_VTS_
+		FRAME_COPY_INFO sFrmCpInfo;
+		int iOffsetY = stride * height;
+		int iOffsetUV = iOffsetY >> 2;
+
+		sFrmCpInfo.puchLumY = pYuv0;
+		sFrmCpInfo.puchChrU = pYuv0 + iOffsetY;
+		sFrmCpInfo.puchChrV = pYuv0 + iOffsetUV;
+		sFrmCpInfo.iFrmWidth = stride;
+		sFrmCpInfo.iFrmHeight = height;
+		sFrmCpInfo.iBufStrideY = stride;
+		sFrmCpInfo.iBufStrideUV = stride >> 1;
+		g_pfnVTSProbe( E_OUTPUT_FRAME, &sFrmCpInfo );
+#else
 		fwriten(dec->cmdl->dst_fd, (u8 *)pYuv0, img_size);
+#endif
 	}
 
 out:
@@ -2163,9 +2218,11 @@ decode_test(void *arg)
 	if (ret)
 		goto err1;
 
+#ifndef _FSL_VTS_
 	/* Not set fps when doing performance test default */
         if ((dec->cmdl->fps == 0) && !vpu_v4l_performance_test)
                 dec->cmdl->fps = 30;
+#endif
 
 	/* start decoding */
 	ret = decoder_start(dec);
