@@ -79,7 +79,7 @@ extern "C"{
 #define ALLOW_COLLISIONS	0
 #define NO_COLLISIONS		1
 
-#define NUM_TESTS		14
+#define NUM_TESTS		12
 
 __u32 pwrdown_delay = 0;
 __u32 scheme = UPDATE_SCHEME_QUEUE_AND_MERGE;
