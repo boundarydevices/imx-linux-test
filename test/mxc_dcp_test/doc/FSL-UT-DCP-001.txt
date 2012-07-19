@@ -1,0 +1,38 @@
+FSL-UT-DCP-001
+~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+DCP test on i.mx50 and i.mx6sl.
+
+| Automated |
+No
+
+| Kernel Config Option |
+CONFIG_IMX_HAVE_PLATFORM_IMX_DCP=y
+CONFIG_CRYPTO_DEV_DCP=y
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+. For AES (ECB & CBC) encryption: "modprobe tcrypt mode=10"
+
+. For SHA1 hash: "modprobe tcrypt mode=2"
+
+. For SHA256 hash: "modprobe tcrypt mode=6"
+
+| Expected Result |
+No error messages containing ecb(aes) or cbc(aes).
+No error messages containing sha1.
+No error messages containing sha256.
+
+|====================================================================
+
+<<<
