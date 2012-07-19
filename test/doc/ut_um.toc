@@ -22,6 +22,10 @@ include::../can/doc/FSL-UT-CAN-002.txt[]
 include::../can/doc/FSL-UT-CAN-003.txt[]
 include::../can/doc/FSL-UT-CAN-004.txt[]
 
+DCP
+---
+include::..//mxc_dcp_test/doc/FSL-UT-DCP-001.txt[]
+
 EPDC
 ----
 include::../mxc_fb_test/doc/FSL-UT-EPDC-001.txt[]
@@ -99,6 +103,10 @@ PXP
 ---
 include::../pxp_lib_test/doc/FSL-UT-PXP-001.txt[]
 include::../pxp_v4l2_test/doc/FSL-UT-PXP-002.txt[]
+
+RNG
+---
+include::../mxc_rng_test/doc/FSL-UT-RNG-001.txt[]
 
 RTC
 ---
