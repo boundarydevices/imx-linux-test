@@ -630,6 +630,10 @@ main(int argc, char **argv)
 		g_display_lcd = 1;
 	else if (strcmp(fb0_fix.id, "DISP3 BG") == 0)
 		g_display_lcd = 0;
+	else if (strcmp(fb0_fix.id, "DISP4 BG") == 0)
+		g_display_lcd = 3;
+	else if (strcmp(fb0_fix.id, "DISP4 BG - DI1") == 0)
+		g_display_lcd = 4;
 
         if (ioctl(fd_v4l, VIDIOC_S_OUTPUT, &g_display_lcd) < 0)
         {
@@ -665,7 +669,8 @@ main(int argc, char **argv)
 		return TFAIL;
 	}
 
-	if (strcmp(fb_fg_fix.id, "DISP3 FG") != 0) {
+	if (((strcmp(fb_fg_fix.id, "DISP3 FG") != 0) && g_display_lcd < 3)
+		|| ((strcmp(fb_fg_fix.id, "DISP4 FG") != 0) && g_display_lcd > 2)) {
 		close(g_fd_fb_fg);
 		fb_device_fg = "/dev/fb2";
 		if ((g_fd_fb_fg = open(fb_device_fg, O_RDWR)) < 0) {
@@ -680,7 +685,8 @@ main(int argc, char **argv)
 			close(fd_fb_0);
 			return TFAIL;
 		}
-		if (strcmp(fb_fg_fix.id, "DISP3 FG") != 0) {
+		if (((strcmp(fb_fg_fix.id, "DISP3 FG") != 0) && g_display_lcd < 3)
+			|| ((strcmp(fb_fg_fix.id, "DISP4 FG") != 0) && g_display_lcd > 2)) {
 			printf("Cannot find overlay frame buffer\n");
 			close(g_fd_fb_fg);
 			close(fd_fb_0);
