@@ -8,21 +8,63 @@ File Description
 	The footprint value is also dumped out, they should be written to
 	SRK fuse later
 
-"habimagegen"
-"<chip>/u-boot.csf" :
-	These 2 files should be copied to "BLN_CST_MAIN_01.00.00/u-boot"
-	the first one is the signing script, the second one is the
-	signing configuration. Note that u-boot.csf is different for
-	MX6Q/MX6DL and MX6SoloLite
+"u-boot/mk_secure_uboot"
+"uImage/mk_secure_uimage"
+"templates/"
+	Automatic secure uboot and uImage generation scripts. These files
+	are used for dynamic authentication. It is more convinient and
+	adaptive comparing to the original static way.
 
-"habUimagegen"
-"<chip>/genIVT"
-"<chip>/uImage.csf
-	These 3 files should be copied to "BLN_CST_MAIN_01.00.00/uImage"
-	the first one is the signing script, the second one is used to
-	generate the "IVT" for uImage. the third one is the signing
-	configuration. Note that genIVT and uImage.csf is different for
-	MX6Q/MX6DL and MX6SoloLite
+	Copy "u-boot/mk_secure_uboot" to "BLN_CST_MAIN_01.00.00/u-boot"
+	Copy "uImage/mk_secure_uimage" to "BLN_CST_MAIN_01.00.00/uImage"
+	Copy "templates/" to "BLN_CST_MAIN_01.00.00"
+
+	For generating secure uboot
+	    . copy "u-boot.bin" to "BLN_CST_MAIN_01.00.00/u-boot"
+	    . "./mk_secure_uboot 0x87800000"
+	        - where 0x87800000 is the DDR location where u-boot is
+		  copied to by ROM code, different from platform to platform
+	    . u-boot-signed.bin will be generated. It is the u-boot image
+	      with signature
+
+	For generating secure uImage
+	    . copy "uImage" to "BLN_CST_MAIN_01.00.00/uImage"
+	    . "./mk_secure_uimage 0x80800000"
+	        - where 0x80800000 is the DDR location where uImage is
+		  copied to by UBoot, different from platform to platform
+	    . uimage-signed.bin will be generated. It is the uImage
+	      with signature
+
+Image Layout
+------------------------------------
+U-Boot
+    +-------------------+      DDR_START
+    |                   |
+    |    U-Boot Image   |
+    |                   |
+    +-------------------+      DDR_START + UBOOT_SIZE
+    |    PADDING        |
+    +-------------------+      align to 0x1000
+    |    CSF Data       | \
+    +-------------------+  +-- CSF + Pad,  Size : 0x2000
+    |    PADDING        | /
+    +-------------------+
+
+uImage
+
+    +-------------------+      DDR_START
+    |                   |
+    |     uImage        |
+    |                   |
+    +-------------------+      DDR_START + UIMAGE_SIZE
+    |     PADDING       |
+    +-------------------+      align to 0x1000
+    |     IVT           | ---- Size : 0x20
+    +-------------------+
+    |     CSF Data      | \
+    +-------------------+  +-- CSF + Pad,  Size : 0x2000
+    |     PADDING       | /
+    +-------------------+
 
 Please refer to "MX6 Linux High Assurance Boot (HAB) User Guide" for
 detailed test steps.
