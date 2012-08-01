@@ -21,11 +21,11 @@
     File = "../crts/IMG1_1_sha256_2048_65537_v3_usr_crt.pem"
 
 # Sign padded u-boot starting at the IVT through to the end with
-# length = 0x2F000 (padded u-boot length) - 0x400 (IVT offset) = 0x2EC00
+# length = %auth_len%
 # This covers the essential parts: IVT, boot data and DCD.
 # Blocks have the following definition:
 #    Image block start address on i.MX, Offset from start of image file,
 #    Length of block in bytes, image data file
 [Authenticate Data]
     Verification index = 2
-    Blocks = 0x27800400 0x400 0x2EC00 "u-boot-pad.bin"
+    Blocks = %ram_start% %image_offset% %auth_len% "u-boot-pad.bin"
