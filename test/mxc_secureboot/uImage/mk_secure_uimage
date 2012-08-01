@@ -1,0 +1,56 @@
+#! /bin/bash
+if [ $# != 1 ]
+then
+	printf "	Command Syntax:\n"
+	printf "	    mk_secure_uimage <DDR_ADDR>\n"
+	printf "	        DDR_ADDR : ddr address where uImage is copied to RAM by U-Boot\n"
+	printf "	Please try again\n"
+	exit
+fi
+
+let ddr_addr=$1
+
+if [ ! -f uImage ]
+then
+	printf "File \"uImage\" does not exist. Copy it from u-boot directory and try again\n"
+	exit 1
+fi
+printf "Make Sure Your \"uImage\" is up to date...\n"
+
+# Calculate the size
+let uimage_size=$(ls -lct uImage | awk '{print $5}')
+let pad_len=$((uimage_size - uimage_size % 0x1000 + 0x1000)) # align to 0x1000
+let auth_len=$((pad_len + 0x20)) # +0x20 "IVT"
+let sig_len=$((auth_len + 0x2000))
+let self_ptr=$((ddr_addr + pad_len))
+let csf_ptr=$((ddr_addr + auth_len))
+let jump_addr=$((ddr_addr + 0x1000))
+
+# change value to hex string
+pad_len=`printf "0x%X" ${pad_len}`
+auth_len=`printf "0x%X" ${auth_len}`
+sig_len=`printf "0x%X" ${sig_len}`
+ddr_addr=`printf "0x%X" ${ddr_addr}`
+self_ptr=`printf "0x%X" ${self_ptr}`
+csf_ptr=`printf "0x%X" ${csf_ptr}`
+jump_addr=`printf "0x%X" ${jump_addr}`
+
+# Create habUimagegen
+sed -e s/%pad_len%/${pad_len}/g -e s/%sig_len%/${sig_len}/g ../templates/habuimagegen_template > habUImageGen
+chmod +x habUImageGen
+
+# Create u-boot.csf
+sed -e s/%ddr_addr%/${ddr_addr}/g -e s/%auth_len%/${auth_len}/g ../templates/uimagecsf_template > uImage.csf
+
+# Create genIVT
+sed -e s/%jump_addr%/${jump_addr}/g -e s/%self_ptr%/${self_ptr}/g -e s/%csf_ptr%/${csf_ptr}/g ../templates/genivt_template > genIVT
+chmod +x genIVT
+
+# Generate secure boot
+./habUImageGen
+
+# Remove temperory files
+rm -f genIVT habUImageGen uImage.csf uImage-pad.bin ivt.bin uImage-pad-ivt.bin uImage_csf.bin uImage-signed.bin
+
+# OK
+printf "uImage with Signature \"uImage-signed-pad.bin\" is ready to use\n"
