@@ -12,6 +12,7 @@ $(OBJS): $(SRCS)
 	cp ipudev_config_file $(OBJDIR)
 	cp autorun-ipu.sh $(OBJDIR)
 	cp stefan_interlaced_320x240_5frames.yv12 $(OBJDIR)
+	cp wall-1024x768-565.rgb $(OBJDIR)
 else
 OBJS =
 endif
