@@ -2098,7 +2098,7 @@ void decoder_close(struct decode *dec)
 
 	ret = vpu_DecClose(dec->handle);
 	if (ret == RETCODE_FRAME_NOT_COMPLETE) {
-		vpu_DecGetOutputInfo(dec->handle, &outinfo);
+		vpu_SWReset(dec->handle, 0);
 		ret = vpu_DecClose(dec->handle);
 		if (ret != RETCODE_SUCCESS)
 			err_msg("vpu_DecClose failed\n");
