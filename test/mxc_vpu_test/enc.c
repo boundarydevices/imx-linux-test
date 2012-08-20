@@ -834,7 +834,7 @@ encoder_close(struct encode *enc)
 
 	ret = vpu_EncClose(enc->handle);
 	if (ret == RETCODE_FRAME_NOT_COMPLETE) {
-		vpu_EncGetOutputInfo(enc->handle, &outinfo);
+		vpu_SWReset(enc->handle, 0);
 		vpu_EncClose(enc->handle);
 	}
 }
