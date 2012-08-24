@@ -32,7 +32,7 @@ if [ $TEST_CAMERA = 1 ]; then
 			modprobe ov5642_camera
 		fi
 		if [ "$(platform)" = "IMX6" ]; then
-			modprobe ov5640_camera
+			modprobe ov5642_camera
 		fi
 		modprobe mxc_v4l2_capture
 	fi
