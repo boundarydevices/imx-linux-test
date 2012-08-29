@@ -1,0 +1,48 @@
+FSL-UT-USB-018-PC-Send-Suspend-Resume-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Using pc to send suspend and resume signal device
+
+| Automated |
+Yes
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. load one usb gadget driver, for example
+modprobe g_file_storage file=/dev/mmcblk0p1 removable=1
+2. Connect the board with Linux PC using usb cale
+NOTE: Linux PC is must, as Windows PC will send reset after
+resume.
+3. enable USB gadget wakeup.
+For otg port
+
+    echo enabled > /sys/devices/platform/fsl-usb2-otg/power/wakeup
+
+For device-only port
+
+    echo enabled > /sys/devices/platform/fsl-usb2-udc/power/wakeup
+
+4. Suspend Linux PC
+5. After Linux PC suspend, using "echo standby > /sys/power/state"
+to let the board to suspend
+6. Resume Linux PC
+7. There is no re-enumeration occurs, and the storage can be mounted.
+
+| Expected Result |
+No disconnect and re-enumeration occurs after pc sends resume.
+
+|====================================================================
+
+<<<
