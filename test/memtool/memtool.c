@@ -18,12 +18,353 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include "memtools_register_info.h"
 
 int g_size = 4;
 unsigned long g_paddr;
 int g_is_write;
 uint32_t g_value = 0;
 uint32_t g_count = 1;
+int g_is_reg = 0;
+char *g_module;
+char *g_reg;
+char *g_field;
+
+int g_fmem;
+int g_map_vaddr = 0;
+int g_map_paddr = 0;
+
+#define MAP_SIZE 0x1000
+
+extern const module_t mx6q[];
+extern const module_t mx6dl[];
+extern const module_t mx6sl[];
+
+char g_buffer[4096];
+
+void die(char *p)
+{
+	printf("%s\n", p);
+	exit(-1);
+}
+
+int open_mem_file(void)
+{
+	if (!g_fmem)
+		g_fmem = open("/dev/mem", O_RDWR | O_SYNC, 0);
+
+	if (!g_fmem)
+		die("Can't open file /dev/mem\n");
+	return 0;
+}
+
+int map_address(int address)
+{
+	if ((address & (~(MAP_SIZE - 1))) == g_map_paddr)
+		return 0;
+	if (g_map_vaddr)
+		munmap((void *)g_map_vaddr, MAP_SIZE);
+
+	g_map_vaddr =
+	    (int)mmap(NULL, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
+		      g_fmem, address & (~(MAP_SIZE - 1)));
+	g_map_paddr = address & (~(MAP_SIZE - 1));
+
+	return 0;
+}
+
+int readm(int address, int width)
+{
+	uint8_t *addr8;
+	uint16_t *addr16;
+	uint32_t *addr32;
+
+	open_mem_file();
+	map_address(address);
+
+	addr32 = (uint32_t *) (g_map_vaddr + (address & (MAP_SIZE - 1)));
+	addr16 = (uint16_t *) addr32;
+	addr8 = (uint8_t *) addr16;
+
+	switch (width) {
+	case 1:
+		return *addr8;
+	case 2:
+		return *addr16;
+	case 4:
+		return *addr32;
+	default:
+		die("Unknown size\n");
+	}
+	return 0;
+}
+
+int writem(int address, int width, int value)
+{
+	uint8_t *addr8;
+	uint16_t *addr16;
+	uint32_t *addr32;
+
+	open_mem_file();
+	map_address(address);
+	addr32 = (uint32_t *) (g_map_vaddr + (address & (MAP_SIZE - 1)));
+	addr16 = (uint16_t *) addr32;
+	addr8 = (uint8_t *) addr16;
+
+	switch (width) {
+	case 1:
+		*addr8 = value;
+		break;
+	case 2:
+		*addr16 = value;
+		break;
+	case 4:
+		*addr32 = value;
+		break;
+	default:
+		die("Unknown size\n");
+	}
+	return 0;
+
+}
+
+unsigned int get_value(int value, int lsb, int msb)
+{
+	return (value >> lsb) & (0xFFFFFFFF >> (31 - (msb - lsb)));
+}
+
+void print_blank(int x)
+{
+	int i = 0;
+	for (i = 0; i < x; i++)
+		putchar(' ');
+}
+
+void parse_field(const module_t * mx, const reg_t * reg, char *field, int value)
+{
+	const field_t *f = reg->fields;
+	char *str = NULL;
+	int i = 0;
+
+	if (field)
+		str = strchr(field, '*');
+	if (str != NULL)
+		*str = 0;
+
+	for (i = 0; i < reg->field_count; i++) {
+		if (field == NULL || *field == 0
+		    || strncmp(f->name, field, strlen(field)) == 0) {
+			printf("     %s.%s.%s(%d..%d) \t:0x%x\n", mx->name,
+			       reg->name, f->name, f->lsb, f->msb,
+			       get_value(value, f->lsb, f->msb)
+			    );
+			printf("             %s\n", f->description);
+		}
+		f++;
+	}
+}
+
+void parse_reg(const module_t * mx, const char *reg, char *field)
+{
+	const reg_t *sreg = mx->regs;
+	char *str;
+
+	int i = 0;
+
+	str = strchr(reg, '*');
+	if (str != NULL)
+		*str = 0;	/*cut register name */
+
+	for (i = 0; i < mx->reg_count; i++) {
+		if (reg == NULL || *reg == 0 || strlen(reg) == 0 ||
+		    strncmp(sreg->name, reg, strlen(reg)) == 0 || *reg == '-') {
+			printf("  %s.%s Addr:0x%08X Value:0x%08X - %s\n",
+			       mx->name, sreg->name,
+			       mx->base_address + sreg->offset,
+			       readm(mx->base_address + sreg->offset,
+				     sreg->width),
+			       sreg->description);
+			if (!(reg && *reg == '-'))
+				parse_field(mx, sreg, field,
+					    readm(mx->base_address +
+						  sreg->offset, sreg->width));
+			printf("\n");
+		}
+		sreg++;
+	}
+}
+
+void write_reg_mask(int addr, int width, int value, int lsb, int msb)
+{
+	int org;
+	unsigned int mask;
+
+	printf("write 0x%08X to Bit %d..%d of 0x%08X \n", value, lsb, msb,
+	       addr);
+
+	org = readm(addr, width);
+	mask = 0xFFFFFFFF;
+	mask >>= lsb;
+	mask <<= lsb;
+
+	mask <<= 31 - msb;
+	mask >>= 31 - msb;
+
+	org &= ~mask;
+	value <<= lsb;
+	org |= value & mask;
+
+	writem(addr, width, org);
+}
+
+void write_reg(int addr, int width, int value)
+{
+	printf("write 0x%08X to 0x%08X\n", value, addr);
+	writem(addr, width, value);
+}
+
+void parse_module(char *module, char *reg, char *field, int iswrite)
+{
+	const module_t *mx = NULL;
+	char *str = NULL;
+	int fd = 0;
+	int n;
+	char *rev;
+
+	fd = open("/proc/cpuinfo", O_RDONLY);
+	if (fd < 0)
+		die("can't open file /proc/cpuinfo\n");
+
+	n = read(fd, g_buffer, 4095);
+	if ((rev = strstr(g_buffer, "Revision"))) {
+		int r;
+		rev = strstr(rev, ":");
+		if (!rev)
+			die("Unkown CPUInfo format\n");
+
+		r = strtoul(rev + 2, NULL, 16);
+
+		switch (r >> 12) {
+		case 0x63:
+			mx = mx6q;
+			printf("SOC is mx6q\n\n");
+			break;
+		case 0x61:
+			mx = mx6dl;
+			printf("SOC is mx6dl\n\n");
+			break;
+		case 0x60:
+			mx = mx6sl;
+			printf("SOC is mx6sl\n\n");
+			break;
+		default:
+			die("Unknown SOC\n\n");
+		}
+	} else
+		die("Unknown SOC\n");
+
+	if (iswrite) {
+		while (mx) {
+			if (strcmp(mx->name, module) == 0) {
+
+				const reg_t *r = mx->regs;
+				int i = 0;
+				for (i = 0; i < mx->reg_count; i++) {
+					if (strcmp(r->name, reg) == 0) {
+						if (field == NULL || *field == 0) {
+							if (r->is_writable)
+								write_reg(mx->
+									  base_address
+									  +
+									  r->
+									  offset,
+									  r->
+									  width,
+									  g_value);
+							else
+								printf
+								    ("%s.%s is not writable register\n",
+								     mx->name,
+								     r->name);
+							return;
+						} else {
+							const field_t *f = r->fields;
+							int j;
+							for (j = 0; j < r->field_count; j++) {
+								if (strcmp(f->name, field) == 0) {
+									if (f->is_writable)
+										write_reg_mask
+										    (mx->
+										     base_address
+										     +
+										     r->
+										     offset,
+										     r->
+										     width,
+										     g_value,
+										     f->
+										     lsb,
+										     f->
+										     msb);
+									else
+										printf
+										    ("%s.%s.%s is not writable\n",
+										     mx->
+										     name,
+										     r->
+										     name,
+										     f->
+										     name);
+								}
+								f++;
+
+							}
+							return;
+						}
+					}
+
+					r++;
+
+				}
+				printf("Can't find register %s\n", reg);
+				return;
+			}
+			mx++;
+		}
+		printf("Can't find module %s\n", module);
+		return;
+	}
+	if (module == NULL || *module == 0 || (str = strchr(module, '*'))) {	/* list all modules */
+		printf("   Module\t\tBase Address\n");
+		if (str)
+			*str = 0;	/*Cut module */
+
+		while (mx->name) {
+			if (str == NULL
+			    || (strncmp(mx->name, module, strlen(module)) ==
+				0)) {
+				printf("  %s", mx->name);
+				print_blank(20 - strlen(mx->name));
+				printf("0x%08X\n", mx->base_address);
+			}
+			mx++;
+		}
+		return;
+	}
+
+	while (mx->name) {
+
+		if (strcmp(mx->name, module) == 0) {
+			printf("%s\t Addr:0x%x \n", mx->name, mx->base_address);
+			parse_reg(mx, reg, field);
+			break;
+		}
+		mx++;
+	}
+}
 
 int parse_cmdline(int argc, char **argv)
 {
@@ -47,11 +388,37 @@ int parse_cmdline(int argc, char **argv)
 	if (cur_arg >= argc)
 		return -1;
 
-	g_paddr = strtoul(argv[cur_arg], NULL, 16);
-	if (!g_paddr)
-		return -1;
+	if ((str = strchr(argv[cur_arg], '.'))) {
+		/*extend memory command */
+		char *equal = 0;
+		g_is_reg = 1;
+		*str = 0;
+		str++;
+		g_module = argv[cur_arg];
+		g_reg = str;
 
-	if (str = strchr(argv[cur_arg], '=')) {
+		if ((g_field = strchr(str, '.'))) {
+			*g_field = 0;
+			g_field++;
+		}
+		if ((equal = strchr(g_field ? g_field : str, '='))) {
+			g_is_write = 1;
+			*equal = 0;
+			equal++;
+			g_value = strtoul(equal, NULL, 16);
+			return 0;
+		}
+		return 0;
+		//cur_arg++;
+	}
+
+	if (!g_is_reg) {
+		g_paddr = strtoul(argv[cur_arg], NULL, 16);
+		if (!g_paddr)
+			return -1;
+	}
+
+	if ((str = strchr(argv[cur_arg], '='))) {
 		g_is_write = 1;
 		if (strlen(str) > 1) {
 			str++;
@@ -77,6 +444,7 @@ int parse_cmdline(int argc, char **argv)
 		else
 			g_count = strtoul(argv[cur_arg], NULL, 16);
 	}
+	printf("E\n");
 	return 0;
 }
 
@@ -119,7 +487,6 @@ void read_mem(void *addr, uint32_t count, uint32_t size)
 
 void write_mem(void *addr, uint32_t value, uint32_t size)
 {
-	int i;
 	uint8_t *addr8 = addr;
 	uint16_t *addr16 = addr;
 	uint32_t *addr32 = addr;
@@ -149,10 +516,22 @@ int main(int argc, char **argv)
 		printf("Usage:\n\n"
 		       "Read memory: memtool [-8 | -16 | -32] <phys addr> <count>\n"
 		       "Write memory: memtool [-8 | -16 | -32] <phys addr>=<value>\n\n"
+		       "List SOC module: memtool *. or memtool .\n"
+		       "Read register:  memtool UART1.*\n"
+		       "                memtool UART1.UMCR\n"
+		       "                memtool UART1.UMCR.MDEN\n"
+		       "		memtool UART1.-\n"
+		       "Write register: memtool UART.UMCR=0x12\n"
+		       "                memtool UART.UMCR.MDEN=0x1\n"
 		       "Default access size is 32-bit.\n\nAddress, count and value are all in hex.\n");
 		return 1;
 	}
 
+	if (g_is_reg) {
+
+		parse_module(g_module, g_reg, g_field, g_is_write);
+		return 0;
+	}
 	/* Align address to access size */
 	g_paddr &= ~(g_size - 1);
 
@@ -189,5 +568,11 @@ int main(int argc, char **argv)
 
 	munmap(aligned_vaddr, aligned_size);
 	close(fd);
+
+	if (g_map_vaddr)
+		munmap((void *)g_map_vaddr, MAP_SIZE);
+	if (g_fmem)
+		close(g_fmem);
+
 	return 0;
 }
