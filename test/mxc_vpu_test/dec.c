@@ -2083,7 +2083,7 @@ decoder_open(struct decode *dec)
 
 	ret = vpu_DecOpen(&handle, &oparam);
 	if (ret != RETCODE_SUCCESS) {
-		err_msg("vpu_DecOpen failed\n");
+		err_msg("vpu_DecOpen failed, ret:%d\n", ret);
 		return -1;
 	}
 
