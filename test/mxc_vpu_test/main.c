@@ -76,7 +76,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -a <frame rate> display framerate \n "\
 	       "	default is 30 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
-	       "        default is none-interleave(0). \n "\
+	       "        default is interleave(1). \n "\
 	       "  -s <prescan/bs_mode> Enable prescan in decoding on i.mx5x - 1. enabled \n "\
 	       "        default is disabled. Bitstream mode in decoding on i.mx6  \n "\
 	       "        0. Normal mode, 1. Rollback mode \n "\
@@ -110,7 +110,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -g <gop size> \n "\
 	       "	default is 0 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
-	       "        default is none-interleave(0). \n "\
+	       "        default is interleave(1). \n "\
 	       "  -q <quantization parameter> \n "\
 	       "	default is 20 \n "\
 	       "\n"\
@@ -122,7 +122,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -h <height>capture image height \n "\
 	       "	default is 144 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
-               "        default is none-interleave(0). \n "\
+               "        default is interleave(1). \n "\
 	       "\n"\
 	       "transcode options, encoder set to h264 720p now \n "\
 	       "  -i <input file> Read input from file \n "\
@@ -166,7 +166,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -a <frame rate> display framerate \n "\
 	       "        default is 30 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
-	       "        default is none-interleave(0). \n "\
+	       "        default is interleave(1). \n "\
 	       "  -s <prescan/bs_mode> Enable prescan in decoding on i.mx5x - 1. enabled \n "\
 	       "        default is disabled. Bitstream mode in decoding on i.mx6  \n "\
 	       "        0. Normal mode, 1. Rollback mode \n "\
@@ -302,6 +302,8 @@ int
 parse_args(int argc, char *argv[], int i)
 {
 	int status = 0, opt, val;
+
+	input_arg[i].cmd.chromaInterleave = 1;
 
 	do {
 		opt = getopt(argc, argv, options);
@@ -492,7 +494,7 @@ main(int argc, char *argv[])
 
 	err = vpu_GetVersionInfo(&ver);
 	if (err) {
-		err_msg("Cannot get version info\n");
+		err_msg("Cannot get version info, err:%d\n", err);
 		vpu_UnInit();
 		return -1;
 	}
