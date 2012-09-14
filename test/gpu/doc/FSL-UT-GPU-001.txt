@@ -17,7 +17,7 @@ GPU function test
 NO
 
 | Kernel Config Option |
-CONFIG_MXC_GPU=m
+CONFIG_MXC_GPU_VIV=y
 
 | Software Dependency |
 N/A
