@@ -8,8 +8,8 @@ pushd .
 #
 #run modprobe test
 #
-gpu_mod_name=galcore.ko
-modprobe_test $gpu_mod_name
+#gpu_mod_name=galcore.ko
+#modprobe_test $gpu_mod_name
 #
 #run tests
 #
@@ -21,7 +21,7 @@ cd /opt/viv_samples/hal/ && ./tvui
 #
 #remove gpu modules
 #
-rmmod $gpu_mod_name
+#rmmod $gpu_mod_name
 #restore the directory
 #
 popd
