@@ -44,6 +44,11 @@ extern "C"{
 #include <sys/time.h>
 #include <string.h>
 #include <malloc.h>
+#include <pthread.h>
+#include <signal.h>
+
+sigset_t sigset;
+int quitflag;
 
 #define TEST_BUFFER_NUM 3
 
@@ -174,6 +179,7 @@ int v4l_capture_test(int fd_v4l)
 	int frame_num = 0, i, fb0_size;
 	unsigned char *fb0;
 	struct timeval tv1, tv2;
+	int j = 0;
 
 	if ((fd_fb = open(fb_device, O_RDWR )) < 0) {
 		printf("Unable to open frame buffer\n");
@@ -233,15 +239,22 @@ int v4l_capture_test(int fd_v4l)
 			if (buf.m.userptr == buffers[i].offset) {
 				if (var.yoffset == 0) {
 					var.yoffset += var.yres;
-					memcpy((unsigned char *)(fb0 + buffers[i].length),
-						buffers[i].start, buffers[i].length);
+					for (j = 0; j < g_height; j++) {
+						memcpy(fb0 + var.xres * var.yres * 2  + j * var.xres * 2,
+							buffers[i].start + j * g_width * 2,
+							g_width * 2);
+					}
 					if (ioctl(fd_fb, FBIOPAN_DISPLAY, &var) < 0) {
 						printf("FBIOPAN_DISPLAY failed\n");
 						break;
 					}
 				} else {
 					var.yoffset = 0;
-					memcpy(fb0, buffers[i].start, buffers[i].length);
+					for (j = 0; j < g_height; j++) {
+						memcpy(fb0 + j * var.xres * 2,
+							buffers[i].start + j * g_width * 2,
+							g_width * 2);
+					}
 					if (ioctl(fd_fb, FBIOPAN_DISPLAY, &var) < 0) {
 						printf("FBIOPAN_DISPLAY failed\n");
 						break;
@@ -259,7 +272,7 @@ int v4l_capture_test(int fd_v4l)
 
 		frame_num += 1;
 		gettimeofday(&tv2, NULL);
-	} while(tv2.tv_sec - tv1.tv_sec < g_timeout);
+	} while((tv2.tv_sec - tv1.tv_sec < g_timeout) && !quitflag);
 
 	/* Make sure pan display offset is zero before capture is stopped */
 	if (var.yoffset) {
@@ -302,9 +315,37 @@ int process_cmdline(int argc, char **argv)
         return 0;
 }
 
+static int signal_thread(void *arg)
+{
+	int sig, err;
+
+	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
+
+	while (1) {
+		err = sigwait(&sigset, &sig);
+		if (sig == SIGINT) {
+			printf("Ctrl-C received. Exiting.\n");
+		} else {
+			printf("Unknown signal. Still exiting\n");
+		}
+		quitflag = 1;
+		break;
+	}
+
+	return 0;
+}
+
+
 int main(int argc, char **argv)
 {
         int fd_v4l;
+	quitflag = 0;
+
+	pthread_t sigtid;
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
+	pthread_create(&sigtid, NULL, (void *)&signal_thread, NULL);
 
         if (process_cmdline(argc, argv) < 0) {
                 return -1;
