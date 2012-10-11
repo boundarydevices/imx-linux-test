@@ -51,6 +51,7 @@ sigset_t sigset;
 int quitflag;
 
 #define TEST_BUFFER_NUM 3
+#define MAX_V4L2_DEVICE_NR     64
 
 struct testbuffer
 {
@@ -122,16 +123,67 @@ int stop_capturing(int fd_v4l)
         return ioctl (fd_v4l, VIDIOC_STREAMOFF, &type);
 }
 
+static int find_video_device(void)
+{
+	char v4l_devname[20] = "/dev/video";
+	char index[3];
+	char v4l_device[20];
+	struct v4l2_capability cap;
+	int fd_v4l;
+	int i = 0;
+
+	if ((fd_v4l = open(v4l_devname, O_RDWR, 0)) < 0) {
+		printf("unable to open %s for capture, continue searching "
+			"device.\n", v4l_devname);
+	}
+	if (ioctl(fd_v4l, VIDIOC_QUERYCAP, &cap) == 0) {
+		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
+			printf("Found v4l2 capture device %s.\n", v4l_devname);
+			return fd_v4l;
+		}
+	} else {
+		close(fd_v4l);
+	}
+
+	/* continue to search */
+	while (i < MAX_V4L2_DEVICE_NR) {
+		strcpy(v4l_device, v4l_devname);
+		sprintf(index, "%d", i);
+		strcat(v4l_device, index);
+
+		if ((fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
+		{
+			i++;
+			continue;
+		}
+		if (ioctl(fd_v4l, VIDIOC_QUERYCAP, &cap)) {
+			close(fd_v4l);
+			i++;
+			continue;
+		}
+		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
+			printf("Found v4l2 capture device %s.\n", v4l_device);
+			break;
+		}
+
+		i++;
+	}
+
+	if (i == MAX_V4L2_DEVICE_NR)
+		return -1;
+	else
+		return fd_v4l;
+}
+
 int v4l_capture_setup(void)
 {
-        char v4l_device[100] = "/dev/video0";
         struct v4l2_format fmt;
         struct v4l2_streamparm parm;
         int fd_v4l = 0;
 
-        if ((fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
+	if ((fd_v4l = find_video_device()) < 0)
         {
-                printf("Unable to open %s\n", v4l_device);
+                printf("Unable to open v4l2 capture device.\n");
                 return 0;
         }
 
