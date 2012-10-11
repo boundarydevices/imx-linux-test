@@ -1,5 +1,5 @@
 # list of platforms which want this test case
-INCLUDE_LIST:=IMX233 IMX28 IMX50 IMX51 IMX5
+INCLUDE_LIST:=IMX233 IMX28 IMX50 IMX51 IMX5 IMX6S
 
 CFLAGS += -lpthread
 
