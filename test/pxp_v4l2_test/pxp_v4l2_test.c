@@ -1,7 +1,7 @@
 /*
  * pxp_test - V4L2 test application for the PxP
  *
- * Copyright (C) 2009-2010 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009-2012 Freescale Semiconductor, Inc.
  * Copyright 2008-2009 Embedded Alley Solutions
  * Matt Porter <mporter@embeddedalley.com>
  *
@@ -41,6 +41,8 @@
 #include <linux/fb.h>
 #include <linux/videodev2.h>
 
+#define MAX_V4L2_DEVICE_NR     64
+
 #define DEFAULT_WIDTH	320
 #define DEFAULT_HEIGHT	240
 
@@ -55,7 +57,6 @@ struct buffer {
 
 struct pxp_control {
 	int fmt_idx;
-	char *vdevfile;
 	int vfd;
 	char *s0_infile;
 	char *s1_infile;
@@ -121,7 +122,6 @@ static struct pxp_video_format pxp_video_formats[] = {
 #define VERSION	"1.0"
 #define MAX_LEN 512
 #define DEFAULT_OUTFILE "out.pxp"
-#define DEFAULT_V4L_DEVICE "/dev/video0"
 
 #define PXP_RES		0
 #define PXP_DST		1
@@ -179,14 +179,69 @@ static int signal_thread(void *arg)
 	return 0;
 }
 
+static int find_video_device(void)
+{
+	char v4l_devname[20] = "/dev/video";
+	char index[3];
+	char v4l_device[20];
+	struct v4l2_capability cap;
+	int fd_v4l;
+	int i = 0;
+
+	if ((fd_v4l = open(v4l_devname, O_RDWR, 0)) < 0) {
+		printf("unable to open %s for output, continue searching "
+			"device.\n", v4l_devname);
+	}
+	if (ioctl(fd_v4l, VIDIOC_QUERYCAP, &cap) == 0) {
+		if (cap.capabilities & V4L2_CAP_VIDEO_OUTPUT) {
+			printf("Found v4l2 output device %s.\n", v4l_devname);
+			return fd_v4l;
+		}
+	} else {
+		close(fd_v4l);
+	}
+
+	/* continue to search */
+	while (i < MAX_V4L2_DEVICE_NR) {
+		strcpy(v4l_device, v4l_devname);
+		sprintf(index, "%d", i);
+		strcat(v4l_device, index);
+
+		if ((fd_v4l = open(v4l_device, O_RDWR, 0)) < 0) {
+			i++;
+			continue;
+		}
+		if (ioctl(fd_v4l, VIDIOC_QUERYCAP, &cap)) {
+			close(fd_v4l);
+			i++;
+			continue;
+		}
+		if (cap.capabilities & V4L2_CAP_VIDEO_OUTPUT) {
+			printf("Found v4l2 output device %s.\n", v4l_device);
+			break;
+		}
+
+		i++;
+	}
+
+	if (i == MAX_V4L2_DEVICE_NR)
+		return -1;
+	else
+		return fd_v4l;
+}
+
 static struct pxp_control *pxp_init(int argc, char **argv)
 {
 	struct pxp_control *pxp;
 	int opt;
 	int long_index = 0;
-	int tfd;
+	int tfd, fd_v4l;
 	char buf[8];
 
+	if ((fd_v4l = find_video_device()) < 0) {
+		printf("Unable open v4l2 output device.\n");
+		return NULL;
+	}
 	/* Disable screen blanking */
 	tfd = open("/dev/tty0", O_RDWR);
 	sprintf(buf, "%s", "\033[9;0]");
@@ -198,6 +253,8 @@ static struct pxp_control *pxp_init(int argc, char **argv)
 		perror("failed to allocate PxP control object");
 		return NULL;
 	}
+
+	pxp->vfd = fd_v4l;
 
 	pxp->buffers = calloc(6, sizeof(*pxp->buffers));
 
@@ -212,9 +269,7 @@ static struct pxp_control *pxp_init(int argc, char **argv)
 	    strcmp(argv[argc - 1], "BLANK") == 0 ? NULL : argv[argc - 1];
 	pxp->outfile = calloc(1, MAX_LEN);
 	pxp->outfile_state = 0;
-	pxp->vdevfile = calloc(1, MAX_LEN);
 	strcpy(pxp->outfile, DEFAULT_OUTFILE);
-	strcpy(pxp->vdevfile, DEFAULT_V4L_DEVICE);
 	pxp->screen_w = pxp->s0.width = DEFAULT_WIDTH;
 	pxp->screen_h = pxp->s0.height = DEFAULT_HEIGHT;
 	pxp->fmt_idx = 3;	/* YUV420 */
@@ -745,7 +800,6 @@ static int pxp_write_outfile(struct pxp_control *pxp)
 static void pxp_cleanup(struct pxp_control *pxp)
 {
 	close(pxp->vfd);
-	free(pxp->vdevfile);
 	if (pxp->outfile)
 		free(pxp->outfile);
 	free(pxp->buffers);
@@ -759,11 +813,6 @@ int main(int argc, char **argv)
 
 	if (!(pxp = pxp_init(argc, argv)))
 		return 1;
-
-	if ((pxp->vfd = open(pxp->vdevfile, O_RDWR, 0)) < 0) {
-		perror("video device open failed");
-		return 1;
-	}
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
