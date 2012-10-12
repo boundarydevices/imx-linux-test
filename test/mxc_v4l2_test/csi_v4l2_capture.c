@@ -66,6 +66,7 @@ int g_height = 480;
 int g_cap_fmt = V4L2_PIX_FMT_RGB565;
 int g_capture_mode = 0;
 int g_timeout = 10;
+int g_camera_framerate = 30;	/* 30 fps */
 
 int start_capturing(int fd_v4l)
 {
@@ -189,6 +190,8 @@ int v4l_capture_setup(void)
 
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	parm.parm.capture.capturemode = g_capture_mode;
+	parm.parm.capture.timeperframe.denominator = g_camera_framerate;
+	parm.parm.capture.timeperframe.numerator = 1;
 	if (ioctl(fd_v4l, VIDIOC_S_PARM, &parm) < 0)
 	{
 	        printf("VIDIOC_S_PARM failed\n");
@@ -357,8 +360,10 @@ int process_cmdline(int argc, char **argv)
 			g_timeout = atoi(argv[++i]);
 		} else if (strcmp(argv[i], "-help") == 0) {
                         printf("CSI Video4Linux capture Device Test\n" \
-                               "Syntax: ./csi_v4l2_capture -t <time>\n");
+                               "Syntax: ./csi_v4l2_capture -t <time> -fr <framerate>\n");
                         return -1;
+		} else if (strcmp(argv[i], "-fr") == 0) {
+			g_camera_framerate = atoi(argv[++i]);
                } else {
                         return -1;
 	       }
