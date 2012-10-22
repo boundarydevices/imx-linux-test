@@ -523,9 +523,12 @@ int process_cmdline(int argc, char **argv)
                 else if (strcmp(argv[i], "-t") == 0) {
                         g_timeout = atoi(argv[++i]);
                 }
-                else if (strcmp(argv[i], "-d") == 0) {
+                else if (strcmp(argv[i], "-do") == 0) {
                         g_display_lcd = atoi(argv[++i]);
                 }
+				else if (strcmp(argv[i], "-di") == 0) {
+					strcpy(v4l_device, argv[++i]);
+				}
                 else if (strcmp(argv[i], "-fg") == 0) {
                         g_overlay = 1;
                 }
@@ -548,7 +551,8 @@ int process_cmdline(int argc, char **argv)
                                " -ow <display width>\n -oh <display height>\n" \
                                " -ot <display top>\n -ol <display left>\n"	\
                                " -r <rotate mode>\n -t <timeout>\n" \
-                               " -d <output display> \n"	\
+                               " -do <output display> \n"	\
+							   " -di <camera select, /dev/video0, /dev/video1> \n" \
                                " -v <camera color> 1-brightness 2-saturation"
                                " 3-red 4-blue 5-black balance\n"\
 			       " -m <capture mode> 0-low resolution 1-high resolution\n" \
