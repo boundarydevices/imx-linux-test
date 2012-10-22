@@ -45,7 +45,7 @@ Test 5. mxc_v4l2_overlay.out -iw 1280 -ih 720 -ow 640 -oh 480 -m 4 -di /dev/vide
 
 Test 6. mxc_v4l2_overlay.out -iw 1920 -ih 1080 -ow 640 -oh 480 -m 5 -di /dev/video1 -fg
 
-Test 7. mxc_v4l2_overlay.out -iw 2592 -ih 1944 -ow 640 -oh 480 -m 6 -di /dev/video1 -fg
+Test 7. mxc_v4l2_overlay.out -iw 2592 -ih 1944 -ow 640 -oh 480 -m 6 -fr 15 -di /dev/video1 -fg
 
 Test background display:
 
@@ -61,7 +61,7 @@ Test 12. mxc_v4l2_overlay.out -iw 1280 -ih 720 -ow 640 -oh 480 -m 4 -di /dev/vid
 
 Test 13. mxc_v4l2_overlay.out -iw 1920 -ih 1080 -ow 640 -oh 480 -m 5 -di /dev/video1 -bg
 
-Test 14. mxc_v4l2_overlay.out -iw 2592 -ih 1944 -ow 640 -oh 480 -m 6 -di /dev/video1 -bg
+Test 14. mxc_v4l2_overlay.out -iw 2592 -ih 1944 -ow 640 -oh 480 -m 6 -fr 15 -di /dev/video1 -bg
 
 | Expected Result |
 The image from the camera is displayed on the screen. Colors and image should be correct.
