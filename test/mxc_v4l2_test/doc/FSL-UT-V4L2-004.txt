@@ -31,7 +31,7 @@ Check again for /dev/video0. If it is not there, the camera driver has not loade
 
 Type the following command.
 
- mxc_v4l2_overlay.out -iw 640 -ih 480 -it 0 -il 0 -ow 160 -oh 160 -ot 20 -ol 20 -r 4 -t 50 -d 0 -fr 30
+ mxc_v4l2_overlay.out -iw 640 -ih 480 -it 0 -il 0 -ow 160 -oh 160 -ot 20 -ol 20 -r 4 -t 50 -do 0 -fr 30
 
 Direct preview (90 degree rotation) the camera to the background, and set frame rate to 30 fps.
 
