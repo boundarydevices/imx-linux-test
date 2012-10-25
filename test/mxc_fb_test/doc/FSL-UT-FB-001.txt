@@ -1,0 +1,87 @@
+FSL-UT-FB-001
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Frame buffer basic test for display.
+The framebuffer driver should be able to easily add new displays to
+the system including timings, refresh, resolution, formats, via tables in the driver.
+
+| Automated |
+YES (But manual observation is required to confirming correct updates on display panel)
+
+| Kernel Config Option |
+ CONFIG_FB=y
+ CONFIG_FB_MXC=y
+ CONFIG_FB_MXC_EDID=y
+ CONFIG_FB_MXC_SYNC_PANEL=y
+ CONFIG_FB_MXC_LDB=y
+ CONFIG_FB_MXC_HDMI=y
+ ...
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+ifdef::imx6q[]
+The fb0 and fb1 are used for tests, fb0 is background framebuffer, and
+fb1 is foreground overlay framebuffer.
+endif::[]
+
+| Test Procedure |
+Frame buffer test for display.
+
+.Features tested:
+* Basic fb operation
+* Set background/foreground to 16 bpp fb
+* Global alpha blending
+* Color key test
+* Framebuffer Panning
+* Gamma test
+
+ $ /unit_tests/mxc_fb_test.out
+ Usage: execute directly.
+
+ Example:
+ root@freescale /unit_tests$ ./mxc_fb_test.out
+ Opened fb0 and fb1
+ Set the background to 16-bpp
+
+ Screen size = 1572864
+ Set the foreground to 16-bpp
+ Testing global alpha blending...
+ Fill the FG in black
+ Fill the BG in white
+ Alpha is 0, FG is opaque
+ Alpha is 255, BG is opaque
+ Color key enabled
+ Color key disabled
+ Global alpha disabled
+ Set the background to 16-bpp
+ Pan test start.
+ Pan test done.
+ Set the background to 16-bpp
+ Pan test start.
+ Pan test done.
+ Gamma test start.
+ Gamma 0.800000
+ Gamma 1.000000
+ Gamma 1.500000
+ Gamma 2.200000
+ Gamma 2.400000
+ Gamma test end.
+
+| Expected Result |
+The test should pass without any failure messages, and the display on panel
+should be correct.
+
+For each test, a sequence of updates should be reflected on the screen.  For
+almost all tests, the text printed out in the debug console describes the image
+that should be observed on the screen.
+
+|====================================================================
+
+<<<
