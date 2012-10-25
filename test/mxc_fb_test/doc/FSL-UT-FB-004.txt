@@ -1,0 +1,34 @@
+FSL-UT-FB-004
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+LVDS Frame buffer test.
+
+| Automated |
+NO
+
+| Software Dependency |
+N/A
+
+| Test Procedure |
+. Connect XGA LVDS panels to LVDS0/LVDS1 connectors on the board
+. Login
+
+ cat /sys/class/graphics/fb0/mode
+
+. Find the rgb image with 1024x768 resolution
+
+ cat image > /dev/fb0
+
+| Expected Result |
+. The penguin should appear on the display.
+. The display resolution of 1024x768 will be displayed.
+. You should see a clear rgb image filling the entire screen with correct colors.
+
+|====================================================================
+
+<<<

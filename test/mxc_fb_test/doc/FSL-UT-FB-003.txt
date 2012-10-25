@@ -1,0 +1,40 @@
+FSL-UT-FB-003
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+WVGA Frame buffer test.
+
+| Automated |
+NO
+
+| Non-default Hardware Configuration |
+ifdef::imx6q[]
+Config command line arguments of video=mxcfb0:dev=lcd,800x480M@55,if=RGB565
+endif::[]
+
+| Software Dependency |
+N/A
+
+| Test Procedure |
+. Connect a WVGA panel to the dumb LCD connector on the board
+. Boot linux with an additional command line arguments of video mode
+. Login
+
+ cat /sys/class/graphics/fb0/mode
+
+. Find the rgb image with 800x480 resolution
+
+ cat image > /dev/fb0
+
+| Expected Result |
+. The penguin should appear on the display.
+. The display resolution of 800x480 will be displayed.
+. You should see a clear rgb image filling the entire screen with correct colors.
+
+|====================================================================
+
+<<<

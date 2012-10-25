@@ -39,6 +39,15 @@ include::../mxc_esai_test/doc/FSL-UT-ESAI-004.txt[]
 include::../mxc_esai_test/doc/FSL-UT-ESAI-005.txt[]
 include::../mxc_esai_test/doc/FSL-UT-ESAI-006.txt[]
 
+FB
+--
+include::../mxc_fb_test/doc/FSL-UT-FB-001.txt[]
+include::../mxc_fb_test/doc/FSL-UT-FB-002.txt[]
+include::../mxc_fb_test/doc/FSL-UT-FB-003.txt[]
+include::../mxc_fb_test/doc/FSL-UT-FB-004.txt[]
+include::../mxc_fb_test/doc/FSL-UT-FB-005.txt[]
+include::../mxc_fb_test/doc/FSL-UT-FB-006.txt[]
+
 FEC
 ---
 include::../misc/doc/FSL-UT-FEC-001.txt[]
@@ -63,6 +72,10 @@ include::../mxc_fb_test/doc/FSL-UT-HDMI-002.txt[]
 I2C
 ----
 include::../misc/doc/FSL-UT-I2C-001.txt[]
+
+IPU
+---
+include::../mxc_ipudev_test/doc/FSL-UT-IPUDEV-001.txt[]
 
 MISC
 ----
