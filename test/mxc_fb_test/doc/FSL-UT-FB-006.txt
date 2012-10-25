@@ -1,0 +1,47 @@
+FSL-UT-FB-006
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Dual display test.
+
+| Automated |
+NO
+
+| Non-default Hardware Configuration |
+ifdef::imx6q[]
+Config command line arguments:video=mxcfb0:dev=hdmi,1920x1080M@60,if=RGB24
+video=mxcfb1:dev=ldb,LDB-XGA,if=RGB666 ldb=sep0
+endif::[]
+
+| Software Dependency |
+N/A
+
+| Test Procedure |
+. Connect XGA LVDS panel and HDMI display on the board
+. Boot linux with an additional command line arguments of video mode
+. Login
+. Unblank the secondary display with
+
+ echo 0 > /sys/class/graphics/fb2/blank
+
+. Check the resolutions of both displays with:
+
+ cat /sys/class/graphics/fb0/mode
+ cat /sys/class/graphics/fb2/mode
+
+. Find the rgb images with correct resolution to both displays:
+
+ cat image1 > /dev/fb0
+ cat image2 > /dev/fb2
+
+| Expected Result |
+. The display resolutions will be displayed correctly.
+. The images should display correctly on both screens.
+
+|====================================================================
+
+<<<

@@ -1,0 +1,39 @@
+FSL-UT-FB-005
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+MIPI DSI Frame buffer test.
+
+| Automated |
+NO
+
+| Non-default Hardware Configuration |
+ifdef::imx6q[]
+Config command line arguments of video=mxcfb0:dev=mipi_dsi,TRULY-WVGA,if=RGB24
+endif::[]
+
+| Software Dependency |
+N/A
+
+| Test Procedure |
+. Connect the MIPI DSI TRULY WVGA panel, ensure the cable is connected correctly
+. Boot the kernel and check the LCD display
+. Change the backlight brightness:
+
+ echo value(0-255) > /sys/class/backlight/mipid-bl/brightness
+
+. Check for blank/unblank:
+
+ echo value(1 or 0) > /sys/class/graphics/fb0/blank
+
+| Expected Result |
+. The penguin should appear on the display.
+. The LCD panel should display correctly.
+
+|====================================================================
+
+<<<
