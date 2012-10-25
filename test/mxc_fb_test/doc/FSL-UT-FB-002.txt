@@ -1,0 +1,48 @@
+FSL-UT-FB-002
+~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Frame buffer vsync test.
+
+| Automated |
+YES
+
+| Kernel Config Option |
+ CONFIG_FB=y
+ CONFIG_FB_MXC=y
+ CONFIG_FB_MXC_EDID=y
+ CONFIG_FB_MXC_SYNC_PANEL=y
+ CONFIG_FB_MXC_LDB=y
+ CONFIG_FB_MXC_HDMI=y
+ ...
+
+| Software Dependency |
+N/A
+
+| Test Procedure |
+Make sure test framebuffer is unblank.
+
+ $ /unit_tests/mxc_fb_vsync_test.out
+ Usage:
+
+ ./mxc_fb_vsync_test.out <fb #> <count>
+	<fb #>  the framebuffer number
+	<count> the frames to be rendered
+
+ Example:
+ root@freescale /unit_tests$ echo 0 > /sys/class/graphics/fb0/blank
+ root@freescale /unit_tests$ ./mxc_fb_vsync_test.out 0 100
+ total time for 100 frames = 1655674 us = 60 fps
+
+| Expected Result |
+Console print out message like (the fps is depended on your display device's
+refresh rate).
+ total time for 100 frames = 1655674 us = 60 fps
+
+|====================================================================
+
+<<<

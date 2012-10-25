@@ -1,0 +1,33 @@
+FSL-UT-IPUDEV-001
+~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+IPU device interface autotest.
+
+| Automated |
+YES
+
+| Software Dependency |
+N/A
+
+| Test Procedure |
+.Note
+There are some cases which ipu can not support,
+it will return ipu task check error info, please check the log.
+
+Go to unit test dir, run:
+
+ ./autorun-ipu.sh > log
+
+If need full test, please run test after export FULLTEST=1
+
+| Expected Result |
+The correct image or video can show on the fb.
+
+|====================================================================
+
+<<<
