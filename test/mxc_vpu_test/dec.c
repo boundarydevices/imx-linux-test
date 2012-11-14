@@ -961,8 +961,8 @@ decoder_start(struct decode *dec)
 		}
 
 		/*
-		 * FIXME for mx6x MJPG decoding with streaming mode
-		 * Currently bitstream buffer filling cannot be done when JPU is in decoding,
+		 * For mx6x MJPG decoding with streaming mode
+		 * bitstream buffer filling cannot be done when JPU is in decoding,
 		 * there are three places can do this:
 		 * 1. before vpu_DecStartOneFrame;
 		 * 2. in the case of RETCODE_JPEG_BIT_EMPTY returned in DecStartOneFrame() func;
@@ -1155,6 +1155,21 @@ decoder_start(struct decode *dec)
 					dprintf(3, "Top Field First flag: %d, dec_idx %d\n",
 						  outinfo.topFieldFirst, decIndex);
 				}
+			} else if (dec->cmdl->format == STD_MPEG2) {
+				if ((outinfo.interlacedFrame)||(!outinfo.progressiveFrame)) {
+					if (outinfo.pictureStructure == 1)
+						field = V4L2_FIELD_INTERLACED_BT;
+					else if (outinfo.pictureStructure == 2)
+						field = V4L2_FIELD_INTERLACED_TB;
+					else if (outinfo.pictureStructure == 3) {
+						if (outinfo.topFieldFirst)
+							field = V4L2_FIELD_INTERLACED_TB;
+						else
+							field = V4L2_FIELD_INTERLACED_BT;
+					}
+				}
+				if (outinfo.repeatFirstField)
+					info_msg("frame_idx %d : Repeat First Field\n", decIndex);
 			} else if ((dec->cmdl->format != STD_MPEG4) &&
 				   (dec->cmdl->format != STD_H263) &&
 				   (dec->cmdl->format != STD_RV)){
@@ -1801,7 +1816,7 @@ decoder_parse(struct decode *dec)
 			break;
 		case STD_MPEG2:
 			info_msg("Mpeg2 Profile: %d Level: %d Progressive Sequence Flag: %d\n",
-				initinfo.profile, initinfo.level, initinfo.interlace);
+				initinfo.profile, initinfo.level, !initinfo.interlace);
 			/*
 			 * Profile: 3'b101: Simple, 3'b100: Main, 3'b011: SNR Scalable,
 			 * 3'b10: Spatially Scalable, 3'b001: High
