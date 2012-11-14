@@ -706,8 +706,8 @@ transcode_start(struct decode *dec, struct encode *enc)
 		}
 
 		/*
-		 * FIXME for mx6x MJPG decoding with streaming mode
-		 * Currently bitstream buffer filling cannot be done when JPU is in decoding,
+		 * For mx6x MJPG decoding with streaming mode
+		 * bitstream buffer filling cannot be done when JPU is in decoding,
 		 * there are three places can do this:
 		 * 1. before vpu_DecStartOneFrame;
 		 * 2. in the case of RETCODE_JPEG_BIT_EMPTY returned in DecStartOneFrame() func;
