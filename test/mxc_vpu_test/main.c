@@ -80,6 +80,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -s <prescan/bs_mode> Enable prescan in decoding on i.mx5x - 1. enabled \n "\
 	       "        default is disabled. Bitstream mode in decoding on i.mx6  \n "\
 	       "        0. Normal mode, 1. Rollback mode \n "\
+	       "        default is enabled. \n "\
 	       "  -y <maptype> Map type for GDI interface \n "\
 	       "        0 - Linear frame map, 1 - frame MB map, 2 - field MB map \n "\
 	       "        default is 0. \n "\
@@ -170,6 +171,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -s <prescan/bs_mode> Enable prescan in decoding on i.mx5x - 1. enabled \n "\
 	       "        default is disabled. Bitstream mode in decoding on i.mx6  \n "\
 	       "        0. Normal mode, 1. Rollback mode \n "\
+	       "        default is enabled. \n "\
 	       "  -y <maptype> Map type for GDI interface \n "\
 	       "        0 - Linear frame map, 1 - frame MB map, 2 - field MB map \n "\
 	       "  -q <quantization parameter> \n "\
@@ -304,6 +306,8 @@ parse_args(int argc, char *argv[], int i)
 	int status = 0, opt, val;
 
 	input_arg[i].cmd.chromaInterleave = 1;
+	if (cpu_is_mx6x())
+		input_arg[i].cmd.bs_mode = 1;
 
 	do {
 		opt = getopt(argc, argv, options);
