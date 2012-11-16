@@ -184,12 +184,16 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 	char *input_p;
 	char *output_p;
 	int output_dma_size;
+	unsigned int tail;
 
 	input_p = (char *)input_buffer;
 	output_p = (char *)output_buffer;
 	output_dma_size =
 	    asrc_get_output_buffer_size(DMA_BUF_SIZE, info->sample_rate,
 					info->output_sample_rate);
+
+	tail = info->channel * 4 * 4;
+
 	convert_flag = 1;
 	memset(input_null, 0, DMA_BUF_SIZE);
 	if ((err = ioctl(fd_asrc, ASRC_START_CONV, &pair_index)) < 0)
@@ -210,7 +214,7 @@ int play_file(int fd_asrc, struct audio_info_s *info)
 			buf_info.input_buffer_length = DMA_BUF_SIZE;
 		}
 
-		buf_info.output_buffer_length = output_dma_size;
+		buf_info.output_buffer_length = output_dma_size + tail;
 		buf_info.output_buffer_vaddr = output_p;
 		if ((err = ioctl(fd_asrc, ASRC_CONVERT, &buf_info)) < 0)
 			goto error;
