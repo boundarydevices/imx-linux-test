@@ -176,17 +176,45 @@ static int find_video_device(void)
 		return fd_v4l;
 }
 
+static int print_pixelformat(char *prefix, int val)
+{
+	printf("%s: %c%c%c%c\n", prefix ? prefix : "pixelformat",
+					val & 0xff,
+					(val >> 8) & 0xff,
+					(val >> 16) & 0xff,
+					(val >> 24) & 0xff);
+}
+
 int v4l_capture_setup(void)
 {
-        struct v4l2_format fmt;
-        struct v4l2_streamparm parm;
-        int fd_v4l = 0;
+	struct v4l2_format fmt;
+	struct v4l2_streamparm parm;
+	struct v4l2_fmtdesc fmtdesc;
+	struct v4l2_frmivalenum frmival;
+	int fd_v4l = 0;
 
 	if ((fd_v4l = find_video_device()) < 0)
         {
                 printf("Unable to open v4l2 capture device.\n");
                 return 0;
         }
+
+	fmtdesc.index = 0;
+	while (ioctl(fd_v4l, VIDIOC_ENUM_FMT, &fmtdesc) >= 0) {
+		print_pixelformat("pixelformat (output by camera)",
+				fmtdesc.pixelformat);
+		frmival.index = 0;
+		frmival.pixel_format = fmtdesc.pixelformat;
+		frmival.width = g_width;
+		frmival.height = g_height;
+		while (ioctl(fd_v4l, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0)
+		{
+			printf("%.3f fps\n", 1.0 * frmival.discrete.denominator
+				/ frmival.discrete.numerator);
+			frmival.index++;
+		}
+		fmtdesc.index++;
+	}
 
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	parm.parm.capture.capturemode = g_capture_mode;
@@ -201,6 +229,7 @@ int v4l_capture_setup(void)
 	memset(&fmt, 0, sizeof(fmt));
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.pixelformat = g_cap_fmt;
+	print_pixelformat("pixelformat (output by v4l)", fmt.fmt.pix.pixelformat);
         fmt.fmt.pix.width = g_width;
         fmt.fmt.pix.height = g_height;
         if (ioctl(fd_v4l, VIDIOC_S_FMT, &fmt) < 0)
