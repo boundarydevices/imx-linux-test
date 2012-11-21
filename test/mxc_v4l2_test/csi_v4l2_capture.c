@@ -47,6 +47,10 @@ extern "C"{
 #include <pthread.h>
 #include <signal.h>
 
+#ifdef	GET_CONTI_PHY_MEM_VIA_PXP_LIB
+#include "pxp_lib.h"
+#endif
+
 sigset_t sigset;
 int quitflag;
 
@@ -61,12 +65,17 @@ struct testbuffer
 };
 
 struct testbuffer buffers[TEST_BUFFER_NUM];
+#ifdef	GET_CONTI_PHY_MEM_VIA_PXP_LIB
+struct pxp_mem_desc mem[TEST_BUFFER_NUM];
+#endif
 int g_width = 640;
 int g_height = 480;
 int g_cap_fmt = V4L2_PIX_FMT_RGB565;
 int g_capture_mode = 0;
 int g_timeout = 10;
 int g_camera_framerate = 30;	/* 30 fps */
+int g_mem_type = V4L2_MEMORY_MMAP;
+int g_frame_size;
 
 int start_capturing(int fd_v4l)
 {
@@ -74,30 +83,37 @@ int start_capturing(int fd_v4l)
         struct v4l2_buffer buf;
         enum v4l2_buf_type type;
 
+	for (i = 0; i < TEST_BUFFER_NUM; i++) {
+		memset(&buf, 0, sizeof (buf));
+		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		buf.memory = g_mem_type;
+		buf.index = i;
+		if (g_mem_type == V4L2_MEMORY_USERPTR) {
+			buf.length = buffers[i].length;
+			buf.m.userptr = (unsigned long) buffers[i].offset;
+			buf.length = buffers[i].length;
+		}
+
+		if (ioctl(fd_v4l, VIDIOC_QUERYBUF, &buf) < 0) {
+			printf("VIDIOC_QUERYBUF error\n");
+			return -1;
+		}
+
+		if (g_mem_type == V4L2_MEMORY_MMAP) {
+			buffers[i].length = buf.length;
+			buffers[i].offset = (size_t) buf.m.offset;
+			buffers[i].start = mmap(NULL, buffers[i].length,
+					 PROT_READ | PROT_WRITE, MAP_SHARED,
+					 fd_v4l, buffers[i].offset);
+			memset(buffers[i].start, 0xFF, buffers[i].length);
+		}
+	}
+
         for (i = 0; i < TEST_BUFFER_NUM; i++)
         {
                 memset(&buf, 0, sizeof (buf));
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                buf.index = i;
-                if (ioctl(fd_v4l, VIDIOC_QUERYBUF, &buf) < 0)
-                {
-                        printf("VIDIOC_QUERYBUF error\n");
-                        return -1;
-                }
-
-                buffers[i].length = buf.length;
-                buffers[i].offset = (size_t) buf.m.offset;
-                buffers[i].start = mmap (NULL, buffers[i].length,
-                    			 PROT_READ | PROT_WRITE, MAP_SHARED,
-                    			 fd_v4l, buffers[i].offset);
-		memset(buffers[i].start, 0xFF, buffers[i].length);
-        }
-
-        for (i = 0; i < TEST_BUFFER_NUM; i++)
-        {
-                memset(&buf, 0, sizeof (buf));
-                buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                buf.memory = V4L2_MEMORY_MMAP;
+                buf.memory = g_mem_type;
                 buf.index = i;
 		buf.m.offset = buffers[i].offset;
 
@@ -238,11 +254,22 @@ int v4l_capture_setup(void)
                 return 0;
         }
 
+	if (ioctl(fd_v4l, VIDIOC_G_FMT, &fmt) < 0)
+	{
+		printf("get format failed\n");
+		return -1;
+	} else {
+		printf("\t Width = %d", fmt.fmt.pix.width);
+		printf("\t Height = %d", fmt.fmt.pix.height);
+		printf("\t Image size = %d\n", fmt.fmt.pix.sizeimage);
+	}
+	g_frame_size = fmt.fmt.pix.sizeimage;
+
         struct v4l2_requestbuffers req;
         memset(&req, 0, sizeof (req));
         req.count = TEST_BUFFER_NUM;
         req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        req.memory = V4L2_MEMORY_MMAP;
+        req.memory = g_mem_type;
 
         if (ioctl(fd_v4l, VIDIOC_REQBUFS, &req) < 0)
         {
@@ -282,17 +309,6 @@ int v4l_capture_test(int fd_v4l)
 		goto FAIL;
 	}
 
-        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if (ioctl(fd_v4l, VIDIOC_G_FMT, &fmt) < 0)
-        {
-                printf("get format failed\n");
-		goto FAIL;
-        } else {
-		printf("\t Width = %d", fmt.fmt.pix.width);
-		printf("\t Height = %d", fmt.fmt.pix.height);
-		printf("\t Image size = %d\n", fmt.fmt.pix.sizeimage);
-        }
-
         if (start_capturing(fd_v4l) < 0)
         {
                 printf("start_capturing failed\n");
@@ -313,7 +329,7 @@ int v4l_capture_test(int fd_v4l)
 	do {
                 memset(&buf, 0, sizeof (buf));
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                buf.memory = V4L2_MEMORY_MMAP;
+                buf.memory = g_mem_type;
                 if (ioctl (fd_v4l, VIDIOC_DQBUF, &buf) < 0) {
                         printf("VIDIOC_DQBUF failed.\n");
 			break;
@@ -380,6 +396,18 @@ FAIL:
         return -1;
 }
 
+void print_help(void)
+{
+#ifdef	GET_CONTI_PHY_MEM_VIA_PXP_LIB
+	printf("CSI Video4Linux capture Device Test\n" \
+	       "Syntax: ./csi_v4l2_capture -t <time> -fr <framerate> " \
+	       "[-u if defined, means use userp, otherwise mmap]\n");
+#else
+	printf("CSI Video4Linux capture Device Test\n" \
+	       "Syntax: ./csi_v4l2_capture -t <time> -fr <framerate>\n");
+#endif
+}
+
 int process_cmdline(int argc, char **argv)
 {
         int i;
@@ -388,14 +416,18 @@ int process_cmdline(int argc, char **argv)
 		if (strcmp(argv[i], "-t") == 0) {
 			g_timeout = atoi(argv[++i]);
 		} else if (strcmp(argv[i], "-help") == 0) {
-                        printf("CSI Video4Linux capture Device Test\n" \
-                               "Syntax: ./csi_v4l2_capture -t <time> -fr <framerate>\n");
+			print_help();
                         return -1;
 		} else if (strcmp(argv[i], "-fr") == 0) {
 			g_camera_framerate = atoi(argv[++i]);
-               } else {
+#ifdef	GET_CONTI_PHY_MEM_VIA_PXP_LIB
+		} else if (strcmp(argv[i], "-u") == 0) {
+			g_mem_type = V4L2_MEMORY_USERPTR;
+#endif
+		} else {
+			print_help();
                         return -1;
-	       }
+		}
         }
 
         return 0;
@@ -421,6 +453,65 @@ static int signal_thread(void *arg)
 	return 0;
 }
 
+#ifdef	GET_CONTI_PHY_MEM_VIA_PXP_LIB
+void memfree(int buf_size, int buf_cnt)
+{
+	int i;
+        unsigned int page_size;
+
+	page_size = getpagesize();
+	buf_size = (buf_size + page_size - 1) & ~(page_size - 1);
+
+	for (i = 0; i < buf_cnt; i++) {
+		if (buffers[i].start) {
+			pxp_put_mem(&mem[i]);
+			buffers[i].start = NULL;
+		}
+	}
+	pxp_uninit();
+}
+
+int memalloc(int buf_size, int buf_cnt)
+{
+	int i, ret;
+        unsigned int page_size;
+
+	ret = pxp_init();
+	if (ret < 0) {
+		printf("pxp init err\n");
+		return -1;
+	}
+
+	for (i = 0; i < buf_cnt; i++) {
+		page_size = getpagesize();
+		buf_size = (buf_size + page_size - 1) & ~(page_size - 1);
+		buffers[i].length = mem[i].size = buf_size;
+		ret = pxp_get_mem(&mem[i]);
+		if (ret < 0) {
+			printf("Get PHY memory fail\n");
+			ret = -1;
+			goto err;
+		}
+		buffers[i].offset = mem[i].phys_addr;
+		buffers[i].start = (unsigned char *)mem[i].virt_uaddr;
+		if (!buffers[i].start) {
+			printf("mmap fail\n");
+			ret = -1;
+			goto err;
+		}
+		printf("USRP: alloc bufs offset 0x%x size %d\n",
+				buffers[i].offset, buf_size);
+	}
+
+	return ret;
+err:
+	memfree(buf_size, buf_cnt);
+	return ret;
+}
+#else
+void memfree(int buf_size, int buf_cnt) {}
+int memalloc(int buf_size, int buf_cnt) { return 0; }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -438,7 +529,15 @@ int main(int argc, char **argv)
         }
 
         fd_v4l = v4l_capture_setup();
+	if (g_mem_type == V4L2_MEMORY_USERPTR)
+		if (memalloc(g_frame_size, TEST_BUFFER_NUM) < 0) {
+			close(fd_v4l);
+		}
+
 	v4l_capture_test(fd_v4l);
+
+	if (g_mem_type == V4L2_MEMORY_USERPTR)
+		memfree(g_frame_size, TEST_BUFFER_NUM);
 
 	return 0;
 }
