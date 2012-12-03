@@ -1159,6 +1159,27 @@ transcode_test(void *arg)
         vpu_mem_desc enc_scratch_mem_desc = {0};
         struct encode *enc;
 
+#ifndef COMMON_INIT
+	vpu_versioninfo ver;
+	ret = vpu_Init(NULL);
+	if (ret) {
+		err_msg("VPU Init Failure.\n");
+		return -1;
+	}
+
+	ret = vpu_GetVersionInfo(&ver);
+	if (ret) {
+		err_msg("Cannot get version info, err:%d\n", ret);
+		vpu_UnInit();
+		return -1;
+	}
+
+	info_msg("VPU firmware version: %d.%d.%d_r%d\n", ver.fw_major, ver.fw_minor,
+						ver.fw_release, ver.fw_code);
+	info_msg("VPU library version: %d.%d.%d\n", ver.lib_major, ver.lib_minor,
+						ver.lib_release);
+#endif
+
 	dec = (struct decode *)calloc(1, sizeof(struct decode));
 	if (dec == NULL) {
 		err_msg("Failed to allocate decode structure\n");
@@ -1339,5 +1360,8 @@ err:
 	IOFreeVirtMem(&mem_desc);
 	IOFreePhyMem(&mem_desc);
 	free(dec);
+#ifndef COMMON_INIT
+	vpu_UnInit();
+#endif
 	return ret;
 }
