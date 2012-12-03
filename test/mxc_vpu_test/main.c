@@ -25,6 +25,9 @@
 #include <getopt.h>
 #include "vpu_test.h"
 
+#define COMMON_INIT
+#define ONE_FRAME_INTERV 100000 // 100 ms
+
 char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "-E \"<encode options>\" "\
 	       "-L \"<loopback options>\" -C <config file> "\
@@ -465,6 +468,10 @@ main(int argc, char *argv[])
 	pthread_t sigtid;
 	vpu_versioninfo ver;
 
+#ifndef COMMON_INIT
+	srand((unsigned)time(0));     // init seed of rand()
+#endif
+
 	dbg_env=getenv("VPU_TEST_DBG");
 	if (dbg_env)
 		vpu_test_dbg_level = atoi(dbg_env);
@@ -490,6 +497,7 @@ main(int argc, char *argv[])
 
 	framebuf_init();
 
+#ifdef COMMON_INIT
 	err = vpu_Init(NULL);
 	if (err) {
 		err_msg("VPU Init Failure.\n");
@@ -507,9 +515,25 @@ main(int argc, char *argv[])
 						ver.fw_release, ver.fw_code);
 	info_msg("VPU library version: %d.%d.%d\n", ver.lib_major, ver.lib_minor,
 						ver.lib_release);
+#else
+	// just to enable cpu_is_xx() to be used in command line parsing
+	err = vpu_Init(NULL);
+	if (err) {
+		err_msg("VPU Init Failure.\n");
+		return -1;
+	}
+
+	vpu_UnInit();
+
+#endif
 
 	if (instance > 1) {
 		for (i = 0; i < instance; i++) {
+#ifndef COMMON_INIT
+			/* sleep roughly a frame interval to test multi-thread race
+			   especially vpu_Init/vpu_UnInit */
+			usleep((int)(rand()%ONE_FRAME_INTERV));
+#endif
 			if (using_config_file == 0) {
 				get_arg(input_arg[i].line, &nargc, pargv);
 				err = parse_args(nargc, pargv, i);
@@ -580,7 +604,9 @@ main(int argc, char *argv[])
 		}
 	}
 
+#ifdef COMMON_INIT
 	vpu_UnInit();
+#endif
 	return ret;
 
 usage:
