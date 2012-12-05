@@ -94,6 +94,15 @@ int alpha_buf_size = 0;
 int ctrl_c_rev = 0;
 int g_fd_fb_fg = 0;
 
+static int print_pixelformat(char *prefix, int val)
+{
+	printf("%s: %c%c%c%c\n", prefix ? prefix : "pixelformat",
+					val & 0xff,
+					(val >> 8) & 0xff,
+					(val >> 16) & 0xff,
+					(val >> 24) & 0xff);
+}
+
 void ctrl_c_handler(int signum, siginfo_t *info, void *myact)
 {
 	ctrl_c_rev = 1;
@@ -404,26 +413,19 @@ mxc_v4l_overlay_setup(struct v4l2_format *fmt)
 	struct v4l2_frmsizeenum fsize;
 	struct v4l2_fmtdesc ffmt;
 
-	fsize.index = g_capture_mode;
-	if (ioctl(fd_v4l, VIDIOC_ENUM_FRAMESIZES, &fsize) < 0)
-	{
-	        printf("VIDIOC_ENUM_FRAMESIZES failed\n");
-	        return TFAIL;
-	}
-
-	printf("sensor frame size is %dx%d\n", fsize.discrete.width,
+	printf("sensor supported frame size:\n");
+	fsize.index = 0;
+	while (ioctl(fd_v4l, VIDIOC_ENUM_FRAMESIZES, &fsize) >= 0) {
+		printf(" %dx%d\n", fsize.discrete.width,
 					       fsize.discrete.height);
-
-	ffmt.index = g_capture_mode;
-	if (ioctl(fd_v4l, VIDIOC_ENUM_FMT, &ffmt) < 0)
-	{
-	        printf("VIDIOC_ENUM_FMT failed\n");
-	        return TFAIL;
+		fsize.index++;
 	}
-	if (ffmt.pixelformat == V4L2_PIX_FMT_YUYV)
-		printf("sensor frame format is YUYV\n");
-	else if (ffmt.pixelformat == V4L2_PIX_FMT_UYVY)
-		printf("sensor frame format is UYVY\n");
+
+	ffmt.index = 0;
+	while (ioctl(fd_v4l, VIDIOC_ENUM_FMT, &ffmt) >= 0) {
+		print_pixelformat("sensor frame format", ffmt.pixelformat);
+		ffmt.index++;
+	}
 
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	parm.parm.capture.timeperframe.numerator = 1;
