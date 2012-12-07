@@ -406,6 +406,7 @@ int process_cmdline(int argc, char **argv)
 			     (g_cap_fmt != V4L2_PIX_FMT_YUV422P) &&
 			     (g_cap_fmt != V4L2_PIX_FMT_UYVY) &&
 			     (g_cap_fmt != V4L2_PIX_FMT_YUYV) &&
+			     (g_cap_fmt != V4L2_PIX_FMT_YVU420) &&
                              (g_cap_fmt != V4L2_PIX_FMT_YUV420) )
                         {
                                 return -1;
