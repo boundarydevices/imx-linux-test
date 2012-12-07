@@ -463,6 +463,7 @@ int process_cmdline(int argc, char **argv)
 			     (g_in_fmt != V4L2_PIX_FMT_YUV422P) &&
 			     (g_in_fmt != IPU_PIX_FMT_YUV444P) &&
                              (g_in_fmt != V4L2_PIX_FMT_YUV420) &&
+                             (g_in_fmt != V4L2_PIX_FMT_YVU420) &&
                              (g_in_fmt != IPU_PIX_FMT_TILED_NV12) &&
                              (g_in_fmt != IPU_PIX_FMT_TILED_NV12F) &&
                              (g_in_fmt != V4L2_PIX_FMT_NV12) )
