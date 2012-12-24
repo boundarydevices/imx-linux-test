@@ -1,0 +1,51 @@
+#! /bin/bash
+
+if [ $# != 0 ]
+then
+	printf "	Command Syntax:\n"
+	printf "	    mk_secure_uboot\n"
+	printf "	Please try again\n"
+	exit
+fi
+
+
+if [ ! -f u-boot.imx ]
+then
+	printf "File \"u-boot.imx\" does not exist. Copy it from u-boot directory and try again\n"
+	exit 1
+fi
+printf "Make Sure Your \"u-boot.imx\" is up to date...\n"
+
+
+let ddr_addr=$(hexdump -n 4 -s 32 -e '/4 "0x%08x\t" "\n"' u-boot.imx)
+
+# Calculate the size
+let uboot_size=$(ls -lct u-boot.imx | awk '{print $5}')
+let pad_len=$(((uboot_size + 0xfff) & 0xfffff000)) # align to 0x1000
+let sig_len=$((pad_len + 0x2000))
+let ivt_offset=0x0
+let auth_len=$((pad_len - ivt_offset))
+let ivt_start=$((ddr_addr + 0x400))  # 0x400 is the boot medium blank space
+
+# change value to hex string
+pad_len=`printf "0x%X" ${pad_len}`
+sig_len=`printf "0x%X" ${sig_len}`
+auth_len=`printf "0x%X" ${auth_len}`
+ivt_offset=`printf "0x%X" ${ivt_offset}`
+ivt_start=`printf "0x%X" ${ivt_start}`
+
+# Create habimagegen
+sed -e s/%pad_len%/${pad_len}/g -e s/%sig_len%/${sig_len}/g ../templates/habimagegen_template > habimagegen
+chmod +x habimagegen
+
+# Create u-boot.csf
+sed -e s/%ram_start%/${ivt_start}/g -e s/%image_offset%/${ivt_offset}/g -e s/%auth_len%/${auth_len}/g ../templates/ubootcsf_template > u-boot.csf
+
+# Generate secure boot
+./habimagegen
+
+# Remove temperory files
+rm -f habimagegen u-boot.csf u-boot_csf.bin u-boot-pad.imx u-boot-signed.imx
+
+# OK
+printf "U-Boot image with Signature \"u-boot-signed-pad.imx\" is ready to use\n"
