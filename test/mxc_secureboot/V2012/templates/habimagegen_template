@@ -1,0 +1,15 @@
+#! /bin/bash
+
+echo "extend u-boot to %pad_len%..."
+objcopy -I binary -O binary --pad-to %pad_len% --gap-fill=0x5A u-boot.imx u-boot-pad.imx
+
+echo "generate csf data..."
+../linux/cst --o u-boot_csf.bin < u-boot.csf
+
+echo "merge image and csf data..."
+cat u-boot-pad.imx u-boot_csf.bin > u-boot-signed.imx
+
+echo "extend final image to %sig_len%..."
+objcopy -I binary -O binary --pad-to %sig_len% --gap-fill=0x5A u-boot-signed.imx u-boot-signed-pad.imx
+
+echo "u-boot-signed-pad.imx is ready"
