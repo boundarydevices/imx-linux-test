@@ -1,0 +1,9 @@
+#! /bin/bash
+
+# Copy this script to "BLN_CST_MAIN_01.00.00/crts" and run to generate fuse file SRK_1_2_3_4_fuse.bin
+echo "Generate SRK Fuse file"
+../linux/srktool -h 4 -t SRK_1_2_3_4_table.bin -e SRK_1_2_3_4_fuse.bin -d sha256 -c ./SRK1_sha256_2048_65537_v3_ca_crt.pem,./SRK2_sha256_2048_65537_v3_ca_crt.pem,./SRK3_sha256_2048_65537_v3_ca_crt.pem,./SRK4_sha256_2048_65537_v3_ca_crt.pem -f 1
+
+# Dump values to be flashed into HW_OCOTP_SRK
+echo "Value to be written to HW_OCOTP_SRK0~7"
+hexdump -e '/4 "0x"' -e '/4  "%X""\n"' SRK_1_2_3_4_fuse.bin
