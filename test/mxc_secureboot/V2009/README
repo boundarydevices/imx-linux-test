@@ -1,0 +1,90 @@
+These files are for convinience for secure boot testers
+
+File Description
+------------------------------------
+"gen_fuse" :
+	This script should be copied to "BLN_CST_MAIN_01.00.00/crts" and
+        run to generate SRK footprint file "SRK_1_2_3_4_fuse.bin"
+	The footprint value is also dumped out, they should be written to
+	SRK fuse later
+
+"u-boot/mk_secure_uboot"
+"uImage/mk_secure_uimage"
+"templates/"
+	Automatic secure uboot and uImage generation scripts. These files
+	are used for dynamic authentication. It is more convinient and
+	adaptive comparing to the original static way.
+
+	Copy "u-boot/mk_secure_uboot" to "BLN_CST_MAIN_01.00.00/u-boot"
+	Copy "uImage/mk_secure_uimage" to "BLN_CST_MAIN_01.00.00/uImage"
+	Copy "templates/" to "BLN_CST_MAIN_01.00.00"
+
+Secure Boot Genreation
+------------------------------------
+For generating secure uboot
+    . copy "u-boot.bin" to "BLN_CST_MAIN_01.00.00/u-boot"
+    . "./mk_secure_uboot 0x87800000"
+	- where 0x87800000 is the DDR location where u-boot is
+	  copied to by ROM code, different from platform to platform
+    . u-boot-signed-pad.bin will be generated. It is the u-boot image
+      with signature
+
+For generating secure uImage
+    . copy "uImage" to "BLN_CST_MAIN_01.00.00/uImage"
+    . "./mk_secure_uimage 0x80800000"
+	- where 0x80800000 is the DDR location where uImage is
+	  copied to by UBoot, different from platform to platform
+    . uimage-signed-pad.bin will be generated. It is the uImage
+      with signature
+
+Image Layout
+------------------------------------
+U-Boot
+    +-------------------+      DDR_START
+    |                   |
+    |    U-Boot Image   |
+    |                   |
+    +-------------------+      DDR_START + UBOOT_SIZE
+    |    PADDING        |
+    +-------------------+      align to 0x1000
+    |    CSF Data       | \
+    +-------------------+  +-- CSF + Pad,  Size : 0x2000
+    |    PADDING        | /
+    +-------------------+
+
+uImage
+
+    +-------------------+      DDR_START
+    |                   |
+    |     uImage        |
+    |                   |
+    +-------------------+      DDR_START + UIMAGE_SIZE
+    |     PADDING       |
+    +-------------------+      align to 0x1000
+    |     IVT           | ---- Size : 0x20
+    +-------------------+
+    |     CSF Data      | \
+    +-------------------+  +-- CSF + Pad,  Size : 0x2000
+    |     PADDING       | /
+    +-------------------+
+
+DDR Location Parameters
+------------------------------------
+The DDR location parameter provided to "mk_secure_uboot" script is the
+"TEXT_BASE" defined in board/freescale/<plat_name>/config.mk
+
+	MX6Q/DL ARM2 Socket Board		MX6SL ARM2 Socket Board
+	-------------------------		-------------------------
+	0x27800000				0x87800000
+
+The DDR location parameter provided to "mk_secure_uimage" script is the
+"CONFIG_LOADADDR" defined in include/configs/<plat_name>.h (default). And
+can be changed in u-boot command line by "setenv loadaddr=..." with valid
+physical address. The following are the default values
+
+	MX6Q/DL ARM2 Socket Board		MX6SL ARM2 Socket Board
+	-------------------------		-------------------------
+	0x10800000				0x80800000
+
+Please refer to "MX6 Linux High Assurance Boot (HAB) User Guide" for
+detailed test steps.
