@@ -2,7 +2,7 @@
 # Makefile for MediaLB driver test app.
 #
 # list of platforms which did not want this test case
-EXCLUDE_LIST:= IMX6Q
+INCLUDE_LIST:= IMX6Q
 
 INC += -I$(LINUXPATH)/include
 CFLAGS += -lpthread -lcec -lrt
