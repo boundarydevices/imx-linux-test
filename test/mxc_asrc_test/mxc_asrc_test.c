@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2008-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -445,6 +445,7 @@ int main(int ac, char *av[])
 	inclk = INCLK_NONE;
 	outclk = OUTCLK_ASRCK1_CLK;
 	convert_flag = 0;
+	pair_index = ASRC_UNVALID_PAIR;
 	printf("Hi... \n");
 
 	if (ac < 5) {
