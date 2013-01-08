@@ -8,6 +8,7 @@ LOCAL_SRC_FILES := \
        enc.c \
        fb.c \
        loopback.c \
+       transcode.c \
        utils.c \
        main.c
 
