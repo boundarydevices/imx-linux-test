@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -213,7 +213,7 @@ int
 parse_config_file(char *file_name)
 {
 	FILE *fp;
-	char line[128];
+	char line[MAX_PATH];
 	char *ptr;
 	int end;
 
