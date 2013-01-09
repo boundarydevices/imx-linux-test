@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2009-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -192,7 +192,7 @@ static int find_video_device(void)
 		return fd_v4l;
 }
 
-static int print_pixelformat(char *prefix, int val)
+static void print_pixelformat(char *prefix, int val)
 {
 	printf("%s: %c%c%c%c\n", prefix ? prefix : "pixelformat",
 					val & 0xff,
@@ -284,7 +284,6 @@ int v4l_capture_test(int fd_v4l)
 {
 	struct fb_var_screeninfo var;
         struct v4l2_buffer buf;
-        struct v4l2_format fmt;
 	char fb_device[100] = "/dev/fb0";
 	int fd_fb = 0;
 	int frame_num = 0, i, fb0_size;
@@ -435,12 +434,12 @@ int process_cmdline(int argc, char **argv)
 
 static int signal_thread(void *arg)
 {
-	int sig, err;
+	int sig;
 
 	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
 
 	while (1) {
-		err = sigwait(&sigset, &sig);
+		sigwait(&sigset, &sig);
 		if (sig == SIGINT) {
 			printf("Ctrl-C received. Exiting.\n");
 		} else {
