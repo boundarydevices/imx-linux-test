@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -94,7 +94,7 @@ int alpha_buf_size = 0;
 int ctrl_c_rev = 0;
 int g_fd_fb_fg = 0;
 
-static int print_pixelformat(char *prefix, int val)
+static void print_pixelformat(char *prefix, int val)
 {
 	printf("%s: %c%c%c%c\n", prefix ? prefix : "pixelformat",
 					val & 0xff,
