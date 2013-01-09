@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -74,7 +74,7 @@ int g_extra_pixel = 0;
 int g_capture_mode = 0;
 char g_v4l_device[100] = "/dev/video0";
 
-static int print_pixelformat(char *prefix, int val)
+static void print_pixelformat(char *prefix, int val)
 {
 	printf("%s: %c%c%c%c\n", prefix ? prefix : "pixelformat",
 					val & 0xff,
