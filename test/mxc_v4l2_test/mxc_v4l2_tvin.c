@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2007-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -667,7 +667,11 @@ int process_cmdline(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+#ifdef BUILD_FOR_ANDROID
+	char fb_device[100] = "/dev/graphics/fb0";
+#else
 	char fb_device[100] = "/dev/fb0";
+#endif
 	int fd_fb = 0, i;
 	struct mxcfb_gbl_alpha alpha;
 	enum v4l2_buf_type type;
