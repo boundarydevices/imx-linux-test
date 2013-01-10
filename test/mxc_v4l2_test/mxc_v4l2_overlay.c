@@ -132,7 +132,11 @@ mxc_v4l_overlay_test(int timeout)
         int overlay = 1;
         int retval = 0;
         struct v4l2_control ctl;
+#ifdef BUILD_FOR_ANDROID
+	char fb_device_0[100] = "/dev/graphics/fb0";
+#else
 	char fb_device_0[100] = "/dev/fb0";
+#endif
 	int fd_graphic_fb = 0;
 	struct fb_var_screeninfo fb0_var;
 	struct mxcfb_loc_alpha l_alpha;
@@ -580,7 +584,11 @@ main(int argc, char **argv)
 {
         struct v4l2_format fmt;
         struct v4l2_framebuffer fb_v4l2;
+#ifdef BUILD_FOR_ANDROID
+        char fb_device_0[100] = "/dev/graphics/fb0";
+#else
         char fb_device_0[100] = "/dev/fb0";
+#endif
         char *fb_device_fg;
         int fd_fb_0 = 0;
         struct fb_fix_screeninfo fb0_fix, fb_fg_fix;
@@ -661,7 +669,11 @@ main(int argc, char **argv)
 
         memset(&fb_v4l2, 0, sizeof(fb_v4l2));
 
+#ifdef BUILD_FOR_ANDROID
+	fb_device_fg = "/dev/graphics/fb1";
+#else
 	fb_device_fg = "/dev/fb1";
+#endif
 	if ((g_fd_fb_fg = open(fb_device_fg, O_RDWR)) < 0) {
 		printf("Unable to open frame buffer 1\n");
 		close(fd_fb_0);
@@ -678,7 +690,11 @@ main(int argc, char **argv)
 	if (((strcmp(fb_fg_fix.id, "DISP3 FG") != 0) && g_display_lcd < 3)
 		|| ((strcmp(fb_fg_fix.id, "DISP4 FG") != 0) && g_display_lcd > 2)) {
 		close(g_fd_fb_fg);
+#ifdef BUILD_FOR_ANDROID
+		fb_device_fg = "/dev/graphics/fb2";
+#else
 		fb_device_fg = "/dev/fb2";
+#endif
 		if ((g_fd_fb_fg = open(fb_device_fg, O_RDWR)) < 0) {
 			printf("Unable to open frame buffer 2\n");
 			close(fd_fb_0);
