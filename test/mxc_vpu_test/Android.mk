@@ -1,3 +1,4 @@
+ifeq ($(BOARD_HAVE_VPU),true)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -23,3 +24,4 @@ LOCAL_SHARED_LIBRARIES := libutils libc libvpu libipu
 LOCAL_MODULE := mxc-vpu-test
 LOCAL_MODULE_TAGS := tests
 include $(BUILD_EXECUTABLE)
+endif
