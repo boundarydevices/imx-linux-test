@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -94,7 +94,11 @@ void fb_setup(void)
         struct mxcfb_gbl_alpha alpha;
 	int fd;
 
+#ifdef BUILD_FOR_ANDROID
 	fd = open("/dev/fb0",O_RDWR);
+#else
+	fd = open("/dev/graphics/fb0",O_RDWR);
+#endif
 
         alpha.alpha = 0;
         alpha.enable = 1;
