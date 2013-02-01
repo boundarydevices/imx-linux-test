@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -24,6 +24,8 @@
 #include "mxc_ipu_hl_lib.h"
 #include "vpu_lib.h"
 #include "vpu_io.h"
+
+#define COMMON_INIT
 
 extern int vpu_test_dbg_level;
 
@@ -226,6 +228,8 @@ struct decode {
 	DecReportInfo userData;
 
 	struct cmd_line *cmdl;
+
+	int decoded_field[32];
 };
 
 struct encode {
