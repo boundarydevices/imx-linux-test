@@ -25,7 +25,6 @@
 #include <getopt.h>
 #include "vpu_test.h"
 
-#define COMMON_INIT
 #define ONE_FRAME_INTERV 100000 // 100 ms
 
 char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
