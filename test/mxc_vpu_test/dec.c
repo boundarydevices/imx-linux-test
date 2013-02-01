@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -1133,6 +1133,8 @@ decoder_start(struct decode *dec)
 		}
 
 		if (outinfo.indexFrameDecoded >= 0) {
+			field = V4L2_FIELD_NONE;
+
 			if (dec->cmdl->format == STD_VC1) {
 				if (outinfo.pictureStructure == 2)
 					info_msg("dec_idx %d : FRAME_INTERLACE\n", decIndex);
@@ -1188,6 +1190,7 @@ decoder_start(struct decode *dec)
 				if (outinfo.repeatFirstField)
 					info_msg("frame_idx %d : Repeat First Field\n", decIndex);
 			}
+			dec->decoded_field[outinfo.indexFrameDecoded]= field;
 		}
 
 		if(outinfo.indexFrameDecoded >= 0)
@@ -1274,9 +1277,9 @@ decoder_start(struct decode *dec)
 
 			if (!cpu_is_mx27())
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
-					err = v4l_put_data(dec, actual_display_index, field, dec->cmdl->fps);
+					err = v4l_put_data(dec, actual_display_index, dec->decoded_field[actual_display_index], dec->cmdl->fps);
 				else
-					err = ipu_put_data(disp, actual_display_index, field, dec->cmdl->fps);
+					err = ipu_put_data(disp, actual_display_index, dec->decoded_field[actual_display_index], dec->cmdl->fps);
 			else
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
 					err = v4l_put_data(dec, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
