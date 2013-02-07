@@ -327,7 +327,8 @@ mxc_v4l_output_test(FILE *in)
 
                 buf.timestamp.tv_sec = tv_start.tv_sec;
                 buf.timestamp.tv_usec = tv_start.tv_usec + (g_frame_period * i);
-
+		if (g_vdi_enable)
+			buf.field = V4L2_FIELD_INTERLACED_TB;
                 if ((retval = ioctl(fd_v4l, VIDIOC_QBUF, &buf)) < 0)
                 {
                         printf("VIDIOC_QBUF failed %d\n", retval);
