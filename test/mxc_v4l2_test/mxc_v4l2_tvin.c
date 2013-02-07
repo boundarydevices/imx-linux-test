@@ -584,6 +584,9 @@ next:
 
 		output_buf.timestamp.tv_sec = tv_start.tv_sec;
 		output_buf.timestamp.tv_usec = tv_start.tv_usec + (g_frame_period * i);
+		if (g_vdi_enable)
+			output_buf.field = g_tb ? V4L2_FIELD_INTERLACED_TB :
+						  V4L2_FIELD_INTERLACED_BT;
 		if (ioctl(fd_output_v4l, VIDIOC_QBUF, &output_buf) < 0)
 		{
 			printf("VIDIOC_QBUF failed\n");
