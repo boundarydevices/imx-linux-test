@@ -95,9 +95,9 @@ void fb_setup(void)
 	int fd;
 
 #ifdef BUILD_FOR_ANDROID
-	fd = open("/dev/fb0",O_RDWR);
-#else
 	fd = open("/dev/graphics/fb0",O_RDWR);
+#else
+	fd = open("/dev/fb0",O_RDWR);
 #endif
 
         alpha.alpha = 0;
