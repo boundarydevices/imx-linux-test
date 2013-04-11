@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2008-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -36,7 +36,7 @@ do {	\
 		printf(fmt, ##args);	\
 } while (0);
 
-static int afd, cfd;
+static int afd = 0, cfd = 0;
 static int verbose = 0;
 static int tcase = 0;
 static unsigned int fps = 512;
@@ -133,6 +133,10 @@ int main(int argc, char *argv[])
 		printf("Control tx/rx test PASS\n\n");
 	}
 
+	if (afd > 0)
+		close(afd);
+	if (cfd > 0)
+		close(cfd);
 	return 0;
 }
 
