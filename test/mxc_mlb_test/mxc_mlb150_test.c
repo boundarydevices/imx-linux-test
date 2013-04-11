@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (C) 2011-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -44,7 +44,9 @@ static int m_fd;
 static int verbose = 0;
 static unsigned int fps = 512;
 static int blocked = 0;
-static int t_case;
+static int t_case = 0;
+static unsigned int sync_quad = 0;
+static unsigned int isoc_pkg_len = 0;
 
 static unsigned int fps_set[] = {
 	256,
@@ -61,10 +63,12 @@ int do_txrx_test(int fd);
 
 void print_help(void)
 {
-	printf("Usage: mxc_mlb150_test [-v] [-h] [-b] [-f fps] [-t casetype]\n"
+	printf("Usage: mxc_mlb150_test [-v] [-h] [-b] [-f fps] [-t casetype] [-q sync quadlets] [-p isoc packet length]\n"
 	"\t-v verbose\n\t-h help\n\t-b block io test\n"
-	"\t-f FPS, 256/512/1024/2048/3072/4096/6144\n\t-t CASE"
-	"\t   CASE can be 'sync', 'ctrl', 'async', 'isoc'\n");
+	"\t-f FPS, 256/512/1024/2048/3072/4096/6144\n"
+	"\t-t CASE, CASE can be 'sync', 'ctrl', 'async', 'isoc'\n"
+	"\t-q SYNC QUADLETS, quadlets per frame in sync mode, can be 1, 2, or 3\n"
+	"\t-p Packet length, package length in isoc mode, can be 188 or 196\n");
 }
 
 int main(int argc, char *argv[])
@@ -74,7 +78,7 @@ int main(int argc, char *argv[])
 	char test_case_str[10] = { 0 };
 
 	while (1) {
-		ret = getopt(argc, argv, "vf:t:hb");
+		ret = getopt(argc, argv, "vf:t:hbq:p:");
 
 		if (1 == argc) {
 			print_help();
@@ -115,6 +119,20 @@ int main(int argc, char *argv[])
 					break;
 			}
 			fprintf(stderr, "invalid input frame rate\n");
+			return -1;
+		case 'q':
+			if (1 == sscanf(optarg, "%d", &sync_quad)) {
+				if (sync_quad > 0 && sync_quad <= 3)
+					break;
+			}
+			fprintf(stderr, "invalid sync quadlets\n");
+			return -1;
+		case 'p':
+			if (1 == sscanf(optarg, "%d", &isoc_pkg_len)) {
+				if (isoc_pkg_len == 188 || isoc_pkg_len == 196)
+					break;
+			}
+			fprintf(stderr, "invalid isoc package length\n");
 			return -1;
 		case 'h':
 			print_help();
@@ -163,6 +181,8 @@ int main(int argc, char *argv[])
 		ret = -1;
 	printf("%s tx/rx test %s\n", test_case_str, (ret ? "failed" : "PASS"));
 
+	close(m_fd);
+
 	return ret;
 }
 
@@ -207,7 +227,7 @@ void dump_hex(const char *buf, int len)
 
 int do_txrx_test(int fd)
 {
-	int ret, packets = 200;
+	int ret, packets = 5000;
 	fd_set rdfds, wtfds;
 	unsigned long evt;
 	char buf[2048];
@@ -249,6 +269,33 @@ int do_txrx_test(int fd)
 		return -1;
 	}
 
+	if (0 != sync_quad) {
+		ret = ioctl(fd, MLB_SET_SYNC_QUAD, &sync_quad);
+		if (ret) {
+			printf("Set quadlets of frame for sync mode failed: %d\n", ret);
+			return -1;
+		}
+	}
+
+	if (0 != isoc_pkg_len) {
+		switch (isoc_pkg_len) {
+		case 188:
+			ret = ioctl(fd, MLB_SET_ISOC_BLKSIZE_188);
+			break;
+		case 196:
+			ret = ioctl(fd, MLB_SET_ISOC_BLKSIZE_196);
+			break;
+		default:
+			ret = -1;
+			printf("Invalid block size for isoc mode\n");
+			break;
+		}
+		if (ret) {
+			printf("Set block size for isoc mode failed: %d\n", ret);
+			return -1;
+		}
+	}
+
 	/* channel startup */
 	ret = ioctl(fd, MLB_CHAN_STARTUP);
 	if (ret) {
@@ -258,7 +305,6 @@ int do_txrx_test(int fd)
 
 	if (blocked) {
 		while (1) {
-
 			ret = read(fd, buf, 2048);
 			if (ret <= 0) {
 				printf("Failed to read MLB packet: %s\n", strerror(errno));
@@ -272,7 +318,7 @@ int do_txrx_test(int fd)
 				printf("Write MLB packet failed %d: %s\n", ret, strerror(errno));
 			} else {
 				vprintf("<< Send this received MLB packet back\n");
-				packets --;
+				packets--;
 			}
 
 			if (!packets)
@@ -330,14 +376,14 @@ int do_txrx_test(int fd)
 				printf("Write MLB packet failed\n");
 			} else {
 				vprintf("<< Send this received MLB packet back\n");
-				packets --;
+				/* In sync mode, use infinite loop */
+				packets--;
 			}
 			gotlen = 0;
 		}
 
 		if (!packets)
 			break;
-
 	}
 
 shutdown:
