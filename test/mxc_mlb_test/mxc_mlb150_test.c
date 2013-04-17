@@ -318,7 +318,8 @@ int do_txrx_test(int fd)
 				printf("Write MLB packet failed %d: %s\n", ret, strerror(errno));
 			} else {
 				vprintf("<< Send this received MLB packet back\n");
-				packets--;
+				if (t_case > 0)
+					packets --;
 			}
 
 			if (!packets)
@@ -376,8 +377,8 @@ int do_txrx_test(int fd)
 				printf("Write MLB packet failed\n");
 			} else {
 				vprintf("<< Send this received MLB packet back\n");
-				/* In sync mode, use infinite loop */
-				packets--;
+				if (t_case > 0)
+					packets --;
 			}
 			gotlen = 0;
 		}
