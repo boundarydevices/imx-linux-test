@@ -8,7 +8,8 @@ INC += -I$(LINUXPATH)/include
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = \
-	$(OBJDIR)/mxc_mlb_test.out
+	$(OBJDIR)/mxc_mlb_test.out \
+	$(OBJDIR)/mxc_mlb150_test.out
 else
 OBJS =
 endif
