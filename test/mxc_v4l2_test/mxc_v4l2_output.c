@@ -268,24 +268,6 @@ mxc_v4l_output_test(FILE *in)
                                         printf("v4l2_output: end of input file, g_frame_size=%d, err = %d\n", g_frame_size, err);
 					if (i <= streamon_cnt)
 						printf("v4l2_output: no display because v4l need at least %d frames\n", streamon_cnt + 1);
-					else {
-						int deq_cnt, j;
-
-						if (i < g_num_buffers)
-							deq_cnt = i;
-						else
-							deq_cnt = g_num_buffers - 1;
-						for (j=0;j<(deq_cnt - 1);j++) {
-							buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-							buf.memory = g_mem_type;
-							if (ioctl(fd_v4l, VIDIOC_DQBUF, &buf) < 0)
-							{
-								printf("VIDIOC_DQBUF failed\n");
-								retval = -1;
-								break;
-							}
-						}
-					}
                                         break;
                                 }
                                 fseek(in, 0, SEEK_SET);
@@ -300,24 +282,6 @@ mxc_v4l_output_test(FILE *in)
 				if (g_loop_count-- == 0) {
 					if (i <= streamon_cnt)
 						printf("v4l2_output: no display because v4l need at least %d frames\n", streamon_cnt + 1);
-					else {
-						int deq_cnt, j;
-
-						if (i < g_num_buffers)
-							deq_cnt = i;
-						else
-							deq_cnt = g_num_buffers - 1;
-						for (j=0;j<(deq_cnt - 1);j++) {
-							buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-							buf.memory = g_mem_type;
-							if (ioctl(fd_v4l, VIDIOC_DQBUF, &buf) < 0)
-							{
-								printf("VIDIOC_DQBUF failed\n");
-								retval = -1;
-								break;
-							}
-						}
-					}
 					break;
 				}
 				count = 30;
