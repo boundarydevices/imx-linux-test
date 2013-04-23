@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -898,7 +898,6 @@ err:
 void v4l_display_close(struct vpu_display *disp)
 {
 	int type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	int threshold = 0;
 
 	if (disp) {
 		if (vpu_v4l_performance_test) {
@@ -908,21 +907,6 @@ void v4l_display_close(struct vpu_display *disp)
 			sem_destroy(&disp->avaiable_dequeue_frame);
 		}
 
-		/* take care of ENGR00161948 */
-		if (cpu_is_mx6x()) {
-			if (disp->buf.field == V4L2_FIELD_ANY || disp->buf.field == V4L2_FIELD_NONE)
-				threshold = 1;
-			else
-				threshold = 2;
-		}
-
-		while (disp->queued_count > threshold) {
-			disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-			disp->buf.memory = V4L2_MEMORY_MMAP;
-			if (ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf) < 0)
-				break;
-			disp->queued_count--;
-		}
 		ioctl(disp->fd, VIDIOC_STREAMOFF, &type);
 		v4l_free_bufs(disp->nframes, disp);
 		close(disp->fd);
