@@ -608,6 +608,7 @@ int main(int ac, char *av[])
 	fclose(fd_dst);
 	close(fd_asrc);
 
+	free(input_null);
 	free(input_buffer);
 	free(output_buffer);
 	printf("All tests passed with success\n");
