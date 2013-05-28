@@ -1049,6 +1049,11 @@ decoder_start(struct decode *dec)
 
 		ret = vpu_DecGetOutputInfo(handle, &outinfo);
 
+		/* In 8 instances test, we found some instance(s) may not get a chance to be scheduled
+		 * until timeout, so we yield schedule each frame explicitly.
+		 * This may be kernel dependant and may be removed on customer platform */
+		usleep(0);
+
 		if ((dec->cmdl->format == STD_MJPG) &&
 		    (outinfo.indexFrameDisplay == 0)) {
 			outinfo.indexFrameDisplay = rotid;
