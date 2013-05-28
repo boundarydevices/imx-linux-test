@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -359,6 +359,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	int enc_fbwidth, enc_fbheight, src_fbwidth, src_fbheight;
 
 	minfbcount = enc->minFrameBufferCount;
+	dprintf(4, "minfb %d\n", minfbcount);
 	srcfbcount = 1;
 
 	enc_fbwidth = (enc->enc_picwidth + 15) & ~15;
@@ -489,6 +490,48 @@ err1:
 }
 
 static int
+read_from_file(struct encode *enc)
+{
+	u32 y_addr, u_addr, v_addr;
+	struct frame_buf *pfb = enc->pfbpool[enc->src_fbid];
+	int divX, divY;
+	int src_fd = enc->cmdl->src_fd;
+	int format = enc->mjpg_fmt;
+	int chromaInterleave = enc->cmdl->chromaInterleave;
+	int img_size, y_size, c_size;
+	int ret = 0;
+
+	if (enc->src_picwidth != pfb->strideY) {
+		err_msg("Make sure src pic width is a multiple of 16\n");
+		return -1;
+	}
+
+	divX = (format == MODE420 || format == MODE422) ? 2 : 1;
+	divY = (format == MODE420 || format == MODE224) ? 2 : 1;
+
+	y_size = enc->src_picwidth * enc->src_picheight;
+	c_size = y_size / divX / divY;
+	img_size = y_size + c_size * 2;
+
+	y_addr = pfb->addrY + pfb->desc.virt_uaddr - pfb->desc.phy_addr;
+	u_addr = pfb->addrCb + pfb->desc.virt_uaddr - pfb->desc.phy_addr;
+	v_addr = pfb->addrCr + pfb->desc.virt_uaddr - pfb->desc.phy_addr;
+
+	if (img_size == pfb->desc.size) {
+		ret = freadn(src_fd, (void *)y_addr, img_size);
+	} else {
+		ret = freadn(src_fd, (void *)y_addr, y_size);
+		if (chromaInterleave == 0) {
+			ret = freadn(src_fd, (void *)u_addr, c_size);
+			ret = freadn(src_fd, (void *)v_addr, c_size);
+		} else {
+			ret = freadn(src_fd, (void *)u_addr, c_size * 2);
+		}
+	}
+	return ret;
+}
+
+static int
 encoder_start(struct encode *enc)
 {
 	EncHandle handle = enc->handle;
@@ -498,11 +541,7 @@ encoder_start(struct encode *enc)
 	RetCode ret = 0;
 	int src_fbid = enc->src_fbid, img_size, frame_id = 0;
 	FrameBuffer *fb = enc->fb;
-	struct frame_buf **pfbpool = enc->pfbpool;
-	struct frame_buf *pfb;
-	u32 yuv_addr;
 	struct v4l2_buffer v4l2_buf;
-	int src_fd = enc->cmdl->src_fd;
 	int src_scheme = enc->cmdl->src_scheme;
 	int count = enc->cmdl->count;
 	struct timeval tenc_begin,tenc_end, total_start, total_end;
@@ -598,10 +637,7 @@ encoder_start(struct encode *enc)
 			fb[src_fbid].strideY = enc->src_picwidth;
 			fb[src_fbid].strideC = enc->src_picwidth / 2;
 		} else {
-			pfb = pfbpool[src_fbid];
-			yuv_addr = pfb->addrY + pfb->desc.virt_uaddr -
-					pfb->desc.phy_addr;
-			ret = freadn(src_fd, (void *)yuv_addr, img_size);
+			ret = read_from_file(enc);
 			if (ret <= 0)
 				break;
 		}
@@ -829,7 +865,6 @@ encoder_configure(struct encode *enc)
 void
 encoder_close(struct encode *enc)
 {
-	EncOutputInfo outinfo = {0};
 	RetCode ret;
 
 	ret = vpu_EncClose(enc->handle);
@@ -1025,7 +1060,7 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.h263Param.h263_annexTEnable = 0;
 	} else if (enc->cmdl->format == STD_AVC) {
 		encop.EncStdParam.avcParam.avc_constrainedIntraPredFlag = 0;
-		encop.EncStdParam.avcParam.avc_disableDeblk = 1;
+		encop.EncStdParam.avcParam.avc_disableDeblk = 0;
 		encop.EncStdParam.avcParam.avc_deblkFilterOffsetAlpha = 6;
 		encop.EncStdParam.avcParam.avc_deblkFilterOffsetBeta = 0;
 		encop.EncStdParam.avcParam.avc_chromaQpOffset = 10;
