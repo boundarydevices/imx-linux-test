@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -84,7 +84,7 @@ freadn(int fd, void *vptr, size_t n)
 		ptr   += nread;
 	}
 
-	return (nread);
+	return (n - nleft);
 }
 
 /* Receive data from udp socket */
@@ -166,6 +166,8 @@ udp_recv(struct cmd_line *cmd, int sd, char *buf, int n)
 
 		/* get our custom header */
 		net_h = (struct nethdr *)cmd->nbuf;
+		dprintf(4, "RX: seqno %d, neth seqno %d, iframe %d, len %d\n",
+				cmd->seq_no, net_h->seqno, net_h->iframe, net_h->len);
 		if (net_h->len == 0) {
 			/* zero length data means no more data will be
 			 * received */
@@ -233,6 +235,7 @@ udp_send(struct cmd_line *cmd, int sd, char *buf, int n)
 		memcpy(cmd->nbuf, (char *)&net_h, hdrlen);
 		memcpy((cmd->nbuf + hdrlen), buf, n);
 	}
+	dprintf(4, "TX: neth seqno %d, iframe %d, len %d\n", net_h.seqno, net_h.iframe, net_h.len);
 
 	n += hdrlen;
 	addr.sin_family = AF_INET;
