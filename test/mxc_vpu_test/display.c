@@ -139,7 +139,7 @@ void v4l_disp_loop_thread(void *arg)
 	struct decode *dec = (struct decode *)arg;
 	struct vpu_display *disp = dec->disp;
 	pthread_attr_t attr;
-	struct timeval ts;
+	struct timespec ts;
 	int error_status = 0, ret;
 	struct v4l2_buffer buffer;
 
@@ -149,8 +149,13 @@ void v4l_disp_loop_thread(void *arg)
 	while (!error_status && !quitflag) {
 		/* Use timed wait here */
 		do {
-			gettimeofday(&ts, NULL);
-			ts.tv_usec +=100000; // 100ms
+			clock_gettime(CLOCK_REALTIME, &ts);
+			ts.tv_nsec +=100000000; // 100ms
+			if (ts.tv_nsec >= 1000000000)
+			{
+				ts.tv_sec += ts.tv_nsec / 1000000000;
+				ts.tv_nsec %= 1000000000;
+			}
 		} while ((sem_timedwait(&disp->avaiable_dequeue_frame,
 			 &ts) != 0) && !quitflag);
 
@@ -400,7 +405,7 @@ ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	pthread_cond_init(&ipu_cond, NULL);
 
 	/* start disp loop thread */
-	pthread_create(&(disp->ipu_disp_loop_thread), NULL, ipu_disp_loop_thread, (void *)dec);
+	pthread_create(&(disp->ipu_disp_loop_thread), NULL, (void *)ipu_disp_loop_thread, (void *)dec);
 
 	return disp;
 }
@@ -760,31 +765,41 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 
 	fmt.fmt.pix.field = V4L2_FIELD_ANY;
 
-    if (dec->cmdl->mapType == LINEAR_FRAME_MAP) {
-        if (dec->cmdl->chromaInterleave == 0) {
-            if (dec->mjpg_fmt == MODE420)
-                fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-            else if (dec->mjpg_fmt == MODE422)
-                fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV422P;
-            else {
-                err_msg(" Display cannot support this MJPG format\n");
-                goto err;
-            }
-        } else {
-            info_msg("Display: NV12\n");
-            fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
-        }
-    }
-    else if (dec->cmdl->mapType == TILED_FRAME_MB_RASTER_MAP) {
-        fmt.fmt.pix.pixelformat = IPU_PIX_FMT_TILED_NV12;
-    }
-    else if (dec->cmdl->mapType == TILED_FIELD_MB_RASTER_MAP) {
-        fmt.fmt.pix.pixelformat = IPU_PIX_FMT_TILED_NV12F;
-    }
-    else {
-        err_msg(" Display cannot support mapType = %d\n", dec->cmdl->mapType);
-        goto err;
-    }
+	if (dec->cmdl->mapType == LINEAR_FRAME_MAP) {
+		if (dec->cmdl->chromaInterleave == 0) {
+			if (dec->mjpg_fmt == MODE420)
+				fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+			else if (dec->mjpg_fmt == MODE422)
+				fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV422P;
+			else {
+				err_msg("Display cannot support this MJPG format\n");
+				goto err;
+			}
+		} else {
+			if (dec->mjpg_fmt == MODE420) {
+				info_msg("Display: NV12\n");
+				fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
+			}
+			else if (dec->mjpg_fmt == MODE422) {
+				info_msg("Display: NV16\n");
+				fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_NV16;
+			}
+			else {
+				err_msg("Display cannot support this MJPG format\n");
+				goto err;
+			}
+		}
+	}
+	else if (dec->cmdl->mapType == TILED_FRAME_MB_RASTER_MAP) {
+		fmt.fmt.pix.pixelformat = IPU_PIX_FMT_TILED_NV12;
+	}
+	else if (dec->cmdl->mapType == TILED_FIELD_MB_RASTER_MAP) {
+		fmt.fmt.pix.pixelformat = IPU_PIX_FMT_TILED_NV12F;
+	}
+	else {
+		err_msg("Display cannot support mapType = %d\n", dec->cmdl->mapType);
+		goto err;
+	}
 	err = ioctl(fd, VIDIOC_S_FMT, &fmt);
 	if (err < 0) {
 		err_msg("VIDIOC_S_FMT failed\n");
@@ -885,7 +900,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		pthread_mutex_init(&v4l_mutex, NULL);
 		/* start v4l disp loop thread */
 		pthread_create(&(disp->v4l_disp_loop_thread), NULL,
-				    v4l_disp_loop_thread, (void *)dec);
+				    (void *)v4l_disp_loop_thread, (void *)dec);
 	}
 
 	return disp;
@@ -917,6 +932,7 @@ void v4l_display_close(struct vpu_display *disp)
 int v4l_put_data(struct decode *dec, int index, int field, int fps)
 {
 	struct timeval tv;
+	struct timespec ts;
 	int err, type, threshold;
 	struct v4l2_format fmt = {0};
 	struct vpu_display *disp;
@@ -1035,10 +1051,15 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 	/* Block here to wait avaiable_decoding_frame */
 	if (vpu_v4l_performance_test) {
 		do {
-			gettimeofday(&tv, NULL);
-			tv.tv_usec +=100000; // 100ms
+			clock_gettime(CLOCK_REALTIME, &ts);
+			ts.tv_nsec +=100000000; // 100ms
+			if (ts.tv_nsec >= 1000000000)
+			{
+				ts.tv_sec += ts.tv_nsec / 1000000000;
+				ts.tv_nsec %= 1000000000;
+			}
 		} while ((sem_timedwait(&disp->avaiable_decoding_frame,
-			    &tv) != 0) && !quitflag);
+			    &ts) != 0) && !quitflag);
 	}
 
 	return 0;
