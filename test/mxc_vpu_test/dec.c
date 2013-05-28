@@ -214,9 +214,11 @@ int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 		return -1;
 	}
 
-	/* Decoder bitstream buffer is empty */
-	if (space <= 0)
+	/* Decoder bitstream buffer is full */
+	if (space <= 0) {
+		warn_msg("space %lu <= 0\n", space);
 		return 0;
+	}
 
 	if (defaultsize > 0) {
 		if (space < defaultsize)
@@ -227,8 +229,10 @@ int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 		size = ((space >> 9) << 9);
 	}
 
-	if (size == 0)
+	if (size == 0) {
+		warn_msg("size == 0, space %lu\n", space);
 		return 0;
+	}
 
 	/* Fill the bitstream buffer */
 	target_addr = bs_va_startaddr + (pa_write_ptr - bs_pa_startaddr);
@@ -241,6 +245,7 @@ int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 				if (nread == -EAGAIN)
 					return 0;
 
+				err_msg("nread %d < 0\n", nread);
 				return -1;
 			}
 
@@ -260,6 +265,7 @@ int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 					if (nread == -EAGAIN)
 						return 0;
 
+					err_msg("nread %d < 0\n", nread);
 					return -1;
 				}
 
@@ -276,6 +282,7 @@ int dec_fill_bsbuffer(DecHandle handle, struct cmd_line *cmd,
 				if (nread == -EAGAIN)
 					return 0;
 
+				err_msg("nread %d < 0\n", nread);
 				return -1;
 			}
 
@@ -451,7 +458,7 @@ int SaveTiledYuvImageHelper(struct decode *dec, int yuvFp,
                               int picWidth, int picHeight, int index)
 {
 	int frameSize, pix_addr, offset;
-	int y, x, nY, nCb, j, n;
+	int y, x, nY, nCb, j;
 	Uint8 *puc, *pYuv = 0, *dstAddrCb, *dstAddrCr;
 	Uint32 addrY, addrCb, addrCr;
 	Uint8 temp_buf[8];
@@ -505,7 +512,7 @@ int SaveTiledYuvImageHelper(struct decode *dec, int yuvFp,
 		}
 	}
 
-	n = fwriten(yuvFp, (u8 *)pYuv, frameSize);
+	fwriten(yuvFp, (u8 *)pYuv, frameSize);
 	free(pYuv);
 
 	return 0;
@@ -1059,7 +1066,8 @@ decoder_start(struct decode *dec)
 			outinfo.indexFrameDisplay = rotid;
 		}
 
-		dprintf(4, "frame_id = %d\n", (int)frame_id);
+		dprintf(3, "frame_id %d, decidx %d, disidx %d, rotid %d\n", (int)frame_id,
+				outinfo.indexFrameDecoded, outinfo.indexFrameDisplay, rotid);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("vpu_DecGetOutputInfo failed Err code is %d\n"
 				"\tframe_id = %d\n", ret, (int)frame_id);
@@ -1069,6 +1077,11 @@ decoder_start(struct decode *dec)
 		if (outinfo.decodingSuccess == 0) {
 			warn_msg("Incomplete finish of decoding process.\n"
 				"\tframe_id = %d\n", (int)frame_id);
+			if ((outinfo.indexFrameDecoded >= 0) && (outinfo.numOfErrMBs)) {
+				if (cpu_is_mx6x() && dec->cmdl->format == STD_MJPG)
+					info_msg("Error Mb info:0x%x, in Frame : %d\n",
+							outinfo.numOfErrMBs, decIndex);
+			}
 			if (quitflag)
 				break;
 			else
@@ -1198,16 +1211,13 @@ decoder_start(struct decode *dec)
 			dec->decoded_field[outinfo.indexFrameDecoded]= field;
 		}
 
-		if(outinfo.indexFrameDecoded >= 0)
-			decIndex++;
-
 		if (outinfo.indexFrameDisplay == -1)
 			decodefinish = 1;
 		else if ((outinfo.indexFrameDisplay > dec->regfbcount) &&
 			 (outinfo.prescanresult != 0) && !cpu_is_mx6x())
 			decodefinish = 1;
 
-		if (decodefinish)
+		if (decodefinish && (!(rot_en || dering_en || tiled2LinearEnable)))
 			break;
 
 		if (!cpu_is_mx6x() && (outinfo.prescanresult == 0) &&
@@ -1247,6 +1257,33 @@ decoder_start(struct decode *dec)
 		if (quitflag)
 			break;
 
+		if(outinfo.indexFrameDecoded >= 0) {
+			/* We MUST be careful of sequence param change (resolution change, etc)
+			 * Different frame buffer number or resolution may require vpu_DecClose
+			 * and vpu_DecOpen again to reallocate sufficient resources.
+			 * If you already allocate enough frame buffers of max resolution
+			 * in the beginning, you may not need vpu_DecClose, etc. But sequence
+			 * headers must be ahead of their pictures to signal param change.
+			 */
+			if ((outinfo.decPicWidth != dec->lastPicWidth)
+					||(outinfo.decPicHeight != dec->lastPicHeight)) {
+				warn_msg("resolution changed from %dx%d to %dx%d\n",
+						dec->lastPicWidth, dec->lastPicHeight,
+						outinfo.decPicWidth, outinfo.decPicHeight);
+				dec->lastPicWidth = outinfo.decPicWidth;
+				dec->lastPicHeight = outinfo.decPicHeight;
+			}
+
+			if (outinfo.numOfErrMBs) {
+				totalNumofErrMbs += outinfo.numOfErrMBs;
+				info_msg("Num of Error Mbs : %d, in Frame : %d \n",
+						outinfo.numOfErrMBs, decIndex);
+			}
+		}
+
+		if(outinfo.indexFrameDecoded >= 0)
+			decIndex++;
+
 		/* BIT don't have picture to be displayed */
 		if ((outinfo.indexFrameDisplay == -3) ||
 				(outinfo.indexFrameDisplay == -2)) {
@@ -1266,8 +1303,14 @@ decoder_start(struct decode *dec)
 			continue;
 		}
 
-		if (rot_en || dering_en || tiled2LinearEnable || (dec->cmdl->format == STD_MJPG))
+		if (rot_en || dering_en || tiled2LinearEnable || (dec->cmdl->format == STD_MJPG)) {
+			/* delay one more frame for PP */
+			if ((dec->cmdl->format != STD_MJPG) && (disp_clr_index < 0)) {
+				disp_clr_index = outinfo.indexFrameDisplay;
+				continue;
+			}
 			actual_display_index = rotid;
+		}
 		else
 			actual_display_index = outinfo.indexFrameDisplay;
 
@@ -1338,17 +1381,6 @@ decoder_start(struct decode *dec)
 			disp_clr_index = outinfo.indexFrameDisplay;
 		}
 
-		if (outinfo.numOfErrMBs) {
-			if (cpu_is_mx6x() && dec->cmdl->format == STD_MJPG)
-				info_msg("Error Mb info:0x%x, in Frame : %d\n",
-					    outinfo.numOfErrMBs, (int)frame_id);
-			else {
-				totalNumofErrMbs += outinfo.numOfErrMBs;
-				info_msg("Num of Error Mbs : %d, in Frame : %d \n",
-					    outinfo.numOfErrMBs, (int)frame_id);
-			}
-		}
-
 		frame_id++;
 		if ((count != 0) && (frame_id >= count))
 			break;
@@ -1365,9 +1397,12 @@ decoder_start(struct decode *dec)
 			}
 		}
 
-	delay_ms = getenv("VPU_DECODER_DELAY_MS");
-	if (delay_ms && strtol(delay_ms, &endptr, 10))
-		usleep(strtol(delay_ms,&endptr, 10) * 1000);
+		delay_ms = getenv("VPU_DECODER_DELAY_MS");
+		if (delay_ms && strtol(delay_ms, &endptr, 10))
+			usleep(strtol(delay_ms,&endptr, 10) * 1000);
+
+		if (decodefinish)
+			break;
 	}
 
 	if (totalNumofErrMbs) {
@@ -1501,6 +1536,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	int stride, divX, divY;
 	vpu_mem_desc *mvcol_md = NULL;
 	Rect rotCrop;
+	int delay = -1;
 
 	if (((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
 			&& (dec->cmdl->ipu_rot_en))
@@ -1528,6 +1564,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	}
 
 	totalfb = regfbcount + dec->extrafb;
+	dprintf(4, "regfb %d, extrafb %d\n", regfbcount, dec->extrafb);
 
 	fb = dec->fb = calloc(totalfb, sizeof(FrameBuffer));
 	if (fb == NULL) {
@@ -1683,6 +1720,14 @@ decoder_allocate_framebuffer(struct decode *dec)
 	bufinfo.maxDecFrmInfo.maxMbX = dec->stride / 16;
 	bufinfo.maxDecFrmInfo.maxMbY = dec->picheight / 16;
 	bufinfo.maxDecFrmInfo.maxMbNum = dec->stride * dec->picheight / 256;
+
+	/* For H.264, we can overwrite initial delay calculated from syntax.
+	 * delay can be 0,1,... (in unit of frames)
+	 * Set to -1 or do not call this command if you don't want to overwrite it.
+	 * Take care not to set initial delay lower than reorder depth of the clip,
+	 * otherwise, display will be out of order. */
+	vpu_DecGiveCommand(handle, DEC_SET_FRAME_DELAY, &delay);
+
 	ret = vpu_DecRegisterFrameBuffer(handle, fb, dec->regfbcount, stride, &bufinfo);
 	if (ret != RETCODE_SUCCESS) {
 		err_msg("Register frame buffer failed, ret=%d\n", ret);
@@ -1927,8 +1972,11 @@ decoder_parse(struct decode *dec)
 		}
 	}
 
+	dec->lastPicWidth = initinfo.picWidth;
+	dec->lastPicHeight = initinfo.picHeight;
+
 	if (cpu_is_mx6x())
-		info_msg("Decoder: width = %d, height = %d, frameRateRes = %d, frameRateDiv = %d, count = %u\n",
+		info_msg("Decoder: width = %d, height = %d, frameRateRes = %lu, frameRateDiv = %lu, count = %u\n",
 			initinfo.picWidth, initinfo.picHeight,
 			initinfo.frameRateRes, initinfo.frameRateDiv,
 			initinfo.minFrameBufferCount);
@@ -1968,6 +2016,7 @@ decoder_parse(struct decode *dec)
 		dec->regfbcount = dec->minfbcount + extended_fbcount + 2;
 	else
 		dec->regfbcount = dec->minfbcount + extended_fbcount;
+	dprintf(4, "minfb %d, extfb %d\n", dec->minfbcount, extended_fbcount);
 
 	dec->picwidth = ((initinfo.picWidth + 15) & ~15);
 
@@ -2070,7 +2119,7 @@ decoder_open(struct decode *dec)
 	oparam.bitstreamFormat = dec->cmdl->format;
 	oparam.bitstreamBuffer = dec->phy_bsbuf_addr;
 	oparam.bitstreamBufferSize = STREAM_BUF_SIZE;
-	oparam.pBitStream = dec->virt_bsbuf_addr;
+	oparam.pBitStream = (Uint8 *)dec->virt_bsbuf_addr;
 	oparam.reorderEnable = dec->reorderEnable;
 	oparam.mp4DeblkEnable = dec->cmdl->deblock_en;
 	oparam.chromaInterleave = dec->cmdl->chromaInterleave;
@@ -2116,7 +2165,6 @@ decoder_open(struct decode *dec)
 
 void decoder_close(struct decode *dec)
 {
-	DecOutputInfo outinfo = {0};
 	RetCode ret;
 
 	ret = vpu_DecClose(dec->handle);
@@ -2223,6 +2271,9 @@ decode_test(void *arg)
 		        (dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
 			dec->phy_bsbuf_addr, fillsize, &eos, &fill_end_bs);
 
+	if (fill_end_bs)
+		err_msg("Update 0 before seqinit, fill_end_bs=%d\n", fill_end_bs);
+
 	cmdl->complete = 0;
 	if (ret < 0) {
 		err_msg("dec_fill_bsbuffer failed\n");
@@ -2248,7 +2299,7 @@ decode_test(void *arg)
 	}
 
 	if (cmdl->format == STD_VP8) {
-		vp8_mbparam_mem_desc.size = 68 * (dec->stride * dec->picwidth / 256);
+		vp8_mbparam_mem_desc.size = 68 * (dec->picwidth * dec->picheight / 256);
 		ret = IOGetPhyMem(&vp8_mbparam_mem_desc);
 		if (ret) {
 			err_msg("Unable to obtain physical vp8 mbparam mem\n");
