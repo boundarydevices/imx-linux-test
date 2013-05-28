@@ -96,7 +96,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "  -n <ip address> Send output to this IP address \n "\
 	       "  -p <port number> UDP port number at server \n "\
 	       "	If no port number is secified, 5555 is used \n "\
-	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG \n "\
+	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 7 - MJPG \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
 	       "  -l <h264 type> 0 - normal H.264(AVC), 1 - MVC\n "\
 	       "  -c <count> Number of frames to encode \n "\
@@ -118,7 +118,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is 20 \n "\
 	       "\n"\
 	       "loopback options \n "\
-	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, 7 - MJPG \n "\
+	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 7 - MJPG \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
 	       "  -w <width> capture image width \n "\
 	       "	default is 176. \n "\
@@ -356,8 +356,9 @@ parse_args(int argc, char *argv[], int i)
 			input_arg[i].cmd.port = atoi(optarg);
 			break;
 		case 'r':
-			input_arg[i].cmd.rot_en = 1;
 			input_arg[i].cmd.rot_angle = atoi(optarg);
+			if (input_arg[i].cmd.rot_angle)
+				input_arg[i].cmd.rot_en = 1;
 			break;
 		case 'u':
 			input_arg[i].cmd.ipu_rot_en = atoi(optarg);
@@ -406,6 +407,8 @@ parse_args(int argc, char *argv[], int i)
 			break;
 		case 'm':
 			input_arg[i].cmd.mirror = atoi(optarg);
+			if (input_arg[i].cmd.mirror)
+				input_arg[i].cmd.rot_en = 1;
 			break;
 		case 't':
 			input_arg[i].cmd.chromaInterleave = atoi(optarg);
@@ -437,12 +440,12 @@ parse_args(int argc, char *argv[], int i)
 static int
 signal_thread(void *arg)
 {
-	int sig, err;
+	int sig;
 
 	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
 
 	while (1) {
-		err = sigwait(&sigset, &sig);
+		sigwait(&sigset, &sig);
 		if (sig == SIGINT) {
 			warn_msg("Ctrl-C received\n");
 		} else {
@@ -466,6 +469,7 @@ main(int argc, char *argv[])
 	char *pargv[32] = {0}, *dbg_env;
 	pthread_t sigtid;
 	vpu_versioninfo ver;
+	int ret_thr;
 
 #ifndef COMMON_INIT
 	srand((unsigned)time(0));     // init seed of rand()
@@ -597,7 +601,9 @@ main(int argc, char *argv[])
 	if (instance > 1) {
 		for (i = 0; i < instance; i++) {
 			if (input_arg[i].tid != 0) {
-				pthread_join(input_arg[i].tid, NULL);
+				pthread_join(input_arg[i].tid, (void *)&ret_thr);
+				if (ret_thr)
+					ret = -1;
 				close_files(&input_arg[i].cmd);
 			}
 		}

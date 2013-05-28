@@ -45,6 +45,10 @@ extern int vpu_test_dbg_level;
 	printf("[WARN]\t" fmt, ## arg);	\
 	} while (0)
 
+#ifdef u32
+#undef u32
+#endif
+typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
@@ -230,6 +234,8 @@ struct decode {
 	struct cmd_line *cmdl;
 
 	int decoded_field[32];
+	int lastPicWidth;
+	int lastPicHeight;
 };
 
 struct encode {
@@ -279,6 +285,7 @@ struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 int v4l_put_data(struct decode *dec, int index, int field, int fps);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol);
+int tiled_framebuf_base(FrameBuffer *fb, Uint32 frame_base, int strideY, int height, int mapType);
 struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol, int mapType);
 void framebuf_free(struct frame_buf *fb);
 
