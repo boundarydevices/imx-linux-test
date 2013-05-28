@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -584,7 +584,6 @@ transcode_start(struct decode *dec, struct encode *enc)
 	struct timeval tdec_begin,tdec_end, total_start, total_end;
 	RetCode ret = 0;
 	int sec, usec, loop_id;
-	u32 img_size;
 	double tdec_time = 0, frame_id = 0, total_time=0;
 	int decIndex = 0;
 	int rotid = 0, mirror;
@@ -678,11 +677,6 @@ transcode_start(struct decode *dec, struct encode *enc)
 			rot_stride = fwidth;
 		vpu_DecGiveCommand(handle, SET_ROTATOR_STRIDE, &rot_stride);
 	}
-
-	if (dec->cmdl->dst_scheme == PATH_V4L2) {
-		img_size = dec->stride * dec->picheight;
-	} else
-		img_size = dec->picwidth * dec->picheight * 3 / 2;
 
 	gettimeofday(&total_start, NULL);
 
