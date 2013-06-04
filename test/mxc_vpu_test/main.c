@@ -30,7 +30,7 @@
 char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "-E \"<encode options>\" "\
 	       "-L \"<loopback options>\" -C <config file> "\
-	       "-T \"<transcode options>\" -C <config file> "\
+	       "-T \"<transcode options>\" "\
 	       "-H display this help \n "
 	       "\n"\
 	       "decode options \n "\
@@ -90,6 +90,8 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "encode options \n "\
 	       "  -i <input file> Read input from file (yuv) \n "\
 	       "	If no input file specified, default is camera \n "\
+	       "  -x <input method> input mode V4L2 with video node \n "\
+	       "        0 - /dev/video0, 1 - /dev/video1, and so on \n "\
 	       "  -o <output file> Write output to file \n "\
 	       "	This option will be ignored if 'n' is specified \n "\
 	       "	If no output is specified, def files are created \n "\
@@ -118,6 +120,8 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is 20 \n "\
 	       "\n"\
 	       "loopback options \n "\
+	       "  -x <input method> input mode V4L2 with video node \n "\
+	       "        0 - /dev/video0, 1 - /dev/video1, and so on \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 7 - MJPG \n "\
 	       "	If no format specified, default is 0 (MPEG4) \n "\
 	       "  -w <width> capture image width \n "\
@@ -203,7 +207,7 @@ int encdec_test(void *arg);
 int transcode_test(void *arg);
 
 /* Encode or Decode or Loopback */
-static char *mainopts = "H:E:D:L:T:C:";
+static char *mainopts = "HE:D:L:T:C:";
 
 /* Options for encode and decode */
 static char *options = "i:o:x:n:p:r:f:c:w:h:g:b:d:e:m:u:t:s:l:j:k:a:v:y:q:";
@@ -329,18 +333,22 @@ parse_args(int argc, char *argv[], int i)
 			break;
 		case 'x':
 			val = atoi(optarg);
-			if (val == 1) {
-				input_arg[i].cmd.dst_scheme = PATH_IPU;
-				info_msg("Display through IPU LIB\n");
-			} else {
-				input_arg[i].cmd.dst_scheme = PATH_V4L2;
-				info_msg("Display through V4L2\n");
-				input_arg[i].cmd.video_node = val;
-			}
-			if (cpu_is_mx27() &&
-				(input_arg[i].cmd.dst_scheme == PATH_IPU)) {
-				input_arg[i].cmd.dst_scheme = PATH_V4L2;
-				warn_msg("ipu lib disp only support in ipuv3\n");
+			if ((input_arg[i].mode == ENCODE) || (input_arg[i].mode == LOOPBACK))
+				input_arg[i].cmd.video_node_capture = val;
+			else {
+				if (val == 1) {
+					input_arg[i].cmd.dst_scheme = PATH_IPU;
+					info_msg("Display through IPU LIB\n");
+				} else {
+					input_arg[i].cmd.dst_scheme = PATH_V4L2;
+					info_msg("Display through V4L2\n");
+					input_arg[i].cmd.video_node = val;
+				}
+				if (cpu_is_mx27() &&
+					(input_arg[i].cmd.dst_scheme == PATH_IPU)) {
+					input_arg[i].cmd.dst_scheme = PATH_V4L2;
+					warn_msg("ipu lib disp only support in ipuv3\n");
+				}
 			}
 			break;
 		case 'n':

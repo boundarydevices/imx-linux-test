@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -100,7 +100,7 @@ v4l_stop_capturing(void)
 int
 v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 {
-	char v4l_device[32] = "/dev/video0";
+	char v4l_device[80], node[8];
 	struct v4l2_format fmt = {0};
 	struct v4l2_streamparm parm = {0};
 	struct v4l2_requestbuffers req = {0};
@@ -114,6 +114,10 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 		warn_msg("capture device already opened\n");
 		return -1;
 	}
+
+	sprintf(node, "%d", enc->cmdl->video_node_capture);
+	strcpy(v4l_device, "/dev/video");
+	strcat(v4l_device, node);
 
 	if ((cap_fd = open(v4l_device, O_RDWR, 0)) < 0) {
 		err_msg("Unable to open %s\n", v4l_device);
