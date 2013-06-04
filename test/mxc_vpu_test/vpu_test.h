@@ -163,6 +163,7 @@ struct cmd_line {
 	int src_scheme;
 	int dst_scheme;
 	int video_node;
+	int video_node_capture;
 	int src_fd;
 	int dst_fd;
 	int width;
