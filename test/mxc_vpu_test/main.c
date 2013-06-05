@@ -118,6 +118,8 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "        default is interleave(1). \n "\
 	       "  -q <quantization parameter> \n "\
 	       "	default is 20 \n "\
+	       "  -a <frame rate> capture/encode framerate \n "\
+	       "	default is 30 \n "\
 	       "\n"\
 	       "loopback options \n "\
 	       "  -x <input method> input mode V4L2 with video node \n "\
@@ -130,6 +132,8 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default is 144 \n "\
 	       "  -t <chromaInterleave> CbCr interleaved \n "\
                "        default is interleave(1). \n "\
+	       "  -a <frame rate> capture/encode/display framerate \n "\
+	       "	default is 30 \n "\
 	       "\n"\
 	       "transcode options, encoder set to h264 720p now \n "\
 	       "  -i <input file> Read input from file \n "\

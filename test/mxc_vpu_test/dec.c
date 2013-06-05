@@ -2280,6 +2280,12 @@ decode_test(void *arg)
 		goto err1;
 	}
 
+#ifndef _FSL_VTS_
+	/* Not set fps when doing performance test default */
+        if ((dec->cmdl->fps == 0) && !vpu_v4l_performance_test)
+                dec->cmdl->fps = 30;
+#endif
+
 	/* parse the bitstream */
 	ret = decoder_parse(dec);
 	if (ret) {
@@ -2312,12 +2318,6 @@ decode_test(void *arg)
 	ret = decoder_allocate_framebuffer(dec);
 	if (ret)
 		goto err1;
-
-#ifndef _FSL_VTS_
-	/* Not set fps when doing performance test default */
-        if ((dec->cmdl->fps == 0) && !vpu_v4l_performance_test)
-                dec->cmdl->fps = 30;
-#endif
 
 	/* start decoding */
 	ret = decoder_start(dec);
