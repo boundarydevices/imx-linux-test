@@ -30,7 +30,6 @@ extern struct capture_testbuffer cap_buffers[];
 
 /* When app need to exit */
 extern int quitflag;
-static int frameRateInfo = 0;
 
 #define FN_ENC_QP_DATA "enc_qp.log"
 #define FN_ENC_SLICE_BND_DATA "enc_slice_bnd.log"
@@ -230,20 +229,20 @@ encoder_fill_headers(struct encode *enc)
 		enchdr_param.userProfileLevelEnable = 1;
 		mbPicNum = ((enc->enc_picwidth + 15) / 16) *((enc->enc_picheight + 15) / 16);
 		if (enc->enc_picwidth <= 176 && enc->enc_picheight <= 144 &&
-		    mbPicNum * frameRateInfo <= 1485)
+		    mbPicNum * enc->cmdl->fps <= 1485)
 			enchdr_param.userProfileLevelIndication = 8; /* L1 */
 		/* Please set userProfileLevelIndication to 8 if L0 is needed */
 		else if (enc->enc_picwidth <= 352 && enc->enc_picheight <= 288 &&
-			 mbPicNum * frameRateInfo <= 5940)
+			 mbPicNum * enc->cmdl->fps <= 5940)
 			enchdr_param.userProfileLevelIndication = 2; /* L2 */
 		else if (enc->enc_picwidth <= 352 && enc->enc_picheight <= 288 &&
-			 mbPicNum * frameRateInfo <= 11880)
+			 mbPicNum * enc->cmdl->fps <= 11880)
 			enchdr_param.userProfileLevelIndication = 3; /* L3 */
 		else if (enc->enc_picwidth <= 640 && enc->enc_picheight <= 480 &&
-			 mbPicNum * frameRateInfo <= 36000)
+			 mbPicNum * enc->cmdl->fps <= 36000)
 			enchdr_param.userProfileLevelIndication = 4; /* L4a */
 		else if (enc->enc_picwidth <= 720 && enc->enc_picheight <= 576 &&
-			 mbPicNum * frameRateInfo <= 40500)
+			 mbPicNum * enc->cmdl->fps <= 40500)
 			enchdr_param.userProfileLevelIndication = 5; /* L5 */
 		else
 			enchdr_param.userProfileLevelIndication = 6; /* L6 */
@@ -456,7 +455,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	}
 
 	if (enc->cmdl->src_scheme == PATH_V4L2) {
-		ret = v4l_capture_setup(enc, enc->src_picwidth, enc->src_picheight, 30);
+		ret = v4l_capture_setup(enc, enc->src_picwidth, enc->src_picheight, enc->cmdl->fps);
 		if (ret < 0) {
 			goto err1;
 		}
@@ -914,8 +913,13 @@ encoder_open(struct encode *enc)
 		encop.picHeight = enc->enc_picheight;
 	}
 
+	if (enc->cmdl->fps == 0)
+		enc->cmdl->fps = 30;
+
+	info_msg("Capture/Encode fps will be %d\n", enc->cmdl->fps);
+
 	/*Note: Frame rate cannot be less than 15fps per H.263 spec */
-	encop.frameRateInfo = frameRateInfo = 30;
+	encop.frameRateInfo = enc->cmdl->fps;
 	encop.bitRate = enc->cmdl->bitrate;
 	encop.gopSize = enc->cmdl->gop;
 	encop.slicemode.sliceMode = 0;	/* 0: 1 slice per picture; 1: Multiple slices per picture */
