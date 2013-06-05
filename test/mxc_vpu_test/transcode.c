@@ -1237,6 +1237,10 @@ transcode_test(void *arg)
 		goto err1;
 	}
 
+	/* Not set fps when doing performance test default */
+        if (dec->cmdl->fps == 0)
+                dec->cmdl->fps = 30;
+
 	/* parse the bitstream */
 	ret = decoder_parse(dec);
 	if (ret) {
@@ -1269,10 +1273,6 @@ transcode_test(void *arg)
 	ret = decoder_allocate_framebuffer(dec);
 	if (ret)
 		goto err1;
-
-	/* Not set fps when doing performance test default */
-        if (dec->cmdl->fps == 0)
-                dec->cmdl->fps = 30;
 
 	/* allocate memory for must remember stuff */
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
