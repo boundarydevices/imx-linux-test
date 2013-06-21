@@ -1,0 +1,57 @@
+FSL-UT-USB-031-Reboot-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Reboot Test With U-disk Connected
+
+| Automated |
+YES
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. Put Below Commands at init script (at the end of /etc/rc.d/rcS, etc)
+mount -t nfs -o nolock 10.192.244.61:/rootfs/wb /mnt/nfs
+cd /mnt/nfs/vte_mx63_d/
+source manual_test
+
+/root/test_reboot.sh
+
+NOTICE: 10.192.244.61:/rootfs/wb is the testing team VTE rootfs
+
+2. Put the below test_reboot.sh at /root/
+
+get_scsi.sh 4
+if [ $? -eq 0 ]
+then
+echo "aa" >> /root/reboot_count.txt
+echo "the time of reboot:"
+cat /root/reboot_count.txt | wc -l
+reboot
+else
+echo "the udisk can't be recognized"
+fi
+
+NOTICE: get_scsi.sh is the test application at VTE, it will judge
+if the u-disk is existed or not.
+
+3. Plug u-disk at USB port
+
+4. Power up the board
+
+| Expected Result |
+The continueous reboot test can run more than 1000 iterations.
+
+|====================================================================
+
+<<<
