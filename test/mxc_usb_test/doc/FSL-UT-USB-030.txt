@@ -1,0 +1,61 @@
+FSL-UT-USB-030-Connected-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB Connected Test During Booting Up
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+NOTICE: please check clkcount often using dump-clocks.sh
+
+1.1: With USB Disk connected at OTG Port
+/unit_tests/dump-clocks.sh | grep usb
+modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1
+modprobe -r g_mass_storage
+/unit_tests/dump-clocks.sh | grep usb
+
+1.2: With USB Disk connected at Host 1 Port
+/unit_tests/dump-clocks.sh | grep usb
+
+1.3: With USB Cable connected with PC, load gadget module
+/unit_tests/dump-clocks.sh | grep usb
+modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1
+/unit_tests/dump-clocks.sh | grep usb
+disconnet PC
+/unit_tests/dump-clocks.sh | grep usb
+
+1.4: With USB Cable connected with USB Charger, load gadget module
+modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1
+/unit_tests/dump-clocks.sh | grep usb
+disconnect usb charger
+connect to pc
+
+1.5: With Micro B-To-A cable, but without anything connected
+/unit_tests/dump-clocks.sh | grep usb
+plug in usb disk
+plug out Micro B-To-A cable
+modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1
+connect to pc
+disconnect with pc
+/unit_tests/dump-clocks.sh | grep usb
+
+| Expected Result |
+Without kernel dump, without clock mismatch
+
+|====================================================================
+
+<<<
