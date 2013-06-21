@@ -1,0 +1,62 @@
+FSL-UT-USB-032-Manually-Plug-In-Out-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Manually Plug in/out Test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+2.1: Host/Device switch test and read/write test
+modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1
+Plug in Micro B-To-A cable with u-disk connected
+/* Mount VTE ENV */
+mount -t nfs -o nolock 10.192.244.61:/rootfs/wb /mnt/nfs
+cd /mnt/nfs/vte_mx63_d
+source manual_test
+mkdir -p /mnt/sda1; mount /dev/sda1 /mnt/sda1
+bonnie\+\+ -d /mnt/sda1 -u 0:0 -s 64 -r 32
+dt of=/mnt/sda1/test_file bs=4k limit=128m passes=20
+Plug out usb disk
+plug in usb-disk
+plug out Micro B-To-A cable,
+plug in USB charger, plug out USB charger,
+plug in usb cable connected to PC.
+At Host PC do below four commands:
+mkdir -p /mnt/flash
+mount -t vfat /dev/sdx1 /mnt/flash
+sudo bonnie++ -d /mnt/flash -u 0:0 -s 10 -r 5
+sudo dt of=/mnt/flash/test_file bs=4k limit=63m passes=20
+
+Plug in Micro B-TO-A cable with u-disk connected
+Check clk refcount(/unit_tests/dump-clocks.sh | grep usb)
+
+2.2: Repeat Host/Device switch test
+s1: Booting With USB Disk connected at OTG Port
+s2: modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1
+s3: plug out Micro B-TO-A cable
+s4: plug in usb cable connecting with PC
+s5: plug out usb cable
+s6: plug in Micro B-TO-A cable with u-disk connected
+s7: repeat s3-s6 10 times
+s8: check clk refcount (/unit_tests/dump-clocks.sh | grep usb)
+
+| Expected Result |
+No Error, No Clock Mismatch
+
+|====================================================================
+
+<<<
