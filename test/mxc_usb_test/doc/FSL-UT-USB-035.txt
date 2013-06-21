@@ -1,0 +1,45 @@
+FSL-UT-USB-035-Loadable-Module-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Loadable Module Test
+
+| Automated |
+No
+
+| Kernel Config Option |
+Device Drivers  --->
+	[*] USB support  --->
+			<M>   ChipIdea Highspeed Dual Role Controller
+			<M>   USB Gadget Support  --->
+			<M>   Freescale MXS USB PHY support
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. modprobe ci13xxx_imx
+2. modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1
+3. plug in usb cable connecting with PC
+4. plug out usb cable
+5. plug in Micro B-TO-A cable with u-disk connected
+6. plug out Micro B-TO-A cable
+7. Check clk refcount(/unit_tests/dump-clocks.sh | grep usb)
+8. modprobe -r g_mass_storage
+9. modprobe -r ci13xxx_imx
+10. Do step 1-9 with u-disk connected during the boot.
+
+
+| Expected Result |
+No Error, No clock mismatch
+
+|====================================================================
+
+<<<
