@@ -1,0 +1,52 @@
+FSL-UT-USB-036-Loadable-Module-Regression-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Loadable Module Regression Test
+
+| Automated |
+Yes
+
+| Kernel Config Option |
+Device Drivers  --->
+	[*] USB support  --->
+			<M>   ChipIdea Highspeed Dual Role Controller
+			<M>   USB Gadget Support  --->
+			<M>   Freescale MXS USB PHY support
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. Run below test module load/unload script without any connection
+2. Run below test module load/unload script with u-disk connection
+
+----------------------------- test.sh----------------------------
+counter=1
+while [ 1 ]
+do
+modprobe ci13xxx_imx
+modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1 (or other gadget)
+sleep 1
+sleep $( expr $RANDOM % 6)
+rmmod g_mass_storage
+modprobe -r ci13xxx_imx
+sleep 2
+counter=$(( $counter + 1 ))
+echo "the counter is $counter"
+echo "unload module!!!!!!!!!!"
+done
+
+| Expected Result |
+No Error, No clock mismatch
+
+|====================================================================
+
+<<<
