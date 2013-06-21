@@ -1,0 +1,60 @@
+FSL-UT-USB-033-Wakeup-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Kinds of USB Wakeup Tests
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1:
+/* Enable Serial Wakeup */
+echo enabled > /sys/class/tty/ttymxc0/power/wakeup
+echo mem > /sys/power/state
+plug in USB device, the system should not be waken up
+wakeup system using console
+The u-disk should be enumerated successfully
+2:
+plug out u-disk
+plug in mouse/keyboard at OTG port with micro b-to-a cable
+
+echo enabled > /sys/bus/platform/devices/2184000.usb/power/wakeup
+echo enabled > /sys/bus/platform/devices/ci_hdrc.0/power/wakeup
+echo enabled > /sys/bus/usb/devices/usb2/power/wakeup
+echo enabled > /sys/bus/usb/devices/2-1/power/wakeup
+
+echo mem > /sys/power/state
+Testing usb wakeup function using plug in/out, micro b-to-a plug
+in/out, and remote wakeup.
+
+NOTICE: If micro b-to-a cable is plugged out, the usb1 will be
+removed, and the usb2 wakeup setting needs to be re-set before suspend.
+If usb device is plugged out, the 2-1 wakeup setting needs to
+be re-set before suspend.
+
+3:
+modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1 (or ther gadgets)
+echo mem > /sys/power/state
+wakeup system with vbus
+echo disabled > /sys/bus/platform/devices/2184000.usb/power/wakeup
+usb cable plug in and micro-b-to-a plug in can't wake up
+
+| Expected Result |
+Can wakeup with wakeup setting, can't wakeup without wakeup setting
+
+|====================================================================
+
+<<<
