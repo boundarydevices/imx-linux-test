@@ -52,7 +52,7 @@ typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-#define SZ_4K			4 * 1024
+#define SZ_4K			(4 * 1024)
 
 #define STREAM_BUF_SIZE		0x200000
 #define STREAM_FILL_SIZE	0x40000
@@ -61,6 +61,7 @@ typedef unsigned char u8;
 #define PS_SAVE_SIZE		0x080000
 #define VP8_MB_SAVE_SIZE	0x080000
 #define MPEG4_SCRATCH_SIZE	0x080000
+#define MJPG_FILL_SIZE		(8 * 1024)
 
 #define STREAM_ENC_PIC_RESET 	1
 
@@ -237,6 +238,13 @@ struct decode {
 	int decoded_field[32];
 	int lastPicWidth;
 	int lastPicHeight;
+
+	int mjpgLineBufferMode;
+	u32 mjpg_wr_ptr;
+	u32 mjpg_rd_ptr;
+	int mjpg_sc_state; /* start code FSM state */
+	int mjpg_eof;
+	u8 *mjpg_cached_bsbuf;
 };
 
 struct encode {

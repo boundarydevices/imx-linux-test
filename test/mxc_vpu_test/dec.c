@@ -54,6 +54,145 @@ static int isInterlacedMPEG4 = 0;
 #define MAX_FRAME_HEIGHT 576
 #endif
 
+/*
+ * Seek SOI
+ * Return SOI position (+2) if found, -1 if not found
+ */
+static int mjpg_seek_soi(struct decode *dec, u8 *buf, int size)
+{
+	u8 *ptr = buf;
+	u8 byte;
+	while (ptr < buf + size) {
+		byte = *ptr++;
+		switch (dec->mjpg_sc_state)
+		{
+			case 0:
+				if (byte == 0xFF)
+					dec->mjpg_sc_state = 1;
+				break;
+			case 1:
+				if (byte == 0xD8) {
+					dec->mjpg_sc_state = 2;
+					goto end;
+				}
+				else if (byte != 0xFF)
+					dec->mjpg_sc_state = 0;
+				break;
+			case 2:
+				if (byte == 0xFF)
+					dec->mjpg_sc_state = 1;
+				else
+					dec->mjpg_sc_state = 0;
+				break;
+			default:
+				break;
+		}
+	}
+
+end:
+	if (dec->mjpg_sc_state == 2) {
+		dprintf(4, "found %x%x\n", *(ptr - 2), *(ptr - 1));
+		return (int)(ptr - buf);
+	} else
+		return -1;
+
+}
+
+/*
+ * Read a chunk to bs buffer, stopped before next SOI
+ * Return chunk size + 2 if success, -1 if error, 0 if eof
+ * For jpeg file having thumbnail, it's not suitable to simply pick
+ * bitstream between 2 SOIs, as the picture has SOI-SOI-EOI-EOI.
+ * Please read the complete jpeg file one time.
+ */
+static int mjpg_read_chunk_till_soi(struct decode *dec)
+{
+	int nread;
+	int pos;
+	u8 *buf;
+
+	buf = dec->mjpg_cached_bsbuf;
+
+	if (dec->mjpg_rd_ptr > 2){
+		memmove((void *)buf, (void *)(buf + dec->mjpg_rd_ptr - 2),
+				dec->mjpg_wr_ptr - (dec->mjpg_rd_ptr - 2));
+		dec->mjpg_wr_ptr -= dec->mjpg_rd_ptr - 2;
+		dec->mjpg_rd_ptr = 2;
+	}
+
+	dprintf(4, "mjpg_rd_ptr 0x%lx mjpg_wr_ptr 0x%lx\n", dec->mjpg_rd_ptr, dec->mjpg_wr_ptr);
+
+	while (1)
+	{
+		if (dec->mjpg_rd_ptr == dec->mjpg_wr_ptr) {
+			nread = vpu_read(dec->cmdl, (void *)buf + dec->mjpg_wr_ptr,
+					MJPG_FILL_SIZE);
+			if (nread < 0) {
+				/* error */
+				err_msg("nread %d < 0\n", nread);
+				return -1;
+			} else if (nread == 0) {
+				if (dec->mjpg_eof) {
+					dprintf(4, "eof\n");
+					return 0;
+				}
+				*(buf + dec->mjpg_wr_ptr) = 0xFF;
+				dec->mjpg_wr_ptr++;
+				*(buf + dec->mjpg_wr_ptr) = 0xD8;
+				dec->mjpg_wr_ptr++;
+				dprintf(4, "pad soi\n");
+				dec->mjpg_eof = 1;
+			} else if (nread < MJPG_FILL_SIZE) {
+				dec->mjpg_wr_ptr += nread;
+				dprintf(4, "last piece of bs\n");
+			} else
+				dec->mjpg_wr_ptr += nread;
+		}
+		pos = mjpg_seek_soi(dec, buf + dec->mjpg_rd_ptr,
+				dec->mjpg_wr_ptr - dec->mjpg_rd_ptr);
+		if (pos < 0)
+		{
+			dprintf(4, "soi not found\n");
+			dec->mjpg_rd_ptr = dec->mjpg_wr_ptr;
+		} else {
+			dec->mjpg_rd_ptr += pos;
+			dprintf(4, "chunk size %lu\n", dec->mjpg_rd_ptr - 2);
+			memcpy((void *)dec->virt_bsbuf_addr, buf, dec->mjpg_rd_ptr - 2);
+			return dec->mjpg_rd_ptr;
+		}
+	}
+}
+
+/*
+ * Read a chunk to bs buffer
+ * Return chunk size + 2 if success, -1 if error, 0 if eof
+ */
+static int mjpg_read_chunk(struct decode *dec)
+{
+	int ret;
+#ifndef READ_WHOLE_FILE
+	/* read a chunk between 2 SOIs for MJPEG clip */
+	if (dec->mjpg_rd_ptr == 0) {
+		ret = mjpg_read_chunk_till_soi(dec);
+		if (ret <= 0)
+			return ret;
+	}
+	ret = mjpg_read_chunk_till_soi(dec);
+	return ret;
+#else
+	/* read whole file for JPEG file */
+	ret = vpu_read(dec->cmdl, (void *)dec->virt_bsbuf_addr,
+			STREAM_BUF_SIZE);
+	if (ret <= 0)
+		return ret;
+	else {
+		dec->mjpg_rd_ptr = ret + 2;
+		dprintf(4, "chunk size %lu\n", dec->mjpg_rd_ptr - 2);
+		return dec->mjpg_rd_ptr;
+	}
+#endif
+}
+
 void SaveFrameBufStat(u8 *frmStatusBuf, int size, int DecNum)
 {
 
@@ -830,6 +969,7 @@ decoder_start(struct decode *dec)
 	int is_waited_int = 0;
 	int tiled2LinearEnable = dec->tiled2LinearEnable;
 	char *delay_ms, *endptr;
+	int mjpgReadChunk = 0;
 
 	if (((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
 			&& (dec->cmdl->ipu_rot_en))
@@ -976,14 +1116,29 @@ decoder_start(struct decode *dec)
 		 * 3. after vpu_DecGetOutputInfo.
 		 */
 		if (cpu_is_mx6x() && (dec->cmdl->format == STD_MJPG)) {
-			err = dec_fill_bsbuffer(handle, dec->cmdl,
-				    dec->virt_bsbuf_addr,
-				    (dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
-				    dec->phy_bsbuf_addr, STREAM_FILL_SIZE,
-				    &eos, &fill_end_bs);
-			if (err < 0) {
-				err_msg("dec_fill_bsbuffer failed\n");
-				return -1;
+			if (dec->mjpgLineBufferMode) {
+				/* First chunk is already read before vpu_DecGetInitialInfo */
+				if (mjpgReadChunk) {
+					ret = mjpg_read_chunk(dec);
+					if (ret < 0)
+						return ret;
+					else if (ret == 0)
+						break;
+				} else
+					mjpgReadChunk = 1;
+				decparam.chunkSize = dec->mjpg_rd_ptr - 2;
+				decparam.phyJpgChunkBase = dec->phy_bsbuf_addr;
+				decparam.virtJpgChunkBase = (unsigned char *)dec->virt_bsbuf_addr;
+			} else {
+				err = dec_fill_bsbuffer(handle, dec->cmdl,
+						dec->virt_bsbuf_addr,
+						(dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
+						dec->phy_bsbuf_addr, STREAM_FILL_SIZE,
+						&eos, &fill_end_bs);
+				if (err < 0) {
+					err_msg("dec_fill_bsbuffer failed\n");
+					return -1;
+				}
 			}
 		}
 
@@ -993,14 +1148,17 @@ decoder_start(struct decode *dec)
 			info_msg(" JPEG bitstream is end\n");
 			break;
 		} else if (ret == RETCODE_JPEG_BIT_EMPTY) {
-			err = dec_fill_bsbuffer(handle, dec->cmdl,
-				    dec->virt_bsbuf_addr,
-				    (dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
-				    dec->phy_bsbuf_addr, STREAM_FILL_SIZE,
-				    &eos, &fill_end_bs);
-			if (err < 0) {
-				err_msg("dec_fill_bsbuffer failed\n");
-				return -1;
+			if (cpu_is_mx6x() && (dec->cmdl->format == STD_MJPG)
+					&& !dec->mjpgLineBufferMode) {
+				err = dec_fill_bsbuffer(handle, dec->cmdl,
+						dec->virt_bsbuf_addr,
+						(dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
+						dec->phy_bsbuf_addr, STREAM_FILL_SIZE,
+						&eos, &fill_end_bs);
+				if (err < 0) {
+					err_msg("dec_fill_bsbuffer failed\n");
+					return -1;
+				}
 			}
 			continue;
 		}
@@ -1079,8 +1237,11 @@ decoder_start(struct decode *dec)
 				"\tframe_id = %d\n", (int)frame_id);
 			if ((outinfo.indexFrameDecoded >= 0) && (outinfo.numOfErrMBs)) {
 				if (cpu_is_mx6x() && dec->cmdl->format == STD_MJPG)
-					info_msg("Error Mb info:0x%x, in Frame : %d\n",
-							outinfo.numOfErrMBs, decIndex);
+					info_msg("Error restart idx:%d, MCU x:%d, y:%d, in Frame : %d\n",
+							(outinfo.numOfErrMBs & 0x0F000000) >> 24,
+							(outinfo.numOfErrMBs & 0x00FFF000) >> 12,
+							(outinfo.numOfErrMBs & 0x00000FFF),
+							decIndex);
 			}
 			if (quitflag)
 				break;
@@ -2130,6 +2291,7 @@ decoder_open(struct decode *dec)
 	oparam.mapType = dec->cmdl->mapType;
 	oparam.tiled2LinearEnable = dec->tiled2LinearEnable;
 	oparam.bitstreamMode = dec->cmdl->bs_mode;
+	oparam.jpgLineBufferMode = dec->mjpgLineBufferMode;
 
 	/*
 	 * mp4 deblocking filtering is optional out-loop filtering for image
@@ -2213,21 +2375,21 @@ decode_test(void *arg)
 	dec = (struct decode *)calloc(1, sizeof(struct decode));
 	if (dec == NULL) {
 		err_msg("Failed to allocate decode structure\n");
-		return -1;
+		ret = -1;
+		goto err;
 	}
 
 	mem_desc.size = STREAM_BUF_SIZE;
 	ret = IOGetPhyMem(&mem_desc);
 	if (ret) {
 		err_msg("Unable to obtain physical mem\n");
-		return -1;
+		goto err;
 	}
 
 	if (IOGetVirtMem(&mem_desc) <= 0) {
 		err_msg("Unable to obtain virtual mem\n");
-		IOFreePhyMem(&mem_desc);
-		free(dec);
-		return -1;
+		ret = -1;
+		goto err;
 	}
 
 	dec->phy_bsbuf_addr = mem_desc.phy_addr;
@@ -2240,8 +2402,19 @@ decode_test(void *arg)
 	dec->mbInfo.enable = 0;
 	dec->mvInfo.enable = 0;
 	dec->frameBufStat.enable = 0;
+	dec->mjpgLineBufferMode = 0;
 
 	dec->cmdl = cmdl;
+
+	if (cpu_is_mx6x() && (dec->cmdl->format == STD_MJPG)
+			&& dec->mjpgLineBufferMode) {
+		dec->mjpg_cached_bsbuf = malloc(STREAM_BUF_SIZE);
+		if (dec->mjpg_cached_bsbuf == NULL) {
+			err_msg("Failed to allocate mjpg_cached_bsbuf\n");
+			ret = -1;
+			goto err;
+		}
+	}
 
 	if (cmdl->format == STD_RV)
 		dec->userData.enable = 0; /* RV has no user data */
@@ -2266,19 +2439,30 @@ decode_test(void *arg)
 	if (dec->cmdl->src_scheme == PATH_NET)
 		fillsize = 1024;
 
-	ret = dec_fill_bsbuffer(dec->handle, cmdl,
-			dec->virt_bsbuf_addr,
-		        (dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
-			dec->phy_bsbuf_addr, fillsize, &eos, &fill_end_bs);
+	if (cpu_is_mx6x() && (dec->cmdl->format == STD_MJPG) && dec->mjpgLineBufferMode) {
+		ret = mjpg_read_chunk(dec);
+		if (ret < 0)
+			goto err1;
+		else if (ret == 0) {
+			err_msg("no pic in the clip\n");
+			ret = -1;
+			goto err1;
+		}
+	} else {
+		ret = dec_fill_bsbuffer(dec->handle, cmdl,
+				dec->virt_bsbuf_addr,
+				(dec->virt_bsbuf_addr + STREAM_BUF_SIZE),
+				dec->phy_bsbuf_addr, fillsize, &eos, &fill_end_bs);
 
-	if (fill_end_bs)
-		err_msg("Update 0 before seqinit, fill_end_bs=%d\n", fill_end_bs);
+		if (fill_end_bs)
+			err_msg("Update 0 before seqinit, fill_end_bs=%d\n", fill_end_bs);
 
-	cmdl->complete = 0;
-	if (ret < 0) {
-		err_msg("dec_fill_bsbuffer failed\n");
-		goto err1;
+		if (ret < 0) {
+			err_msg("dec_fill_bsbuffer failed\n");
+			goto err1;
+		}
 	}
+	cmdl->complete = 0;
 
 #ifndef _FSL_VTS_
 	/* Not set fps when doing performance test default */
@@ -2334,9 +2518,12 @@ err:
 	if (cmdl->format == STD_VP8)
 		IOFreePhyMem(&vp8_mbparam_mem_desc);
 
+	if (dec->mjpg_cached_bsbuf)
+		free(dec->mjpg_cached_bsbuf);
 	IOFreeVirtMem(&mem_desc);
 	IOFreePhyMem(&mem_desc);
-	free(dec);
+	if (dec)
+		free(dec);
 #ifndef COMMON_INIT
 	vpu_UnInit();
 #endif
