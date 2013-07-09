@@ -939,15 +939,6 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 
 	disp = dec->disp;
 
-	if (disp->ncount == 0) {
-		gettimeofday(&tv, 0);
-		disp->buf.timestamp.tv_sec = tv.tv_sec;
-		disp->buf.timestamp.tv_usec = tv.tv_usec;
-
-		disp->sec = tv.tv_sec;
-		disp->usec = tv.tv_usec;
-	}
-
 	disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	disp->buf.memory = V4L2_MEMORY_MMAP;
 
@@ -957,6 +948,15 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 	if (err < 0) {
 		err_msg("VIDIOC_QUERYBUF failed\n");
 		goto err;
+	}
+
+	if (disp->ncount == 0) {
+		gettimeofday(&tv, 0);
+		disp->buf.timestamp.tv_sec = tv.tv_sec;
+		disp->buf.timestamp.tv_usec = tv.tv_usec;
+
+		disp->sec = tv.tv_sec;
+		disp->usec = tv.tv_usec;
 	}
 
 	if (disp->ncount > 0) {
