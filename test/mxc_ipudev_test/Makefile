@@ -2,7 +2,7 @@
 INCLUDE_LIST:=IMX51 IMX53 IMX6Q
 
 SRCS = mxc_ipudev_test.c utils.c
-CFLAGS += -lm -lrt
+LIBS += -lm -lrt
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 OBJS = $(OBJDIR)/mxc_ipudev_test.out
