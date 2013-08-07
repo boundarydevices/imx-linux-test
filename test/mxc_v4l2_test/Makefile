@@ -6,9 +6,7 @@ NEED_PXP_LIB_LIST:=IMX6S
 # Just use pxp library to get contiguous physical memory for USERPTR testing
 # However, be noticed that this is not the only way.
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(NEED_PXP_LIB_LIST)))
-CFLAGS += -lpthread -lpxp -DGET_CONTI_PHY_MEM_VIA_PXP_LIB
-else
-CFLAGS += -lpthread
+LIBS += -lpthread -lpxp -DGET_CONTI_PHY_MEM_VIA_PXP_LIB
 endif
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
