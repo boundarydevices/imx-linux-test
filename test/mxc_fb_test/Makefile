@@ -1,6 +1,6 @@
 # list of platforms which did not want this test case
 EXCLUDE_LIST:=
-CFLAGS += -lm
+LIBS += -lm
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = $(OBJDIR)/autorun-fb.sh $(OBJDIR)/mxc_tve_test.sh $(OBJDIR)/mxc_fb_test.out \
