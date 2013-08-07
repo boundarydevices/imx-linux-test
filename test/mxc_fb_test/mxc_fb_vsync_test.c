@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -25,7 +25,6 @@
 #include <sys/fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <linux/compiler.h>
 #include <math.h>
 #include <string.h>
 
