@@ -45,9 +45,9 @@ extern int vpu_test_dbg_level;
 	printf("[WARN]\t" fmt, ## arg);	\
 	} while (0)
 
-#ifdef u32
 #undef u32
-#endif
+#undef u16
+#undef u8
 typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
