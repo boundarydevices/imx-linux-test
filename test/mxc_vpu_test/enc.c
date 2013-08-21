@@ -336,12 +336,20 @@ encoder_free_framebuffer(struct encode *enc)
 {
 	int i;
 
-	for (i = 0; i < enc->totalfb; i++) {
-		framebuf_free(enc->pfbpool[i]);
+	if (enc->pfbpool) {
+		for (i = 0; i < enc->totalfb; i++) {
+			framebuf_free(enc->pfbpool[i]);
+		}
 	}
 
-	free(enc->fb);
-	free(enc->pfbpool);
+	if (enc->fb) {
+		free(enc->fb);
+		enc->fb = NULL;
+	}
+	if (enc->pfbpool) {
+		free(enc->pfbpool);
+		enc->pfbpool = NULL;
+	}
 }
 
 int
@@ -391,7 +399,8 @@ encoder_allocate_framebuffer(struct encode *enc)
 					sizeof(struct frame_buf *));
 	if (pfbpool == NULL) {
 		err_msg("Failed to allocate enc->pfbpool\n");
-		free(fb);
+		free(enc->fb);
+		enc->fb = NULL;
 		return -1;
 	}
 
@@ -483,8 +492,10 @@ err1:
 		framebuf_free(pfbpool[i]);
 	}
 
-	free(fb);
-	free(pfbpool);
+	free(enc->fb);
+	free(enc->pfbpool);
+	enc->fb = NULL;
+	enc->pfbpool = NULL;
 	return -1;
 }
 
@@ -1168,7 +1179,8 @@ encode_test(void *arg)
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
 	if (enc == NULL) {
 		err_msg("Failed to allocate encode structure\n");
-		return -1;
+		ret = -1;
+		goto err;
 	}
 
 	/* get physical contigous bit stream buffer */
@@ -1176,17 +1188,15 @@ encode_test(void *arg)
 	ret = IOGetPhyMem(&mem_desc);
 	if (ret) {
 		err_msg("Unable to obtain physical memory\n");
-		free(enc);
-		return -1;
+		goto err;
 	}
 
 	/* mmap that physical buffer */
 	enc->virt_bsbuf_addr = IOGetVirtMem(&mem_desc);
 	if (enc->virt_bsbuf_addr <= 0) {
 		err_msg("Unable to map physical memory\n");
-		IOFreePhyMem(&mem_desc);
-		free(enc);
-		return -1;
+		ret = -1;
+		goto err;
 	}
 
 	enc->phy_bsbuf_addr = mem_desc.phy_addr;
@@ -1200,7 +1210,8 @@ encode_test(void *arg)
 		enc->cmdl->chromaInterleave = 1; /* Must be CbCrInterleave for tiled */
 		if (cmdl->format == STD_MJPG) {
 			err_msg("MJPG encoder cannot support tiled format\n");
-			return -1;
+			ret = -1;
+			goto err;
 		}
         } else
 		enc->linear2TiledEnable = 0;
@@ -1248,7 +1259,8 @@ err:
 	/* free the physical memory */
 	IOFreeVirtMem(&mem_desc);
 	IOFreePhyMem(&mem_desc);
-	free(enc);
+	if (enc)
+		free(enc);
 #ifndef COMMON_INIT
 	vpu_UnInit();
 #endif
