@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -354,6 +354,7 @@ encdec_test(void *arg)
 	vpu_mem_desc	dec_mem_desc = {0};
 	vpu_mem_desc	ps_mem_desc = {0};
 	vpu_mem_desc	slice_mem_desc = {0};
+	vpu_mem_desc	enc_scratch_mem_desc = {0};
 	int ret, i;
 
 #ifndef COMMON_INIT
@@ -381,7 +382,8 @@ encdec_test(void *arg)
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
 	if (enc == NULL) {
 		err_msg("Failed to allocate encode structure\n");
-		return -1;
+		ret = -1;
+		goto err;
 	}
 
 	/* get physical contigous bit stream buffer */
@@ -389,17 +391,15 @@ encdec_test(void *arg)
 	ret = IOGetPhyMem(&enc_mem_desc);
 	if (ret) {
 		err_msg("Unable to obtain physical memory\n");
-		free(enc);
-		return -1;
+		goto err;
 	}
 
 	/* mmap that physical buffer */
 	enc->virt_bsbuf_addr = IOGetVirtMem(&enc_mem_desc);
 	if (enc->virt_bsbuf_addr <= 0) {
 		err_msg("Unable to map physical memory\n");
-		IOFreePhyMem(&enc_mem_desc);
-		free(enc);
-		return -1;
+		ret = -1;
+		goto err;
 	}
 
 	enc->phy_bsbuf_addr = enc_mem_desc.phy_addr;
@@ -410,6 +410,7 @@ encdec_test(void *arg)
 	dec = (struct decode *)calloc(1, sizeof(struct decode));
 	if (dec == NULL) {
 		err_msg("Failed to allocate decode structure\n");
+		ret = -1;
 		goto err;
 	}
 
@@ -417,16 +418,14 @@ encdec_test(void *arg)
 	ret = IOGetPhyMem(&dec_mem_desc);
 	if (ret) {
 		err_msg("Unable to obtain physical mem\n");
-		free(dec);
-		goto err;
+		goto err1;
 	}
 
 	dec->virt_bsbuf_addr = IOGetVirtMem(&dec_mem_desc);
 	if (dec->virt_bsbuf_addr <= 0) {
 		err_msg("Unable to obtain virtual mem\n");
-		IOFreePhyMem(&dec_mem_desc);
-		free(dec);
-		goto err;
+		ret = -1;
+		goto err1;
 	}
 
 	dec->phy_bsbuf_addr = dec_mem_desc.phy_addr;
@@ -437,7 +436,7 @@ encdec_test(void *arg)
 		ret = IOGetPhyMem(&ps_mem_desc);
 		if (ret) {
 			err_msg("Unable to obtain physical ps save mem\n");
-			goto err;
+			goto err1;
 		}
 
 		dec->phy_ps_buf = ps_mem_desc.phy_addr;
@@ -453,6 +452,18 @@ encdec_test(void *arg)
 	if (ret)
 		goto err2;
 
+	/* allocate scratch buf */
+	if (cpu_is_mx6x() && (cmdl->format == STD_MPEG4) && enc->mp4_dataPartitionEnable) {
+		enc_scratch_mem_desc.size = MPEG4_SCRATCH_SIZE;
+		ret = IOGetPhyMem(&enc_scratch_mem_desc);
+		if (ret) {
+			err_msg("Unable to obtain physical slice save mem\n");
+			goto err2;
+		}
+		enc->scratchBuf.bufferBase = enc_scratch_mem_desc.phy_addr;
+		enc->scratchBuf.bufferSize = enc_scratch_mem_desc.size;
+	}
+
 	/* allocate memory for the frame buffers */
 	ret = encoder_allocate_framebuffer(enc);
 	if (ret)
@@ -463,7 +474,7 @@ encdec_test(void *arg)
 	/* open decoder */
 	ret = decoder_open(dec);
 	if (ret)
-		goto err3;
+		goto err2;
 
 
 	/* For MX6 MJPG, header must be inserted before each frame, only need to
@@ -472,7 +483,7 @@ encdec_test(void *arg)
 		ret = encoder_fill_headers();
 		if (ret) {
 			err_msg("fill headers failed\n");
-			goto err4;
+			goto err3;
 		}
 	}
 
@@ -480,21 +491,21 @@ encdec_test(void *arg)
 	ret = v4l_start_capturing();
 	if (ret < 0) {
 		err_msg("v4l2 start failed\n");
-		goto err4;
+		goto err3;
 	}
 
 	/* encode 5 frames first */
 	for (i = 0; i < 5; i++) {
 		ret = encode();
 		if (ret)
-			goto err5;
+			goto err4;
 	}
 
 	/* parse the bitstream */
 	ret = decoder_parse(dec);
 	if (ret) {
 		err_msg("decoder parse failed\n");
-		goto err5;
+		goto err4;
 	}
 
 	/* allocate slice buf */
@@ -503,7 +514,7 @@ encdec_test(void *arg)
 		ret = IOGetPhyMem(&slice_mem_desc);
 		if (ret) {
 			err_msg("Unable to obtain physical slice save mem\n");
-			goto err5;
+			goto err4;
 		}
 
 		dec->phy_slice_buf = slice_mem_desc.phy_addr;
@@ -512,7 +523,7 @@ encdec_test(void *arg)
 	/* allocate frame buffers */
 	ret = decoder_allocate_framebuffer(dec);
 	if (ret)
-		goto err5;
+		goto err4;
 
 	if (dec->cmdl->format == STD_MJPG)
 		rotid = 0;
@@ -536,19 +547,19 @@ encdec_test(void *arg)
 
 	}
 
-err5:
-	v4l_stop_capturing();
 err4:
+	v4l_stop_capturing();
+err3:
 	decoder_close(dec);
 
 	/* free the frame buffers */
 	decoder_free_framebuffer(dec);
-err3:
-	/* free the allocated framebuffers */
-	encoder_free_framebuffer(enc);
 err2:
 	/* close the encoder */
 	encoder_close(enc);
+
+	/* free the allocated framebuffers */
+	encoder_free_framebuffer(enc);
 err1:
 	if (cmdl->format == STD_AVC) {
 		IOFreePhyMem(&ps_mem_desc);
@@ -557,12 +568,18 @@ err1:
 
 	IOFreeVirtMem(&dec_mem_desc);
 	IOFreePhyMem(&dec_mem_desc);
-	free(dec);
+	if (dec)
+		free(dec);
 err:
+	if (cpu_is_mx6x() && cmdl->format == STD_MPEG4 && enc->mp4_dataPartitionEnable) {
+		IOFreeVirtMem(&enc_scratch_mem_desc);
+		IOFreePhyMem(&enc_scratch_mem_desc);
+	}
 	/* free the physical memory */
 	IOFreeVirtMem(&enc_mem_desc);
 	IOFreePhyMem(&enc_mem_desc);
-	free(enc);
+	if (enc)
+		free(enc);
 #ifndef COMMON_INIT
 	vpu_UnInit();
 #endif
