@@ -303,8 +303,6 @@ int v4l_capture_setup(void)
 	g_in_width = fmt.fmt.pix.width;
 	g_in_height = fmt.fmt.pix.height;
 
-	printf("VIDIOC_G_FMT failed\n");
-
 	memset(&req, 0, sizeof (req));
 
 	req.count               = g_capture_num_buffers;
