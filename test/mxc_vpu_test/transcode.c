@@ -1177,21 +1177,21 @@ transcode_test(void *arg)
 	dec = (struct decode *)calloc(1, sizeof(struct decode));
 	if (dec == NULL) {
 		err_msg("Failed to allocate decode structure\n");
-		return -1;
+		ret = -1;
+		goto err;
 	}
 
 	mem_desc.size = STREAM_BUF_SIZE;
 	ret = IOGetPhyMem(&mem_desc);
 	if (ret) {
 		err_msg("Unable to obtain physical mem\n");
-		return -1;
+		goto err;
 	}
 
 	if (IOGetVirtMem(&mem_desc) <= 0) {
 		err_msg("Unable to obtain virtual mem\n");
-		IOFreePhyMem(&mem_desc);
-		free(dec);
-		return -1;
+		ret = -1;
+		goto err;
 	}
 
 	dec->phy_bsbuf_addr = mem_desc.phy_addr;
@@ -1278,7 +1278,8 @@ transcode_test(void *arg)
 	enc = (struct encode *)calloc(1, sizeof(struct encode));
 	if (enc == NULL) {
 		err_msg("Failed to allocate encode structure\n");
-		return -1;
+		ret = -1;
+		goto err1;
 	}
 
 	/* get physical contigous bit stream buffer */
@@ -1286,17 +1287,15 @@ transcode_test(void *arg)
 	ret = IOGetPhyMem(&enc_mem_desc);
 	if (ret) {
 		err_msg("Unable to obtain physical memory\n");
-		free(enc);
-		return -1;
+		goto err2;
 	}
 
 	/* mmap that physical buffer */
 	enc->virt_bsbuf_addr = IOGetVirtMem(&enc_mem_desc);
 	if (enc->virt_bsbuf_addr <= 0) {
 		err_msg("Unable to map physical memory\n");
-		IOFreePhyMem(&enc_mem_desc);
-		free(enc);
-		return -1;
+		ret = -1;
+		goto err2;
 	}
 
 	enc->phy_bsbuf_addr = enc_mem_desc.phy_addr;
@@ -1305,12 +1304,12 @@ transcode_test(void *arg)
 
 	ret = encoder_open(enc);
 	if (ret)
-		goto err3;
+		goto err2;
 
 	/* configure the encoder */
 	ret = encoder_configure(enc);
 	if (ret)
-		goto err2;
+		goto err3;
 
 	/* allocate scratch buf */
 	if (cpu_is_mx6x() && (cmdl->format == STD_MPEG4) && enc->mp4_dataPartitionEnable) {
@@ -1318,7 +1317,7 @@ transcode_test(void *arg)
 		ret = IOGetPhyMem(&enc_scratch_mem_desc);
 		if (ret) {
 			err_msg("Unable to obtain physical slice save mem\n");
-			goto err1;
+			goto err3;
 		}
 		enc->scratchBuf.bufferBase = enc_scratch_mem_desc.phy_addr;
 		enc->scratchBuf.bufferSize = enc_scratch_mem_desc.size;
@@ -1326,17 +1325,26 @@ transcode_test(void *arg)
 	/*allocate memory for the frame buffers */
 	ret = encoder_allocate_framebuffer(enc);
 	if (ret)
-		goto err2;
+		goto err3;
 
 	/* start transcoding */
 	ret = transcode_start(dec, enc);
 
-err3:
 	/* free the allocated framebuffers */
 	encoder_free_framebuffer(enc);
-err2:
+err3:
 	/* close the encoder */
 	encoder_close(enc);
+
+err2:
+	if (cpu_is_mx6x() && cmdl->format == STD_MPEG4 && enc->mp4_dataPartitionEnable) {
+		IOFreeVirtMem(&enc_scratch_mem_desc);
+		IOFreePhyMem(&enc_scratch_mem_desc);
+	}
+	IOFreeVirtMem(&enc_mem_desc);
+	IOFreePhyMem(&enc_mem_desc);
+	if (enc)
+		free(enc);
 
 err1:
 	decoder_close(dec);
@@ -1353,7 +1361,8 @@ err:
 
 	IOFreeVirtMem(&mem_desc);
 	IOFreePhyMem(&mem_desc);
-	free(dec);
+	if (dec)
+		free(dec);
 #ifndef COMMON_INIT
 	vpu_UnInit();
 #endif

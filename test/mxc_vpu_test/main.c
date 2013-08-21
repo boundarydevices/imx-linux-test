@@ -480,7 +480,9 @@ main(int argc, char *argv[])
 	int err, nargc, i, ret = 0;
 	char *pargv[32] = {0}, *dbg_env;
 	pthread_t sigtid;
+#ifdef COMMON_INIT
 	vpu_versioninfo ver;
+#endif
 	int ret_thr;
 
 #ifndef COMMON_INIT
