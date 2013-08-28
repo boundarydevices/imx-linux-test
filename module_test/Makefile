@@ -53,6 +53,9 @@ EXTRA_CFLAGS := -DLINUX_KERNEL -DIMX_NEEDS_DEPRECATED_SYMBOLS
 ##       source.
 EXTRA_CFLAGS += -I$(LINUXPATH)/drivers/mxc/security -I$(LINUXPATH)/drivers/mxc/security/rng/include -I$(LINUXPATH)/drivers/mxc/security/sahara2/include
 
+all: obj-m
+	$(MAKE) -C $(LINUXPATH) M=`pwd` KBUILD_OUTPUT=$(KBUILD_OUTPUT) ARCH=arm CROSS_COMPILE=$(CROSS_COMPILE)  obj-j
+
 else
 
 # Need to remove sahara objects because the test app uses same objects
