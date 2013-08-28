@@ -4,21 +4,21 @@ else
 	VERBOSE=@
 endif
 
-AS		= $(CROSS_COMPILE)as
-LD		= $(CROSS_COMPILE)ld
-CC		= $(CROSS_COMPILE)gcc
-CPP		= $(CC) -E
-AR		= $(CROSS_COMPILE)ar
-NM		= $(CROSS_COMPILE)nm
-STRIP		= $(CROSS_COMPILE)strip
-OBJCOPY		= $(CROSS_COMPILE)objcopy
-OBJDUMP		= $(CROSS_COMPILE)objdump
-RM		= rm -f
-MAKEDIR		= mkdir -p
+AS		?= $(CROSS_COMPILE)as
+LD		?= $(CROSS_COMPILE)ld
+CC		?= $(CROSS_COMPILE)gcc
+CPP		?= $(CC) -E
+AR		?= $(CROSS_COMPILE)ar
+NM		?= $(CROSS_COMPILE)nm
+STRIP		?= $(CROSS_COMPILE)strip
+OBJCOPY		?= $(CROSS_COMPILE)objcopy
+OBJDUMP		?= $(CROSS_COMPILE)objdump
+RM		?= rm -f
+MAKEDIR		?= mkdir -p
 
 CFLAGS 		+= -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
 	  	   -fno-strict-aliasing -fno-common
-AFLAGS		:= -D__ASSEMBLY__
+AFLAGS         := -D__ASSEMBLY__
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@mkdir -p `dirname $@`
