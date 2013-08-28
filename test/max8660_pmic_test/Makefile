@@ -1,5 +1,5 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX51 IMX37_3STACK IMX31_3STACK IMX31ADS IMX27_3STACK IMX27ADS IMX25_3STACK"
+EXCLUDE_LIST:="IMX51 IMX37_3STACK IMX31_3STACK IMX31ADS IMX27_3STACK IMX27ADS IMX25_3STACK IMX6Q"
 
 
 LTP_DIR = $(TOPDIR)/test/mxc_pmic_test/
@@ -22,7 +22,9 @@ SUBDIRS =       protocol_tests \
 		pmic_testapp_rtc
 
 all: $(OBJS)
+ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 	@set -e; for i in $(SUBDIRS); do $(MAKE) -C $$i ; done
+endif
 
 libltp.a:
 	@$(MAKE) -C $(LTP_DIR)lib/ $@
