@@ -1,5 +1,5 @@
-CC=$(CROSS_COMPILE)gcc
-LINK=$(CROSS_COMPILE)gcc
+CC ?=$(CROSS_COMPILE)gcc
+LINK ?=$(CROSS_COMPILE)gcc
 
 OBJ = main.o \
       dec.o \

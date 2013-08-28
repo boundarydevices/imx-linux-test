@@ -13,25 +13,17 @@ else
 OBJS =
 endif
 
-all : $(OBJS)
-
-.PHONY: clean
-clean:
-	rm -f $(OBJS)
-
-include ../make.rules
-
-
 # If you want to compile the source code, please reference follow make file.
 # this is default off by here.
 # it will be compile on your target envroioment.(eg, ubuntu).
+all: $(OBJS)
 
-#CC := gcc
+CFLAGS +=  -lbluetooth
 
-#all: hciattach-ar3k
+$(OBJDIR)/hciattach-ar3k.bin :
+	$(CC)  ${INC} -Wall -lbluetooth -g hciattach_ath3k.c  hciattach.c  hciattach_qualcomm.c  hciattach_st.c  hciattach_tialt.c  hciattach_ti.c -o hciattach-ar3k.bin
 
-#hciattach-ar3k:
-#	$(CC) -Wall -lbluetooth -g hciattach_ath3k.c  hciattach.c  hciattach_qualcomm.c  hciattach_st.c  hciattach_tialt.c  hciattach_ti.c -o hciattach-ar3k
+clean:
+	rm -f *.o hciattach-ar3k.bin
 
-#clean:
-#	rm -f hciattach-ar3k *.o
+include ../make.rules
