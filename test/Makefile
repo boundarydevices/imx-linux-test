@@ -1,4 +1,6 @@
+ifeq ($(LTIB_BUILD),1)
 export INC = -I$(TOPDIR)/include $(INCLUDE)
+endif
 
 # Get all dirs with a Makefile
 TMP_DIRS := $(foreach dir, $(wildcard *), $(wildcard $(dir)/Makefile))

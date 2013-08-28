@@ -1,5 +1,5 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:=
+EXCLUDE_LIST:= IMX6Q
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = $(OBJDIR)/mxc_isl29023.out
