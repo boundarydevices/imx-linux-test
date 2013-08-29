@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <linux/videodev2.h>
 
 #define TRIES		25		/* Get 25 samples */
@@ -34,9 +35,16 @@
 
 int main(int argc, char **argv)
 {
-	int fd, ret, n_selection, freq;
+	int fd, ret, n_selection, freq, core;
 	struct v4l2_frequency vt;
+	struct stat buf;
 	char *dev = NULL;
+
+	/* Check if using si476x drivers, return 0 means true */
+	core = stat("/sys/bus/i2c/drivers/si476x-core", &buf);
+	printf("Using si476%c drivers.....\n", core ? '3' : 'x');
+
+	memset(&vt, 0, sizeof(struct v4l2_frequency));
 
 	do{
 		printf("Welcome to radio menu\n");
@@ -65,7 +73,10 @@ int main(int argc, char **argv)
 				printf("error: Turn on the radio first\n");
 				break;
 			}
-			printf("Frequency = %d\n", vt.frequency);
+			if (!core)
+				printf("Frequency = %d\n", vt.frequency * 625 / 100000);
+			else
+				printf("Frequency = %d\n", vt.frequency);
 			break;
 
 		case TUNER_SETFREQ:
@@ -76,7 +87,10 @@ int main(int argc, char **argv)
 			}
 			printf("Set frequency = ");
 			if (scanf("%d", &freq) == 1){
-				vt.frequency = freq;
+				if (!core)
+					vt.frequency = freq * 100000 / 625;
+				else
+					vt.frequency = freq;
 				ret = ioctl(fd, VIDIOC_S_FREQUENCY, &vt);
 				if (ret < 0) {
 					perror("error: Turn on the radio first\n");
