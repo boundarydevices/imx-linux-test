@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2012 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -26,50 +26,11 @@
 #include <stdio.h>
 #include "vpu_test.h"
 
-#define NUM_FRAME_BUFS	32
-#define FB_INDEX_MASK	(NUM_FRAME_BUFS - 1)
-
-static int fb_index;
-static struct frame_buf *fbarray[NUM_FRAME_BUFS];
-static struct frame_buf fbpool[NUM_FRAME_BUFS];
-
-void framebuf_init(void)
+struct frame_buf *framebuf_alloc(struct frame_buf *fb, int stdMode, int format, int strideY, int height, int mvCol)
 {
-	int i;
-
-	for (i = 0; i < NUM_FRAME_BUFS; i++) {
-		fbarray[i] = &fbpool[i];
-	}
-}
-
-struct frame_buf *get_framebuf(void)
-{
-	struct frame_buf *fb;
-
-	fb = fbarray[fb_index];
-	fbarray[fb_index] = 0;
-
-	++fb_index;
-	fb_index &= FB_INDEX_MASK;
-
-	return fb;
-}
-
-void put_framebuf(struct frame_buf *fb)
-{
-	--fb_index;
-	fb_index &= FB_INDEX_MASK;
-
-	fbarray[fb_index] = fb;
-}
-
-struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height, int mvCol)
-{
-	struct frame_buf *fb;
 	int err;
 	int divX, divY;
 
-	fb = get_framebuf();
 	if (fb == NULL)
 		return NULL;
 
@@ -163,19 +124,17 @@ int tiled_framebuf_base(FrameBuffer *fb, Uint32 frame_base, int strideY, int hei
 	fb->bufCb = (chr_top_20bits << 24) + (lum_bot_20bits << 4) + (chr_bot_20bits >> 16);
 	fb->bufCr = chr_bot_20bits << 16;
 
-    return 0;
+	return 0;
 }
 
-struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height, int mvCol, int mapType)
+struct frame_buf *tiled_framebuf_alloc(struct frame_buf *fb, int stdMode, int format, int strideY, int height, int mvCol, int mapType)
 {
-	struct frame_buf *fb;
 	int err, align;
 	int divX, divY;
 	Uint32 lum_top_base, lum_bot_base, chr_top_base, chr_bot_base;
 	Uint32 lum_top_20bits, lum_bot_20bits, chr_top_20bits, chr_bot_20bits;
 	int luma_top_size, luma_bot_size, chroma_top_size, chroma_bot_size;
 
-	fb = get_framebuf();
 	if (fb == NULL)
 		return NULL;
 
@@ -260,7 +219,7 @@ struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int
 		}
 	}
 
-    return fb;
+	return fb;
 }
 
 void framebuf_free(struct frame_buf *fb)
@@ -277,6 +236,5 @@ void framebuf_free(struct frame_buf *fb)
 	}
 
 	memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
-	put_framebuf(fb);
 }
 

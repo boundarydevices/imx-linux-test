@@ -486,7 +486,7 @@ main(int argc, char *argv[])
 	int ret_thr;
 
 #ifndef COMMON_INIT
-	srand((unsigned)time(0));     // init seed of rand()
+	srand((unsigned)time(0)); /* init seed of rand() */
 #endif
 
 	dbg_env=getenv("VPU_TEST_DBG");
@@ -511,8 +511,6 @@ main(int argc, char *argv[])
 	pthread_sigmask(SIG_BLOCK, &sigset, NULL);
 	pthread_create(&sigtid, NULL, (void *)&signal_thread, NULL);
 #endif
-
-	framebuf_init();
 
 #ifdef COMMON_INIT
 	err = vpu_Init(NULL);
