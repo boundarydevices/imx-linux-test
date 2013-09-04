@@ -245,6 +245,8 @@ struct decode {
 	int mjpg_sc_state; /* start code FSM state */
 	int mjpg_eof;
 	u8 *mjpg_cached_bsbuf;
+
+	struct frame_buf fbpool[MAX_BUF_NUM];
 };
 
 struct encode {
@@ -275,9 +277,10 @@ struct encode {
 	struct cmd_line *cmdl; /* command line */
 	u8 * huffTable;
 	u8 * qMatTable;
+
+	struct frame_buf fbpool[MAX_BUF_NUM];
 };
 
-void framebuf_init(void);
 int fwriten(int fd, void *vptr, size_t n);
 int freadn(int fd, void *vptr, size_t n);
 int vpu_read(struct cmd_line *cmd, char *buf, int n);
@@ -293,9 +296,9 @@ struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 					struct rot rotation, Rect rotCrop);
 int v4l_put_data(struct decode *dec, int index, int field, int fps);
 void v4l_display_close(struct vpu_display *disp);
-struct frame_buf *framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol);
+struct frame_buf *framebuf_alloc(struct frame_buf *fb, int stdMode, int format, int strideY, int height, int mvCol);
 int tiled_framebuf_base(FrameBuffer *fb, Uint32 frame_base, int strideY, int height, int mapType);
-struct frame_buf *tiled_framebuf_alloc(int stdMode, int format, int strideY, int height, int movCol, int mapType);
+struct frame_buf *tiled_framebuf_alloc(struct frame_buf *fb, int stdMode, int format, int strideY, int height, int mvCol, int mapType);
 void framebuf_free(struct frame_buf *fb);
 
 struct vpu_display *

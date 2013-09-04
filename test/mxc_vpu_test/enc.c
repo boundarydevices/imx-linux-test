@@ -407,7 +407,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 	if (enc->cmdl->mapType == LINEAR_FRAME_MAP) {
 		/* All buffers are linear */
 		for (i = 0; i < minfbcount + extrafbcount; i++) {
-			pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+			pfbpool[i] = framebuf_alloc(&enc->fbpool[i], enc->cmdl->format, enc->mjpg_fmt,
 						    enc_fbwidth, enc_fbheight, 0);
 			if (pfbpool[i] == NULL) {
 				goto err1;
@@ -416,14 +416,14 @@ encoder_allocate_framebuffer(struct encode *enc)
 	 } else {
 		/* Encoded buffers are tiled */
 		for (i = 0; i < minfbcount; i++) {
-			pfbpool[i] = tiled_framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+			pfbpool[i] = tiled_framebuf_alloc(&enc->fbpool[i], enc->cmdl->format, enc->mjpg_fmt,
 					    enc_fbwidth, enc_fbheight, 0, enc->cmdl->mapType);
 			if (pfbpool[i] == NULL)
 				goto err1;
 		}
 		/* sub frames are linear */
 		for (i = minfbcount; i < minfbcount + extrafbcount; i++) {
-			pfbpool[i] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+			pfbpool[i] = framebuf_alloc(&enc->fbpool[i], enc->cmdl->format, enc->mjpg_fmt,
 						    enc_fbwidth, enc_fbheight, 0);
 			if (pfbpool[i] == NULL)
 				goto err1;
@@ -470,7 +470,7 @@ encoder_allocate_framebuffer(struct encode *enc)
 		}
 	} else {
 		/* Allocate a single frame buffer for source frame */
-		pfbpool[src_fbid] = framebuf_alloc(enc->cmdl->format, enc->mjpg_fmt,
+		pfbpool[src_fbid] = framebuf_alloc(&enc->fbpool[src_fbid], enc->cmdl->format, enc->mjpg_fmt,
 						   src_fbwidth, src_fbheight, 0);
 		if (pfbpool[src_fbid] == NULL) {
 			err_msg("failed to allocate single framebuf\n");
