@@ -13,34 +13,47 @@ fi
 
 saved_path=$PWD
 
-#printf "%-24s %-24s %3s %9s\n" "clock" "parent" "use" "rate"
 printf "digraph clocktree {\n"
 printf "rankdir = LR;\n"
 printf "node [shape=record];\n"
 
-for foo in $(find /sys/kernel/debug/clock -type d); do
-    if [ "$foo" = '/sys/kernel/debug/clock' ]; then
+for foo in $(find /sys/kernel/debug/clk -type d); do
+    if [ "$foo" = '/sys/kernel/debug/clk' ]; then
         continue
     fi
 
     cd $foo
 
-    use="$(cat usecount)"
-    rate="$(cat rate)"
+    if [ -f clk_flags ]; then
+        flags="$(cat clk_flags)"
+    fi
+
+    if [ -f clk_enable_count ]; then
+        enable_count="$(cat clk_enable_count)"
+    fi
+
+    if [ -f clk_prepare_count ]; then
+        prepare_count="$(cat clk_enable_count)"
+    fi
+
+    if [ -f clk_rate ]; then
+        rate="$(cat clk_rate)"
+    fi
 
     clk="$(basename $foo)"
     cd ..
     parent="$(basename $PWD)"
 
-    if [ "$use" = 0 ]; then
+    if [ "$enable_count" = 0 ]; then
     	bgcolor="red"
     else
     	bgcolor="green"
     fi
 
-    printf "%s [label=\"%s|rate %d|use $use\" color=%s];\n" "$clk" "$clk" "$rate" $bgcolor
+    printf "%s [label=\"%s|rate %d|en_cnt %d|pr_cnt %d|flags %08x\" color=%s];\n" \
+	"$clk" "$clk" "$rate" "$enable_count" "$prepare_count" "$flags" $bgcolor
 
-    if [ "$parent" = 'clock' ]; then
+    if [ "$parent" = 'clk' ]; then
         parent="virtual_Root"
 # 	printf "%s d];\n"  "$clk" "$clk" "$rate"
     else
@@ -49,7 +62,6 @@ for foo in $(find /sys/kernel/debug/clock -type d); do
 
 #    printf "%s [label=%s_%d];\n" "$clk" "$rate"
 #    printf "%s -> %s ;\n" "$parent" "$clk"
-# "$use" "$rate"
 
     cd $saved_path
 done
