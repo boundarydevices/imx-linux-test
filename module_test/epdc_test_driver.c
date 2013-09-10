@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2013 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@
 
 #include <linux/device.h>
 #include <linux/mxcfb.h>
-#include <linux/mxcfb_epdc_kernel.h>
+#include <linux/mxcfb_epdc.h>
 
 /* major number of device */
 static int gMajor;
