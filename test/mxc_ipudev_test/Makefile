@@ -1,5 +1,5 @@
 # list of platforms which want this test case
-INCLUDE_LIST:=IMX51 IMX53 IMX6Q
+INCLUDE_LIST:=IMX51 IMX53 IMX6Q IMX6S
 
 SRCS = mxc_ipudev_test.c utils.c
 LIBS += -lm -lrt
