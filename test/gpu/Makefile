@@ -1,5 +1,5 @@
 # list of platforms which want this test case
-INCLUDE_LIST:=IMX6Q
+INCLUDE_LIST:=IMX6Q IMX6S
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 OBJS = $(OBJDIR)/gpu.sh
