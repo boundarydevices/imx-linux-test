@@ -2,7 +2,7 @@
 EXCLUDE_LIST:= IMX25_3STACK
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
-OBJS = $(OBJDIR)/rtc_timesetnotification_test.out $(OBJDIR)/rtctest.out $(OBJDIR)/rtcwakeup.out $(OBJDIR)/autorun-rtc.sh
+OBJS = $(OBJDIR)/rtctest.out $(OBJDIR)/rtcwakeup.out $(OBJDIR)/autorun-rtc.sh
 else
 OBJS =
 endif
