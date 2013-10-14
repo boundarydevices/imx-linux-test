@@ -48,16 +48,6 @@ static int t_case = 0;
 static unsigned int sync_quad = 0;
 static unsigned int isoc_pkg_len = 0;
 
-static unsigned int fps_set[] = {
-	256,
-	512,
-	1024,
-	2048,
-	3072,
-	4096,
-	6144,
-};
-
 int do_basic_test(int fd);
 int do_txrx_test(int fd);
 
@@ -74,7 +64,6 @@ void print_help(void)
 int main(int argc, char *argv[])
 {
 	int ret, flags;
-	int fd_set[4] = { 0 };
 	char test_case_str[10] = { 0 };
 
 	while (1) {
@@ -188,9 +177,8 @@ int main(int argc, char *argv[])
 
 int do_basic_test(int fd)
 {
-	int i, ret;
+	int ret;
 	unsigned long ver;
-	unsigned int tfps;
 	unsigned char addr = 0xC0;
 
 	/* ioctl check */
