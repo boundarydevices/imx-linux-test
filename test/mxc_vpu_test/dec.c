@@ -1193,8 +1193,8 @@ decoder_start(struct decode *dec)
 				return -1;
 			}
 
-			vpu_WaitForInt(100);
-			is_waited_int = 1;
+			if (vpu_WaitForInt(100) == 0)
+				is_waited_int = 1;
 			loop_id ++;
 		}
 
