@@ -560,6 +560,7 @@ encoder_start(struct encode *enc)
 	PhysicalAddress phy_bsbuf_start = enc->phy_bsbuf_addr;
 	u32 virt_bsbuf_start = enc->virt_bsbuf_addr;
 	u32 virt_bsbuf_end = virt_bsbuf_start + STREAM_BUF_SIZE;
+	int is_waited_int = 0;
 
 	/* Must put encode header here before encoding for all codec, except MX6 MJPG */
 	if (!(cpu_is_mx6x() && (enc->cmdl->format == STD_MJPG))) {
@@ -669,13 +670,18 @@ encoder_start(struct encode *enc)
 			goto err2;
 		}
 
+		is_waited_int = 0;
 		loop_id = 0;
 		while (vpu_IsBusy()) {
-			vpu_WaitForInt(200);
 			if (enc->ringBufferEnable == 1) {
-				ret = enc_readbs_ring_buffer(handle, enc->cmdl,
-					virt_bsbuf_start, virt_bsbuf_end,
-					phy_bsbuf_start, STREAM_READ_SIZE);
+				if (cpu_is_mx6x() && enc->cmdl->format == STD_MJPG)
+					ret = enc_readbs_ring_buffer(handle, enc->cmdl,
+							virt_bsbuf_start, virt_bsbuf_end,
+							phy_bsbuf_start, 0);
+				else
+					ret = enc_readbs_ring_buffer(handle, enc->cmdl,
+							virt_bsbuf_start, virt_bsbuf_end,
+							phy_bsbuf_start, STREAM_READ_SIZE);
 				if (ret < 0) {
 					goto err2;
 				}
@@ -684,8 +690,13 @@ encoder_start(struct encode *enc)
 				ret = vpu_SWReset(handle, 0);
 				return -1;
 			}
+			if (vpu_WaitForInt(200) == 0)
+				is_waited_int = 1;
 			loop_id ++;
 		}
+
+		if (!is_waited_int)
+			vpu_WaitForInt(200);
 
 		gettimeofday(&tenc_end, NULL);
 		sec = tenc_end.tv_sec - tenc_begin.tv_sec;
@@ -699,6 +710,11 @@ encoder_start(struct encode *enc)
 		tenc_time += (sec * 1000000) + usec;
 
 		ret = vpu_EncGetOutputInfo(handle, &outinfo);
+
+		usleep(0);
+
+		dprintf(3, "frame_id %d\n", (int)frame_id);
+
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("vpu_EncGetOutputInfo failed Err code: %d\n",
 									ret);
