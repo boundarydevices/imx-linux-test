@@ -376,7 +376,7 @@ int do_txrx_test(int fd)
 	}
 
 shutdown:
-
+	usleep(1000);
 	ret = ioctl(fd, MLB_CHAN_SHUTDOWN);
 	if (ret) {
 		printf("Failed to shutdown async channel\n");
