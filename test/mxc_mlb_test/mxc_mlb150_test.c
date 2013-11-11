@@ -291,6 +291,15 @@ int do_txrx_test(int fd)
 		return -1;
 	}
 
+	if (0 == t_case) {
+		ret = ioctl(fd, MLB_IRQ_DISABLE);
+		if (ret) {
+			printf("Failed to disable the IRQ\n");
+			return -1;
+		}
+	}
+
+
 	if (blocked) {
 		while (1) {
 			ret = read(fd, buf, 2048);
@@ -377,6 +386,15 @@ int do_txrx_test(int fd)
 
 shutdown:
 	usleep(1000);
+
+	if (0 == t_case) {
+		ret = ioctl(fd, MLB_IRQ_ENABLE);
+		if (ret) {
+			printf("Failed to enalbe the IRQ\n");
+			return -1;
+		}
+	}
+
 	ret = ioctl(fd, MLB_CHAN_SHUTDOWN);
 	if (ret) {
 		printf("Failed to shutdown async channel\n");
