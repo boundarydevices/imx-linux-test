@@ -1,8 +1,6 @@
 # list of platforms which did not want this test case
 EXCLUDE_LIST:=
 
-CC :=$(CROSS_COMPILE)gcc
-LD :=$(CROSS_COMPILE)gcc
 LINK ?=$(CROSS_COMPILE)gcc
 STRIP ?=$(CROSS_COMPILE)strip
 
