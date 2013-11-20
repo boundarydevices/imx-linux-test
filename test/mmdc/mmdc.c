@@ -115,7 +115,7 @@ void get_mmdc_profiling_results(pMMDC_t mmdc, MMDC_PROFILE_RES_t *results)
 		results->data_load  	= 0;
 		results->access_utilization	= 0;
 		results->avg_write_burstsize = 0;
-		 results->avg_read_burstsize = 0;
+		results->avg_read_burstsize = 0;
 	}
 }
 void print_mmdc_profiling_results(MMDC_PROFILE_RES_t results, MMDC_RES_TYPE_t print_type, int time)
@@ -146,9 +146,14 @@ void print_mmdc_profiling_results(MMDC_PROFILE_RES_t results, MMDC_RES_TYPE_t pr
 
 		printf("\r\n");
 	}
-	printf("Utilization: %u%%\n",results.utilization);
-	printf("Bus Load: %u%%\n",results.data_load);
-	printf("Bytes Access: %u\n\n",results.access_utilization);
+	if((results.utilization > 100) || (results.data_load > 100))
+	{
+		printf("Warning:Counter overflow!!!Record time too long!!!\n");
+	} else	{
+		printf("Utilization: %u%%\n",results.utilization);
+		printf("Overall Bus Load: %u%%\n",results.data_load);
+		printf("Bytes Access: %u\n\n",results.access_utilization);
+	}
 }
 
 static int get_system_rev(void)
