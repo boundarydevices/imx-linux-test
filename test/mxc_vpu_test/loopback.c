@@ -38,6 +38,7 @@ decode(void)
 	DecParam decparam = {0};
 	DecOutputInfo outinfo = {0};
 	struct vpu_display *disp = dec->disp;
+	struct v4l_specific_data *v4l_rsd = (struct v4l_specific_data *)disp->render_specific_data;
 	RetCode ret;
 	int loop_id = 0, rot_stride = 0;
 
@@ -130,7 +131,7 @@ decode(void)
 			err_msg("vpu_DecClrDispFlag failed Error code"
 			     " %d\n", ret);
 	}
-	disp_clr_index = disp->buf.index;
+	disp_clr_index = v4l_rsd->buf.index;
 
 	if (dec->cmdl->format == STD_MJPG) {
 		rotid++;
