@@ -38,7 +38,7 @@
 #define V4L2_MXC_ROTATE_90_RIGHT_HFLIP          6
 #define V4L2_MXC_ROTATE_90_LEFT                 7
 
-static __inline int queue_size(struct ipu_queue * q)
+static __inline int queue_size(struct buf_queue * q)
 {
         if (q->tail >= q->head)
                 return (q->tail - q->head);
@@ -46,7 +46,7 @@ static __inline int queue_size(struct ipu_queue * q)
                 return ((q->tail + QUEUE_SIZE) - q->head);
 }
 
-static __inline int queue_buf(struct ipu_queue * q, int idx)
+static __inline int queue_buf(struct buf_queue * q, int idx)
 {
         if (((q->tail + 1) % QUEUE_SIZE) == q->head)
                 return -1;      /* queue full */
@@ -55,7 +55,7 @@ static __inline int queue_buf(struct ipu_queue * q, int idx)
         return 0;
 }
 
-static __inline int dequeue_buf(struct ipu_queue * q)
+static __inline int dequeue_buf(struct buf_queue * q)
 {
         int ret;
         if (q->tail == q->head)
@@ -65,7 +65,7 @@ static __inline int dequeue_buf(struct ipu_queue * q)
         return ret;
 }
 
-static __inline int peek_next_buf(struct ipu_queue * q)
+static __inline int peek_next_buf(struct buf_queue * q)
 {
         if (q->tail == q->head)
                 return -1;      /* queue empty */
@@ -169,11 +169,11 @@ void v4l_disp_loop_thread(void *arg)
 			err_msg("VIDIOC_DQBUF failed\n");
 			error_status = 1;
 		}
-		/* Clear the flag after showing */
-		ret = vpu_DecClrDispFlag(dec->handle, buffer.index);
+		queue_buf(&(disp->released_q), buffer.index);
 
 		pthread_mutex_lock(&v4l_mutex);
 		disp->queued_count--;
+		disp->dequeued_count++;
 		pthread_mutex_unlock(&v4l_mutex);
 		sem_post(&disp->avaiable_decoding_frame);
 	}
@@ -450,16 +450,19 @@ void v4l_free_bufs(int n, struct vpu_display *disp)
 {
 	int i;
 	struct v4l_buf *buf;
+	struct v4l_specific_data *v4l_rsd = (struct v4l_specific_data *)disp->render_specific_data;
+
 	for (i = 0; i < n; i++) {
-		if (disp->buffers[i] != NULL) {
-			buf = disp->buffers[i];
+		if (v4l_rsd->buffers[i] != NULL) {
+			buf = v4l_rsd->buffers[i];
 			if (buf->start > 0)
 				munmap(buf->start, buf->length);
 
 			free(buf);
-			disp->buffers[i] = NULL;
+			v4l_rsd->buffers[i] = NULL;
 		}
 	}
+	free(v4l_rsd);
 }
 
 static int
@@ -512,6 +515,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	struct v4l2_mxc_offset off = {0};
 	struct v4l2_rect icrop = {0};
 	struct vpu_display *disp;
+	struct v4l_specific_data *v4l_rsd;
 	int fd_fb;
 	char *tv_mode, *test_mode;
 	char motion_mode = dec->cmdl->vdi_motion;
@@ -827,6 +831,9 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		goto err;
 	}
 
+	v4l_rsd = calloc(1, sizeof(struct v4l_specific_data));
+	disp->render_specific_data = (void *)v4l_rsd;
+
 	for (i = 0; i < nframes; i++) {
 		struct v4l2_buffer buffer = {0};
 		struct v4l_buf *buf;
@@ -837,7 +844,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 			goto err;
 		}
 
-		disp->buffers[i] = buf;
+		v4l_rsd->buffers[i] = buf;
 
 		buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		buffer.memory = V4L2_MEMORY_MMAP;
@@ -894,12 +901,13 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 
 	if (vpu_v4l_performance_test) {
 		dec->disp = disp;
+		disp->released_q.tail = disp->released_q.head = 0;
 		sem_init(&disp->avaiable_decoding_frame, 0,
 			    dec->regfbcount - dec->minfbcount);
 		sem_init(&disp->avaiable_dequeue_frame, 0, 0);
 		pthread_mutex_init(&v4l_mutex, NULL);
 		/* start v4l disp loop thread */
-		pthread_create(&(disp->v4l_disp_loop_thread), NULL,
+		pthread_create(&(disp->disp_loop_thread), NULL,
 				    (void *)v4l_disp_loop_thread, (void *)dec);
 	}
 
@@ -917,7 +925,7 @@ void v4l_display_close(struct vpu_display *disp)
 	if (disp) {
 		if (vpu_v4l_performance_test) {
 			quitflag = 1;
-			pthread_join(disp->v4l_disp_loop_thread, NULL);
+			pthread_join(disp->disp_loop_thread, NULL);
 			sem_destroy(&disp->avaiable_decoding_frame);
 			sem_destroy(&disp->avaiable_dequeue_frame);
 		}
@@ -929,22 +937,53 @@ void v4l_display_close(struct vpu_display *disp)
 	}
 }
 
-int v4l_put_data(struct decode *dec, int index, int field, int fps)
+int v4l_get_buf(struct decode *dec)
 {
-	struct timeval tv;
+	int index = -1;
 	struct timespec ts;
-	int err, type, threshold;
-	struct v4l2_format fmt = {0};
 	struct vpu_display *disp;
 
 	disp = dec->disp;
+	/* Block here to wait avaiable_decoding_frame */
+	if (vpu_v4l_performance_test) {
+		do {
+			clock_gettime(CLOCK_REALTIME, &ts);
+			ts.tv_nsec +=100000000; // 100ms
+			if (ts.tv_nsec >= 1000000000)
+			{
+				ts.tv_sec += ts.tv_nsec / 1000000000;
+				ts.tv_nsec %= 1000000000;
+			}
+		} while ((sem_timedwait(&disp->avaiable_decoding_frame,
+			    &ts) != 0) && !quitflag);
+	}
 
-	disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	disp->buf.memory = V4L2_MEMORY_MMAP;
+	if (disp->dequeued_count > 0) {
+		index = dequeue_buf(&(disp->released_q));
+		pthread_mutex_lock(&v4l_mutex);
+		disp->dequeued_count--;
+		pthread_mutex_unlock(&v4l_mutex);
+	}
+	return index;
+}
+
+int v4l_put_data(struct decode *dec, int index, int field, int fps)
+{
+	struct timeval tv;
+	int err, type, threshold;
+	struct v4l2_format fmt = {0};
+	struct vpu_display *disp;
+	struct v4l_specific_data *v4l_rsd;
+
+	disp = dec->disp;
+	v4l_rsd = (struct v4l_specific_data *)disp->render_specific_data;
+
+	v4l_rsd->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+	v4l_rsd->buf.memory = V4L2_MEMORY_MMAP;
 
 	/* query buffer info */
-	disp->buf.index = index;
-	err = ioctl(disp->fd, VIDIOC_QUERYBUF, &disp->buf);
+	v4l_rsd->buf.index = index;
+	err = ioctl(disp->fd, VIDIOC_QUERYBUF, &v4l_rsd->buf);
 	if (err < 0) {
 		err_msg("VIDIOC_QUERYBUF failed\n");
 		goto err;
@@ -952,8 +991,8 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 
 	if (disp->ncount == 0) {
 		gettimeofday(&tv, 0);
-		disp->buf.timestamp.tv_sec = tv.tv_sec;
-		disp->buf.timestamp.tv_usec = tv.tv_usec;
+		v4l_rsd->buf.timestamp.tv_sec = tv.tv_sec;
+		v4l_rsd->buf.timestamp.tv_usec = tv.tv_usec;
 
 		disp->sec = tv.tv_sec;
 		disp->usec = tv.tv_usec;
@@ -967,19 +1006,19 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 				disp->usec -= 1000000;
 			}
 
-			disp->buf.timestamp.tv_sec = disp->sec;
-			disp->buf.timestamp.tv_usec = disp->usec;
+			v4l_rsd->buf.timestamp.tv_sec = disp->sec;
+			v4l_rsd->buf.timestamp.tv_usec = disp->usec;
 		} else {
 			gettimeofday(&tv, 0);
-			disp->buf.timestamp.tv_sec = tv.tv_sec;
-			disp->buf.timestamp.tv_usec = tv.tv_usec;
+			v4l_rsd->buf.timestamp.tv_sec = tv.tv_sec;
+			v4l_rsd->buf.timestamp.tv_usec = tv.tv_usec;
 		}
 	}
 
-	disp->buf.index = index;
-	disp->buf.field = field;
+	v4l_rsd->buf.index = index;
+	v4l_rsd->buf.field = field;
 
-	err = ioctl(disp->fd, VIDIOC_QBUF, &disp->buf);
+	err = ioctl(disp->fd, VIDIOC_QBUF, &v4l_rsd->buf);
 	if (err < 0) {
 		err_msg("VIDIOC_QBUF failed\n");
 		goto err;
@@ -994,10 +1033,10 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 		disp->queued_count++;
 
 	if (disp->ncount == 1) {
-		if ((disp->buf.field == V4L2_FIELD_TOP) ||
-		    (disp->buf.field == V4L2_FIELD_BOTTOM) ||
-		    (disp->buf.field == V4L2_FIELD_INTERLACED_TB) ||
-		    (disp->buf.field == V4L2_FIELD_INTERLACED_BT)) {
+		if ((v4l_rsd->buf.field == V4L2_FIELD_TOP) ||
+		    (v4l_rsd->buf.field == V4L2_FIELD_BOTTOM) ||
+		    (v4l_rsd->buf.field == V4L2_FIELD_INTERLACED_TB) ||
+		    (v4l_rsd->buf.field == V4L2_FIELD_INTERLACED_BT)) {
 			/* For interlace feature */
 			fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 			err = ioctl(disp->fd, VIDIOC_G_FMT, &fmt);
@@ -1005,8 +1044,8 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 				err_msg("VIDIOC_G_FMT failed\n");
 				goto err;
 			}
-			if ((disp->buf.field == V4L2_FIELD_TOP) ||
-			    (disp->buf.field == V4L2_FIELD_BOTTOM))
+			if ((v4l_rsd->buf.field == V4L2_FIELD_TOP) ||
+			    (v4l_rsd->buf.field == V4L2_FIELD_BOTTOM))
 				fmt.fmt.pix.field = V4L2_FIELD_ALTERNATE;
 			else
 				fmt.fmt.pix.field = field;
@@ -1035,9 +1074,9 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 		if (vpu_v4l_performance_test) {
 			sem_post(&disp->avaiable_dequeue_frame);
 		} else {
-			disp->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-			disp->buf.memory = V4L2_MEMORY_MMAP;
-			err = ioctl(disp->fd, VIDIOC_DQBUF, &disp->buf);
+			v4l_rsd->buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+			v4l_rsd->buf.memory = V4L2_MEMORY_MMAP;
+			err = ioctl(disp->fd, VIDIOC_DQBUF, &v4l_rsd->buf);
 			if (err < 0) {
 				err_msg("VIDIOC_DQBUF failed\n");
 				goto err;
@@ -1046,21 +1085,7 @@ int v4l_put_data(struct decode *dec, int index, int field, int fps)
 		}
 	}
 	else
-		disp->buf.index = -1;
-
-	/* Block here to wait avaiable_decoding_frame */
-	if (vpu_v4l_performance_test) {
-		do {
-			clock_gettime(CLOCK_REALTIME, &ts);
-			ts.tv_nsec +=100000000; // 100ms
-			if (ts.tv_nsec >= 1000000000)
-			{
-				ts.tv_sec += ts.tv_nsec / 1000000000;
-				ts.tv_nsec %= 1000000000;
-			}
-		} while ((sem_timedwait(&disp->avaiable_decoding_frame,
-			    &ts) != 0) && !quitflag);
-	}
+		v4l_rsd->buf.index = -1;
 
 	return 0;
 
