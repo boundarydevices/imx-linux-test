@@ -955,6 +955,7 @@ decoder_start(struct decode *dec)
 	struct frame_buf **pfbpool = dec->pfbpool;
 	struct frame_buf *pfb = NULL;
 	struct vpu_display *disp = dec->disp;
+	struct v4l_specific_data *v4l_rsd;
 	int err = 0, eos = 0, fill_end_bs = 0, decodefinish = 0;
 	struct timeval tdec_begin,tdec_end, total_start, total_end;
 	RetCode ret;
@@ -970,6 +971,7 @@ decoder_start(struct decode *dec)
 	int tiled2LinearEnable = dec->tiled2LinearEnable;
 	char *delay_ms, *endptr;
 	int mjpgReadChunk = 0;
+	int index;
 
 	if (((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU))
 			&& (dec->cmdl->ipu_rot_en))
@@ -1140,6 +1142,8 @@ decoder_start(struct decode *dec)
 					return -1;
 				}
 			}
+			decparam.mjpegScaleDownRatioWidth = dec->mjpegScaleDownRatioWidth;
+			decparam.mjpegScaleDownRatioHeight = dec->mjpegScaleDownRatioHeight;
 		}
 
 		gettimeofday(&tdec_begin, NULL);
@@ -1476,9 +1480,10 @@ decoder_start(struct decode *dec)
 			actual_display_index = outinfo.indexFrameDisplay;
 
 		if ((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU)) {
+			v4l_rsd = (struct v4l_specific_data *)disp->render_specific_data;
 			if (deblock_en) {
 				deblock_fb->bufY =
-					disp->buffers[disp->buf.index]->offset;
+					v4l_rsd->buffers[v4l_rsd->buf.index]->offset;
 				deblock_fb->bufCb = deblock_fb->bufY + img_size;
 				deblock_fb->bufCr = deblock_fb->bufCb +
 							(img_size >> 2);
@@ -1506,6 +1511,14 @@ decoder_start(struct decode *dec)
 							err_msg("vpu_DecClrDispFlag failed Error code"
 								" %d\n", err);
 					}
+				} else {
+					index = v4l_get_buf(dec);
+					if (index >= 0) {
+						err = vpu_DecClrDispFlag(handle, index);
+						if (err)
+							err_msg("vpu_DecClrDispFlag failed Error code"
+									" %d\n", err);
+					}
 				}
 
 				if (dec->cmdl->format == STD_MJPG) {
@@ -1513,8 +1526,8 @@ decoder_start(struct decode *dec)
 					rotid %= dec->regfbcount;
 				} else if (rot_en || dering_en || tiled2LinearEnable) {
 					disp_clr_index = outinfo.indexFrameDisplay;
-					if (disp->buf.index != -1)
-						rotid = disp->buf.index; /* de-queued buffer as next rotation buffer */
+					if (v4l_rsd->buf.index != -1)
+						rotid = v4l_rsd->buf.index; /* de-queued buffer as next rotation buffer */
 					else {
 						rotid++;
 						rotid = (rotid - dec->regfbcount) % dec->extrafb;
@@ -1522,7 +1535,7 @@ decoder_start(struct decode *dec)
 					}
 				}
 				else
-					disp_clr_index = disp->buf.index;
+					disp_clr_index = v4l_rsd->buf.index;
 			}
 		} else {
 			if (rot_en) {
@@ -1694,6 +1707,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 	FrameBuffer *fb;
 	struct frame_buf **pfbpool;
 	struct vpu_display *disp = NULL;
+	struct v4l_specific_data *v4l_rsd;
 	int stride, divX, divY;
 	vpu_mem_desc *mvcol_md = NULL;
 	Rect rotCrop;
@@ -1814,6 +1828,16 @@ decoder_allocate_framebuffer(struct decode *dec)
 			goto err;
 		}
 
+#ifndef _FSL_VTS_
+		/* Not set fps when doing performance test default */
+		if ((dec->cmdl->fps == 0) && !vpu_v4l_performance_test)
+			dec->cmdl->fps = 30;
+#endif
+
+		info_msg("Display fps will be %d\n", dec->cmdl->fps);
+
+		v4l_rsd = (struct v4l_specific_data *)disp->render_specific_data;
+
 		divX = (dec->mjpg_fmt == MODE420 || dec->mjpg_fmt == MODE422) ? 2 : 1;
 		divY = (dec->mjpg_fmt == MODE420 || dec->mjpg_fmt == MODE224) ? 2 : 1;
 
@@ -1830,7 +1854,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 
 				if (dec->cmdl->mapType == LINEAR_FRAME_MAP) {
 					if (dst_scheme == PATH_V4L2)
-						fb[i].bufY = disp->buffers[i]->offset;
+						fb[i].bufY = v4l_rsd->buffers[i]->offset;
 					else
 						fb[i].bufY = disp->ipu_bufs[i].ipu_paddr;
 					fb[i].bufCb = fb[i].bufY + img_size;
@@ -1839,7 +1863,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 				else if ((dec->cmdl->mapType == TILED_FRAME_MB_RASTER_MAP)
 						||(dec->cmdl->mapType == TILED_FIELD_MB_RASTER_MAP)){
 					if (dst_scheme == PATH_V4L2)
-						tiled_framebuf_base(&fb[i], disp->buffers[i]->offset,
+						tiled_framebuf_base(&fb[i], v4l_rsd->buffers[i]->offset,
 							dec->stride, dec->picheight, dec->cmdl->mapType);
 					else {
 						fb[i].bufY = disp->ipu_bufs[i].ipu_paddr;
@@ -1955,6 +1979,7 @@ decoder_parse(struct decode *dec)
 	int align, profile, level, extended_fbcount;
 	RetCode ret;
 	char *count;
+	int origPicWidth, origPicHeight;
 
 	/*
 	 * If userData report is enabled, buffer and comamnd need to be set
@@ -2179,7 +2204,15 @@ decoder_parse(struct decode *dec)
 		dec->regfbcount = dec->minfbcount + extended_fbcount;
 	dprintf(4, "minfb %d, extfb %d\n", dec->minfbcount, extended_fbcount);
 
-	dec->picwidth = ((initinfo.picWidth + 15) & ~15);
+	if (cpu_is_mx6x() && (dec->cmdl->format == STD_MJPG)) {
+		origPicWidth = initinfo.picWidth >> dec->mjpegScaleDownRatioWidth;
+		origPicHeight = initinfo.picHeight >> dec->mjpegScaleDownRatioHeight;
+	} else {
+		origPicWidth = initinfo.picWidth;
+		origPicHeight = initinfo.picHeight;
+	}
+
+	dec->picwidth = ((origPicWidth + 15) & ~15);
 
 	align = 16;
 	if ((dec->cmdl->format == STD_MPEG2 ||
@@ -2188,7 +2221,7 @@ decoder_parse(struct decode *dec)
 	    dec->cmdl->format == STD_VP8) && initinfo.interlace == 1)
 		align = 32;
 
-	dec->picheight = ((initinfo.picHeight + align - 1) & ~(align - 1));
+	dec->picheight = ((origPicHeight + align - 1) & ~(align - 1));
 
 #ifdef COMBINED_VIDEO_SUPPORT
 	/* Following lines are sample code to support resolution change
@@ -2217,16 +2250,16 @@ decoder_parse(struct decode *dec)
 	 */
 
 	/* Add non-h264 crop support, assume left=top=0 */
-	if ((dec->picwidth > initinfo.picWidth ||
-		dec->picheight > initinfo.picHeight) &&
+	if ((dec->picwidth > origPicWidth ||
+		dec->picheight > origPicHeight) &&
 		(!initinfo.picCropRect.left &&
 		!initinfo.picCropRect.top &&
 		!initinfo.picCropRect.right &&
 		!initinfo.picCropRect.bottom)) {
 		initinfo.picCropRect.left = 0;
 		initinfo.picCropRect.top = 0;
-		initinfo.picCropRect.right = initinfo.picWidth;
-		initinfo.picCropRect.bottom = initinfo.picHeight;
+		initinfo.picCropRect.right = origPicWidth;
+		initinfo.picCropRect.bottom = origPicHeight;
 	}
 
 	info_msg("CROP left/top/right/bottom %lu %lu %lu %lu\n",
@@ -2258,8 +2291,6 @@ decoder_parse(struct decode *dec)
 		if (!dec->mvInfo.addr)
 			err_msg("malloc_error\n");
 	}
-
-	info_msg("Display fps will be %d\n", dec->cmdl->fps);
 
 	return 0;
 }
@@ -2403,6 +2434,8 @@ decode_test(void *arg)
 	dec->mvInfo.enable = 0;
 	dec->frameBufStat.enable = 0;
 	dec->mjpgLineBufferMode = 0;
+	dec->mjpegScaleDownRatioWidth = 0;  /* 0,1,2,3 */
+	dec->mjpegScaleDownRatioHeight = 0; /* 0,1,2,3 */
 
 	dec->cmdl = cmdl;
 
@@ -2463,12 +2496,6 @@ decode_test(void *arg)
 		}
 	}
 	cmdl->complete = 0;
-
-#ifndef _FSL_VTS_
-	/* Not set fps when doing performance test default */
-        if ((dec->cmdl->fps == 0) && !vpu_v4l_performance_test)
-                dec->cmdl->fps = 30;
-#endif
 
 	/* parse the bitstream */
 	ret = decoder_parse(dec);
