@@ -84,7 +84,7 @@ void SaveEncMvInfo(u8 *mvParaBuf, int size, int MbNumX, int EncNum)
 			fprintf(fpEncMvInfo, "MbAddr[%4d:For ]: Avail[0] Mv[%5d:%5d]\n", i, 0, 0);
 		} else {
 			mvX = (mvX & 0x7FFF) | ((mvX << 1) & 0x8000);
-			fprintf(fpEncMvInfo, "MbAddr[%4d:For ]: Avail[1] Mv[%5d:%5d]\n", i, mvX, mvY);
+			fprintf(fpEncMvInfo, "MbAddr[%4d:For ]: Avail[1] Mv[%5d:%5d]\n", i, (s16)mvX, (s16)mvY);
 		}
 		mvParaBuf += 4;
 	}
@@ -271,7 +271,9 @@ put_mp4header:
 				return -1;
 		}
 	} else if (enc->cmdl->format == STD_AVC) {
-		if (!enc->mvc_extension || !enc->mvc_paraset_refresh_en) {
+		if (enc->mvc_extension && enc->mvc_paraset_refresh_en)
+			goto skip_put_header;
+		{
 			enchdr_param.headerType = SPS_RBSP;
 			vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
 			if (enc->ringBufferEnable == 0 ) {
@@ -328,6 +330,7 @@ put_mp4header:
 		}
 	}
 
+skip_put_header:
 	return 0;
 }
 
@@ -823,6 +826,7 @@ encoder_configure(struct encode *enc)
 	EncInitialInfo initinfo = {0};
 	RetCode ret;
 	MirrorDirection mirror;
+	int intraRefreshMode = 1;
 
 	if (cpu_is_mx27()) {
 		search_pa.searchRamAddr = 0xFFFF4C00;
@@ -841,6 +845,8 @@ encoder_configure(struct encode *enc)
 		mirror = enc->cmdl->mirror;
 		vpu_EncGiveCommand(handle, SET_MIRROR_DIRECTION, &mirror);
 	}
+
+	vpu_EncGiveCommand(handle, ENC_SET_INTRA_REFRESH_MODE, &intraRefreshMode);
 
 	ret = vpu_EncGetInitialInfo(handle, &initinfo);
 	if (ret != RETCODE_SUCCESS) {
