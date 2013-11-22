@@ -580,6 +580,7 @@ transcode_start(struct decode *dec, struct encode *enc)
 	int dering_en = dec->cmdl->dering_en;
 	FrameBuffer *fb = dec->fb;
 	struct vpu_display *disp = dec->disp;
+	struct v4l_specific_data *v4l_rsd = (struct v4l_specific_data *)disp->render_specific_data;
 	int err = 0, eos = 0, fill_end_bs = 0, decodefinish = 0;
 	struct timeval tdec_begin,tdec_end, total_start, total_end;
 	RetCode ret = 0;
@@ -792,7 +793,7 @@ transcode_start(struct decode *dec, struct encode *enc)
 		enc_img_size = enc->src_picwidth * enc->src_picheight;
 		if (outinfo.indexFrameDisplay >= 0) {
 			enc_fb[src_fbid].myIndex = enc->src_fbid;
-			enc_fb[src_fbid].bufY = disp->buffers[outinfo.indexFrameDisplay]->offset;
+			enc_fb[src_fbid].bufY = v4l_rsd->buffers[outinfo.indexFrameDisplay]->offset;
 			enc_fb[src_fbid].bufCb = enc_fb[src_fbid].bufY + enc_img_size;
 			enc_fb[src_fbid].bufCr = enc_fb[src_fbid].bufCb + (enc_img_size >> 2);
 			enc_fb[src_fbid].strideY = enc->src_picwidth;
@@ -1000,13 +1001,13 @@ transcode_start(struct decode *dec, struct encode *enc)
 					rotid %= dec->regfbcount;
 				} else if (rot_en || dering_en || tiled2LinearEnable) {
 					disp_clr_index = outinfo.indexFrameDisplay;
-					if (disp->buf.index != -1)
-						rotid = disp->buf.index; /* de-queued buffer as next rotation buffer */
+					if (v4l_rsd->buf.index != -1)
+						rotid = v4l_rsd->buf.index; /* de-queued buffer as next rotation buffer */
 					else
 						rotid++;
 				}
 				else
-					disp_clr_index = disp->buf.index;
+					disp_clr_index = v4l_rsd->buf.index;
 			}
 		} else {
 			if (rot_en) {
@@ -1236,10 +1237,6 @@ transcode_test(void *arg)
 		err_msg("dec_fill_bsbuffer failed\n");
 		goto err1;
 	}
-
-	/* Not set fps when doing performance test default */
-        if (dec->cmdl->fps == 0)
-                dec->cmdl->fps = 30;
 
 	/* parse the bitstream */
 	ret = decoder_parse(dec);

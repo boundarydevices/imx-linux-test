@@ -108,7 +108,7 @@ v4l_capture_setup(struct encode *enc, int width, int height, int fps)
 	struct v4l2_crop crop;
 	struct v4l2_dbg_chip_ident chip;
 	struct v4l2_frmsizeenum fsize;
-	int i, g_input = 1, mode = 0;
+	int i, g_input = 1, mode = 0; /* Use different g_input (0 or 1) for each camera */
 
 	if (cap_fd > 0) {
 		warn_msg("capture device already opened\n");

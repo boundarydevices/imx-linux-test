@@ -48,9 +48,15 @@ extern int vpu_test_dbg_level;
 #undef u32
 #undef u16
 #undef u8
+#undef s32
+#undef s16
+#undef s8
 typedef unsigned long u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
+typedef long s32;
+typedef short s16;
+typedef char s8;
 
 #define SZ_4K			(4 * 1024)
 
@@ -108,7 +114,12 @@ struct v4l_buf {
 
 #define MAX_BUF_NUM	32
 #define QUEUE_SIZE	(MAX_BUF_NUM + 1)
-struct ipu_queue {
+struct v4l_specific_data {
+	struct v4l2_buffer buf;
+	struct v4l_buf *buffers[MAX_BUF_NUM];
+};
+
+struct buf_queue {
 	int list[MAX_BUF_NUM + 1];
 	int head;
 	int tail;
@@ -126,24 +137,29 @@ struct vpu_display {
 	int ncount;
 	time_t sec;
 	int queued_count;
+	int dequeued_count;
 	suseconds_t usec;
-	struct v4l2_buffer buf;
-	struct v4l_buf *buffers[MAX_BUF_NUM];
-
 	int frame_size;
-	ipu_lib_handle_t ipu_handle;
-	ipu_lib_input_param_t input;
-	ipu_lib_output_param_t output;
-	pthread_t ipu_disp_loop_thread;
-	pthread_t v4l_disp_loop_thread;
+
+	pthread_t disp_loop_thread;
 
 	sem_t avaiable_decoding_frame;
 	sem_t avaiable_dequeue_frame;
 
-	struct ipu_queue ipu_q;
-	struct ipu_buf ipu_bufs[MAX_BUF_NUM];
+	struct buf_queue display_q;
+	struct buf_queue released_q;
 	int stopping;
 	int deinterlaced;
+	void *render_specific_data;
+
+	/* ipu lib renderer */
+	ipu_lib_handle_t ipu_handle;
+	ipu_lib_input_param_t input;
+	ipu_lib_output_param_t output;
+	pthread_t ipu_disp_loop_thread;
+	struct buf_queue ipu_q;
+	struct ipu_buf ipu_bufs[MAX_BUF_NUM];
+
 };
 
 struct capture_testbuffer {
@@ -245,6 +261,8 @@ struct decode {
 	int mjpg_sc_state; /* start code FSM state */
 	int mjpg_eof;
 	u8 *mjpg_cached_bsbuf;
+	int mjpegScaleDownRatioWidth;
+	int mjpegScaleDownRatioHeight;
 
 	struct frame_buf fbpool[MAX_BUF_NUM];
 };
@@ -294,6 +312,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode);
 
 struct vpu_display *v4l_display_open(struct decode *dec, int nframes,
 					struct rot rotation, Rect rotCrop);
+int v4l_get_buf(struct decode *dec);
 int v4l_put_data(struct decode *dec, int index, int field, int fps);
 void v4l_display_close(struct vpu_display *disp);
 struct frame_buf *framebuf_alloc(struct frame_buf *fb, int stdMode, int format, int strideY, int height, int mvCol);
