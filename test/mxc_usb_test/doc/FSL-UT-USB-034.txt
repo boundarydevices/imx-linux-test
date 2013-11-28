@@ -26,15 +26,15 @@ use another i.mx board as USB device.
 2. Boot up both boards, and connect two boards with USB cable.
 
 3. At device side, do below commands:
-modprobe g_zero autoresume=3000 interval=1 endms=5000
+modprobe g_zero autoresume=3  max_autoresume=8 autoresume_interval_ms=1
 we can use the above three parameters to control device send resume signal time.
-Autoresume is the minimum number of milliseconds before sending resume signal,
+Autoresume is the minimum number of seconds before sending resume signal,
 and the time before sending resume signal will automatically increase according
-to interval value, the endms is the max number of milliseconds before sending
-resume signal. When autoresume is 0 or not be set,the test device auto remote
-wakeup function will be disabled.
+to interval value, the endms is the max number of seconds before sending
+resume signal.
 
 4. At host side, first do below command:
+echo enabled > /sys/bus/platform/devices/20c9000.usbphy/power/wakeup
 echo enabled > /sys/bus/platform/devices/2184000.usb/power/wakeup
 echo enabled > /sys/bus/platform/devices/ci_hdrc.0/power/wakeup
 echo enabled > /sys/bus/usb/devices/usb2/power/wakeup
