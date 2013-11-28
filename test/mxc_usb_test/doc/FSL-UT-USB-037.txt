@@ -1,0 +1,41 @@
+FSL-UT-USB-037-Auto-Suspend-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Auto suspend and remote wakeup test at system ative mode
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+1. Put device as well as controller to low power mode
+echo auto > /sys/bus/usb/devices/1-1/power/control
+
+2. dump clk
+cat /sys/kernel/debug/clk/clk_summary | grep usb
+
+3. For hid device, press key to wakeup device
+cat /sys/kernel/debug/clk/clk_summary | grep usb
+
+NOTE: Since the auto-suspend timeout is small, please check
+clk count just finish pressing the key
+
+| Expected Result |
+The USB device as well as controller can enters low power mode
+and be waken up successfully
+
+|====================================================================
+
+<<<
