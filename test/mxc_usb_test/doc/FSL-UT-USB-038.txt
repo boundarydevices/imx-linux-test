@@ -1,0 +1,50 @@
+FSL-UT-USB-038-Auto-Suspend-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Using /sys to suspend and auto-resume USB device
+
+| Automated |
+Yes
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+test_auto_suspend.sh 1-1
+---------------------------------------------------------------
+counter=1
+while [ 1 ]
+do
+
+echo auto > /sys/bus/usb/devices/$1/power/control
+
+sleep 1
+echo on > /sys/bus/usb/devices/$1/power/control
+
+counter=$(( $counter + 1 ))
+sleep 1
+echo "the counter is $counter"
+
+sleep 1
+
+done
+---------------------------------------------------------------
+
+| Expected Result |
+The USB device as well as controller can enters low power mode
+and be waken up successfully, besides, there is no reset/timeout
+/disconnect occur during the test
+
+|====================================================================
+
+<<<

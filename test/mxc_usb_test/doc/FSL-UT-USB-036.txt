@@ -32,12 +32,14 @@ N/A
 counter=1
 while [ 1 ]
 do
-modprobe ci13xxx_imx
+modprobe phy_mxs_usb
+modprobe ci_hdrc_imx
 modprobe g_mass_storage file=/dev/mmcblk0p1 removable=1 (or other gadget)
 sleep 1
 sleep $( expr $RANDOM % 6)
-rmmod g_mass_storage
-modprobe -r ci13xxx_imx
+modprobe -r g_mass_storage
+modprobe -r ci_hdrc_imx
+modprobe -r phy_mxs_usb
 sleep 2
 counter=$(( $counter + 1 ))
 echo "the counter is $counter"
