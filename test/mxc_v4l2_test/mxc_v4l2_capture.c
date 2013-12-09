@@ -42,7 +42,6 @@ extern "C"{
 #include <sys/mman.h>
 #include <string.h>
 #include <malloc.h>
-//#include <linux/mxc_v4l2.h>
 
 struct v4l2_mxc_offset {
 	uint32_t u_offset;
@@ -72,6 +71,7 @@ int g_cap_fmt = V4L2_PIX_FMT_YUV420;
 int g_camera_framerate = 30;
 int g_extra_pixel = 0;
 int g_capture_mode = 0;
+int g_usb_camera = 0;
 char g_v4l_device[100] = "/dev/video0";
 
 static void print_pixelformat(char *prefix, int val)
@@ -161,12 +161,15 @@ int v4l_capture_setup(void)
                 return 0;
         }
 
-	if (ioctl(fd_v4l, VIDIOC_DBG_G_CHIP_IDENT, &chip))
-	{
-                printf("VIDIOC_DBG_G_CHIP_IDENT failed.\n");
-                return -1;
+	/* UVC driver does not support this ioctl */
+	if (g_usb_camera != 1) {
+		if (ioctl(fd_v4l, VIDIOC_DBG_G_CHIP_IDENT, &chip))
+		{
+			printf("VIDIOC_DBG_G_CHIP_IDENT failed.\n");
+			return -1;
+		}
+		printf("sensor chip is %s\n", chip.match.name);
 	}
-	printf("sensor chip is %s\n", chip.match.name);
 
 	printf("sensor supported frame size:\n");
 	fsize.index = 0;
@@ -199,22 +202,25 @@ int v4l_capture_setup(void)
 		return -1;
 	}
 
-	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (ioctl(fd_v4l, VIDIOC_G_CROP, &crop) < 0)
-	{
-		printf("VIDIOC_G_CROP failed\n");
-		return -1;
-	}
+	/* UVC driver does not implement CROP */
+	if (g_usb_camera != 1) {
+		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (ioctl(fd_v4l, VIDIOC_G_CROP, &crop) < 0)
+		{
+			printf("VIDIOC_G_CROP failed\n");
+			return -1;
+		}
 
-	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	crop.c.width = g_in_width;
-	crop.c.height = g_in_height;
-	crop.c.top = g_top;
-	crop.c.left = g_left;
-	if (ioctl(fd_v4l, VIDIOC_S_CROP, &crop) < 0)
-	{
-		printf("VIDIOC_S_CROP failed\n");
-		return -1;
+		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		crop.c.width = g_in_width;
+		crop.c.height = g_in_height;
+		crop.c.top = g_top;
+		crop.c.left = g_left;
+		if (ioctl(fd_v4l, VIDIOC_S_CROP, &crop) < 0)
+		{
+			printf("VIDIOC_S_CROP failed\n");
+			return -1;
+		}
 	}
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -243,14 +249,19 @@ int v4l_capture_setup(void)
                 return 0;
         }
 
-        // Set rotation
-        ctrl.id = V4L2_CID_PRIVATE_BASE + 0;
-        ctrl.value = g_rotate;
-        if (ioctl(fd_v4l, VIDIOC_S_CTRL, &ctrl) < 0)
-        {
-                printf("set ctrl failed\n");
-                return 0;
-        }
+        /*
+	 * Set rotation
+	 * It's mxc-specific definition for rotation.
+	 */
+	if (g_usb_camera != 1) {
+		ctrl.id = V4L2_CID_PRIVATE_BASE + 0;
+		ctrl.value = g_rotate;
+		if (ioctl(fd_v4l, VIDIOC_S_CTRL, &ctrl) < 0)
+		{
+			printf("set ctrl failed\n");
+			return 0;
+		}
+	}
 
         struct v4l2_requestbuffers req;
         memset(&req, 0, sizeof (req));
@@ -294,7 +305,7 @@ int v4l_capture_test(int fd_v4l, const char * file)
                 printf("\t Width = %d", fmt.fmt.pix.width);
                 printf("\t Height = %d", fmt.fmt.pix.height);
                 printf("\t Image size = %d\n", fmt.fmt.pix.sizeimage);
-                printf("\t pixelformat = %d\n", fmt.fmt.pix.pixelformat);
+		print_pixelformat(0, fmt.fmt.pix.pixelformat);
         }
 
         if (start_capturing(fd_v4l) < 0)
@@ -412,6 +423,9 @@ int process_cmdline(int argc, char **argv)
                                 return -1;
                         }
                 }
+		else if (strcmp(argv[i], "-uvc") == 0) {
+			g_usb_camera = 1;
+		}
                 else if (strcmp(argv[i], "-help") == 0) {
                         printf("MXC Video4Linux capture Device Test\n\n" \
 			       "Syntax: mxc_v4l2_capture.out -iw <capture croped width>\n" \
@@ -425,6 +439,7 @@ int process_cmdline(int argc, char **argv)
                                " -e <destination cropping: extra pixels> \n" \
 			       " -m <capture mode, 0-low resolution, 1-high resolution> \n" \
 			       " -d <camera select, /dev/video0, /dev/video1> \n" \
+			       " -uvc (for USB camera test) \n" \
 			       " -f <format> -fr <frame rate, 30fps by default> \n");
                         return -1;
                }
