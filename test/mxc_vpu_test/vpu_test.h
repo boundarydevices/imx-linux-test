@@ -24,6 +24,10 @@
 #include "mxc_ipu_hl_lib.h"
 #include "vpu_lib.h"
 #include "vpu_io.h"
+#ifdef BUILD_FOR_ANDROID
+#include "g2d.h"
+#endif
+
 
 #define COMMON_INIT
 
@@ -160,6 +164,11 @@ struct vpu_display {
 	struct buf_queue ipu_q;
 	struct ipu_buf ipu_bufs[MAX_BUF_NUM];
 
+#ifdef BUILD_FOR_ANDROID
+	struct buf_queue g2d_buf_q;
+	struct g2d_buf *g2d_bufs[MAX_BUF_NUM];
+	pthread_t g2d_disp_loop_thread;
+#endif
 };
 
 struct capture_testbuffer {
@@ -324,6 +333,13 @@ struct vpu_display *
 ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect cropRect);
 void ipu_display_close(struct vpu_display *disp);
 int ipu_put_data(struct vpu_display *disp, int index, int field, int fps);
+
+#ifdef BUILD_FOR_ANDROID
+struct vpu_display *
+android_display_open(struct decode *dec, int nframes, struct rot rotation, Rect cropRect);
+void android_display_close(struct vpu_display *disp);
+int android_put_data(struct vpu_display *disp, int index, int field, int fps);
+#endif
 
 int v4l_start_capturing(void);
 void v4l_stop_capturing(void);
