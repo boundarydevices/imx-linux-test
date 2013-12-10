@@ -1490,15 +1490,23 @@ decoder_start(struct decode *dec)
 			}
 
 			if (!cpu_is_mx27())
+#ifdef BUILD_FOR_ANDROID
+				err = android_put_data(disp, actual_display_index, dec->decoded_field[actual_display_index], dec->cmdl->fps);
+#else
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
 					err = v4l_put_data(dec, actual_display_index, dec->decoded_field[actual_display_index], dec->cmdl->fps);
 				else
 					err = ipu_put_data(disp, actual_display_index, dec->decoded_field[actual_display_index], dec->cmdl->fps);
+#endif
 			else
+#ifdef BUILD_FOR_ANDROID
+				err = android_put_data(disp, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
+#else
 				if (dec->cmdl->dst_scheme == PATH_V4L2)
 					err = v4l_put_data(dec, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
 				else
 					err = ipu_put_data(disp, actual_display_index, V4L2_FIELD_ANY, dec->cmdl->fps);
+#endif
 
 			if (err)
 				return -1;
@@ -1610,10 +1618,14 @@ decoder_free_framebuffer(struct decode *dec)
 
 	if ((dec->cmdl->dst_scheme == PATH_V4L2) || (dec->cmdl->dst_scheme == PATH_IPU)) {
 		if (dec->disp) {
+#ifdef BUILD_FOR_ANDROID
+			android_display_close(dec->disp);
+#else
 			if (dec->cmdl->dst_scheme == PATH_V4L2)
 				v4l_display_close(dec->disp);
 			else
 				ipu_display_close(dec->disp);
+#endif
 			dec->disp = NULL;
 		}
 
@@ -1814,15 +1826,23 @@ decoder_allocate_framebuffer(struct decode *dec)
 		}
 		if (rotation.rot_en) {
 			swapCropRect(dec, &rotCrop);
+#ifdef BUILD_FOR_ANDROID
+			disp = android_display_open(dec, totalfb, rotation, rotCrop);
+#else
 			if (dst_scheme == PATH_V4L2)
 				disp = v4l_display_open(dec, totalfb, rotation, rotCrop);
 			else
 				disp = ipu_display_open(dec, totalfb, rotation, rotCrop);
+#endif
 		} else
+#ifdef BUILD_FOR_ANDROID
+			disp = android_display_open(dec, totalfb, rotation, dec->picCropRect);
+#else
 			if (dst_scheme == PATH_V4L2)
 				disp = v4l_display_open(dec, totalfb, rotation, dec->picCropRect);
 			else
 				disp = ipu_display_open(dec, totalfb, rotation, dec->picCropRect);
+#endif
 
 		if (disp == NULL) {
 			goto err;
@@ -1853,15 +1873,24 @@ decoder_allocate_framebuffer(struct decode *dec)
 				fb[i].myIndex = i;
 
 				if (dec->cmdl->mapType == LINEAR_FRAME_MAP) {
+#ifdef BUILD_FOR_ANDROID
+					fb[i].bufY = disp->g2d_bufs[i]->buf_paddr;
+#else
 					if (dst_scheme == PATH_V4L2)
 						fb[i].bufY = v4l_rsd->buffers[i]->offset;
 					else
 						fb[i].bufY = disp->ipu_bufs[i].ipu_paddr;
+#endif
 					fb[i].bufCb = fb[i].bufY + img_size;
 					fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
 				}
 				else if ((dec->cmdl->mapType == TILED_FRAME_MB_RASTER_MAP)
 						||(dec->cmdl->mapType == TILED_FIELD_MB_RASTER_MAP)){
+#ifdef BUILD_FOR_ANDROID
+					fb[i].bufY = disp->g2d_bufs[i]->buf_paddr;
+					fb[i].bufCb = fb[i].bufY + img_size;
+					fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
+#else
 					if (dst_scheme == PATH_V4L2)
 						tiled_framebuf_base(&fb[i], v4l_rsd->buffers[i]->offset,
 							dec->stride, dec->picheight, dec->cmdl->mapType);
@@ -1870,6 +1899,7 @@ decoder_allocate_framebuffer(struct decode *dec)
 						fb[i].bufCb = fb[i].bufY + img_size;
 						fb[i].bufCr = fb[i].bufCb + (img_size / divX / divY);
 					}
+#endif
 				} else {
 					err_msg("undefined mapType = %d\n", dec->cmdl->mapType);
 					goto err1;
@@ -1923,6 +1953,10 @@ decoder_allocate_framebuffer(struct decode *dec)
 	return 0;
 
 err1:
+#ifdef BUILD_FOR_ANDROID
+	android_display_close(disp);
+	dec->disp = NULL;
+#else
 	if (dst_scheme == PATH_V4L2) {
 		v4l_display_close(disp);
 		dec->disp = NULL;
@@ -1930,7 +1964,7 @@ err1:
 		ipu_display_close(disp);
 		dec->disp = NULL;
 	}
-
+#endif
 err:
 	if (((dst_scheme != PATH_V4L2) && (dst_scheme != PATH_IPU))||
 	   ((dst_scheme == PATH_V4L2) && deblock_en )) {
