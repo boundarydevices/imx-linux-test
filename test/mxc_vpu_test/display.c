@@ -38,40 +38,6 @@
 #define V4L2_MXC_ROTATE_90_RIGHT_HFLIP          6
 #define V4L2_MXC_ROTATE_90_LEFT                 7
 
-static __inline int queue_size(struct buf_queue * q)
-{
-        if (q->tail >= q->head)
-                return (q->tail - q->head);
-        else
-                return ((q->tail + QUEUE_SIZE) - q->head);
-}
-
-static __inline int queue_buf(struct buf_queue * q, int idx)
-{
-        if (((q->tail + 1) % QUEUE_SIZE) == q->head)
-                return -1;      /* queue full */
-        q->list[q->tail] = idx;
-        q->tail = (q->tail + 1) % QUEUE_SIZE;
-        return 0;
-}
-
-static __inline int dequeue_buf(struct buf_queue * q)
-{
-        int ret;
-        if (q->tail == q->head)
-                return -1;      /* queue empty */
-        ret = q->list[q->head];
-        q->head = (q->head + 1) % QUEUE_SIZE;
-        return ret;
-}
-
-static __inline int peek_next_buf(struct buf_queue * q)
-{
-        if (q->tail == q->head)
-                return -1;      /* queue empty */
-        return q->list[q->head];
-}
-
 int ipu_memory_alloc(int size, int cnt, dma_addr_t paddr[], void * vaddr[], int fd_fb_alloc)
 {
 	int i, ret = 0;
@@ -381,7 +347,7 @@ ipu_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	disp->output.width = disp_width;
 	disp->output.height = disp_height;
 	disp->output.fmt = V4L2_PIX_FMT_UYVY;
-	if (rotation.ipu_rot_en && (rotation.rot_angle != 0)) {
+	if (rotation.ext_rot_en && (rotation.rot_angle != 0)) {
 		if (rotation.rot_angle == 90)
 			disp->output.rot = IPU_ROTATE_90_RIGHT;
 		else if (rotation.rot_angle == 180)
@@ -544,8 +510,8 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		}
 		close(fd_fb);
 	}
-	dprintf(3, "rot_en:%d; rot_angle:%d; ipu_rot_en:%d\n", rotation.rot_en,
-			rotation.rot_angle, rotation.ipu_rot_en);
+	dprintf(3, "rot_en:%d; rot_angle:%d; ext_rot_en:%d\n", rotation.rot_en,
+			rotation.rot_angle, rotation.ext_rot_en);
 
 	tv_mode = getenv("VPU_TV_MODE");
 
@@ -626,7 +592,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		cropcap.bounds.width, cropcap.bounds.height,
 		cropcap.defrect.width, cropcap.defrect.height);
 
-	if (rotation.ipu_rot_en == 0) {
+	if (rotation.ext_rot_en == 0) {
 		ratio = calculate_ratio(width, height, cropcap.bounds.width,
 				cropcap.bounds.height);
 		dprintf(3, "VPU rot: ratio = %d\n", ratio);
@@ -683,7 +649,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		struct v4l2_control ctrl;
 
 		ctrl.id = V4L2_CID_ROTATE;
-		if (rotation.ipu_rot_en)
+		if (rotation.ext_rot_en)
 			ctrl.value = rotation.rot_angle;
 		else
 			ctrl.value = 0;
@@ -692,7 +658,7 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 			err_msg("VIDIOC_S_CTRL failed\n");
 			goto err;
 		}
-	} else if (rotation.ipu_rot_en && (rotation.rot_angle != 0)) {
+	} else if (rotation.ext_rot_en && (rotation.rot_angle != 0)) {
 		/* Set rotation via V4L2 i/f */
 		struct v4l2_control ctrl;
 		ctrl.id = V4L2_CID_PRIVATE_BASE;
