@@ -19,7 +19,8 @@ LOCAL_CFLAGS += -DBUILD_FOR_ANDROID
 LOCAL_C_INCLUDES += $(LOCAL_PATH) \
 	external/linux-lib/ipu \
 	external/linux-lib/vpu \
-	device/fsl-proprietary/include
+	device/fsl-proprietary/include \
+	hardware/imx/mx6/libgralloc_wrapper
 
 LOCAL_SHARED_LIBRARIES := libutils libc libvpu libipu libg2d libgui libui libhardware
 
