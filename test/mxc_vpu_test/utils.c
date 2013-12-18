@@ -732,14 +732,14 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 		return 0;
 	}
 
-	str = strstr(buf, "ipu_rot");
+	str = strstr(buf, "ext_rot");
 	if (str != NULL) {
 		str = index(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
-				cmd->ipu_rot_en = strtol(str, NULL, 10);
-				if (cmd->ipu_rot_en == 1)
+				cmd->ext_rot_en = strtol(str, NULL, 10);
+				if (cmd->ext_rot_en == 1)
 					cmd->rot_en = 0;
 			}
 		}
