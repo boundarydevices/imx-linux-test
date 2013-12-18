@@ -40,6 +40,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	If no output is specified, default is LCD \n "\
 	       "  -x <output method> output mode V4l2(0) or IPU lib(1) \n "\
 	       "        0 - V4L2 of FG device, 1 - IPU lib path \n "\
+	       "        2 - G2D (available for Android only) \n "\
 	       "        Other value means V4L2 with other video node\n "\
 	       "        16 - /dev/video16, 17 - /dev/video17, and so on \n "\
 	       "  -f <format> 0 - MPEG4, 1 - H.263, 2 - H.264, 3 - VC1, \n "\
@@ -62,7 +63,7 @@ char *usage = "Usage: ./mxc_vpu_test.out -D \"<decode options>\" "\
 	       "	default rotation is disabled (0) \n "\
 	       "  -m <mirror direction> 0, 1, 2, 3 \n "\
 	       "	default no mirroring (0) \n "\
-	       "  -u <ipu rotation> Using IPU rotation for display - 1. IPU rotation \n "\
+	       "  -u <ipu/gpu rotation> Using IPU/GPU rotation for display - 1. IPU/GPU rotation \n "\
 	       "        default is VPU rotation(0).\n "\
 	       "        This flag is effective when 'r' flag is specified.\n "\
 	       "  -v <vdi motion> set IPU VDI motion algorithm l, m, h.\n "\
@@ -343,6 +344,13 @@ parse_args(int argc, char *argv[], int i)
 				if (val == 1) {
 					input_arg[i].cmd.dst_scheme = PATH_IPU;
 					info_msg("Display through IPU LIB\n");
+					if (cpu_is_mx6x())
+						warn_msg("IPU lib is OBSOLETE, please try other renderer\n");
+#ifdef BUILD_FOR_ANDROID
+				} else if (val == 2) {
+					input_arg[i].cmd.dst_scheme = PATH_G2D;
+					info_msg("Display through G2D\n");
+#endif
 				} else {
 					input_arg[i].cmd.dst_scheme = PATH_V4L2;
 					info_msg("Display through V4L2\n");
@@ -373,9 +381,9 @@ parse_args(int argc, char *argv[], int i)
 				input_arg[i].cmd.rot_en = 1;
 			break;
 		case 'u':
-			input_arg[i].cmd.ipu_rot_en = atoi(optarg);
-			/* ipu rotation will override vpu rotation */
-			if (input_arg[i].cmd.ipu_rot_en)
+			input_arg[i].cmd.ext_rot_en = atoi(optarg);
+			/* ipu/gpu rotation will override vpu rotation */
+			if (input_arg[i].cmd.ext_rot_en)
 				input_arg[i].cmd.rot_en = 0;
 			break;
 		case 'f':
