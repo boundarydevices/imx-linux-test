@@ -79,6 +79,9 @@ typedef char s8;
 #define PATH_FILE	1
 #define PATH_NET	2
 #define PATH_IPU	3
+#ifdef BUILD_FOR_ANDROID
+#define PATH_G2D	4
+#endif
 
 /* Test operations */
 #define ENCODE		1
@@ -123,6 +126,12 @@ struct v4l_specific_data {
 	struct v4l_buf *buffers[MAX_BUF_NUM];
 };
 
+#ifdef BUILD_FOR_ANDROID
+struct g2d_specific_data {
+	struct g2d_buf *g2d_bufs[MAX_BUF_NUM];
+};
+#endif
+
 struct buf_queue {
 	int list[MAX_BUF_NUM + 1];
 	int head;
@@ -163,12 +172,6 @@ struct vpu_display {
 	pthread_t ipu_disp_loop_thread;
 	struct buf_queue ipu_q;
 	struct ipu_buf ipu_bufs[MAX_BUF_NUM];
-
-#ifdef BUILD_FOR_ANDROID
-	struct buf_queue g2d_buf_q;
-	struct g2d_buf *g2d_bufs[MAX_BUF_NUM];
-	pthread_t g2d_disp_loop_thread;
-#endif
 };
 
 struct capture_testbuffer {
@@ -178,7 +181,7 @@ struct capture_testbuffer {
 
 struct rot {
 	int rot_en;
-	int ipu_rot_en;
+	int ext_rot_en;
 	int rot_angle;
 };
 
@@ -201,8 +204,8 @@ struct cmd_line {
 	int format;
 	int deblock_en;
 	int dering_en;
-	int rot_en;
-	int ipu_rot_en;
+	int rot_en; /* Use VPU to do rotation */
+	int ext_rot_en; /* Use IPU/GPU to do rotation */
 	int rot_angle;
 	int mirror;
 	int chromaInterleave;
@@ -338,6 +341,7 @@ int ipu_put_data(struct vpu_display *disp, int index, int field, int fps);
 struct vpu_display *
 android_display_open(struct decode *dec, int nframes, struct rot rotation, Rect cropRect);
 void android_display_close(struct vpu_display *disp);
+int android_get_buf(struct decode *dec);
 int android_put_data(struct vpu_display *disp, int index, int field, int fps);
 #endif
 
@@ -370,4 +374,39 @@ static inline int is_mx6x_mjpg(int fmt)
         else
                 return false;
 }
+
+static __inline int queue_size(struct buf_queue * q)
+{
+        if (q->tail >= q->head)
+                return (q->tail - q->head);
+        else
+                return ((q->tail + QUEUE_SIZE) - q->head);
+}
+
+static __inline int queue_buf(struct buf_queue * q, int idx)
+{
+        if (((q->tail + 1) % QUEUE_SIZE) == q->head)
+                return -1;      /* queue full */
+        q->list[q->tail] = idx;
+        q->tail = (q->tail + 1) % QUEUE_SIZE;
+        return 0;
+}
+
+static __inline int dequeue_buf(struct buf_queue * q)
+{
+        int ret;
+        if (q->tail == q->head)
+                return -1;      /* queue empty */
+        ret = q->list[q->head];
+        q->head = (q->head + 1) % QUEUE_SIZE;
+        return ret;
+}
+
+static __inline int peek_next_buf(struct buf_queue * q)
+{
+        if (q->tail == q->head)
+                return -1;      /* queue empty */
+        return q->list[q->head];
+}
+
 #endif

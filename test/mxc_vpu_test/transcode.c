@@ -624,9 +624,6 @@ transcode_start(struct decode *dec, struct encode *enc)
 		return -1;
 	}
 
-	if ((dec->cmdl->dst_scheme == PATH_V4L2) && (dec->cmdl->ipu_rot_en))
-		rot_en = 0;
-
 	if (rot_en || dering_en || tiled2LinearEnable) {
 		rotid = dec->regfbcount;
 	}
