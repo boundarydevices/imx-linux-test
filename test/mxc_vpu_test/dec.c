@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc.
+ * Copyright 2004-2014 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -1224,8 +1224,9 @@ decoder_start(struct decode *dec)
 			outinfo.indexFrameDisplay = rotid;
 		}
 
-		dprintf(3, "frame_id %d, decidx %d, disidx %d, rotid %d\n", (int)frame_id,
-				outinfo.indexFrameDecoded, outinfo.indexFrameDisplay, rotid);
+		dprintf(3, "frame_id %d, decidx %d, disidx %d, rotid %d, decodingSuccess 0x%x\n",
+				(int)frame_id, outinfo.indexFrameDecoded, outinfo.indexFrameDisplay,
+				rotid, outinfo.decodingSuccess);
 		if (ret != RETCODE_SUCCESS) {
 			err_msg("vpu_DecGetOutputInfo failed Err code is %d\n"
 				"\tframe_id = %d\n", ret, (int)frame_id);
@@ -1266,6 +1267,9 @@ decoder_start(struct decode *dec)
 			else
 				continue;
 		}
+
+		if (cpu_is_mx6x() && (outinfo.decodingSuccess & 0x100000))
+			warn_msg("sequence parameters have been changed\n");
 
 		if (outinfo.notSufficientPsBuffer) {
 			err_msg("PS Buffer overflow\n");
