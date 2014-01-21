@@ -1,7 +1,7 @@
 /*
  * pxp_test - test application for the PxP DMA ENGINE lib
  *
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -255,9 +255,11 @@ int pxp_test(void *arg)
 		dbg(DBG_ERR, "pxp request channel err\n");
 		goto err0;
 	}
-	dbg(DBG_INFO, "requested chan_id %d\n", pxp_chan.chan_id);
+	dbg(DBG_INFO, "requested chan handle %d\n", pxp_chan.handle);
 
 	/* Prepare the channel parameters */
+	memset(&mem, 0, sizeof(struct pxp_mem_desc));
+	memset(&mem_o, 0, sizeof(struct pxp_mem_desc));
 	mem.size = WIDTH * HEIGHT * 2;
 	mem_o.size = WIDTH * HEIGHT;
 
