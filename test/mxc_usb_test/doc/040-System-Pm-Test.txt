@@ -1,0 +1,55 @@
+FSL-UT-USB-040-system-pm-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB Disk connected during system suspend/resume
+
+| Automated |
+Yes
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+NOTICE: please check clkcount often using dump-clocks.sh
+
+Pre-test operation
+echo enabled > /sys/class/tty/ttymxc0/power/wakeup
+mkdir -p /mnt/nfs
+mount -t nfs -o nolock 10.192.244.6:/rootfs/wb /mnt/nfs
+cd /mnt/nfs/vte_mx63_hf/
+source ./manual_test
+
+1.1: With USB Disk connected and copy data during suspend/resume
+plug in usb disk
+bonnie\+\+ -d /media/sda1 -u 0:0 -s 256 -r 128 & sleep 3; i=0; while [ $i -lt 200 ]; do echo "$i iterations of suspend/resume has finished"; rtc_testapp_6 -T 50; let i=i+1; sleep 5; done
+i=0; while [ $i -lt 20000 ]; do echo "$i iterations of suspend/resume has finished"; rtc_testapp_6 -T 2; let i=i+1; sleep 2; done
+
+1.2: With USB mouse connected and do suspend/resume
+plug in usb mouse
+i=0; while [ $i -lt 20000 ]; do echo "$i iterations of suspend/resume has finished"; rtc_testapp_6 -T 2; let i=i+1; sleep 2; done
+
+1.3: With USB HUB connected and do suspend/resume
+plug in usb HUB
+i=0; while [ $i -lt 20000 ]; do echo "$i iterations of suspend/resume has finished"; rtc_testapp_6 -T 2; let i=i+1; sleep 2; done
+
+1.4: With USB HUB (u-disk connected) connected and do suspend/resume
+plug in usb HUB (with u-disk connected)
+i=0; while [ $i -lt 20000 ]; do echo "$i iterations of suspend/resume has finished"; rtc_testapp_6 -T 2; let i=i+1; sleep 2; done
+
+| Expected Result |
+Without error during suspend/resume, and the usb functions are still ok
+after finishing suspend/resume test.
+
+|====================================================================
+
+<<<

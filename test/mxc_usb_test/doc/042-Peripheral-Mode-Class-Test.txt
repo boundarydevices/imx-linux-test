@@ -1,0 +1,74 @@
+FSL-UT-USB-042-USB-Peripheral-Mode-Class-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test kinds of class at peripheral mode
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+Since the mass storage has been tested during the role switch
+test, so it only tests g_ether and g_serial
+
+1: Test g_serial
+1.1 modprobe g_serial
+connect usb cable between board and pc, and you will see below message
+"g_serial gadget: high-speed config #2: CDC ACM config"
+
+1.2 Test data transfer from device to host
+run "cat /dev/ttyACM0" at host side
+run "echo "Happy New Year" > /dev/ttyGS0" at device side
+You should see "Happy New Year" at console of host side
+
+1.3 Test data transfer from host to device
+run "cat /dev/ttyACM0" at device side
+run "echo "Happy New Year" > /dev/ttyGS0" at host side
+You should see "Happy New Year" at console of device side
+
+2: Test g_ether
+2.1 modprobe g_ether qmult=10
+connect usb cable between board and pc, and you will see below message
+"g_ether gadget: high-speed config #1: CDC Ethernet (ECM)"
+
+2.2
+At device side:
+ifconfig usb0 10.0.0.2 up
+At host side:
+sudo ifconfig usb0 10.0.0.1 up
+
+At device side:
+ping 10.0.0.1, for ubuntu host, the ip for usb0 will lost
+after several seconds, re ifconfig usb0 at host side
+
+After ping can run more than 10 seconds, stop it
+
+2.3 Using iperf to do ether test
+
+At host side:
+iperf -s -i 5 &
+At device side:
+iperf -t 1000000 -c  10.0.0.1 -d -i 5 &
+
+2.4
+The connect should be there during the overnight test
+The speed is about 120Mbps.
+
+| Expected Result |
+There should be no error during the transfer
+
+|====================================================================
+
+<<<
