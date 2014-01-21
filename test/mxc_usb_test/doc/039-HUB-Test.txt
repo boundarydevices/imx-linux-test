@@ -1,0 +1,68 @@
+FSL-UT-USB-039-HUB-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+USB Test with HUB Connected
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+NOTICE: please check clkcount often
+
+1.1: With USB Hub connected at OTG Port boots up
+1.1.1 The u-disk connected at HUB
+check clk refcount is 1
+plug out u-disk
+check clk refcount is 0
+plug out hub cable
+check clk refcount is 0
+plug out Micro-AB cable
+check clk refcount is 0
+
+
+1.1.2 Nothing is needed at HUB
+After booting up, and check if clock refcount is 0
+plug in usb mouse to see if works OK
+plug out usb mouse to see if clock refcount is 0
+plug out HUB to see if clock refcount is 0
+plug out Micro AB cable to see if clock refcount is 0
+
+1.2: Check u-disk connect/disconnect at hub
+Plug in HUB
+check clk refcount is 0
+plug in u-disk
+check clk refcount is 1
+plug out u-disk
+check clk refcount is 0
+re-do u-disk connect/disconnect 10 times, the u-disk needs to be
+recognized at every time.
+plug out Micro-AB cable with u-disk connected
+check clk refcount is 0
+
+1.3: With hub connected, do system suspend/resume
+u-disk is connected, do "echo mem > /sys/power/state"
+after resume, the u-disk should be existed.
+without u-disk connection, after system resume,
+the u-disk needs to be recognized after connection.
+
+1.4 Redo 1.1-1.3 with USB mouse
+
+| Expected Result |
+Without kernel dump, without clock mismatch
+
+|====================================================================
+
+<<<

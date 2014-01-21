@@ -1,0 +1,69 @@
+FSL-UT-USB-041-USB-Host-Class-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Unit test for usb class test
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+
+Mass storage and mouse has been tested at other tests.
+
+1. Test camera
+1.1: modprobe uvcvideo (if the module is not loaded automatically)
+
+1.2: Try to find video device
+Before the camera plug in:
+root@freescale ~$ ls /dev/video*
+/dev/video16  /dev/video17  /dev/video18  /dev/video19  /dev/video20
+
+After the camera plug in:
+root@freescale ~$ ls /dev/video*
+/dev/video    /dev/video16  /dev/video18  /dev/video20
+/dev/video0   /dev/video17  /dev/video19
+
+So the vedio device is /dev/video0
+
+1.3: Run unit test
+./unit_tests/mxc_v4l2_capture.out -uvc -f YUYV -d /dev/video0 -ow 320 -oh 240 -c 1000 test.yuv
+
+You can stop capture using CTRL+C, and use vooya to watch the capture.
+
+2. Test USB sound card
+2.1 modprobe snd_usb_audio (if it does not load automatically)
+
+2.2 root@imx6qdlsolo:~# aplay -l
+card 2: Pro [SB X-Fi Surround 5.1 Pro], device 0: USB Audio [USB Audio]
+Subdevices: 1/1
+Subdevice #0: subdevice #0
+card 2: Pro [SB X-Fi Surround 5.1 Pro], device 1: USB Audio [USB Audio #1]
+Subdevices: 1/1
+Subdevice #0: subdevice #0
+
+2.3 Play music
+cd $STREAM_PATH/alsa_stream_music
+aplay -Dhw:2 audio48k16S.wav (supported rate)
+aplay -D plug:hw:2,0 *.wav (non supported rate)
+
+2.4 Check the music is ok
+
+| Expected Result |
+No error during the operation
+
+|====================================================================
+
+<<<
