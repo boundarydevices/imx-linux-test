@@ -1,0 +1,85 @@
+FSL-UT-USB-044-USB-DR-MODE-Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[cols=">s,6a",frame="topbot",options="header"]
+|====================================================================
+|Name | Description
+
+| Summary |
+Test peripheral-only and host-only mode through dt file
+
+| Automated |
+No
+
+| Kernel Config Option |
+
+| Software Dependency |
+N/A
+
+| Non-default Hardware Configuration |
+N/A
+
+| Test Procedure |
+Change dts file to support it (eg: arch/arm/boot/dts/imx6qdl-sabreauto.dtsi)
+
+1. Test dr_mode = "host"
+1.1 Rebuild dtb
+# modprobe -r ci_hdrc_imx; modprobe -r phy_mxs_usb; modprobe phy_mxs_usb && modprobe ci_hdrc_imx
+try if peripheral function is ok, the g_serial should not be inserted.
+
+1.2 Hotplug test in low power status without host wakeup support
+# echo mem > /sys/power/state
+Plugin u-disk into Host/OTG port
+Resume system by POWER switch and the u-disk should be found
+For ARD, use console wakeup
+# echo mem > /sys/power/state
+Plugout u-disk from Host/OTG port
+Resume system by POWER switch and the u-disk detach disconnet should be noticed
+Repeat this step 3 times
+1.3 USB mouse remote wakeup test
+Connect USB mouse to Host/OTG port
+# low_power_usb.sh; echo mem > /sys/power/state
+Click USB mouse to wakeup system
+Repeat this step to verify system can suspend/resume again
+1.4 Connect/disconnect wakeup
+# low_power_usb.sh; echo mem > /sys/power/state
+Plugin or plug out USB device from Host/OTG,
+System should be wakeup
+5. Special for OTG port
+# echo mem > /sys/power/state
+Then only plugin a microAB to female A cable(without device) to OTG port
+The system should NOT be wakeup
+Resume board by POWER switch and
+# echo mem > /sys/power/state
+Connect OTG port to PC
+The system should NOT be wakeup
+
+2 Test dr_mode = "peripheral"
+2.1 boot from rebuilt kernel and dtb and usb mouse at the board
+# modprobe -r ci_hdrc_imx; modprobe -r phy_mxs_usb; modprobe phy_mxs_usb && modprobe ci_hdrc_imx
+The mouse should not be recognized.
+
+2. Test g_mass_storage module
+In board
+# dd if=/dev/zero of=/var/storage.img bs=1M count=64
+# mkfs.vfat /var/storage.img
+# modprobe g_mass_storage file=/var/storage.img removable=1
+In Host PC:
+# mkdir -p /mnt/flash
+# umount /mnt/flash
+# mount -t vfat /dev/sdxx /mnt/flash (sdxx is the partition exported by g_file_storage in target board whose size is near 64M)
+# bonnie++ -d /mnt/flash -u 0:0 -s 32 -r 16
+# dt of=/mnt/flash/test_file bs=4k limit=63m passes=20
+Above commands should pass
+In board:
+# modprobe -r g_mass_storage
+# modprobe -r ci_hdrc_imx; modprobe -r phy_mxs_usb
+Remove the USB cable from OTG port
+3. Repeat steps 1 & 2
+
+| Expected Result |
+There should be no error during the test
+
+|====================================================================
+
+<<<
