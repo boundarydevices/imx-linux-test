@@ -49,6 +49,7 @@ milliseconds later,the device will send resume signal to wake up host.
 re-enumeration happens.
 7. The host will enter suspended state again,and test case will repeat step
 5 and step 6.
+8. Do the same test with HUB connected.
 
 | Expected Result |
 See setp 5-7.

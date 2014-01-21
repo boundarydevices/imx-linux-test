@@ -45,7 +45,7 @@ fi
 NOTICE: get_scsi.sh is the test application at VTE, it will judge
 if the u-disk is existed or not.
 
-3. Plug u-disk at USB port
+3. Plug u-disk at USB port (Do another test with HUB connected)
 
 4. Power up the board
 
