@@ -290,6 +290,7 @@ int pxp_test(void *arg)
 
 	/* Configure the channel */
 	pxp_conf = malloc(sizeof (*pxp_conf));
+	memset(pxp_conf, 0, sizeof(*pxp_conf));
 	proc_data = &pxp_conf->proc_data;
 
 	/* Initialize non-channel-specific PxP parameters */
