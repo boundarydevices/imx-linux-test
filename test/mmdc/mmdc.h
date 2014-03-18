@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2013-2014 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -142,6 +142,7 @@ extern unsigned int system_rev;
 #define cpu_is_mx6q()		mxc_is_cpu(0x63)
 #define cpu_is_mx6dl()		mxc_is_cpu(0x61)
 #define cpu_is_mx6sl()		mxc_is_cpu(0x60)
+#define cpu_is_mx6sx()		mxc_is_cpu(0x62)
 #define mxc_is_cpu(part)        ((mxc_cpu() == (unsigned int)part) ? 1 : 0)
 #define mxc_cpu()               (system_rev >> 12)
 #define axi_ipu1                0x00070004
@@ -157,6 +158,13 @@ extern unsigned int system_rev;
 #define axi_openvg_6q           0x003F0022
 #define axi_openvg_6sl          0x001F0017
 #define axi_arm                 0x00060000
+#define axi_arm_6sx             0x000E0000
+#define axi_m4_6sx              0x000F0002
+#define axi_gpu3d_6sx           0x000F0005
+#define axi_pxp_6sx             0x043F0404
+#define axi_lcd1_6sl            0x0e870005
+#define axi_lcd1_6sx            0x043F0013
+#define axi_lcd2_6sx            0x043F0023
 #define axi_default             0x00000000
 
 #endif /*MMDC_H_*/
