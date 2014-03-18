@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2013-2014 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -221,6 +221,11 @@ static int get_system_rev(void)
 			system_rev= 0x60000;
 			ret = 0;
 			printf("i.MX6SL detected.\n");
+		}else if(strncmp(buf,"i.MX6SX",7)==0)
+		{
+			system_rev= 0x62000;
+			ret = 0;
+			printf("i.MX6SX detected.\n");
 		}
 	}
 	return ret;
@@ -233,8 +238,8 @@ void signalhandler(int signal)
 }
 void help(void)
 {
-	printf("======================MMDC v1.2===========================\n");
-	printf("Usage: mmdc [ARM:IPU1:IPU2:GPU2D:GPU2D1:GPU2D2:GPU3D:GPUVG:VPU:SUM] [...]\n");
+	printf("======================MMDC v1.3===========================\n");
+	printf("Usage: mmdc [ARM:DSP1:DSP2:GPU2D:GPU2D1:GPU2D2:GPU3D:GPUVG:VPU:M4:PXP:SUM] [...]\n");
 	printf("export MMDC_SLEEPTIME can be used to define profiling duration.1 by default means 1s\n");
 	printf("export MMDC_LOOPCOUNT can be used to define profiling times. 1 by default. -1 means infinite loop.\n");
 	printf("export MMDC_CUST_MADPCR1 can be used to customize madpcr1. Will ignore it if defined master\n");
@@ -297,12 +302,29 @@ int main(int argc, char **argv)
 			int j;
 			for(j=1; j<argc; j++)
 			{
-				if(strcmp(argv[j],"IPU1")==0){
-				  ((pMMDC_t)A)->madpcr1 = axi_ipu1;
-				  printf("MMDC IPU1 \n");
-				}else if((strcmp(argv[j], "IPU2")==0)&&(cpu_is_mx6q()==1)){
+				if(strcmp(argv[j],"DSP1")==0){
+					if(cpu_is_mx6sx()==1)
+						((pMMDC_t)A)->madpcr1 = axi_lcd1_6sx;
+					else if(cpu_is_mx6sl()==1)
+						((pMMDC_t)A)->madpcr1 = axi_lcd1_6sl;
+					else
+						((pMMDC_t)A)->madpcr1 = axi_ipu1;
+					printf("MMDC DSP1 \n");
+				}else if((strcmp(argv[j], "DSP2")==0)&&(cpu_is_mx6q()==1)){
 				  ((pMMDC_t)A)->madpcr1 = axi_ipu2_6q;
-				  printf("MMDC IPU2 \n");
+				  printf("MMDC DSP2 \n");
+				}else if((strcmp(argv[j], "DSP2")==0)&&(cpu_is_mx6sx()==1)){
+				  ((pMMDC_t)A)->madpcr1 = axi_lcd2_6sx;
+				  printf("MMDC DSP2 \n");
+				}else if((strcmp(argv[j], "M4")==0)&&(cpu_is_mx6sx()==1)){
+				  ((pMMDC_t)A)->madpcr1 = axi_m4_6sx;
+				  printf("MMDC M4 \n");
+				}else if((strcmp(argv[j], "PXP")==0)&&(cpu_is_mx6sx()==1)){
+				  ((pMMDC_t)A)->madpcr1 = axi_pxp_6sx;
+				  printf("MMDC M4 \n");
+				}else if((strcmp(argv[j], "GPU3D")==0)&&(cpu_is_mx6sx()==1)){
+				  ((pMMDC_t)A)->madpcr1 = axi_gpu3d_6sx;
+				  printf("MMDC GPU3D \n");
 				}else if((strcmp(argv[j], "GPU3D")==0)&&(cpu_is_mx6dl()==1)){
 				  ((pMMDC_t)A)->madpcr1 = axi_gpu3d_6dl;
 				  printf("MMDC GPU3D \n");
@@ -334,8 +356,11 @@ int main(int argc, char **argv)
 				   ((pMMDC_t)A)->madpcr1 = axi_openvg_6sl;
 				   printf("MMDC GPUVG \n");
 				}else if(strcmp(argv[j],"ARM")==0){
-				   ((pMMDC_t)A)->madpcr1 = axi_arm;
-				   printf("MMDC ARM \n");
+					if((cpu_is_mx6sx()==1))
+						((pMMDC_t)A)->madpcr1 = axi_arm_6sx;
+					else
+						((pMMDC_t)A)->madpcr1 = axi_arm;
+					printf("MMDC ARM \n");
 				}else if(strcmp(argv[j], "SUM")==0){
 				  ((pMMDC_t)A)->madpcr1 = axi_default;
 				  printf("MMDC SUM \n");
