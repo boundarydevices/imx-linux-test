@@ -16,7 +16,8 @@ OBJS = 	$(OBJDIR)/autorun-v4l2.sh \
 	$(OBJDIR)/mxc_v4l2_tvin.out
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(CSI_LIST)))
 OBJS += $(OBJDIR)/csi_v4l2_overlay.out \
-	$(OBJDIR)/csi_v4l2_capture.out
+	$(OBJDIR)/csi_v4l2_capture.out \
+	$(OBJDIR)/csi_v4l2_tvin.out
 else
 OBJS += $(OBJDIR)/mxc_v4l2_overlay.out \
 	$(OBJDIR)/mxc_v4l2_capture.out
