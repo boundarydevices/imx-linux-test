@@ -4,7 +4,8 @@ EXCLUDE_LIST:=
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = \
 	$(OBJDIR)/wdt_driver_test.out \
-	$(OBJDIR)/autorun-wdog.sh
+	$(OBJDIR)/autorun-wdog.sh \
+	$(OBJDIR)/dbg_monitor.sh
 
 else
 OBJS =
