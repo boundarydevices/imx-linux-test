@@ -198,6 +198,8 @@ static int find_video_device(void)
 		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
 			printf("Found v4l2 capture device %s.\n", v4l_device);
 			break;
+		} else {
+			close(fd_v4l);
 		}
 
 		i++;
