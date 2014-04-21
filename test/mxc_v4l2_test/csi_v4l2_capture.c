@@ -267,8 +267,8 @@ int v4l_capture_setup(void)
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.pixelformat = g_cap_fmt;
 	print_pixelformat("pixelformat (output by v4l)", fmt.fmt.pix.pixelformat);
-	fmt.fmt.pix.width = g_in_width;
-	fmt.fmt.pix.height = g_in_height;
+	fmt.fmt.pix.width = g_out_width;
+	fmt.fmt.pix.height = g_out_height;
 	if (ioctl(fd_v4l, VIDIOC_S_FMT, &fmt) < 0)
 	{
 		printf("set format failed\n");
@@ -285,18 +285,6 @@ int v4l_capture_setup(void)
 		printf("\t Image size = %d\n", fmt.fmt.pix.sizeimage);
 	}
 	g_frame_size = fmt.fmt.pix.sizeimage;
-
-	memset(&fmt, 0, sizeof(fmt));
-	fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
-	fmt.fmt.win.w.left = 0;
-	fmt.fmt.win.w.top = 0;
-	fmt.fmt.win.w.width = g_out_width;
-	fmt.fmt.win.w.height = g_out_height;
-	if (ioctl(fd_v4l, VIDIOC_S_FMT, &fmt) < 0)
-	{
-		printf("set format failed\n");
-		return 0;
-	}
 
 	memset(&crop, 0, sizeof(crop));
 	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
