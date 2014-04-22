@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc.
+ * Copyright 2004-2014 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -316,7 +316,9 @@ put_mp4header:
 		if (enc->qMatTable)
 			free(enc->qMatTable);
 		if (cpu_is_mx6x()) {
+			int enableSofStuffing = 1;
 			EncParamSet enchdr_param = {0};
+			vpu_EncGiveCommand(handle, ENC_ENABLE_SOF_STUFF, &enableSofStuffing);
 			enchdr_param.size = STREAM_BUF_SIZE;
 			enchdr_param.pParaSet = malloc(STREAM_BUF_SIZE);
 			if (enchdr_param.pParaSet) {
