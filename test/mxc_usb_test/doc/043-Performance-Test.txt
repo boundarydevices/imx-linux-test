@@ -49,9 +49,9 @@ iperf -t 1000000 -c  10.0.0.1 -d -i 5 &
 
 2 mass storage test
 2.1 block layer Read
-time -p dd if=/dev/sda2 of=/dev/null bs=4096 count=102400
+time -p dd if=/dev/sda2 of=/dev/null bs=4096 count=204800
 2.2 block layer write
-time -p dd if=/dev/zero of=/dev/sda2 bs=4096 count=102400
+time -p dd if=/dev/zero of=/dev/sda2 bs=4096 count=204800
 2.3 filesystem layer
 iozone -a -i 1 -i 0 -U /media/sda2 -s 4096m -f  /media/sda2/iozone.test -b /mnt/tmp/iozone_usb_result.xls
 

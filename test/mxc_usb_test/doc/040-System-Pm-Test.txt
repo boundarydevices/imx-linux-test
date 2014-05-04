@@ -31,7 +31,8 @@ source ./manual_test
 
 1.1: With USB Disk connected and copy data during suspend/resume
 plug in usb disk
-bonnie\+\+ -d /media/sda1 -u 0:0 -s 256 -r 128 & sleep 3; i=0; while [ $i -lt 200 ]; do echo "$i iterations of suspend/resume has finished"; rtc_testapp_6 -T 50; let i=i+1; sleep 5; done
+mount /dev/sda1 /media/sda1/
+bonnie\+\+ -d /media/sda1 -u 0:0 -s 256 -r 128 & sleep 3; i=0; while [ $i -lt 200 ]; do echo "$i iterations of suspend/resume has finished"; rtc_testapp_6 -T 50; let i=i+1; sleep 5; done;
 i=0; while [ $i -lt 20000 ]; do echo "$i iterations of suspend/resume has finished"; rtc_testapp_6 -T 2; let i=i+1; sleep 2; done
 
 1.2: With USB mouse connected and do suspend/resume

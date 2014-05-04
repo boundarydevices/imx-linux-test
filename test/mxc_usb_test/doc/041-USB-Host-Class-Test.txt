@@ -61,6 +61,13 @@ aplay -D plug:hw:2,0 *.wav (non supported rate)
 
 2.4 Check the music is ok
 
+
+3. Test USB Microphone (Need to borrow from test team)
+3.1 run aplay -l to know which record device for USB Microphone
+3.2 arecord -Dhw:1 -r 48000 -c 1 -f S16_LE -d 20 file_48.wav
+3.3 arecord -Dhw:1 -r 44100 -c 1 -f S16_LE -d 20 file_44.wav
+3.4 aplay -Dplughw:0 file_44.wav file_48.wav (with on board codec to check)
+
 | Expected Result |
 No error during the operation
 

@@ -54,7 +54,7 @@ Resume board by POWER switch and
 Connect OTG port to PC
 The system should NOT be wakeup
 
-2 Test Test peripheral-only driver
+2 Test peripheral-only driver
 2.1 boot from rebuilt kernel and connect usb mouse at the board
 # modprobe -r ci_hdrc_imx; modprobe -r phy_mxs_usb; modprobe phy_mxs_usb && modprobe ci_hdrc_imx
 The mouse should not be recognized.
@@ -76,6 +76,24 @@ In board:
 # modprobe -r ci_hdrc_imx; modprobe -r phy_mxs_usb
 Remove the USB cable from OTG port
 2.3 Repeat above steps
+
+2.4 Wakeup test
+the ID change should not wake up system
+2.4.1 dd if=/dev/zero of=/var/storage.img bs=1M count=64
+2.4.2 mkfs.vfat /var/storage.img
+2.4.3 modprobe g_mass_storage file=/var/storage.img removable=1
+2.4.4 Enable wakeup setting: usb_wakeup.sh
+
+#/bin/sh
+	for i in $(find /sys -name wakeup | grep usb)
+	do
+		echo enabled > $i
+		echo "echo enabled > $i"
+	done
+2.4.5 suspend system, echo mem > /sys/power/suspend
+2.4.6 plug in Micro-AB cable should not wakeup system
+2.4.7 wakeup system through serial port, nothing should be happened
+for usb otg port.
 
 | Expected Result |
 There should be no error during the test
