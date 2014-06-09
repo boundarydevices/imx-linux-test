@@ -5,7 +5,7 @@
 #****************************************************************************/
 
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX27ADS IMX51 IMX6Q IMX6S"
+EXCLUDE_LIST:="IMX27ADS IMX51 IMX6Q IMX6SL IMX6SX"
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = apitest rng_test move
