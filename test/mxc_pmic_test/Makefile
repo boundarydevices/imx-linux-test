@@ -1,5 +1,5 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX37_3STACK IMX35_3STACK IMX51 IMX6Q IMX6S"
+EXCLUDE_LIST:="IMX37_3STACK IMX35_3STACK IMX51 IMX6Q IMX6SL IMX6SX"
 
 LTP_DIR = ../
 LOADLIBES+= -L$(LTP_DIR)lib -lltp -lpthread -lm
