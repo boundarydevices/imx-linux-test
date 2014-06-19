@@ -28,4 +28,4 @@
 #    Length of block in bytes, image data file
 [Authenticate Data]
     Verification index = 2
-    Blocks = %ddr_addr% 0x0 %auth_len% "uImage-pad-ivt.bin"
+    Blocks = %ddr_addr% 0x0 %auth_len% "zImage-pad-ivt.bin"
