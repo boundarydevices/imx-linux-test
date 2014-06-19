@@ -9,14 +9,14 @@ File Description
 	SRK fuse later
 
 "u-boot/mk_secure_uboot"
-"uImage/mk_secure_uimage"
+"zImage/mk_secure_zimage"
 "templates/"
-	Automatic secure uboot and uImage generation scripts. These files
+	Automatic secure uboot and zImage generation scripts. These files
 	are used for dynamic authentication. It is more convinient and
 	adaptive comparing to the original static way.
 
 	Copy "u-boot/mk_secure_uboot" to "BLN_CST_MAIN_01.00.00/u-boot"
-	Copy "uImage/mk_secure_uimage" to "BLN_CST_MAIN_01.00.00/uImage"
+	Copy "zImage/mk_secure_zimage" to "BLN_CST_MAIN_01.00.00/zImage"
 	Copy "templates/" to "BLN_CST_MAIN_01.00.00"
 
 Secure Boot Genreation
@@ -30,12 +30,12 @@ For generating secure uboot
     . it is slightly differrent the script for V2009, where we should
       explicityly specify U-Boot DDR load address as a parameter
 
-For generating secure uImage
-    . copy "uImage" to "BLN_CST_MAIN_01.00.00/uImage"
-    . "./mk_secure_uimage 0x10800000"
-	- where 0x10800000 is the DDR location where uImage is
+For generating secure zImage
+    . copy "zImage" to "BLN_CST_MAIN_01.00.00/zImage"
+    . "./mk_secure_zimage 0x10800000"
+	- where 0x10800000 is the DDR location where zImage is
 	  copied to by UBoot, different from platform to platform
-    . uimage-signed-pad.bin will be generated. It is the uImage
+    . zimage-signed-pad.bin will be generated. It is the zImage
       with signature
 
 Image Layout
@@ -53,11 +53,11 @@ U-Boot
     |    PADDING        | /
     +-------------------+
 
-uImage
+zImage
 
     +-------------------+      DDR_START
     |                   |
-    |     uImage        |
+    |     zImage        |
     |                   |
     +-------------------+      DDR_START + UIMAGE_SIZE
     |     PADDING       |
@@ -71,12 +71,12 @@ uImage
 
 DDR Location Parameters
 ------------------------------------
-The DDR location parameter provided to "mk_secure_uimage" script is the
+The DDR location parameter provided to "mk_secure_zimage" script is the
 "CONFIG_LOADADDR" defined in include/configs/<plat_name>.h (default). And
 can be changed in u-boot command line by "setenv loadaddr=..." with valid
 physical address. The following are the default values
 
-	MX6Q/DL ARM2 Socket Board		MX6SL ARM2 Socket Board
+	MX6Q/DL ARM2 Socket Board		MX6SL/SX ARM2 Socket Board
 	-------------------------		-------------------------
 	0x10800000				0x80800000
 
