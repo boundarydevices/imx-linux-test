@@ -82,6 +82,9 @@ int g_rotation = 0;
 int g_loop = 0;
 int g_mem_type = V4L2_MEMORY_MMAP;
 int g_frame_size;
+char g_v4l_device[100] = "/dev/video0";
+char g_saved_filename[100] = "/1.yuv";
+int  g_saved_to_file = 0;
 
 int start_capturing(int fd_v4l)
 {
@@ -166,49 +169,20 @@ static int find_video_device(void)
 	int fd_v4l;
 	int i = 0;
 
-	if ((fd_v4l = open(v4l_devname, O_RDWR, 0)) < 0) {
+	if ((fd_v4l = open(g_v4l_device, O_RDWR, 0)) < 0) {
 		printf("unable to open %s for capture, continue searching "
-			"device.\n", v4l_devname);
+			"device.\n", g_v4l_device);
 	}
 	if (ioctl(fd_v4l, VIDIOC_QUERYCAP, &cap) == 0) {
 		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
-			printf("Found v4l2 capture device %s.\n", v4l_devname);
+			printf("Found v4l2 capture device %s.\n", g_v4l_device);
 			return fd_v4l;
 		}
 	} else {
 		close(fd_v4l);
 	}
 
-	/* continue to search */
-	while (i < MAX_V4L2_DEVICE_NR) {
-		strcpy(v4l_device, v4l_devname);
-		sprintf(index, "%d", i);
-		strcat(v4l_device, index);
-
-		if ((fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
-		{
-			i++;
-			continue;
-		}
-		if (ioctl(fd_v4l, VIDIOC_QUERYCAP, &cap)) {
-			close(fd_v4l);
-			i++;
-			continue;
-		}
-		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
-			printf("Found v4l2 capture device %s.\n", v4l_device);
-			break;
-		} else {
-			close(fd_v4l);
-		}
-
-		i++;
-	}
-
-	if (i == MAX_V4L2_DEVICE_NR)
-		return -1;
-	else
-		return fd_v4l;
+	return fd_v4l;
 }
 
 static void print_pixelformat(char *prefix, int val)
@@ -346,6 +320,15 @@ int v4l_capture_test(int fd_v4l)
 	struct timeval tv1, tv2;
 	int j = 0;
 	int out_w, out_h;
+	FILE * fd_y_file = 0;
+
+	if (g_saved_to_file == 1) {
+		if ((fd_y_file = fopen(g_saved_filename, "wb")) == NULL) {
+			printf("Unable to create y frame recording file\n");
+			return -1;
+		}
+		goto loop; /* skip the fb display */
+	}
 
 	if ((fd_fb = open(fb_device, O_RDWR )) < 0) {
 		printf("Unable to open frame buffer\n");
@@ -406,6 +389,10 @@ loop:
 			break;
 		}
 
+		if (fd_y_file)
+	                fwrite(buffers[buf.index].start, g_frame_size, 1, fd_y_file);
+
+		else
 		for (i = 0; i < TEST_BUFFER_NUM; i++) {
 			if (buf.m.userptr == buffers[i].offset) {
 				if (var.yoffset == 0) {
@@ -446,11 +433,15 @@ loop:
 	} while((tv2.tv_sec - tv1.tv_sec < g_timeout) && !quitflag);
 
 	/* Make sure pan display offset is zero before capture is stopped */
-	if (var.yoffset) {
-		var.yoffset = 0;
-		if (ioctl(fd_fb, FBIOPAN_DISPLAY, &var) < 0)
-			printf("FBIOPAN_DISPLAY failed\n");
-	}
+	if (g_saved_to_file == 0)
+		if (var.yoffset) {
+			var.yoffset = 0;
+			if (ioctl(fd_fb, FBIOPAN_DISPLAY, &var) < 0)
+				printf("FBIOPAN_DISPLAY failed\n");
+		}
+
+	if (fd_y_file)
+		fclose(fd_y_file);
 
 	if (stop_capturing(fd_v4l) < 0)
 		printf("stop_capturing failed\n");
@@ -461,12 +452,16 @@ loop:
 		goto loop;
 	}
 
-	munmap((void *)fd_fb, fb0_size);
-	close(fd_fb);
+	if (g_saved_to_file == 0) {
+		munmap((void *)fd_fb, fb0_size);
+		close(fd_fb);
+	}
+
 	close(fd_v4l);
 	return 0;
 FAIL:
-	close(fd_fb);
+	if (g_saved_to_file == 0)
+		close(fd_fb);
 	close(fd_v4l);
 	return -1;
 }
@@ -483,6 +478,9 @@ void print_help(void)
 		" -m <capture mode, 0-640x480, 1-320x240, etc>\n" \
 		" -r <rotation 0, 90, 180, 270>\n"
 		" -t <time> -fr <framerate>\n"
+		" -d <camera select, /dev/video0, /dev/video1> \n" \
+		" -f <format> \n"
+		" -of <save_to_file>\n"
 		" -loop <times>\n"
 #ifdef	GET_CONTI_PHY_MEM_VIA_PXP_LIB
 		" [-u if defined, means use userp, otherwise mmap]\n"
@@ -505,6 +503,9 @@ int process_cmdline(int argc, char **argv)
 			g_out_width = atoi(argv[++i]);
 		} else if (strcmp(argv[i], "-oh") == 0) {
 			g_out_height = atoi(argv[++i]);
+		}
+		else if (strcmp(argv[i], "-d") == 0) {
+			strcpy(g_v4l_device, argv[++i]);
 		} else if (strcmp(argv[i], "-t") == 0) {
 			g_timeout = atoi(argv[++i]);
 		} else if (strcmp(argv[i], "-hf") == 0) {
@@ -520,6 +521,20 @@ int process_cmdline(int argc, char **argv)
 			return -1;
 		} else if (strcmp(argv[i], "-fr") == 0) {
 			g_camera_framerate = atoi(argv[++i]);
+		} else if (strcmp(argv[i], "-of") == 0) {
+			strcpy(g_saved_filename, argv[++i]);
+			g_saved_to_file = 1;
+                } else if (strcmp(argv[i], "-f") == 0) {
+                        i++;
+                        g_cap_fmt = v4l2_fourcc(argv[i][0], argv[i][1],argv[i][2],argv[i][3]);
+
+                        if ((g_cap_fmt != V4L2_PIX_FMT_RGB565) &&
+			     (g_cap_fmt != V4L2_PIX_FMT_NV12) &&
+			     (g_cap_fmt != V4L2_PIX_FMT_UYVY) &&
+			     (g_cap_fmt != V4L2_PIX_FMT_YUYV))
+                        {
+                                return -1;
+                        }
 #ifdef	GET_CONTI_PHY_MEM_VIA_PXP_LIB
 		} else if (strcmp(argv[i], "-u") == 0) {
 			g_mem_type = V4L2_MEMORY_USERPTR;

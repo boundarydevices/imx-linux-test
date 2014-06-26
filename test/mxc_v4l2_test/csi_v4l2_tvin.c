@@ -81,6 +81,7 @@ int g_loop = 0;
 int g_mem_type = V4L2_MEMORY_MMAP;
 int g_frame_size;
 v4l2_std_id g_current_std = V4L2_STD_NTSC;
+char g_v4l_device[100] = "/dev/video0";
 
 int start_capturing(int fd_v4l)
 {
@@ -158,57 +159,25 @@ int stop_capturing(int fd_v4l)
 
 static int find_video_device(void)
 {
-	char v4l_devname[20] = "/dev/video";
-	char index[3];
 	char v4l_device[20];
 	struct v4l2_capability cap;
 	int fd_v4l;
 	int i = 0;
 
-	if ((fd_v4l = open(v4l_devname, O_RDWR, 0)) < 0) {
+	if ((fd_v4l = open(g_v4l_device, O_RDWR, 0)) < 0) {
 		printf("unable to open %s for capture, continue searching "
-			"device.\n", v4l_devname);
+			"device.\n", g_v4l_device);
 	}
 	if (ioctl(fd_v4l, VIDIOC_QUERYCAP, &cap) == 0) {
 		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
-			printf("Found v4l2 capture device %s.\n", v4l_devname);
+			printf("Found v4l2 capture device %s.\n", g_v4l_device);
 			return fd_v4l;
 		}
 	} else {
 		close(fd_v4l);
 	}
 
-	/* continue to search */
-	while (i < MAX_V4L2_DEVICE_NR) {
-		strcpy(v4l_device, v4l_devname);
-		sprintf(index, "%d", i);
-		strcat(v4l_device, index);
-
-		if ((fd_v4l = open(v4l_device, O_RDWR, 0)) < 0)
-		{
-			i++;
-			continue;
-		}
-		if (ioctl(fd_v4l, VIDIOC_QUERYCAP, &cap)) {
-			close(fd_v4l);
-			i++;
-			continue;
-		}
-		if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
-			printf("Found v4l2 capture device %s.\n", v4l_device);
-			break;
-		} else {
-			/* close it if not support capture */
-			close(fd_v4l);
-		}
-
-		i++;
-	}
-
-	if (i == MAX_V4L2_DEVICE_NR)
-		return -1;
-	else
-		return fd_v4l;
+	return fd_v4l;
 }
 
 static void print_pixelformat(char *prefix, int val)
@@ -487,6 +456,9 @@ int process_cmdline(int argc, char **argv)
 			g_out_width = atoi(argv[++i]);
 		} else if (strcmp(argv[i], "-oh") == 0) {
 			g_out_height = atoi(argv[++i]);
+		}
+		else if (strcmp(argv[i], "-d") == 0) {
+			strcpy(g_v4l_device, argv[++i]);
 		} else if (strcmp(argv[i], "-t") == 0) {
 			g_timeout = atoi(argv[++i]);
 		} else if (strcmp(argv[i], "-hf") == 0) {
