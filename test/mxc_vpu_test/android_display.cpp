@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2014 Freescale Semiconductor, Inc.
  * All rights reserved.
  */
 
@@ -25,10 +25,6 @@
 #include <gui/Surface.h>
 #include <gui/SurfaceComposerClient.h>
 #include "gralloc_priv.h"
-
-#ifndef LOGE
-#define LOGE ALOGE
-#endif
 
 extern "C" {
 #include "vpu_test.h"
@@ -374,14 +370,14 @@ struct ANativeWindow *android_get_display_surface(struct android_display_context
     dispctx->g2d_control = dispctx->g2d_client->createSurface(String8("VPU Renderer Surface"), disp_width, disp_height, PIXEL_FORMAT_RGB_565, 0);
     if(dispctx->g2d_control == NULL)
     {
-        LOGE("%s %d error !!!", __FUNCTION__, __LINE__);
+        err_msg("%s %d error !!!", __FUNCTION__, __LINE__);
         return NULL;
     }
 
     dispctx->g2d_surface = dispctx->g2d_control->getSurface();
     if( dispctx->g2d_surface == NULL)
     {
-        LOGE("%s %d error !!!", __FUNCTION__, __LINE__);
+        err_msg("%s %d error !!!", __FUNCTION__, __LINE__);
         return NULL;
     }
 

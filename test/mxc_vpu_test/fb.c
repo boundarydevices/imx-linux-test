@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc.
+ * Copyright 2004-2014 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -57,8 +57,7 @@ struct frame_buf *framebuf_alloc(struct frame_buf *fb, int stdMode, int format, 
 	if (mvCol)
 		fb->mvColBuf = fb->addrCr + strideY / divX * height / divY;
 
-	fb->desc.virt_uaddr = IOGetVirtMem(&(fb->desc));
-	if (fb->desc.virt_uaddr <= 0) {
+	if (IOGetVirtMem(&(fb->desc)) == -1) {
 		IOFreePhyMem(&fb->desc);
 		memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
 		return NULL;
@@ -177,8 +176,7 @@ struct frame_buf *tiled_framebuf_alloc(struct frame_buf *fb, int stdMode, int fo
 		return NULL;
 	}
 
-	fb->desc.virt_uaddr = IOGetVirtMem(&(fb->desc));
-	if (fb->desc.virt_uaddr <= 0) {
+	if (IOGetVirtMem(&(fb->desc)) == -1) {
 		IOFreePhyMem(&fb->desc);
 		memset(&(fb->desc), 0, sizeof(vpu_mem_desc));
 		return NULL;
