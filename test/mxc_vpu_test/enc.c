@@ -1216,14 +1216,14 @@ encode_test(void *arg)
 	}
 
 	/* mmap that physical buffer */
-	enc->virt_bsbuf_addr = IOGetVirtMem(&mem_desc);
-	if (enc->virt_bsbuf_addr <= 0) {
+	if (IOGetVirtMem(&mem_desc) == -1) {
 		err_msg("Unable to map physical memory\n");
 		ret = -1;
 		goto err;
 	}
 
 	enc->phy_bsbuf_addr = mem_desc.phy_addr;
+	enc->virt_bsbuf_addr = mem_desc.virt_uaddr;
 	enc->cmdl = cmdl;
 
 	if (enc->cmdl->format == STD_MJPG)
