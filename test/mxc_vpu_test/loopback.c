@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc.
+ * Copyright 2004-2014 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -396,14 +396,14 @@ encdec_test(void *arg)
 	}
 
 	/* mmap that physical buffer */
-	enc->virt_bsbuf_addr = IOGetVirtMem(&enc_mem_desc);
-	if (enc->virt_bsbuf_addr <= 0) {
+	if (IOGetVirtMem(&enc_mem_desc) == -1) {
 		err_msg("Unable to map physical memory\n");
 		ret = -1;
 		goto err;
 	}
 
 	enc->phy_bsbuf_addr = enc_mem_desc.phy_addr;
+	enc->virt_bsbuf_addr = enc_mem_desc.virt_uaddr;
 	enc->cmdl = cmdl;
 	enc->src_picwidth = 176;
 	enc->src_picheight = 144;
@@ -422,14 +422,14 @@ encdec_test(void *arg)
 		goto err1;
 	}
 
-	dec->virt_bsbuf_addr = IOGetVirtMem(&dec_mem_desc);
-	if (dec->virt_bsbuf_addr <= 0) {
+	if (IOGetVirtMem(&dec_mem_desc) == -1) {
 		err_msg("Unable to obtain virtual mem\n");
 		ret = -1;
 		goto err1;
 	}
 
 	dec->phy_bsbuf_addr = dec_mem_desc.phy_addr;
+	dec->virt_bsbuf_addr = dec_mem_desc.virt_uaddr;
 	dec->cmdl = cmdl;
 
 	if (cmdl->format == STD_AVC) {

@@ -2481,7 +2481,7 @@ decode_test(void *arg)
 		goto err;
 	}
 
-	if (IOGetVirtMem(&mem_desc) <= 0) {
+	if (IOGetVirtMem(&mem_desc) == -1) {
 		err_msg("Unable to obtain virtual mem\n");
 		ret = -1;
 		goto err;
