@@ -159,10 +159,8 @@ int stop_capturing(int fd_v4l)
 
 static int find_video_device(void)
 {
-	char v4l_device[20];
 	struct v4l2_capability cap;
 	int fd_v4l;
-	int i = 0;
 
 	if ((fd_v4l = open(g_v4l_device, O_RDWR, 0)) < 0) {
 		printf("unable to open %s for capture, continue searching "
@@ -434,11 +432,12 @@ FAIL:
 
 void print_help(void)
 {
-	printf("CSI Video4Linux capture Device Test\n"
-		"Syntax: ./csi_v4l2_capture -ow <capture output width>\n"
+	printf("CSI Video4Linux capture Device Test for VADC\n"
+		"Syntax: ./csi_v4l2_tvin -ow <capture output width>\n"
 		" -oh <capture output height>\n"
 		" -hf <horizontal flip>\n"
 		" -vf <vertical flip>\n"
+		" -d <device select, /dev/video2> \n" \
 		" -r <rotation 0, 90, 180, 270>\n"
 		" -loop <times>\n"
 #ifdef	GET_CONTI_PHY_MEM_VIA_PXP_LIB
