@@ -162,12 +162,8 @@ int stop_capturing(int fd_v4l)
 
 static int find_video_device(void)
 {
-	char v4l_devname[20] = "/dev/video";
-	char index[3];
-	char v4l_device[20];
 	struct v4l2_capability cap;
 	int fd_v4l;
-	int i = 0;
 
 	if ((fd_v4l = open(g_v4l_device, O_RDWR, 0)) < 0) {
 		printf("unable to open %s for capture, continue searching "
@@ -319,7 +315,7 @@ int v4l_capture_test(int fd_v4l)
 	unsigned char *fb0;
 	struct timeval tv1, tv2;
 	int j = 0;
-	int out_w, out_h;
+	int out_w = 0, out_h = 0;
 	FILE * fd_y_file = 0;
 
 	if (g_saved_to_file == 1) {
