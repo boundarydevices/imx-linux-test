@@ -1,7 +1,7 @@
 /*
  * pxp_test - V4L2 test application for the PxP
  *
- * Copyright (C) 2009-2012 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009-2014 Freescale Semiconductor, Inc.
  * Copyright 2008-2009 Embedded Alley Solutions
  * Matt Porter <mporter@embeddedalley.com>
  *
@@ -117,6 +117,18 @@ static struct pxp_video_format pxp_video_formats[] = {
 	 .fourcc = V4L2_PIX_FMT_YUV422P,
 	 .colorspace = V4L2_COLORSPACE_JPEG,
 	 },
+	{
+	 .name = "UYVY",
+	 .bpp = 2,
+	 .fourcc = V4L2_PIX_FMT_UYVY,
+	 .colorspace = V4L2_COLORSPACE_JPEG,
+	 },
+	{
+	 .name = "Y444",
+	 .bpp = 4,
+	 .fourcc = V4L2_PIX_FMT_YUV444,
+	 .colorspace = V4L2_COLORSPACE_JPEG,
+	 },
 };
 
 #define VERSION	"1.0"
@@ -133,7 +145,7 @@ static struct pxp_video_format pxp_video_formats[] = {
 static void usage(char *bin)
 {
 	printf
-	    ("Usage: %s [-a <n>] [-k 0xHHHHHHHH] [-o <outfile>] [-sx <width>] [-sy <height>] [-hf] [-vf] [-r <D>] [-res <x>:<y>] [-w <n>] [-dst ...] <s0_in> <s1_in>\n",
+	    ("Usage: %s [-a <n>] [-k 0xHHHHHHHH] [-o <outfile>] [-sx <width>] [-sy <height>] [-hf] [-vf] [-r <D>] [-res <x>:<y>] [-w <n>] [-dst ...] [-f <fmt>] <s0_in> <s1_in>\n",
 	     bin);
 }
 
@@ -153,6 +165,7 @@ static void help(char *bin)
 	printf("\t-sy <height> \theight of the LCD screen\n");
 	printf("\t-o <outfile>  \tset outfile for virtual buffer\n");
 	printf("\t-r   \trotate image\n");
+	printf("\t-f <x>   \timage format\t0-RGB24  1-RGB565  2-RGB555  3-YUV420  4-YUV422  5-UYVY  6-YUV444\n");
 	printf("\t-res <w>:<h>  \tinput resolution\n");
 	printf("\t-vf   \tflip image vertically\n");
 	printf("\t-w n   \twait n seconds before exiting\n");
@@ -275,7 +288,7 @@ static struct pxp_control *pxp_init(int argc, char **argv)
 	pxp->fmt_idx = 3;	/* YUV420 */
 	pxp->wait = 1;
 
-	static const char *opt_string = "a:hk:o:ir:w:?";
+	static const char *opt_string = "a:hk:o:ir:w:f:?";
 
 	static const struct option long_opts[] = {
 		{"dst", required_argument, NULL, PXP_DST},
@@ -338,6 +351,9 @@ static struct pxp_control *pxp_init(int argc, char **argv)
 			break;
 		case 'w':
 			pxp->wait = atoi(optarg);
+			break;
+		case 'f':
+			pxp->fmt_idx = atoi(optarg);
 			break;
 		case '?':
 			help(argv[0]);
@@ -649,10 +665,16 @@ static int pxp_start(struct pxp_control *pxp)
 {
 	int i = 0, cnt = 0;
 	int fd;
-	int s0_size = pxp->s0.width * pxp->s0.height * 3 / 2;	/*YUV420 */
+	int s0_size;
 	unsigned int total_time;
 	struct timeval tv_start, tv_current;
 	int ret = 0;
+
+	if (pxp_video_formats[pxp->fmt_idx].fourcc ==  V4L2_PIX_FMT_YUV420)
+		s0_size = pxp->s0.width * pxp->s0.height * 3 / 2;
+	else
+		s0_size = pxp->s0.width * pxp->s0.height
+			* pxp_video_formats[pxp->fmt_idx].bpp;
 
 	/* Queue buffer */
 	if ((fd = open(pxp->s0_infile, O_RDWR, 0)) < 0) {
