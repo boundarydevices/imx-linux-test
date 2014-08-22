@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Freescale Semiconductor, Inc.  All Rights Reserved.
+ * Copyright (C) 2014 Freescale Semiconductor, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ extern "C"{
 #include "ginger_rgb_800x600.c"
 #include "fsl_rgb_480x360.c"
 #include "colorbar_rgb_800x600.c"
-#include "girl_rgb_800x600.c"
+#include "vgray_rgb_800x600.c"
 
 
 #define TFAIL -1
@@ -845,7 +845,7 @@ static int test_pan(void)
 	uint backbuf_offs;
 
 	printf("Draw to offscreen region.\n");
-	copy_image_to_buffer_byte(0, 0, 800, 600, gImage_girl_rgb_800x600,
+	copy_image_to_buffer_byte(0, 0, 800, 600, gImage_vgray_rgb_800x600,
 		BUFFER_OVERLAY, &screen_info);
 
 	printf("Ginger update\n");
@@ -1031,7 +1031,7 @@ static int test_overlay(void)
 		return TFAIL;
 
 	/* Fill overlay buffer with data */
-	copy_image_to_buffer_byte(0, 0, 800, 600, gImage_girl_rgb_800x600,
+	copy_image_to_buffer_byte(0, 0, 800, 600, gImage_vgray_rgb_800x600,
 		BUFFER_OVERLAY, &screen_info);
 
 	ol_phys_addr = fix_screen_info.smem_start +
