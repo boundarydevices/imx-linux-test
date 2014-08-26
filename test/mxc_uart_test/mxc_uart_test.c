@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2009 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2014 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -28,7 +28,8 @@ int main(int argc, char **argv)
         unsigned int line_val;
         char buf[5];
         struct termios mxc, old;
-        int retval;
+        int retval = 0;
+	int retries = 5;
 
         printf("Test: MXC UART!\n");
         printf("Usage: mxc_uart_test <UART device name, opens UART2 if no dev name is specified>\n");
@@ -64,7 +65,9 @@ int main(int argc, char **argv)
         write(uart_file1, "Test\0", 5);
         printf("Data Written= Test\n");
 
-        read(uart_file1, buf, 5);
+	sleep(1);
+        while (retries-- && retval < 5)
+		retval += read(uart_file1, buf + retval, 5 - retval);
         printf("Data Read back= %s\n", buf);
         sleep(2);
         ioctl(uart_file1, TIOCMBIC, &line_val);
