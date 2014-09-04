@@ -11,10 +11,6 @@ check_devnode "/dev/mxc_asrc"
 check_devnode "/dev/snd/pcmC0D0p"
 
 if [ "$STATUS" = 0 ]; then
-run_testcase " ./mxc_asrc_test.out -to 48000 audio8k16S.wav /dev/s48.wav"
-fi
-
-if [ "$STATUS" = 0 ]; then
 run_testcase " aplay -N -M /dev/s48.wav"
 fi
 
