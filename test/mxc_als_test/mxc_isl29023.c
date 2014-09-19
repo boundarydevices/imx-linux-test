@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (C) 2011-2014 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -37,11 +37,41 @@ extern "C"{
 #include <linux/isl29023.h>
 #include <linux/input.h>
 
-#define TFAIL -1
-#define TPASS 0
-#define PATH_SIZE 1024
+#define TFAIL		-1
+#define TPASS 		0
+#define PATH_SIZE	1024
 
 static const char *INPUT_DIR_BASE = "/sys/devices/virtual/input/";
+static const char *event_name = "event";
+
+static int get_event_num(char *path, char *index)
+{
+	struct dirent *dent;
+	char *event_num_ptr;
+	DIR *inputdir = NULL;
+
+	inputdir = opendir(path);
+	if (!inputdir) {
+		printf("Error when opening search dir\n");
+		return -1;
+	}
+
+	while ((dent = readdir(inputdir)) != NULL) {
+		if (strcmp(dent->d_name, ".") == 0 ||
+		    strcmp(dent->d_name, "..") == 0)
+			continue;
+		if (memcmp(dent->d_name, event_name, strlen(event_name)) == 0) {
+			event_num_ptr = dent->d_name + strlen(event_name);
+			*index = *event_num_ptr;
+			return 0;
+		} else {
+			continue;
+		}
+	}
+
+	return -1;
+
+}
 
 int main(int argc, char **argv)
 {
@@ -51,15 +81,17 @@ int main(int argc, char **argv)
 	int lux, int_ht_lux, int_lt_lux;
 	int ret, dev_found = 0;
 	char buf[6];
+	char event_index = 0;
 	char fd_mode_dev[] = "/sys/class/i2c-dev/i2c-2/device/2-0044/mode";
 	char fd_lux_dev[] = "/sys/class/i2c-dev/i2c-2/device/2-0044/lux";
 	char fd_int_ht_lux_dev[] = "/sys/class/i2c-dev/i2c-2/device/2-0044/int_ht_lux";
 	char fd_int_lt_lux_dev[] = "/sys/class/i2c-dev/i2c-2/device/2-0044/int_lt_lux";
-	char fd_event_dev[] = "/dev/input/event2";
+	char fd_event_dev[] = "/dev/input/event?";
 	struct pollfd fds;
 	struct dirent *dent;
 	DIR *inputdir = NULL;
 	char *path;
+	char temp_path[50] = {0};
 	char phys[6];
 	struct input_event event;
 
@@ -79,6 +111,7 @@ int main(int argc, char **argv)
 
 		path = strcpy(path, INPUT_DIR_BASE);
 		path = strcat(path, dent->d_name);
+		strcpy(temp_path, path);
 		path = strcat(path, "/phys");
 		if ((fd_phys = fopen(path, "r")) == NULL)
 			continue;
@@ -93,7 +126,14 @@ int main(int argc, char **argv)
 
 		ret = strncmp("0044", &phys[2], 4);
 		if (ret == 0) {
+			if (get_event_num(temp_path, &event_index)) {
+				printf("cann't find the event index\n");
+				free(path);
+				return -EINVAL;
+			}
+
 			dev_found = 1;
+
 			break;
 		}
 	}
@@ -111,7 +151,7 @@ int main(int argc, char **argv)
 	fd_int_lt_lux_dev[23] = fd_int_lt_lux_dev[32] = phys[0];
 
 	/* dent->d_name[5] is event num */
-	fd_event_dev[16] = dent->d_name[5];
+	fd_event_dev[16] = event_index;
 
         if ((fd_mode = fopen(fd_mode_dev, "r+")) == NULL)
         {
