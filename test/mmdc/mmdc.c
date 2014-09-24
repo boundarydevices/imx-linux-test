@@ -88,15 +88,17 @@ void clear_mmdc_results(pMMDC_t mmdc)
 
 void get_mmdc_profiling_results(pMMDC_t mmdc, MMDC_PROFILE_RES_t *results)
 {
+	unsigned int bytewidth;
 	results->total_cycles 	= mmdc->madpsr0;
 	results->busy_cycles 	= mmdc->madpsr1;
 	results->read_accesses	= mmdc->madpsr2;
 	results->write_accesses	= mmdc->madpsr3;
 	results->read_bytes		= mmdc->madpsr4;
 	results->write_bytes	= mmdc->madpsr5;
+	bytewidth = 4 << ((mmdc->mdctl & 0x30000)>>16);
 	if(results->read_bytes!=0 || results->write_bytes!=0)
 	{
-		results->utilization	= (int)(((float)results->read_bytes+(float)results->write_bytes)/((float)results->busy_cycles * 16) * 100);
+		results->utilization	= (int)(((float)results->read_bytes+(float)results->write_bytes)/((float)results->busy_cycles * bytewidth) * 100);
 
 		results->data_load  	= (int)((float)results->busy_cycles/(float)results->total_cycles * 100);
 		results->access_utilization	= (int)(((float)results->read_bytes+(float)results->write_bytes)/((float)results->read_accesses + (float)results->write_accesses));
