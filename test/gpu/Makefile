@@ -3,7 +3,7 @@ INCLUDE_LIST:=IMX6Q IMX6SL IMX6SX
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 OBJS = $(OBJDIR)/gpu.sh \
-	   $(OBJDIR)/dumpgpu.sh
+	   $(OBJDIR)/gpuinfo.sh
 else
 OBJS =
 endif
