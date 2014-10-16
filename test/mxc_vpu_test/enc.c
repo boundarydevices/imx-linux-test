@@ -274,12 +274,38 @@ put_mp4header:
 		if (enc->mvc_extension && enc->mvc_paraset_refresh_en)
 			goto skip_put_header;
 		{
-			enchdr_param.headerType = SPS_RBSP;
-			vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
-			if (enc->ringBufferEnable == 0 ) {
-				ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
-				if (ret < 0)
+			if (!enc->avc_vui_present_flag) {
+				enchdr_param.headerType = SPS_RBSP;
+				vpu_EncGiveCommand(handle, ENC_PUT_AVC_HEADER, &enchdr_param);
+				if (enc->ringBufferEnable == 0 ) {
+					ret = enc_readbs_reset_buffer(enc, enchdr_param.buf, enchdr_param.size);
+					if (ret < 0)
+						return -1;
+				}
+			} else {
+				/*
+				 * Not support MVC
+				 * Not support ring buffer mode
+				 */
+				unsigned char *pBuffer = malloc(STREAM_BUF_SIZE);
+
+				if (pBuffer) {
+					enchdr_param.headerType = SPS_RBSP;
+					enchdr_param.pBuf = pBuffer;
+					enchdr_param.size = STREAM_BUF_SIZE;
+					ret = vpu_EncGiveCommand(handle, ENC_GET_VIDEO_HEADER, &enchdr_param);
+					if (ret == RETCODE_SUCCESS) {
+						vpu_write(enc->cmdl, (void *)pBuffer, enchdr_param.size);
+						free(pBuffer);
+					} else {
+						err_msg("ENC_GET_VIDEO_HEADER failure\n");
+						free(pBuffer);
+						return -1;
+					}
+				} else {
+					err_msg("memory allocate failure\n");
 					return -1;
+				}
 			}
 		}
 
@@ -1104,6 +1130,17 @@ encoder_open(struct encode *enc)
 		encop.EncStdParam.avcParam.avc_deblkFilterOffsetBeta = 0;
 		encop.EncStdParam.avcParam.avc_chromaQpOffset = 10;
 		encop.EncStdParam.avcParam.avc_audEnable = 0;
+		encop.EncStdParam.avcParam.avc_vui_present_flag = 0;
+		enc->avc_vui_present_flag = encop.EncStdParam.avcParam.avc_vui_present_flag;
+		encop.EncStdParam.avcParam.avc_vui_param.video_signal_type_pres_flag = 1;
+		encop.EncStdParam.avcParam.avc_vui_param.video_format = 0;
+		encop.EncStdParam.avcParam.avc_vui_param.video_full_range_flag = 1;
+		encop.EncStdParam.avcParam.avc_vui_param.colour_descrip_pres_flag = 1;
+		encop.EncStdParam.avcParam.avc_vui_param.colour_primaries = 1;
+		encop.EncStdParam.avcParam.avc_vui_param.transfer_characteristics = 1;
+		encop.EncStdParam.avcParam.avc_vui_param.matrix_coeff = 0;
+		encop.EncStdParam.avcParam.avc_level = 0;
+
 		if (cpu_is_mx6x()) {
 			encop.EncStdParam.avcParam.interview_en = 0;
 			encop.EncStdParam.avcParam.paraset_refresh_en = enc->mvc_paraset_refresh_en = 0;
