@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc.
+ * Copyright 2004-2014 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -299,6 +299,7 @@ struct encode {
 	int mvc_extension;
 	int linear2TiledEnable;
 	int minFrameBufferCount;
+	int avc_vui_present_flag;
 
         EncReportInfo mbInfo;
         EncReportInfo mvInfo;
