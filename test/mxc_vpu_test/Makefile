@@ -23,7 +23,7 @@ endif
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(LINK) -o $(TARGET) $(OBJ) ${LIBS} -lvpu -lipu -lrt -lpthread
+	$(CC) -o $(TARGET) $(OBJ) ${LIBS} -lvpu -lipu -lrt -lpthread
 	mkdir -p $(OBJDIR)
 	mv $(TARGET) $(OBJDIR)
 	cp autorun-vpu.sh $(OBJDIR)
