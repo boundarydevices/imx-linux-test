@@ -33,10 +33,13 @@ int g_is_reg = 0;
 char *g_module;
 char *g_reg;
 char *g_field;
+char *g_reg_input;
 
 int g_fmem;
 int g_map_vaddr = 0;
 int g_map_paddr = 0;
+int g_comp = 0;
+int g_module_match = 0;
 
 #define MAP_SIZE 0x1000
 #define KERN_VER(a, b, c) (((a) << 16) + ((b) << 8) + (c))
@@ -160,11 +163,15 @@ void parse_field(const module_t * mx, const reg_t * reg, char *field, int value)
 	for (i = 0; i < reg->field_count; i++) {
 		if (field == NULL || *field == 0
 		    || strncmp(f->name, field, strlen(field)) == 0) {
-			printf("     %s.%s.%s(%d..%d) \t:0x%x\n", mx->name,
-			       reg->name, f->name, f->lsb, f->msb,
-			       get_value(value, f->lsb, f->msb)
-			    );
-			printf("             %s\n", f->description);
+			if (g_comp) {
+				printf("%s.%s.%s\n", mx->name, reg->name, f->name);
+			} else {
+				printf("     %s.%s.%s(%d..%d) \t:0x%x\n", mx->name,
+				       reg->name, f->name, f->lsb, f->msb,
+				       get_value(value, f->lsb, f->msb)
+				    );
+				printf("             %s\n", f->description);
+			}
 		}
 		f++;
 	}
@@ -182,7 +189,15 @@ void parse_reg(const module_t * mx, const char *reg, char *field)
 		*str = 0;	/*cut register name */
 
 	for (i = 0; i < mx->reg_count; i++) {
-		if (reg == NULL || *reg == 0 || strlen(reg) == 0 ||
+		if (g_comp) {
+			if (field != NULL && reg != NULL) {
+				if (strcmp(sreg->name, reg) == 0)
+					parse_field(mx, sreg, field, 0);
+			} else if (reg == NULL || strncmp(sreg->name, reg, strlen(reg)) == 0) {
+				printf("%s.%s.\n", mx->name, sreg->name);
+			}
+
+		} else if (reg == NULL || *reg == 0 || strlen(reg) == 0 ||
 		    strncmp(sreg->name, reg, strlen(reg)) == 0 || *reg == '-') {
 			printf("  %s.%s Addr:0x%08X Value:0x%08X - %s\n",
 			       mx->name, sreg->name,
@@ -296,7 +311,8 @@ void parse_module(char *module, char *reg, char *field, int iswrite)
 		}
 		fclose(fp);
 
-		printf("SOC: %s\n", soc_name);
+		if (!g_comp)
+			printf("SOC: %s\n", soc_name);
 
 		if (!strcmp(soc_name, "i.MX6Q"))
 			mx = mx6q;
@@ -310,7 +326,7 @@ void parse_module(char *module, char *reg, char *field, int iswrite)
 			die("Unknown SOC\n");
 	}
 
-	if (iswrite) {
+	if (iswrite && !g_comp) {
 		while (mx) {
 			if (strcmp(mx->name, module) == 0) {
 
@@ -381,7 +397,15 @@ void parse_module(char *module, char *reg, char *field, int iswrite)
 		printf("Can't find module %s\n", module);
 		return;
 	}
-	if (module == NULL || *module == 0 || (str = strchr(module, '*'))) {	/* list all modules */
+
+	if (g_comp && !g_module_match) {
+		while (mx->name) {
+			if (module == NULL || strlen(module)==0 || (strncmp(mx->name, module, strlen(module)) == 0))
+				printf("%s.\n", mx->name);
+			mx++;
+		}
+
+	} else if (module == NULL || *module == 0 || (str = strchr(module, '*'))) {	/* list all modules */
 		printf("   Module\t\tBase Address\n");
 		if (str)
 			*str = 0;	/*Cut module */
@@ -396,13 +420,14 @@ void parse_module(char *module, char *reg, char *field, int iswrite)
 			}
 			mx++;
 		}
-		return;
+		if(!g_comp)
+			return;
 	}
 
 	while (mx->name) {
-
 		if (strcmp(mx->name, module) == 0) {
-			printf("%s\t Addr:0x%x \n", mx->name, mx->base_address);
+			if (!g_comp)
+				printf("%s\t Addr:0x%x \n", mx->name, mx->base_address);
 			parse_reg(mx, reg, field);
 			break;
 		}
@@ -429,28 +454,50 @@ int parse_cmdline(int argc, char **argv)
 		cur_arg++;
 		g_size = 4;
 	}
-	if (cur_arg >= argc)
-		return -1;
 
-	if ((str = strchr(argv[cur_arg], '.'))) {
+	if (strcmp(argv[cur_arg], "-comp") == 0)
+	{
+		g_comp = 1;
+                cur_arg++;
+	}
+
+	while (cur_arg >=0 && cur_arg < argc &&
+		(strstr(argv[cur_arg], "memtool") != NULL || strlen(argv[cur_arg]) == 0)) {
+
+		if (strstr(argv[cur_arg], "memtool") != NULL)
+			g_comp = 1;
+
+		cur_arg++;
+		if (cur_arg >= argc)
+			break;
+	}
+
+	if (cur_arg >= argc)
+		return g_comp ? 0 : -1;
+
+	str = strchr(argv[cur_arg], '.');
+	if (g_comp || str) {
 		/*extend memory command */
 		char *equal = 0;
 		g_is_reg = 1;
-		*str = 0;
-		str++;
 		g_module = argv[cur_arg];
-		g_reg = str;
+		if (str) {
+			*str = 0;
+			str++;
+			g_reg = str;
+			g_module_match = 1;
 
-		if ((g_field = strchr(str, '.'))) {
-			*g_field = 0;
-			g_field++;
-		}
-		if ((equal = strchr(g_field ? g_field : str, '='))) {
-			g_is_write = 1;
-			*equal = 0;
-			equal++;
-			g_value = strtoul(equal, NULL, 16);
-			return 0;
+			if ((g_field = strchr(str, '.'))) {
+				*g_field = 0;
+				g_field++;
+			}
+			if ((equal = strchr(g_field ? g_field : str, '='))) {
+				g_is_write = 1;
+				*equal = 0;
+				equal++;
+				g_value = strtoul(equal, NULL, 16);
+				return 0;
+			}
 		}
 		return 0;
 		//cur_arg++;
@@ -567,12 +614,13 @@ int main(int argc, char **argv)
 		       "		memtool UART1.-\n"
 		       "Write register: memtool UART.UMCR=0x12\n"
 		       "                memtool UART.UMCR.MDEN=0x1\n"
-		       "Default access size is 32-bit.\n\nAddress, count and value are all in hex.\n");
+		       "Default access size is 32-bit.\n\nAddress, count and value are all in hex.\n"
+		       "\nTo support autocompete feature please run below command:\n"
+		       "     complete -o nospace -C /unit_tests/memtool memtool\n");
 		return 1;
 	}
 
-	if (g_is_reg) {
-
+	if (g_is_reg || g_comp) {
 		parse_module(g_module, g_reg, g_field, g_is_write);
 		return 0;
 	}
