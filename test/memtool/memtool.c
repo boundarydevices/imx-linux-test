@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2006-2014 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -44,6 +44,7 @@ int g_map_paddr = 0;
 extern const module_t mx6q[];
 extern const module_t mx6dl[];
 extern const module_t mx6sl[];
+extern const module_t mx6sx[];
 
 char g_buffer[4096];
 
@@ -303,8 +304,10 @@ void parse_module(char *module, char *reg, char *field, int iswrite)
 			mx = mx6dl;
 		else if (!strcmp(soc_name, "i.MX6SL"))
 			mx = mx6sl;
+		else if (!strcmp(soc_name, "i.MX6SX"))
+			mx = mx6sx;
 		else
-			die("Unknown SOC\n");	
+			die("Unknown SOC\n");
 	}
 
 	if (iswrite) {
