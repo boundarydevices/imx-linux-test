@@ -15,6 +15,7 @@ OBJS =
 endif
 
 all : $(OBJS)
+	cp audio8k16S.wav $(OBJDIR)
 
 .PHONY: clean
 clean :
