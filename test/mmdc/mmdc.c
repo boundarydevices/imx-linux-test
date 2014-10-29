@@ -241,7 +241,7 @@ void signalhandler(int signal)
 void help(void)
 {
 	printf("======================MMDC v1.3===========================\n");
-	printf("Usage: mmdc [ARM:DSP1:DSP2:GPU2D:GPU2D1:GPU2D2:GPU3D:GPUVG:VPU:M4:PXP:SUM] [...]\n");
+	printf("Usage: mmdc [ARM:DSP1:DSP2:GPU2D:GPU2D1:GPU2D2:GPU3D:GPUVG:VPU:M4:PXP:USB:SUM] [...]\n");
 	printf("export MMDC_SLEEPTIME can be used to define profiling duration.1 by default means 1s\n");
 	printf("export MMDC_LOOPCOUNT can be used to define profiling times. 1 by default. -1 means infinite loop.\n");
 	printf("export MMDC_CUST_MADPCR1 can be used to customize madpcr1. Will ignore it if defined master\n");
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 		printf("Could not open /dev/mem\n");
 		return -1;
 	}
-	A = (ulong*) mmap(NULL, 0x4000, PROT_READ | PROT_WRITE, MAP_SHARED, fd, MMDC_P0_IPS_BASE_ADDR);
+	A = (unsigned long*) mmap(NULL, 0x4000, PROT_READ | PROT_WRITE, MAP_SHARED, fd, MMDC_P0_IPS_BASE_ADDR);
 		if (A == MAP_FAILED)
 	{
 		printf("Mapping failed mmdc_p0\n");
@@ -357,6 +357,14 @@ int main(int argc, char **argv)
 				}else if((strcmp(argv[j],"GPUVG")==0)&&(cpu_is_mx6sl()==1)){
 				   ((pMMDC_t)A)->madpcr1 = axi_openvg_6sl;
 				   printf("MMDC GPUVG \n");
+				}else if(strcmp(argv[j],"USB")==0){
+					if(cpu_is_mx6sx()==1)
+						((pMMDC_t)A)->madpcr1 = axi_usb_6sx;
+					else if(cpu_is_mx6sl()==1)
+						((pMMDC_t)A)->madpcr1 = axi_usb_6sl;
+					else
+						((pMMDC_t)A)->madpcr1 = axi_usb;
+				        printf("MMDC USB \n");
 				}else if(strcmp(argv[j],"ARM")==0){
 					if((cpu_is_mx6sx()==1))
 						((pMMDC_t)A)->madpcr1 = axi_arm_6sx;
