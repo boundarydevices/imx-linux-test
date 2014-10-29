@@ -165,6 +165,9 @@ extern unsigned int system_rev;
 #define axi_lcd1_6sl            0x0e870005
 #define axi_lcd1_6sx            0x043F0013
 #define axi_lcd2_6sx            0x043F0023
+#define axi_usb                 0x03FF005A
+#define axi_usb_6sl             0x003F0014
+#define axi_usb_6sx             0x007F0046
 #define axi_default             0x00000000
 
 #endif /*MMDC_H_*/
