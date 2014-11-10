@@ -129,20 +129,11 @@ void real_op(int fd, char op)
 			total += count;
 
 			if (op == 'R') {
-				int v;
-				unsigned int dec_val = 0;
-
-				for (v = 0; v < CHUNK_SIZE && v < count; v++)
-					printf("byte%d : 0x%x\n", v, tmp[v]);
-
 				if (count > 0) {
 					printf("[%d] READ finished :%d bytes\n",
 						i, count);
-					for (v = 0; v < count; v++)
-						dec_val |= (tmp[v] << (8 * v));
-					printf("dec val is %08d.\n", dec_val);
-				}
-				else if (count == 0)
+					printf("\n%s\n", tmp);
+				} else if (count == 0)
 					printf("We read 0 byte\n");
 			}
 			if (count == 0)
@@ -171,8 +162,8 @@ int main(int argc, char *argv[])
 			"X : the group number\n"
 			"Y : the group size\n\n"
 			"For example:\n"
-			"mx6sx-sd(mcc and m4 are running), receive one byte:\n"
-			"./mxc_mcc_tty_test.out /dev/ttyMCCp0 115200 R 1 1\n\n"
+			"mx6sx-sd(mcc and m4 are running), receive one string:\n"
+			"./mxc_mcc_tty_test.out /dev/ttyMCCp0 115200 R 100 1000\n\n"
 			,
 			argv[0]);
 	else {
