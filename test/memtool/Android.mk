@@ -6,6 +6,7 @@ LOCAL_SRC_FILES := \
        memtool.c \
        mx6dl_modules.c \
        mx6q_modules.c \
+       mx6sx_modules.c \
        mx6sl_modules.c
 
 #LOCAL_CFLAGS += -DBUILD_FOR_ANDROID
