@@ -18,10 +18,12 @@ printf "Make Sure Your \"u-boot.imx\" is up to date...\n"
 
 
 let ddr_addr=$(hexdump -n 4 -s 32 -e '/4 "0x%08x\t" "\n"' u-boot.imx)
+let ivt_self=$(hexdump -n 4 -s 20 -e '/4 "0x%08x\t" "\n"' u-boot.imx)
+let ivt_csf=$(hexdump -n 4 -s 24 -e '/4 "0x%08x\t" "\n"' u-boot.imx)
 
 # Calculate the size
 let uboot_size=$(ls -lct u-boot.imx | awk '{print $5}')
-let pad_len=$(((uboot_size + 0xfff) & 0xfffff000)) # align to 0x1000
+let pad_len=$((ivt_csf - ivt_self))
 let sig_len=$((pad_len + 0x2000))
 let ivt_offset=0x0
 let auth_len=$((pad_len - ivt_offset))
