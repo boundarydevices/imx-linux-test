@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2012 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2014 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +46,9 @@ extern "C"{
 #include <string.h>
 #include <malloc.h>
 #include <getopt.h>
+#include <signal.h>
+#include <linux/vt.h>
+#include <linux/kd.h>
 
 #include "ginger_rgb_800x600.c"
 #include "fsl_rgb_480x360.c"
@@ -79,6 +82,10 @@ extern "C"{
 
 #define NUM_TESTS		16
 
+#define EPDC_VT_NR 8
+#define VT_SWITCH_FROM SIGUSR1
+#define VT_SWITCH_TO   SIGUSR2
+
 __u32 pwrdown_delay = 0;
 __u32 scheme = UPDATE_SCHEME_QUEUE_AND_MERGE;
 int test_map[NUM_TESTS];
@@ -93,6 +100,9 @@ struct fb_var_screeninfo screen_info;
 __u32 marker_val = 1;
 int use_animation = 0;
 int num_flashes = 10;
+
+static int vt_fd = -1;
+static int orig_vt = -1;
 
 void memset_dword(void *s, int c, size_t count)
 {
@@ -570,7 +580,7 @@ static int test_rotation(void)
 		update_to_display(0, 0, screen_info.xres, screen_info.yres,
 			WAVEFORM_MODE_DU, TRUE, 0);
 
-		printf("Rotating FB 90 degrees\n");
+		printf("Rotating FB %d degrees\n", 90 * i);
 		screen_info.rotate = i;
 		screen_info.bits_per_pixel = 16;
 		screen_info.grayscale = 0;
@@ -2113,6 +2123,169 @@ int parse_test_nums(char *num_str)
 	return 0;
 }
 
+static void vt_switch_handler(int sig)
+{
+	int retval = 0;
+
+	switch(sig) {
+		case VT_SWITCH_FROM:
+		{
+			struct mxcfb_update_marker_data upd_marker_data;
+
+			printf("VT switching from\n");
+
+			retval = ioctl(fd_fb_ioctl, MXCFB_DISABLE_EPDC_ACCESS);
+			if (retval < 0) {
+				fprintf(stderr, "disable epdc fb access failed\n");
+				return;
+			}
+
+			retval = ioctl(vt_fd, VT_RELDISP, 1);
+			if (retval < 0) {
+				fprintf(stderr, "release display failed\n");
+				return;
+			}
+			break;
+		}
+		case VT_SWITCH_TO:
+			printf("VT switching to\n");
+
+			retval = ioctl(vt_fd, VT_RELDISP, VT_ACKACQ);
+			if (retval < 0) {
+				fprintf(stderr, "reaquire display failed\n");
+				return;
+			}
+
+			/* this is to restore the pre-suspended fb mode */
+			retval = ioctl(fd_fb, FBIOPUT_VSCREENINFO, &screen_info);
+			if (retval < 0)
+				fprintf(stderr, "%s: restore the fb var failed\n", __func__);
+
+			retval = ioctl(fd_fb_ioctl, MXCFB_ENABLE_EPDC_ACCESS);
+			if (retval < 0) {
+				fprintf(stderr, "enable epdc fb access failed\n");
+				return;
+			}
+
+			break;
+		default:
+			fprintf(stderr, "unexpected vt signal recieved\n");
+			return;
+	}
+
+	return;
+}
+
+static int mxc_epdc_con_init(void)
+{
+	int ret;
+	unsigned int vt_nr;
+	char vt_name[11];
+	struct vt_stat vcs;
+	struct vt_mode vcm;
+	struct sigaction act;
+
+	vt_nr = EPDC_VT_NR;
+	snprintf(vt_name, sizeof(vt_name), "/dev/tty%d", vt_nr);
+
+	if ((vt_fd = open(vt_name, O_RDWR | O_NONBLOCK, 0)) < 0) {
+		fprintf(stderr, "open vt %s failed\n", vt_name);
+		return -1;
+	}
+
+	ret = ioctl(vt_fd, VT_GETSTATE, &vcs);
+	if (ret < 0) {
+		fprintf(stderr, "get vt stat failed\n");
+		return -1;
+	}
+	orig_vt = vcs.v_active;
+
+	ret = ioctl(vt_fd, VT_ACTIVATE, vt_nr);
+	if (ret < 0) {
+		fprintf(stderr, "%s: activate vt %d failed\n", __func__, vt_nr);
+		return -1;
+	}
+
+	ret = ioctl(vt_fd, VT_WAITACTIVE, vt_nr);
+	if (ret < 0) {
+		fprintf(stderr, "%s: wait vt %d active failed, errno = %d, ret = %d\n",
+			__func__, vt_nr, errno, ret);
+		return -1;
+	}
+
+	sigemptyset(&act.sa_mask);
+	sigaddset(&act.sa_mask, VT_SWITCH_FROM | VT_SWITCH_TO);
+	act.sa_flags = 0;
+	act.sa_handler = vt_switch_handler;
+
+	sigaction(VT_SWITCH_FROM, &act, 0);
+	sigaction(VT_SWITCH_TO, &act, 0);
+
+	ret = ioctl(vt_fd, VT_GETMODE, &vcm);
+	if (ret < 0) {
+		fprintf(stderr, "get vt %d mode failed\n", vt_nr);
+		return -1;
+	}
+
+	vcm.mode = VT_PROCESS;
+	vcm.relsig  = VT_SWITCH_FROM;
+	vcm.acqsig  = VT_SWITCH_TO;
+
+	ret = ioctl(vt_fd, VT_SETMODE, &vcm);
+	if (ret < 0) {
+		fprintf(stderr, "set vt %d mode failed\n", vt_nr);
+		return -1;
+	}
+
+	/* Three reasons to change vt to graphic mode:
+	 * 1. cursor will be hidden.
+	 * 2. 10 minutes timer expired blank won't happen.
+	 * 3. printk messages will not be printed to the screen unless
+	 *    the oops messages if you set 'console=tty0' in boot args.
+	 */
+	ret = ioctl(vt_fd, KDSETMODE, KD_GRAPHICS);
+	if (ret < 0) {
+		fprintf(stderr, "set kd mode to graphics failed\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+static void mxc_epdc_con_fini(void)
+{
+	int retval = 0;
+	struct vt_mode vcm;
+
+	retval = ioctl(vt_fd, KDSETMODE, KD_TEXT);
+	if (retval < 0) {
+		fprintf(stderr, "set kd mode to text failed\n");
+		return;
+	}
+
+	retval = ioctl(vt_fd, VT_GETMODE, &vcm);
+	if (retval < 0)
+		fprintf(stderr, "get vt mode failed\n");
+	else {
+		vcm.mode = VT_AUTO;
+		vcm.relsig = vcm.acqsig = 0;
+		retval = ioctl(vt_fd, VT_SETMODE, &vcm);
+		if (retval < 0)
+			fprintf(stderr, "set vt mode failed\n");
+	}
+
+	if (orig_vt > 0) {
+		retval = ioctl(vt_fd, VT_ACTIVATE, orig_vt);
+		if (retval < 0)
+			fprintf(stderr, "%s: activate vt %d failed\n", __func__, orig_vt);
+		retval = ioctl(vt_fd, VT_WAITACTIVE, orig_vt);
+		if (retval < 0)
+			fprintf(stderr, "%s: wait vt %d active failed\n", orig_vt);
+	}
+
+	close(vt_fd);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -2124,6 +2297,9 @@ main(int argc, char **argv)
 	struct fb_fix_screeninfo screen_info_fix;
 
 	int i, rt;
+
+	if ((retval = mxc_epdc_con_init()) < 0)
+		goto err0;
 
 	/* Initialize test map so all tests (except stress test) will run */
 	for (i = 0; i < NUM_TESTS; i++)
@@ -2310,5 +2486,6 @@ err1:
 	if (fd_fb != fd_fb_ioctl)
 		close(fd_fb_ioctl);
 err0:
+	mxc_epdc_con_fini();
 	return retval;
 }
