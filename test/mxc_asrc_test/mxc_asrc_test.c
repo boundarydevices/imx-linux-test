@@ -58,7 +58,7 @@ struct audio_buf {
 	unsigned int max_len;
 };
 
-#define WAVE_HEAD_SIZE 44 + 14
+#define WAVE_HEAD_SIZE 44 + 14 + 16
 static enum asrc_pair_index pair_index;
 static char header[WAVE_HEAD_SIZE];
 
@@ -317,7 +317,7 @@ void bitshift(FILE * src, struct audio_info_s *info)
 	info->input_word_width = ASRC_WIDTH_24_BIT;
 	update_sample_bitdepth(info);
 	/*allocate input buffer*/
-	output_buffer = (int *)malloc(info->output_data_len + 64 * 1024);
+	output_buffer = (int *)malloc(info->output_data_len + 256 * 1024);
 	if (output_buffer == NULL)
 		printf("output buffer allocate error\n");
 }
