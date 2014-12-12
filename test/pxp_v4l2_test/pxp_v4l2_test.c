@@ -124,6 +124,12 @@ static struct pxp_video_format pxp_video_formats[] = {
 	 .colorspace = V4L2_COLORSPACE_JPEG,
 	 },
 	{
+	 .name = "YUYV",
+	 .bpp = 2,
+	 .fourcc = V4L2_PIX_FMT_YUYV,
+	 .colorspace = V4L2_COLORSPACE_JPEG,
+	 },
+	{
 	 .name = "Y444",
 	 .bpp = 4,
 	 .fourcc = V4L2_PIX_FMT_YUV444,
@@ -165,7 +171,7 @@ static void help(char *bin)
 	printf("\t-sy <height> \theight of the LCD screen\n");
 	printf("\t-o <outfile>  \tset outfile for virtual buffer\n");
 	printf("\t-r   \trotate image\n");
-	printf("\t-f <x>   \timage format\t0-RGB24  1-RGB565  2-RGB555  3-YUV420  4-YUV422  5-UYVY  6-YUV444\n");
+	printf("\t-f <x>   \timage format\t0-RGB24  1-RGB565  2-RGB555  3-YUV420  4-YUV422  5-UYVY  6-YUYV 7-YUV444\n");
 	printf("\t-res <w>:<h>  \tinput resolution\n");
 	printf("\t-vf   \tflip image vertically\n");
 	printf("\t-w n   \twait n seconds before exiting\n");
