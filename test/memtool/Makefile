@@ -21,7 +21,7 @@ CFLAGS+= -Os
 all : $(TARGET)
 
 $(TARGET):$(OBJ)
-	$(LINK) -o $(TARGET) $(OBJ) -Os
+	$(CC) -o $(TARGET) $(OBJ) -Os
 	$(STRIP) $(TARGET)
 
 .PHONY: clean

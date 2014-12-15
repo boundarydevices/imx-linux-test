@@ -19,7 +19,7 @@ LDFLAGS+= -lstdc++
 all : $(TARGET)
 
 $(TARGET):$(OBJ)
-	$(LINK) -o $(TARGET) $(OBJ) $(LDFLAGS) -Os
+	$(CC) -o $(TARGET) $(OBJ) $(LDFLAGS) -Os
 	$(STRIP) $(TARGET)
 
 .PHONY: clean
