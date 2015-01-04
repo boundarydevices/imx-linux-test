@@ -1,7 +1,7 @@
 /*
  * pxp_test - V4L2 test application for the PxP
  *
- * Copyright (C) 2009-2014 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009-2015 Freescale Semiconductor, Inc.
  * Copyright 2008-2009 Embedded Alley Solutions
  * Matt Porter <mporter@embeddedalley.com>
  *
@@ -130,9 +130,9 @@ static struct pxp_video_format pxp_video_formats[] = {
 	 .colorspace = V4L2_COLORSPACE_JPEG,
 	 },
 	{
-	 .name = "Y444",
+	 .name = "YUV32",
 	 .bpp = 4,
-	 .fourcc = V4L2_PIX_FMT_YUV444,
+	 .fourcc = V4L2_PIX_FMT_YUV32,
 	 .colorspace = V4L2_COLORSPACE_JPEG,
 	 },
 };
