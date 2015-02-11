@@ -249,7 +249,7 @@ int v4l_capture_setup(void)
 	if ((fd_v4l = open_video_device()) < 0)
 	{
 		printf("Unable to open v4l2 capture device.\n");
-		return 0;
+		return -1;
 	}
 
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
