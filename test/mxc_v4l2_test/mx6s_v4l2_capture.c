@@ -103,23 +103,18 @@ int start_capturing(int fd_v4l)
 		return -1;
 	}
 
-	for (i = 0; i < TEST_BUFFER_NUM; i++) {
-		memset(&buf, 0, sizeof (buf));
-		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		buf.memory = g_mem_type;
-		buf.index = i;
-		if (g_mem_type == V4L2_MEMORY_USERPTR) {
-			buf.length = buffers[i].length;
-			buf.m.userptr = (unsigned long) buffers[i].offset;
-			buf.length = buffers[i].length;
-		}
+	if (g_mem_type == V4L2_MEMORY_MMAP) {
+		for (i = 0; i < TEST_BUFFER_NUM; i++) {
+			memset(&buf, 0, sizeof (buf));
+			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			buf.memory = g_mem_type;
+			buf.index = i;
 
-		if (ioctl(fd_v4l, VIDIOC_QUERYBUF, &buf) < 0) {
-			printf("VIDIOC_QUERYBUF error\n");
-			return -1;
-		}
+			if (ioctl(fd_v4l, VIDIOC_QUERYBUF, &buf) < 0) {
+				printf("VIDIOC_QUERYBUF error\n");
+				return -1;
+			}
 
-		if (g_mem_type == V4L2_MEMORY_MMAP) {
 			buffers[i].length = buf.length;
 			buffers[i].offset = (size_t) buf.m.offset;
 			buffers[i].start = mmap(NULL, buffers[i].length,
@@ -637,7 +632,7 @@ static int signal_thread(void *arg)
 void memfree(int buf_size, int buf_cnt)
 {
 	int i;
-        unsigned int page_size;
+	unsigned int page_size;
 
 	page_size = getpagesize();
 	buf_size = (buf_size + page_size - 1) & ~(page_size - 1);
@@ -679,8 +674,9 @@ int memalloc(int buf_size, int buf_cnt)
 			ret = -1;
 			goto err;
 		}
-		printf("USRP: alloc bufs offset 0x%x size %d\n",
-				buffers[i].offset, buf_size);
+		printf("%s, buf_size=0x%x\n", __func__, buf_size);
+		printf("USRP: alloc bufs va=0x%x, pa=0x%x, size %d\n",
+				buffers[i].start, buffers[i].offset, buf_size);
 	}
 
 	return ret;
