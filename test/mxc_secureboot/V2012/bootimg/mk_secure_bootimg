@@ -1,0 +1,62 @@
+#! /bin/bash
+if [ $# != 1 ]
+then
+	printf "	Command Syntax:\n"
+	printf "	    mk_secure_bootimg <DDR_ADDR>\n"
+	printf "	        DDR_ADDR : ddr address where boot.img is copied to RAM by U-Boot\n"
+	printf "	Please try again\n"
+	exit
+fi
+
+let ddr_addr=$1
+
+if [ ! -f boot.img ]
+then
+	printf "File \"boot.img\" does not exist. Copy it from android directory and try again\n"
+	exit 1
+fi
+printf "Make Sure Your \"boot.img\" is up to date...\n"
+
+# DDR_ADDR should be as $(od --skip-bytes=12 --read-bytes=4  --format=x4 boot.img |head -1 | awk '{print $2}') and
+# minus 0x800
+
+# Calculate the size
+let bootimg_size=$(ls -lct boot.img | awk '{print $5}')
+let pad_len=$((bootimg_size - bootimg_size % 0x1000 + 0x1000)) # align to 0x1000
+let auth_len=$((pad_len + 0x20)) # +0x20 "IVT"
+let sig_len=$((auth_len + 0x2000))
+let self_ptr=$((${ddr_addr}+ pad_len))
+let csf_ptr=$((${ddr_addr} + auth_len))
+let jump_addr=$((${ddr_addr} + 0x1000))
+
+# change value to hex string
+pad_len=`printf "0x%X" ${pad_len}`
+auth_len=`printf "0x%X" ${auth_len}`
+sig_len=`printf "0x%X" ${sig_len}`
+ddr_addr=`printf "0x%X" ${ddr_addr}`
+self_ptr=`printf "0x%X" ${self_ptr}`
+csf_ptr=`printf "0x%X" ${csf_ptr}`
+jump_addr=`printf "0x%X" ${jump_addr}`
+
+echo "ddr_addr $ddr_addr"
+echo "self_addr $self_addr"
+
+# Create habBImagegen
+sed -e s/%pad_len%/${pad_len}/g -e s/%sig_len%/${sig_len}/g ../templates/habbimagegen_template > habBImageGen
+chmod +x habBImageGen
+
+# Create BImage.csf
+sed -e s/%ddr_addr%/${ddr_addr}/g -e s/%auth_len%/${auth_len}/g ../templates/bimagecsf_template > bootimg.csf
+
+# Create genIVT
+sed -e s/%jump_addr%/${jump_addr}/g -e s/%self_ptr%/${self_ptr}/g -e s/%csf_ptr%/${csf_ptr}/g ../templates/genivt_template > genIVT
+chmod +x genIVT
+
+# Generate secure boot
+./habBImageGen
+
+# Remove temperory files
+rm -f genIVT habBImageGen bootimg.csf boot-pad.img ivt.bin boot-pad-ivt.img bootimg_csf.img boot-signed.img
+
+# OK
+printf "boot.img with Signature \"boot-signed-pad.img\" is ready to use\n"

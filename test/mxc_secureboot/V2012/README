@@ -10,13 +10,15 @@ File Description
 
 "u-boot/mk_secure_uboot"
 "zImage/mk_secure_zimage"
+"bootimg/mk_secure_bootimg"
 "templates/"
-	Automatic secure uboot and zImage generation scripts. These files
+	Automatic secure uboot, zImage and android's boot.img generation scripts. These files
 	are used for dynamic authentication. It is more convinient and
 	adaptive comparing to the original static way.
 
 	Copy "u-boot/mk_secure_uboot" to "BLN_CST_MAIN_01.00.00/u-boot"
 	Copy "zImage/mk_secure_zimage" to "BLN_CST_MAIN_01.00.00/zImage"
+	Copy "bootimg/mk_secure_bootimg" to "BLN_CST_MAIN_01.00.00/bootimg"
 	Copy "templates/" to "BLN_CST_MAIN_01.00.00"
 
 Secure Boot Genreation
@@ -37,6 +39,15 @@ For generating secure zImage
 	  copied to by UBoot, different from platform to platform
     . zimage-signed-pad.bin will be generated. It is the zImage
       with signature
+
+For generating secure boot.img
+    . copy "boot.img" to "BLN_CST_MAIN_01.00.00/boot.img"
+    . "./mk_secure_bootimg 0x14007800"
+	- where 0x14007800 is the DDR location where boot.img is
+	  copied to by UBoot, different from platform to platform
+    . boot-signed-pad.img will be generated. It is the boot.img
+      with signature
+
 
 Image Layout
 ------------------------------------
@@ -69,6 +80,23 @@ zImage
     |     PADDING       | /
     +-------------------+
 
+boot.img
+
+    +-------------------+      DDR_START
+    |                   |
+    |     boot.img      |
+    |                   |
+    +-------------------+      DDR_START + BOOTIMG_SIZE
+    |     PADDING       |
+    +-------------------+      align to 0x1000
+    |     IVT           | ---- Size : 0x20
+    +-------------------+
+    |     CSF Data      | \
+    +-------------------+  +-- CSF + Pad,  Size : 0x2000
+    |     PADDING       | /
+    +-------------------+
+
+
 DDR Location Parameters
 ------------------------------------
 The DDR location parameter provided to "mk_secure_zimage" script is the
@@ -79,6 +107,15 @@ physical address. The following are the default values
 	MX6Q/DL ARM2 Socket Board		MX6SL/SX ARM2 Socket Board
 	-------------------------		-------------------------
 	0x10800000				0x80800000
+
+The DDR location parameter provided to "mk_secure_bootimg" script is the
+kernel_addr from boot.img's header minus 0x800. The kernel_addr can be get from
+'$od --skip-bytes=12 --read-bytes=4  --format=x4 boot.img |head -1 | awk '{print $2}')'
+The following are the default values
+
+	MX6Q/DL SabreSD Board
+    ------------------------
+	0x14007800
 
 Please refer to "MX6 Linux High Assurance Boot (HAB) User Guide" for
 detailed test steps.
