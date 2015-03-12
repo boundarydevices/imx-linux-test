@@ -135,7 +135,11 @@ int start_capturing(int fd_v4l)
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = g_mem_type;
 		buf.index = i;
-		buf.m.offset = buffers[i].offset;
+		buf.length = buffers[i].length;
+		if (g_mem_type == V4L2_MEMORY_USERPTR)
+			buf.m.userptr = (unsigned long) buffers[i].start;
+		else
+			buf.m.offset = buffers[i].offset;
 
 		if (ioctl (fd_v4l, VIDIOC_QBUF, &buf) < 0) {
 			printf("VIDIOC_QBUF error\n");
