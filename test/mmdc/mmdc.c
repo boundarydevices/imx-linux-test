@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2014 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2013-2015 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -83,7 +83,7 @@ void load_mmdc_results(pMMDC_t mmdc)
 void clear_mmdc_results(pMMDC_t mmdc)
 {
 	mmdc->madpcr0 = 0xA;            // Reset counters and clear Overflow bit
-		msync(&(mmdc->madpcr0),4,MS_SYNC);
+	msync(&(mmdc->madpcr0),4,MS_SYNC);
 }
 
 void get_mmdc_profiling_results(pMMDC_t mmdc, MMDC_PROFILE_RES_t *results)
@@ -93,15 +93,15 @@ void get_mmdc_profiling_results(pMMDC_t mmdc, MMDC_PROFILE_RES_t *results)
 	results->busy_cycles 	= mmdc->madpsr1;
 	results->read_accesses	= mmdc->madpsr2;
 	results->write_accesses	= mmdc->madpsr3;
-	results->read_bytes		= mmdc->madpsr4;
+	results->read_bytes	= mmdc->madpsr4;
 	results->write_bytes	= mmdc->madpsr5;
 	bytewidth = 4 << ((mmdc->mdctl & 0x30000)>>16);
 	if(results->read_bytes!=0 || results->write_bytes!=0)
 	{
-		results->utilization	= (int)(((float)results->read_bytes+(float)results->write_bytes)/((float)results->busy_cycles * bytewidth) * 100);
+		results->utilization	= (int)(((double)results->read_bytes+(double)results->write_bytes)/((double)results->busy_cycles * bytewidth) * 100);
 
 		results->data_load  	= (int)((float)results->busy_cycles/(float)results->total_cycles * 100);
-		results->access_utilization	= (int)(((float)results->read_bytes+(float)results->write_bytes)/((float)results->read_accesses + (float)results->write_accesses));
+		results->access_utilization	= (int)(((double)results->read_bytes+(double)results->write_bytes)/((double)results->read_accesses + (double)results->write_accesses));
 		if(mmdc->madpsr3)
 			results->avg_write_burstsize = (int)mmdc->madpsr5 / mmdc->madpsr3;
 		else
@@ -138,13 +138,13 @@ void print_mmdc_profiling_results(MMDC_PROFILE_RES_t results, MMDC_RES_TYPE_t pr
 
 		printf("Read: ");
 
-		printf("%0.2f MB/s / ", (float)results.read_bytes*1000/(1024*1024*time));
+		printf("%0.2f MB/s / ", (double)results.read_bytes*1000/(1024*1024*time));
 
 		printf(" Write: ");
-		printf("%0.2f MB/s ", (float)results.write_bytes*1000/(1024*1024*(float)time));
+		printf("%0.2f MB/s ", (double)results.write_bytes*1000/(1024*1024*(float)time));
 
 		printf(" Total: ");
-		printf("%0.2f MB/s ", (float)(results.write_bytes+results.read_bytes)*1000/(1024*1024*(float)time));
+		printf("%0.2f MB/s ", (double)(results.write_bytes+results.read_bytes)*1000/(1024*1024*(float)time));
 
 		printf("\r\n");
 	}
@@ -242,7 +242,7 @@ void help(void)
 {
 	printf("======================MMDC v1.3===========================\n");
 	printf("Usage: mmdc [ARM:DSP1:DSP2:GPU2D:GPU2D1:GPU2D2:GPU3D:GPUVG:VPU:M4:PXP:USB:SUM] [...]\n");
-	printf("export MMDC_SLEEPTIME can be used to define profiling duration.1 by default means 1s\n");
+	printf("export MMDC_SLEEPTIME can be used to define profiling duration, 500 by default means 0.5s\n");
 	printf("export MMDC_LOOPCOUNT can be used to define profiling times. 1 by default. -1 means infinite loop.\n");
 	printf("export MMDC_CUST_MADPCR1 can be used to customize madpcr1. Will ignore it if defined master\n");
 	printf("Note1: More than 1 master can be inputed. They will be profiled one by one.\n");
@@ -250,7 +250,7 @@ void help(void)
 }
 int main(int argc, char **argv)
 {
-	int timeForSleep = 1;
+	unsigned int timeForSleep = 500;
 	void *A;
 	MMDC_PROFILE_RES_t results;
 	int ulStartTime = 0;
@@ -264,7 +264,7 @@ int main(int argc, char **argv)
 	{
 		timeForSleep = strtol(p, 0, 10);
 		if(timeForSleep == 0)
-			timeForSleep = 1;
+			timeForSleep = 500;
 	}
 	p = getenv("MMDC_LOOPCOUNT");
 	if (p != 0)
@@ -384,7 +384,7 @@ int main(int argc, char **argv)
 				clear_mmdc_results((pMMDC_t)A);
 				ulStartTime=getTickCount();
 				start_mmdc_profiling((pMMDC_t)A);
-				sleep(timeForSleep);
+				usleep(timeForSleep*1000);
 				load_mmdc_results((pMMDC_t)A);
 				get_mmdc_profiling_results((pMMDC_t)A, &results);
 				print_mmdc_profiling_results(results , RES_FULL,getTickCount()-ulStartTime);
@@ -405,7 +405,7 @@ int main(int argc, char **argv)
 			clear_mmdc_results((pMMDC_t)A);
 			ulStartTime=getTickCount();
 			start_mmdc_profiling((pMMDC_t)A);
-			sleep(timeForSleep); //leave it collect 1sec data;
+			usleep(timeForSleep*1000);
 			load_mmdc_results((pMMDC_t)A);
 			get_mmdc_profiling_results((pMMDC_t)A, &results);
 			print_mmdc_profiling_results(results , RES_FULL,getTickCount()-ulStartTime);
