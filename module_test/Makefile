@@ -18,9 +18,6 @@ endif
 ifeq ($(CONFIG_MXC_SDMA_API),y)
 module_list-y += mxc_sdma_mem_test.o
 endif
-ifeq ($(CONFIG_FB_MXC_EINK_PANEL),y)
-module_list-y += epdc_test_driver.o
-endif
 ifeq ($(CONFIG_FB_MXC_SIPIX_PANEL),y)
 module_list-y += spdc_test_driver.o
 endif
