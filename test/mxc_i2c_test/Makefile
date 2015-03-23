@@ -1,7 +1,8 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX35_3STACK IMX25_3STACK IMX6Q IMX6SL IMX6SX"
+#EXCLUDE_LIST:="IMX35_3STACK IMX25_3STACK IMX6Q IMX6SL IMX6SX IMX7D"
+INCLUDE_LIST:="IMX53 IMX51"
 
-ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
+ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 OBJS = \
 	$(OBJDIR)/mxc_i2c_test.out \
 	$(OBJDIR)/mxc_i2c_test_usb.out \
