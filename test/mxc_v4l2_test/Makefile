@@ -1,7 +1,7 @@
 # list of platforms which did not want this test case
 EXCLUDE_LIST:=
-CSI_LIST:=IMX25_3STACK IMX6SL IMX6SX
-NEED_PXP_LIB_LIST:=IMX6SL IMX6SX
+CSI_LIST:=IMX25_3STACK IMX6SL IMX6SX IMX7D
+NEED_PXP_LIB_LIST:=IMX6SL IMX6SX IMX7D
 
 # Just use pxp library to get contiguous physical memory for USERPTR testing
 # However, be noticed that this is not the only way.

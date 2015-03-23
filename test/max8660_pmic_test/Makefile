@@ -1,11 +1,11 @@
 # list of platforms which did not want this test case
-EXCLUDE_LIST:="IMX51 IMX37_3STACK IMX31_3STACK IMX31ADS IMX27_3STACK IMX27ADS IMX25_3STACK IMX6Q IMX6SL IMX6SX"
-
+#EXCLUDE_LIST:="IMX51 IMX37_3STACK IMX31_3STACK IMX31ADS IMX27_3STACK IMX27ADS IMX25_3STACK IMX6Q IMX6SL IMX6SX"
+INCLUDE_LIST:="IMX53"
 
 LTP_DIR = $(TOPDIR)/test/mxc_pmic_test/
 LOADLIBES+= -L$(LTP_DIR)lib -lltp
 
-ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
+ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 OBJS = autorun-mcu_pmic.sh libltp.a
 else
 OBJS =
@@ -22,7 +22,7 @@ SUBDIRS =       protocol_tests \
 		pmic_testapp_rtc
 
 all: $(OBJS)
-ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
+ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 	@set -e; for i in $(SUBDIRS); do $(MAKE) -C $$i ; done
 endif
 
