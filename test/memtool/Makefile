@@ -8,7 +8,8 @@ OBJ = memtool.o \
       mx6dl_modules.o \
       mx6q_modules.o \
       mx6sl_modules.o \
-      mx6sx_modules.o
+      mx6sx_modules.o \
+      mx6ul_modules.o
 
 ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 TARGET = $(OBJDIR)/memtool
