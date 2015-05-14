@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (C) 2014-2015 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -451,6 +451,9 @@ int main(int argc, char **argv)
 		}
 		printf("open /dev/dcic1\n");
 	}
+
+	/* unblank framebuffer */
+	ioctl(fd_fb0, FBIOBLANK, FB_BLANK_UNBLANK);
 
 	retval = ioctl(fd_fb0, FBIOGET_VSCREENINFO, &screen_info);
 	if (retval < 0) {
