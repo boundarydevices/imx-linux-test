@@ -5,7 +5,7 @@
 #****************************************************************************/
 
 # list of platforms which did not want this test case
-#EXCLUDE_LIST:="IMX27ADS IMX51 IMX6Q IMX6SL IMX6SX IMX7D"
+#EXCLUDE_LIST:="IMX27ADS IMX51 IMX6Q IMX6SL IMX6SX IMX7D IMX6UL"
 INCLUDE_LIST:="IMX53 IMX31"
 
 ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
