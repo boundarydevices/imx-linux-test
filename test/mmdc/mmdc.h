@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2014 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright (C) 2013-2015 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
 /*
@@ -139,12 +139,26 @@ void print_mmdc_profiling_results(MMDC_PROFILE_RES_t results, MMDC_RES_TYPE_t pr
 
 extern unsigned int system_rev;
 
+#define CHIP_REV_1_0            	0x1
+#define CHIP_REV_2_0			0x2
+
+#define cpu_is_mx6qp()		mxc_is_cpu(0x65)
 #define cpu_is_mx6q()		mxc_is_cpu(0x63)
 #define cpu_is_mx6dl()		mxc_is_cpu(0x61)
 #define cpu_is_mx6sl()		mxc_is_cpu(0x60)
 #define cpu_is_mx6sx()		mxc_is_cpu(0x62)
 #define mxc_is_cpu(part)        ((mxc_cpu() == (unsigned int)part) ? 1 : 0)
 #define mxc_cpu()               (system_rev >> 12)
+#define mxc_cpu_rev()           (system_rev & 0xFF)
+#define mxc_cpu_is_rev(rev)     \
+        ((mxc_cpu_rev() == (unsigned int)rev) ? 1 : ((mxc_cpu_rev() < (unsigned int)rev) ? -1 : 2))
+#define MXC_REV(type)                           \
+static inline int type## _rev (int rev)         \
+{                                               \
+        return (type() ? mxc_cpu_is_rev(rev) : 0);      \
+}
+MXC_REV(cpu_is_mx6q);
+
 #define axi_ipu1                0x00070004
 #define axi_ipu2_6q             0x00070005
 #define axi_gpu3d_6dl           0x003F0002
@@ -169,5 +183,15 @@ extern unsigned int system_rev;
 #define axi_usb_6sl             0x003F0014
 #define axi_usb_6sx             0x007F0046
 #define axi_default             0x00000000
+
+#define axi_gpu3d_6qp		0x00170006
+#define axi_gpu2d_6qp		0x001F0016
+#define axi_pre_6qp		0x00070007  /* for all PRE */
+#define axi_pre0_6qp		0x001F0007
+#define axi_pre1_6qp		0x001F000F
+#define axi_pre2_6qp		0x001F0017
+#define axi_pre3_6qp		0x001F001F
+#define axi_vpu_6qp		0x003F0002
+
 
 #endif /*MMDC_H_*/
