@@ -45,44 +45,106 @@ static unsigned long getTickCount(void)
 
 void start_mmdc_profiling(pMMDC_t mmdc)
 {
-
-	mmdc->madpcr0 = 0xA;		// Reset counters and clear Overflow bit
+	/* Reset counters and clear Overflow bit */
+	if(cpu_is_mx6qp() == 1)
+		mmdc->madpcr0 = 0x1A;
+	else if( cpu_is_mx6q() == 1
+		|| cpu_is_mx6dl() == 1
+		|| cpu_is_mx6sl() == 1
+		|| cpu_is_mx6sx() == 1)
+		mmdc->madpcr0 = 0xA;
+	else
+		return;
 	msync(&(mmdc->madpcr0),4,MS_SYNC);
 
-	mmdc->madpcr0 = 0x1;		// Enable counters
+	/* Enable counters */
+	if(cpu_is_mx6qp() == 1)
+		mmdc->madpcr0 = 0x11;
+	else if( cpu_is_mx6q() == 1
+		|| cpu_is_mx6dl() == 1
+		|| cpu_is_mx6sl() == 1
+		|| cpu_is_mx6sx() == 1)
+		mmdc->madpcr0 = 0x1;
+	else
+		return;
 	msync(&(mmdc->madpcr0),4,MS_SYNC);
 
 }
 
 void stop_mmdc_profiling(pMMDC_t mmdc)
 {
-	mmdc->madpcr0 = 0x0;		// Disable counters
+	/* Disable counters */
+	if(cpu_is_mx6qp() == 1)
+		mmdc->madpcr0 = 0x10;
+	else if( cpu_is_mx6q() == 1
+		|| cpu_is_mx6dl() == 1
+		|| cpu_is_mx6sl() == 1
+		|| cpu_is_mx6sx() == 1)
+		mmdc->madpcr0 = 0x0;
+	else
+		return;
 	msync(&(mmdc->madpcr0),4,MS_SYNC);
 
 }
 
 void pause_mmdc_profiling(pMMDC_t mmdc)
 {
-	mmdc->madpcr0 = 0x3;		// PRF_FRZ = 1
+	/* PRF_FRZ = 1 */
+	if(cpu_is_mx6qp() == 1)
+		mmdc->madpcr0 = 0x13;
+	else if( cpu_is_mx6q() == 1
+		|| cpu_is_mx6dl() == 1
+		|| cpu_is_mx6sl() == 1
+		|| cpu_is_mx6sx() == 1)
+		mmdc->madpcr0 = 0x3;
+	else
+		return;
 	msync(&(mmdc->madpcr0),4,MS_SYNC);
 }
 
 void resume_mmdc_profiling(pMMDC_t mmdc)
 {
-	mmdc->madpcr0 = 0x1;		// PRF_FRZ = 0
+	/* PRF_FRZ = 0 */
+	if(cpu_is_mx6qp() == 1)
+		mmdc->madpcr0 = 0x11;
+	else if( cpu_is_mx6q() == 1
+		|| cpu_is_mx6dl() == 1
+		|| cpu_is_mx6sl() == 1
+		|| cpu_is_mx6sx() == 1)
+		mmdc->madpcr0 = 0x1;
+	else
+		return;
 	msync(&(mmdc->madpcr0),4,MS_SYNC);
 }
 void load_mmdc_results(pMMDC_t mmdc)
 {
-	//printf("before : mmdc->madpcr0 0x%x\n",mmdc->madpcr0);
-	mmdc->madpcr0 |= 0x4; //sets the PRF_FRZ bit to 1 in order to load the results into the registers
-	//printf("after : mmdc->madpcr0 0x%x\n",mmdc->madpcr0);
+	/* printf("before : mmdc->madpcr0 0x%x\n",mmdc->madpcr0);*/
+	/* sets the PRF_FRZ bit to 1 in order to load the results into the registers */
+	if(cpu_is_mx6qp() == 1)
+		mmdc->madpcr0 |= 0x14; 
+	else if( cpu_is_mx6q() == 1
+		|| cpu_is_mx6dl() == 1
+		|| cpu_is_mx6sl() == 1
+		|| cpu_is_mx6sx() == 1)
+		mmdc->madpcr0 |= 0x4;
+	else
+		return;
+	/* printf("after : mmdc->madpcr0 0x%x\n",mmdc->madpcr0); */
 	msync(&(mmdc->madpcr0),4,MS_SYNC);
 }
 
 void clear_mmdc_results(pMMDC_t mmdc)
 {
-	mmdc->madpcr0 = 0xA;            // Reset counters and clear Overflow bit
+	/* Reset counters and clear Overflow bit */
+	if(cpu_is_mx6qp() == 1)
+		mmdc->madpcr0 = 0x1A;
+	else if( cpu_is_mx6q() == 1
+		|| cpu_is_mx6dl() == 1
+		|| cpu_is_mx6sl() == 1
+		|| cpu_is_mx6sx() == 1)
+		mmdc->madpcr0 = 0xA;
+	else
+		return;
 	msync(&(mmdc->madpcr0),4,MS_SYNC);
 }
 
@@ -164,6 +226,7 @@ static int get_system_rev(void)
 	char buf[2048];
 	int nread;
 	char *tmp, *rev;
+	int rev_major, rev_minor;
 	int ret = -1;
 
 	fp = fopen("/proc/cpuinfo", "r");
@@ -192,7 +255,7 @@ static int get_system_rev(void)
 		}
 	}
 
-	//cpuinfo is changed in 3.10.9 kernel, new way is used.
+	/* cpuinfo is changed in 3.10.9 kernel, new way is used. */
 	if((ret == 0) && (system_rev ==0))
 	{
 		ret = -1;
@@ -209,11 +272,32 @@ static int get_system_rev(void)
 			return ret;
 		}
 		buf[nread] = '\0';
+		fp = fopen("/sys/devices/soc0/revision", "r");
+		if (fp == NULL) {
+			perror("/sys/devices/soc0/revision");
+			return ret;
+		}
+
+		if (fscanf(fp, "%d.%d", &rev_major, &rev_minor) != 2) {
+			perror("fscanf");
+			fclose(fp);
+			return ret;
+		}
+		fclose(fp);
+
 		if(strncmp(buf,"i.MX6Q",6)==0)
 		{
-			system_rev= 0x63000;
-			ret =0;
-			printf("i.MX6Q detected.\n");
+			if ( rev_major == CHIP_REV_2_0 )
+			{
+				system_rev= 0x65000;
+				ret =0;
+				printf("i.MX6QP detected.\n");
+			}else if( rev_major == CHIP_REV_1_0 )
+			{
+				system_rev= 0x63000;
+				ret =0;
+				printf("i.MX6Q detected.\n");
+			}
 		}else if(strncmp(buf,"i.MX6DL",7)==0){
 			system_rev= 0x61000;
 			ret = 0;
@@ -330,12 +414,18 @@ int main(int argc, char **argv)
 				}else if((strcmp(argv[j], "GPU3D")==0)&&(cpu_is_mx6dl()==1)){
 				  ((pMMDC_t)A)->madpcr1 = axi_gpu3d_6dl;
 				  printf("MMDC GPU3D \n");
+				}else if((strcmp(argv[j], "GPU3D")==0)&&(cpu_is_mx6qp()==1)){
+				  ((pMMDC_t)A)->madpcr1 = axi_gpu3d_6qp;
+				  printf("MMDC GPU3D \n");
 				}else if((strcmp(argv[j], "GPU3D")==0)&&(cpu_is_mx6q()==1)){
 				  ((pMMDC_t)A)->madpcr1 = axi_gpu3d_6q;
 				  printf("MMDC GPU3D \n");
 				}else if((strcmp(argv[j], "GPU2D1")==0)&&(cpu_is_mx6dl()==1)){
 				  ((pMMDC_t)A)->madpcr1 = axi_gpu2d1_6dl;
 				  printf("MMDC GPU2D1 \n");
+				}else if((strcmp(argv[j], "GPU2D")==0)&&(cpu_is_mx6qp()==1)){
+				  ((pMMDC_t)A)->madpcr1 = axi_gpu2d_6qp;
+				  printf("MMDC GPU2D \n");
 				}else if((strcmp(argv[j], "GPU2D")==0)&&(cpu_is_mx6q()==1)){
 				  ((pMMDC_t)A)->madpcr1 = axi_gpu2d_6q;
 				  printf("MMDC GPU2D \n");
@@ -348,9 +438,27 @@ int main(int argc, char **argv)
 				}else if((strcmp(argv[j],"VPU")==0)&&(cpu_is_mx6dl()==1)){
 				  ((pMMDC_t)A)->madpcr1 = axi_vpu_6dl;
 				  printf("MMDC VPU \n");
+				}else if((strcmp(argv[j],"VPU")==0)&&(cpu_is_mx6qp()==1)){
+				   ((pMMDC_t)A)->madpcr1 = axi_vpu_6qp;
+				   printf("MMDC VPU \n");
 				}else if((strcmp(argv[j],"VPU")==0)&&(cpu_is_mx6q()==1)){
 				   ((pMMDC_t)A)->madpcr1 = axi_vpu_6q;
 				   printf("MMDC VPU \n");
+				}else if((strcmp(argv[j],"PRE")==0)&&(cpu_is_mx6qp()==1)){
+				   ((pMMDC_t)A)->madpcr1 = axi_pre_6qp;
+				   printf("MMDC PRE \n");
+				}else if((strcmp(argv[j],"PRE0")==0)&&(cpu_is_mx6qp()==1)){
+				   ((pMMDC_t)A)->madpcr1 = axi_pre0_6qp;
+				   printf("MMDC PRE0 \n");
+				}else if((strcmp(argv[j],"PRE1")==0)&&(cpu_is_mx6qp()==1)){
+				   ((pMMDC_t)A)->madpcr1 = axi_pre1_6qp;
+				   printf("MMDC PRE1 \n");
+				}else if((strcmp(argv[j],"PRE2")==0)&&(cpu_is_mx6qp()==1)){
+				   ((pMMDC_t)A)->madpcr1 = axi_pre2_6qp;
+				   printf("MMDC PRE2 \n");
+				}else if((strcmp(argv[j],"PRE3")==0)&&(cpu_is_mx6qp()==1)){
+				   ((pMMDC_t)A)->madpcr1 = axi_pre3_6qp;
+				   printf("MMDC PRE3 \n");
 				}else if((strcmp(argv[j],"GPUVG")==0)&&(cpu_is_mx6q()==1)){
 				   ((pMMDC_t)A)->madpcr1 = axi_openvg_6q;
 				   printf("MMDC GPUVG \n");
