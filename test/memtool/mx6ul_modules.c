@@ -17059,8 +17059,8 @@ static const field_t hw_ccm_ccsr[] =
         true // Writable
     },
     {
-        "CA7_SECONDARY_CLK_SEL",
-        "CA7 secondary clock",
+        "SECONDARY_CLK_SEL",
+        "Select source to generate secondary_clk",
         3, // LSB
         3, // MSB
         true, // Readable
@@ -17112,16 +17112,16 @@ static const field_t hw_ccm_cbcdr[] =
         true // Writable
     },
     {
-        "OCRAM_CLK_SEL",
-        "OCRAM clock source select",
+        "AXI_CLK_SEL",
+        "AXI clock source select",
         6, // LSB
         6, // MSB
         true, // Readable
         true // Writable
     },
     {
-        "OCRAM_ALT_CLK_SEL",
-        "OCRAM alternative clock select",
+        "AXI_ALT_CLK_SEL",
+        "AXI alternative clock select",
         7, // LSB
         7, // MSB
         true, // Readable
@@ -17144,8 +17144,8 @@ static const field_t hw_ccm_cbcdr[] =
         true // Writable
     },
     {
-        "OCRAM_PODF",
-        "Post divider for ocram clock.",
+        "AXI_PODF",
+        "Post divider for axi clock.",
         16, // LSB
         18, // MSB
         true, // Readable
@@ -17244,7 +17244,7 @@ static const field_t hw_ccm_cscmr1[] =
         true // Writable
     },
     {
-        "QSPI1_SEL",
+        "QSPI1_CLK_SEL",
         "QSPI1 clock select",
         7, // LSB
         9, // MSB
@@ -17513,15 +17513,6 @@ static const field_t hw_ccm_cs2cdr[] =
         "en both input and output clocks are gated.",
         9, // LSB
         11, // MSB
-        true, // Readable
-        true // Writable
-    },
-    {
-        "LDB_DI1_CLK_SEL",
-        "Selector for ldb_di1 clock multiplexerMultiplexor should be updated wh"
-        "en both input and output clocks are gated.",
-        12, // LSB
-        14, // MSB
         true, // Readable
         true // Writable
     },
@@ -18228,7 +18219,7 @@ static const field_t hw_ccm_ccgr0[] =
     },
     {
         "CG15",
-        "aips_tz3 clocks (aips_tz3_clk_enable)",
+        "gpio2_clocks (gpio2_clk_enable)",
         30, // LSB
         31, // MSB
         true, // Readable
@@ -18306,7 +18297,7 @@ static const field_t hw_ccm_ccgr1[] =
     },
     {
         "CG8",
-        "esai clocks adc1 clock (adc1_clk_enable)",
+        "adc1 clock (adc1_clk_enable)",
         16, // LSB
         17, // MSB
         true, // Readable
@@ -18559,7 +18550,7 @@ static const field_t hw_ccm_ccgr3[] =
     },
     {
         "CG6",
-        "ldb_di0 clock (ldb_di0_clk_enable)",
+        "gpio4 clock (gpio4_clk_enable)",
         12, // LSB
         13, // MSB
         true, // Readable
@@ -18631,7 +18622,7 @@ static const field_t hw_ccm_ccgr3[] =
     },
     {
         "CG15",
-        "gpio4 clock (gpio4_clk_enable)",
+        "Reserved",
         30, // LSB
         31, // MSB
         true, // Readable
@@ -18693,7 +18684,8 @@ static const field_t hw_ccm_ccgr4[] =
     },
     {
         "CG6",
-        "pl301_mx6qper1_bch clocks (pl301_mx6qper1_bchclk_enable)",
+        "pl301_mx6qper1_bch clocks (pl301_mx6qper1_bchclk_enable) This gates bc"
+        "h_clk_root to sim_m fabric.",
         12, // LSB
         13, // MSB
         true, // Readable
@@ -18939,7 +18931,7 @@ static const field_t hw_ccm_ccgr6[] =
     },
     {
         "CG3",
-        "bch clock (bch_clk_enable)",
+        "sim1_clock (sim1_clk_enable)",
         6, // LSB
         7, // MSB
         true, // Readable
@@ -18947,7 +18939,7 @@ static const field_t hw_ccm_ccgr6[] =
     },
     {
         "CG4",
-        "gpmi clock (gpmi_clk_enable)",
+        "sim2_clock (sim2_clk_enable)",
         8, // LSB
         9, // MSB
         true, // Readable
@@ -18971,7 +18963,7 @@ static const field_t hw_ccm_ccgr6[] =
     },
     {
         "CG7",
-        "Reserved",
+        "uart8 clocks (uart8_clk_enable)",
         14, // LSB
         15, // MSB
         true, // Readable
@@ -19224,7 +19216,7 @@ static const reg_t hw_ccm[] =
         0x0000002c, // Base address offset
         true, // Readable
         true, // Writable
-        7, // Number of bitfields
+        6, // Number of bitfields
         hw_ccm_cs2cdr
     },
     {
@@ -22422,9 +22414,8 @@ static const field_t hw_ccm_analog_analog_misc0[] =
         true // Writable
     },
     {
-        "RTC_RINGOSC_EN",
-        "Enables the internal ring oscillator that can be used in lieu of an ex"
-        "ternal 32k crystal.",
+        "DISCON_HIGH_SNVS",
+        "This bit controls a switch from VDD_HIGH_IN to VDD_SNVS_IN.",
         12, // LSB
         12, // MSB
         true, // Readable
@@ -22548,9 +22539,8 @@ static const field_t hw_ccm_analog_analog_misc0_set[] =
         true // Writable
     },
     {
-        "RTC_RINGOSC_EN",
-        "Enables the internal ring oscillator that can be used in lieu of an ex"
-        "ternal 32k crystal.",
+        "DISCON_HIGH_SNVS",
+        "This bit controls a switch from VDD_HIGH_IN to VDD_SNVS_IN.",
         12, // LSB
         12, // MSB
         true, // Readable
@@ -22674,9 +22664,8 @@ static const field_t hw_ccm_analog_analog_misc0_clr[] =
         true // Writable
     },
     {
-        "RTC_RINGOSC_EN",
-        "Enables the internal ring oscillator that can be used in lieu of an ex"
-        "ternal 32k crystal.",
+        "DISCON_HIGH_SNVS",
+        "This bit controls a switch from VDD_HIGH_IN to VDD_SNVS_IN.",
         12, // LSB
         12, // MSB
         true, // Readable
@@ -22800,9 +22789,8 @@ static const field_t hw_ccm_analog_analog_misc0_tog[] =
         true // Writable
     },
     {
-        "RTC_RINGOSC_EN",
-        "Enables the internal ring oscillator that can be used in lieu of an ex"
-        "ternal 32k crystal.",
+        "DISCON_HIGH_SNVS",
+        "This bit controls a switch from VDD_HIGH_IN to VDD_SNVS_IN.",
         12, // LSB
         12, // MSB
         true, // Readable
@@ -29386,7 +29374,7 @@ static const field_t hw_emvsim_int_mask[] =
         true // Writable
     },
     {
-        "PEF_MASK",
+        "PEF_IM",
         "Used to enable/disable the ability of the PEF flag in the RX_STATUS re"
         "gister to generate EMV SIM interrupts.",
         15, // LSB
@@ -29558,7 +29546,7 @@ static const field_t hw_emvsim_rx_status[] =
         "RX_CNT",
         "These bits indicate the number of bytes stored in the receive FIFO.",
         24, // LSB
-        28, // MSB
+        31, // MSB
         true, // Readable
         false // Writable
     },
@@ -29651,7 +29639,7 @@ static const field_t hw_emvsim_tx_status[] =
         "TX_CNT",
         "These bits indicate the number of bytes stored in the transmit FIFO.",
         24, // LSB
-        28, // MSB
+        31, // MSB
         true, // Readable
         false // Writable
     },
@@ -30652,7 +30640,7 @@ static const field_t hw_enet_rcr[] =
     },
     {
         "RMII_10T",
-        "Enables 10-Mbps mode of the RMII .",
+        "Enables 10-Mbit/s mode of the RMII .",
         9, // LSB
         9, // MSB
         true, // Readable
@@ -68800,7 +68788,7 @@ static const field_t hw_mmdc_mpzqlp2ctl[] =
     {
         "ZQ_LP2_HW_ZQCL",
         "This register defines the period in cycles that it takes the memory de"
-        "vice to perform a long ZQ calibration.",
+        "vice to perform a short ZQ calibration.",
         16, // LSB
         23, // MSB
         true, // Readable
@@ -68809,7 +68797,7 @@ static const field_t hw_mmdc_mpzqlp2ctl[] =
     {
         "ZQ_LP2_HW_ZQCS",
         "This register defines the period in cycles that it takes the memory de"
-        "vice to perform a Short ZQ calibration.",
+        "vice to perform a long ZQ calibration.",
         24, // LSB
         30, // MSB
         true, // Readable
@@ -74638,9 +74626,8 @@ static const field_t hw_pmu_misc0[] =
         true // Writable
     },
     {
-        "RTC_RINGOSC_EN",
-        "Enables the internal ring oscillator that can be used in lieu of an ex"
-        "ternal 32k crystal.",
+        "DISCON_HIGH_SNVS",
+        "This bit controls a switch from VDD_HIGH_IN to VDD_SNVS_IN.",
         12, // LSB
         12, // MSB
         true, // Readable
@@ -79042,7 +79029,7 @@ static const field_t hw_quadspi_mcr[] =
 {
     {
         "SWRSTSD",
-        "Software reset for Serial Flash domain",
+        "Software reset for serial flash domain",
         0, // LSB
         0, // MSB
         true, // Readable
@@ -79058,7 +79045,7 @@ static const field_t hw_quadspi_mcr[] =
     },
     {
         "END_CFG",
-        "Defines the endianness of the QSPI module.",
+        "Defines the endianness of the QuadSPI module.",
         2, // LSB
         3, // MSB
         true, // Readable
@@ -79066,7 +79053,7 @@ static const field_t hw_quadspi_mcr[] =
     },
     {
         "DQS_EN",
-        "DQS enable: This field is valid for both SDR and DDR mode.",
+        "DQS enable.",
         6, // LSB
         6, // MSB
         true, // Readable
@@ -79074,7 +79061,7 @@ static const field_t hw_quadspi_mcr[] =
     },
     {
         "DDR_EN",
-        "DDR mode enable:",
+        "DDR mode enable",
         7, // LSB
         7, // MSB
         true, // Readable
@@ -79120,8 +79107,7 @@ static const field_t hw_quadspi_ipcr[] =
 {
     {
         "IDATSZ",
-        "IP data transfer size: Defines the data transfer size in bytes of the "
-        "IP command.",
+        "IP data transfer size.",
         0, // LSB
         15, // MSB
         true, // Readable
@@ -79138,7 +79124,7 @@ static const field_t hw_quadspi_ipcr[] =
     },
     {
         "SEQID",
-        "Points to a sequence in the Look-up-table.",
+        "Points to a sequence in the Look-up table.",
         24, // LSB
         27, // MSB
         true, // Readable
@@ -79174,7 +79160,7 @@ static const field_t hw_quadspi_buf0cr[] =
 {
     {
         "MSTRID",
-        "Master ID: The ID of the AHB master associated with BUFFER0.",
+        "Master ID.",
         0, // LSB
         3, // MSB
         true, // Readable
@@ -79191,8 +79177,7 @@ static const field_t hw_quadspi_buf0cr[] =
     },
     {
         "HP_EN",
-        "High Priority Enable: When set, the master associated with this buffer"
-        " is assigned a priority higher than the rest of the masters.",
+        "High Priority Enable.",
         31, // LSB
         31, // MSB
         true, // Readable
@@ -79206,7 +79191,7 @@ static const field_t hw_quadspi_buf1cr[] =
 {
     {
         "MSTRID",
-        "Master ID: The ID of the AHB master associated with BUFFER1.",
+        "Master ID.",
         0, // LSB
         3, // MSB
         true, // Readable
@@ -79215,8 +79200,7 @@ static const field_t hw_quadspi_buf1cr[] =
     {
         "ADATSZ",
         "Defines the data transfer size in 8 bytes of an AHB triggered access t"
-        "o serial flash.For example, a value of 0x2 will set transfer size to 1"
-        "6bytes.",
+        "o serial flash.",
         8, // LSB
         15, // MSB
         true, // Readable
@@ -79230,7 +79214,7 @@ static const field_t hw_quadspi_buf2cr[] =
 {
     {
         "MSTRID",
-        "Master ID: The ID of the AHB master associated with BUFFER2.",
+        "Master ID.",
         0, // LSB
         3, // MSB
         true, // Readable
@@ -79238,7 +79222,7 @@ static const field_t hw_quadspi_buf2cr[] =
     },
     {
         "ADATSZ",
-        "Defines the data transfer size in 8 Bytes of an AHB triggered access t"
+        "Defines the data transfer size in 8 bytes of an AHB triggered access t"
         "o serial flash.",
         8, // LSB
         15, // MSB
@@ -79253,7 +79237,7 @@ static const field_t hw_quadspi_buf3cr[] =
 {
     {
         "MSTRID",
-        "Master ID: The ID of the AHB master associated with BUFFER3.",
+        "Master ID.",
         0, // LSB
         3, // MSB
         true, // Readable
@@ -79270,7 +79254,7 @@ static const field_t hw_quadspi_buf3cr[] =
     },
     {
         "ALLMST",
-        "All master enable: When set, buffer3 acts as an all-master buffer.",
+        "All master enable.",
         31, // LSB
         31, // MSB
         true, // Readable
@@ -79364,7 +79348,7 @@ static const field_t hw_quadspi_smpr[] =
     {
         "HSENA",
         "This bit enables the divide by 2 of the clock to the external serial f"
-        "lash device for all commands,only in SDR.",
+        "lash device for all commands, only in SDR.",
         0, // LSB
         0, // MSB
         true, // Readable
@@ -79388,7 +79372,7 @@ static const field_t hw_quadspi_smpr[] =
     },
     {
         "FSPHS",
-        "Select the edge of the sampling clock valid for full speed commands:",
+        "Select the edge of the sampling clock valid for full speed commands.",
         5, // LSB
         5, // MSB
         true, // Readable
@@ -79419,8 +79403,7 @@ static const field_t hw_quadspi_rbsr[] =
 {
     {
         "RDBFL",
-        "RX Buffer Fill Level, indicates how many entries of 4 bytes are still "
-        "available in the RX Buffer.",
+        "RX Buffer Fill Level.",
         8, // LSB
         13, // MSB
         true, // Readable
@@ -79428,8 +79411,7 @@ static const field_t hw_quadspi_rbsr[] =
     },
     {
         "RDCTR",
-        "Read Counter, indicates how many entries of 4 bytes have been removed "
-        "from the RX Buffer.",
+        "Read Counter.",
         16, // LSB
         31, // MSB
         true, // Readable
@@ -79443,8 +79425,7 @@ static const field_t hw_quadspi_rbct[] =
 {
     {
         "WMRK",
-        "RX Buffer Watermark: This field determines when the readout action of "
-        "the RX Buffer is triggered.",
+        "RX Buffer Watermark.",
         0, // LSB
         4, // MSB
         true, // Readable
@@ -79452,8 +79433,7 @@ static const field_t hw_quadspi_rbct[] =
     },
     {
         "RXBRD",
-        "RX Buffer Readout: This bit specifies the access scheme for the RX Buf"
-        "fer readout.",
+        "RX Buffer Readout.",
         8, // LSB
         8, // MSB
         true, // Readable
@@ -79505,8 +79485,7 @@ static const field_t hw_quadspi_sr[] =
 {
     {
         "BUSY",
-        "Module Busy: Asserted when module is currently busy handling a transac"
-        "tion to an external flash device.",
+        "Module Busy.",
         0, // LSB
         0, // MSB
         true, // Readable
@@ -79514,8 +79493,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "IP_ACC",
-        "IP Access: Asserted when transaction currently executed was initiated "
-        "by IP bus.",
+        "IP Access.",
         1, // LSB
         1, // MSB
         true, // Readable
@@ -79523,8 +79501,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB_ACC",
-        "AHB Access: Asserted when the transaction currently executed was initi"
-        "ated by AHB bus.",
+        "AHB Access.",
         2, // LSB
         2, // MSB
         true, // Readable
@@ -79541,8 +79518,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHBTRN",
-        "AHB Access Transaction pending: Asserted when there is a pending reque"
-        "st on the AHB interface.",
+        "AHB Access Transaction pending.",
         6, // LSB
         6, // MSB
         true, // Readable
@@ -79550,7 +79526,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB0NE",
-        "AHB 0 Buffer Not Empty: Asserted when AHB 0 buffer contains data.",
+        "AHB 0 Buffer Not Empty.",
         7, // LSB
         7, // MSB
         true, // Readable
@@ -79558,7 +79534,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB1NE",
-        "AHB 1 Buffer Not Empty: Asserted when AHB 1 buffer contains data.",
+        "AHB 1 Buffer Not Empty.",
         8, // LSB
         8, // MSB
         true, // Readable
@@ -79566,7 +79542,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB2NE",
-        "AHB 2 Buffer Not Empty: Asserted when AHB 2 buffer contains data.",
+        "AHB 2 Buffer Not Empty.",
         9, // LSB
         9, // MSB
         true, // Readable
@@ -79574,7 +79550,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB3NE",
-        "AHB 3 Buffer Not Empty: Asserted when AHB 3 buffer contains data.",
+        "AHB 3 Buffer Not Empty.",
         10, // LSB
         10, // MSB
         true, // Readable
@@ -79582,7 +79558,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB0FUL",
-        "AHB 0 Buffer Full: Asserted when AHB 0 buffer is full.",
+        "AHB 0 Buffer Full.",
         11, // LSB
         11, // MSB
         true, // Readable
@@ -79590,7 +79566,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB1FUL",
-        "AHB 1 Buffer Full: Asserted when AHB 1 buffer is full.",
+        "AHB 1 Buffer Full.",
         12, // LSB
         12, // MSB
         true, // Readable
@@ -79598,7 +79574,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB2FUL",
-        "AHB 2 Buffer Full: Asserted when AHB 2 buffer is full.",
+        "AHB 2 Buffer Full.",
         13, // LSB
         13, // MSB
         true, // Readable
@@ -79606,7 +79582,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "AHB3FUL",
-        "AHB 3 Buffer Full: Asserted when AHB 3 buffer is full.",
+        "AHB 3 Buffer Full.",
         14, // LSB
         14, // MSB
         true, // Readable
@@ -79614,9 +79590,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "RXWE",
-        "RX Buffer Watermark Exceeded: Asserted when the number of valid entrie"
-        "s in the RX Buffer exceeds the number given in the QSPI_RBCT[WMRK] fie"
-        "ld.",
+        "RX Buffer Watermark Exceeded.",
         16, // LSB
         16, // MSB
         true, // Readable
@@ -79624,7 +79598,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "RXFULL",
-        "RX Buffer Full: Asserted when the RX Buffer is full, i.e.",
+        "RX Buffer Full.",
         19, // LSB
         19, // MSB
         true, // Readable
@@ -79632,7 +79606,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "RXDMA",
-        "RX Buffer DMA: Asserted when RX Buffer read out via DMA is active i.",
+        "RX Buffer DMA.",
         23, // LSB
         23, // MSB
         true, // Readable
@@ -79649,7 +79623,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "TXFULL",
-        "TX Buffer Full: Asserted when no more data can be stored.",
+        "TX Buffer Full.",
         27, // LSB
         27, // MSB
         true, // Readable
@@ -79657,8 +79631,7 @@ static const field_t hw_quadspi_sr[] =
     },
     {
         "DLPSMP",
-        "Data learning pattern sampling point: The sampling point found by the "
-        "controller with the data learning pattern.",
+        "Data learning pattern sampling point.",
         29, // LSB
         31, // MSB
         true, // Readable
@@ -79672,8 +79645,7 @@ static const field_t hw_quadspi_fr[] =
 {
     {
         "TFF",
-        "IP Command Transaction Finished Flag: Set when the QuadSPI module has "
-        "finished a running IP Command.",
+        "IP Command Transaction Finished Flag.",
         0, // LSB
         0, // MSB
         true, // Readable
@@ -79681,9 +79653,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "IPGEF",
-        "IP Command Trigger during AHB Grant Error Flag: Set when the following"
-        " condition occurs: A write access occurs to the QSPI_IPCR[SEQID] field"
-        " and the QSPI_SR[AHBGNT] bit is set.",
+        "IP Command Trigger during AHB Grant Error Flag.",
         4, // LSB
         4, // MSB
         true, // Readable
@@ -79707,9 +79677,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "IUEF",
-        "IP Command Usage Error Flag: Set when in parallel flash mode the execu"
-        "tion of an IP Command is started and the sequence pointed to by the se"
-        "quence ID contains a WRITE or a WRITE_DDR command.",
+        "IP Command Usage Error Flag.",
         11, // LSB
         11, // MSB
         true, // Readable
@@ -79717,8 +79685,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "ABOF",
-        "AHB Buffer Overflow Flag: Set when the size of the AHB access exceeds "
-        "the size of the AHB buffer.",
+        "AHB Buffer Overflow Flag.",
         12, // LSB
         12, // MSB
         true, // Readable
@@ -79726,9 +79693,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "ABSEF",
-        "AHB Sequence Error Flag: Set when the execution of an AHB Command is s"
-        "tarted with a WRITE or WRITE_DDR Command in the sequence pointed to by"
-        " the QSPI_BUFxCR register.",
+        "AHB Sequence Error Flag.",
         15, // LSB
         15, // MSB
         true, // Readable
@@ -79736,8 +79701,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "RBDF",
-        "RX Buffer Drain Flag: Will be set if the QuadSPI_SR[RXWE] status bit i"
-        "s asserted.",
+        "RX Buffer Drain Flag.",
         16, // LSB
         16, // MSB
         true, // Readable
@@ -79745,8 +79709,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "RBOF",
-        "RX Buffer Overflow Flag: Set when not all the data read from the seria"
-        "l flash device could be pushed into the RX Buffer.",
+        "RX Buffer Overflow Flag.",
         17, // LSB
         17, // MSB
         true, // Readable
@@ -79754,8 +79717,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "ILLINE",
-        "Illegal Instruction Error Flag: Set when an illegal instruction is enc"
-        "ountered by the controller in any of the sequences.",
+        "Illegal Instruction Error Flag.",
         23, // LSB
         23, // MSB
         true, // Readable
@@ -79763,9 +79725,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "TBUF",
-        "TX Buffer Underrun Flag: Set when the module tried to pull data althou"
-        "gh TX Buffer was emptyor the buffer contains less than 128bits of data"
-        ".",
+        "TX Buffer Underrun Flag.",
         26, // LSB
         26, // MSB
         true, // Readable
@@ -79773,8 +79733,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "TBFF",
-        "TX Buffer Fill Flag: Before writing to the TX buffer, this bit should "
-        "be cleared.",
+        "TX Buffer Fill Flag.",
         27, // LSB
         27, // MSB
         true, // Readable
@@ -79782,10 +79741,7 @@ static const field_t hw_quadspi_fr[] =
     },
     {
         "DLPFF",
-        "Data Learning Pattern Failure Flag: Set when DATA_LEARN instruction wa"
-        "s encountered in a sequence but no sampling point was found for the da"
-        "ta learning pattern The controller automatically starts sampling using"
-        " the value in QSPI_SMPR[DDRSMP].",
+        "Data Learning Pattern Failure Flag.",
         31, // LSB
         31, // MSB
         true, // Readable
@@ -80035,7 +79991,7 @@ static const field_t hw_quadspi_rbdr0[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80049,7 +80005,7 @@ static const field_t hw_quadspi_rbdr1[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80063,7 +80019,7 @@ static const field_t hw_quadspi_rbdr2[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80077,7 +80033,7 @@ static const field_t hw_quadspi_rbdr3[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80091,7 +80047,7 @@ static const field_t hw_quadspi_rbdr4[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80105,7 +80061,7 @@ static const field_t hw_quadspi_rbdr5[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80119,7 +80075,7 @@ static const field_t hw_quadspi_rbdr6[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80133,7 +80089,7 @@ static const field_t hw_quadspi_rbdr7[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80147,7 +80103,7 @@ static const field_t hw_quadspi_rbdr8[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80161,7 +80117,7 @@ static const field_t hw_quadspi_rbdr9[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80175,7 +80131,7 @@ static const field_t hw_quadspi_rbdr10[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80189,7 +80145,7 @@ static const field_t hw_quadspi_rbdr11[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80203,7 +80159,7 @@ static const field_t hw_quadspi_rbdr12[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80217,7 +80173,7 @@ static const field_t hw_quadspi_rbdr13[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80231,7 +80187,7 @@ static const field_t hw_quadspi_rbdr14[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80245,7 +80201,7 @@ static const field_t hw_quadspi_rbdr15[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80259,7 +80215,7 @@ static const field_t hw_quadspi_rbdr16[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80273,7 +80229,7 @@ static const field_t hw_quadspi_rbdr17[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80287,7 +80243,7 @@ static const field_t hw_quadspi_rbdr18[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80301,7 +80257,7 @@ static const field_t hw_quadspi_rbdr19[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80315,7 +80271,7 @@ static const field_t hw_quadspi_rbdr20[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80329,7 +80285,7 @@ static const field_t hw_quadspi_rbdr21[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80343,7 +80299,7 @@ static const field_t hw_quadspi_rbdr22[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80357,7 +80313,7 @@ static const field_t hw_quadspi_rbdr23[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80371,7 +80327,7 @@ static const field_t hw_quadspi_rbdr24[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80385,7 +80341,7 @@ static const field_t hw_quadspi_rbdr25[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80399,7 +80355,7 @@ static const field_t hw_quadspi_rbdr26[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80413,7 +80369,7 @@ static const field_t hw_quadspi_rbdr27[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80427,7 +80383,7 @@ static const field_t hw_quadspi_rbdr28[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80441,7 +80397,7 @@ static const field_t hw_quadspi_rbdr29[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80455,7 +80411,7 @@ static const field_t hw_quadspi_rbdr30[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -80469,7 +80425,7 @@ static const field_t hw_quadspi_rbdr31[] =
         0, // LSB
         31, // MSB
         true, // Readable
-        true // Writable
+        false // Writable
     },
     { 0 } // Terminator
 };
@@ -84158,8 +84114,8 @@ static const reg_t hw_quadspi[] =
     {
         "SR",
         "The QSPI_SR register provides all available status information about S"
-        "FM command execution and arbitration, the RX Buffer and TX Buffer and "
-        "the AHB Buffer.",
+        "FM command execution and arbitration, the RX Buffer, TX Buffer, and th"
+        "e AHB Buffer.",
         4, // Width in bytes
         0x0000015c, // Base address offset
         true, // Readable
@@ -84267,7 +84223,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000200, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr0
     },
@@ -84278,7 +84234,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000204, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr1
     },
@@ -84289,7 +84245,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000208, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr2
     },
@@ -84300,7 +84256,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x0000020c, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr3
     },
@@ -84311,7 +84267,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000210, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr4
     },
@@ -84322,7 +84278,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000214, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr5
     },
@@ -84333,7 +84289,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000218, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr6
     },
@@ -84344,7 +84300,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x0000021c, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr7
     },
@@ -84355,7 +84311,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000220, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr8
     },
@@ -84366,7 +84322,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000224, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr9
     },
@@ -84377,7 +84333,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000228, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr10
     },
@@ -84388,7 +84344,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x0000022c, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr11
     },
@@ -84399,7 +84355,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000230, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr12
     },
@@ -84410,7 +84366,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000234, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr13
     },
@@ -84421,7 +84377,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000238, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr14
     },
@@ -84432,7 +84388,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x0000023c, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr15
     },
@@ -84443,7 +84399,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000240, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr16
     },
@@ -84454,7 +84410,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000244, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr17
     },
@@ -84465,7 +84421,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000248, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr18
     },
@@ -84476,7 +84432,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x0000024c, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr19
     },
@@ -84487,7 +84443,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000250, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr20
     },
@@ -84498,7 +84454,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000254, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr21
     },
@@ -84509,7 +84465,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000258, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr22
     },
@@ -84520,7 +84476,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x0000025c, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr23
     },
@@ -84531,7 +84487,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000260, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr24
     },
@@ -84542,7 +84498,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000264, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr25
     },
@@ -84553,7 +84509,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000268, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr26
     },
@@ -84564,7 +84520,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x0000026c, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr27
     },
@@ -84575,7 +84531,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000270, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr28
     },
@@ -84586,7 +84542,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000274, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr29
     },
@@ -84597,7 +84553,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x00000278, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr30
     },
@@ -84608,7 +84564,7 @@ static const reg_t hw_quadspi[] =
         4, // Width in bytes
         0x0000027c, // Base address offset
         true, // Readable
-        true, // Writable
+        false, // Writable
         1, // Number of bitfields
         hw_quadspi_rbdr31
     },
@@ -97106,18 +97062,18 @@ static const field_t hw_usb_uog1_usbcmd[] =
         true // Writable
     },
     {
-        "SUTW",
-        "Setup TripWire - Read/Write.",
-        13, // LSB
-        13, // MSB
+        "ATDTW",
+        "Add dTD TripWire - Read/Write.",
+        12, // LSB
+        12, // MSB
         true, // Readable
         true // Writable
     },
     {
-        "ATDTW",
-        "Add dTD TripWire - Read/Write.",
-        14, // LSB
-        14, // MSB
+        "SUTW",
+        "Setup TripWire - Read/Write.",
+        13, // LSB
+        13, // MSB
         true, // Readable
         true // Writable
     },
@@ -99615,18 +99571,18 @@ static const field_t hw_usb_uog2_usbcmd[] =
         true // Writable
     },
     {
-        "SUTW",
-        "Setup TripWire - Read/Write.",
-        13, // LSB
-        13, // MSB
+        "ATDTW",
+        "Add dTD TripWire - Read/Write.",
+        12, // LSB
+        12, // MSB
         true, // Readable
         true // Writable
     },
     {
-        "ATDTW",
-        "Add dTD TripWire - Read/Write.",
-        14, // LSB
-        14, // MSB
+        "SUTW",
+        "Setup TripWire - Read/Write.",
+        13, // LSB
+        13, // MSB
         true, // Readable
         true // Writable
     },
@@ -108619,9 +108575,8 @@ static const field_t hw_xtalosc24m_misc0[] =
         true // Writable
     },
     {
-        "RTC_RINGOSC_EN",
-        "Enables the internal ring oscillator that can be used in lieu of an ex"
-        "ternal 32k crystal.",
+        "DISCON_HIGH_SNVS",
+        "This bit controls a switch from VDD_HIGH_IN to VDD_SNVS_IN.",
         12, // LSB
         12, // MSB
         true, // Readable
@@ -109961,8 +109916,7 @@ const module_t mx6ul[] =
     { "IOMUXC",         1, 0x020e0000, 419,  hw_iomuxc },
     { "IOMUXC_GPR",     1, 0x020e4000, 9,    hw_iomuxc_gpr },
     { "KPP",            1, 0x020b8000, 4,    hw_kpp },
-    { "LCDIF1",         1, 0x02220000, 54,   hw_lcdif },
-    { "LCDIF2",         2, 0x02224000, 54,   hw_lcdif },
+    { "LCDIF",          1, 0x021c8000, 54,   hw_lcdif },
     { "MMDC",           1, 0x021b0000, 69,   hw_mmdc },
     { "OCOTP",          1, 0x021bc000, 144,  hw_ocotp },
     { "PMU",            1, 0x020c8000, 16,   hw_pmu },
