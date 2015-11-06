@@ -24,8 +24,12 @@
 
 #define BUFFER_LEN	200
 #define T0_CMD_LEN	5
+#define ILLEGLE_CMD	20
 
-/*These command is application level. These command are dumped from test program before*/
+/* These command is application level. These
+ * command are dumped from test program before.
+ * CLA INS P1 P2 Lc DATA Le
+ */
 static unsigned char cmd0[7] = {0xa0, 0xa4, 0x00, 0x00, 0x02, 0x3f, 0x00};
 static unsigned char cmd1[7] = {0xa0, 0xa4, 0x00, 0x00, 0x02, 0x2f, 0xe2};
 static unsigned char cmd2[5] = {0xa0, 0xb0, 0x00, 0x00, 0x0a};
@@ -64,7 +68,26 @@ static int send_t0_cmd(int fd, char *cmd_buff, unsigned char cmd_len, char *rcv_
 		ret = ioctl(fd, SIM_IOCTL_RCV, &rcv_data);
 		if (ret < 0)
 			return ret;
+
 		rx_pos += rcv_data.rcv_length;
+
+		/* illgal status byte */
+		if (rcv_buff[0] == 0x6e && rcv_buff[1] == 0X00) {
+			printf("CLA not support\n");
+			return -ILLEGLE_CMD;
+		} else if (rcv_buff[0] == 0x6d && rcv_buff[1] == 0X00) {
+			printf("CLA support, but INS invalid\n");
+			return -ILLEGLE_CMD;
+		} else if (rcv_buff[0] == 0x6b && rcv_buff[1] == 0X00) {
+			printf("CLA INS support, but P1P2 incorect\n");
+			return -ILLEGLE_CMD;
+		} else if (rcv_buff[0] == 0x67 && rcv_buff[1] == 0X00) {
+			printf("CLA INS P1 P2 supported, but Lc incorrect\n");
+			return -ILLEGLE_CMD;
+		} else if (rcv_buff[0] == 0x6f && rcv_buff[1] == 0X00) {
+			printf("cmd not supported and no precise diagnosis given\n");
+			return -ILLEGLE_CMD;
+		}
 	}
 
 	for (i = 0; i < rx_pos; i++)
@@ -115,8 +138,11 @@ int main(int argc, char *argv[])
 
 	for (i = 0; i < sizeof(cmd_array_size); i++) {
 		ret = send_t0_cmd(sim_fd, cmd_array[i], cmd_array_size[i], rx_buffer);
+
+		if (ret == -ILLEGLE_CMD)
+			break;
 		if (ret < 0) {
-			printf("Error when tx/rx\n");
+			printf("Error when tx/rx:%d\n", ret);
 			break;
 		}
 	}
