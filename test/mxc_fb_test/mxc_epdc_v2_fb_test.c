@@ -160,6 +160,7 @@ static __u32 update_to_display(int left, int top, int width, int height, int wav
 	int wait = wait_for_complete | (flags & EPDC_FLAG_TEST_COLLISION);
 	int max_retry = 10;
 
+	upd_data.dither_mode = 0;
 	upd_data.update_mode = UPDATE_MODE_PARTIAL;
 	upd_data.waveform_mode = wave_mode;
 	upd_data.update_region.left = left;
@@ -217,6 +218,7 @@ static __u32 update_to_display_with_dithering(int left, int top, int width, int 
 	int wait = wait_for_complete | (flags & EPDC_FLAG_TEST_COLLISION);
 	int max_retry = 10;
 
+	upd_data.dither_mode = 0;
 	upd_data.update_mode = UPDATE_MODE_PARTIAL;
 	upd_data.waveform_mode = wave_mode;
 	if (hw_dithering) {
