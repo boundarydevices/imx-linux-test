@@ -8,7 +8,9 @@ LOCAL_SRC_FILES := \
        mx6q_modules.c \
        mx6sx_modules.c \
        mx6sl_modules.c \
-       mx6ul_modules.c
+       mx6ul_modules.c \
+       mx7d_modules.c \
+       mx6ull_modules.c
 
 #LOCAL_CFLAGS += -DBUILD_FOR_ANDROID
 

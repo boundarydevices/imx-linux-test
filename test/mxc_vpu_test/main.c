@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013, 2016 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -24,6 +24,8 @@
 #include <signal.h>
 #include <getopt.h>
 #include "vpu_test.h"
+
+#include "../../include/soc_check.h"
 
 #define ONE_FRAME_INTERV 100000 // 100 ms
 
@@ -485,13 +487,23 @@ vputest_main(int argc, char *argv[])
 main(int argc, char *argv[])
 #endif
 {
-	int err, nargc, i, ret = 0;
+	int err, nargc, i, ret;
 	char *pargv[32] = {0}, *dbg_env;
 	pthread_t sigtid;
 #ifdef COMMON_INIT
 	vpu_versioninfo ver;
 #endif
 	int ret_thr;
+
+	char *soc_list[] = {"i.MX6Q", "i.MX6QP", "i.MX6DL", " "};
+
+	ret = soc_version_check(soc_list);
+	if (ret == 0) {
+		printf("mxc_vpu_test.out not supported on current soc\n");
+		return 0;
+	}
+
+	ret = 0;
 
 #ifndef COMMON_INIT
 	srand((unsigned)time(0)); /* init seed of rand() */

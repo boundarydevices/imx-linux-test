@@ -7,11 +7,7 @@ source /unit_tests/test-utils.sh
 #
 STATUS=0
 
-case $(platform) in
-	IMX31ADS | IMX32ADS )	uart_list="0 2 4" ;;
-	MXC91131EVB)		uart_list="0 2";;
-	* )			uart_list="0 1 2" ;;
-esac
+uart_list="0 1 2" ;
 
 for i in $uart_list; do
 	check_devnode "/dev/ttymxc${i}"

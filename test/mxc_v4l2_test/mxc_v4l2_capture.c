@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2016 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -39,14 +39,10 @@ extern "C"{
 #include <stdlib.h>
 #include <asm/types.h>
 #include <linux/videodev2.h>
+#include <linux/mxc_v4l2.h>
 #include <sys/mman.h>
 #include <string.h>
 #include <malloc.h>
-
-struct v4l2_mxc_offset {
-	uint32_t u_offset;
-	uint32_t v_offset;
-};
 
 #define TEST_BUFFER_NUM 3
 
@@ -150,7 +146,7 @@ int v4l_capture_setup(void)
         struct v4l2_streamparm parm;
 	struct v4l2_crop crop;
         int fd_v4l = 0;
-		struct v4l2_mxc_offset off;
+		struct v4l2_mxc_dest_crop of;
 	struct v4l2_dbg_chip_ident chip;
 	struct v4l2_frmsizeenum fsize;
 	struct v4l2_fmtdesc ffmt;
@@ -223,23 +219,36 @@ int v4l_capture_setup(void)
 		}
 	}
 
+		of.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if (g_extra_pixel){
+			of.offset.u_offset = (2 * g_extra_pixel + g_out_width) * (g_out_height + g_extra_pixel)
+				 - g_extra_pixel + (g_extra_pixel / 2) * ((g_out_width / 2)
+				 + g_extra_pixel) + g_extra_pixel / 2;
+			of.offset.v_offset = of.offset.u_offset + (g_extra_pixel + g_out_width / 2) *
+				((g_out_height / 2) + g_extra_pixel);
+		} else {
+			of.offset.u_offset = 0;
+			of.offset.v_offset = 0;
+		}
+
+	if (g_usb_camera != 1) {
+		if (ioctl(fd_v4l, VIDIOC_S_DEST_CROP, &of) < 0)
+		{
+			printf("set dest crop failed\n");
+			return 0;
+		}
+        }
+
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmt.fmt.pix.pixelformat = g_cap_fmt;
+        fmt.fmt.pix.pixelformat = g_cap_fmt;
         fmt.fmt.pix.width = g_out_width;
         fmt.fmt.pix.height = g_out_height;
         if (g_extra_pixel){
-			off.u_offset = (2 * g_extra_pixel + g_out_width) * (g_out_height + g_extra_pixel)
-				 - g_extra_pixel + (g_extra_pixel / 2) * ((g_out_width / 2)
-				 + g_extra_pixel) + g_extra_pixel / 2;
-			off.v_offset = off.u_offset + (g_extra_pixel + g_out_width / 2) *
-				((g_out_height / 2) + g_extra_pixel);
         	fmt.fmt.pix.bytesperline = g_out_width + g_extra_pixel * 2;
-			fmt.fmt.pix.priv = (uint32_t) &off;
         	fmt.fmt.pix.sizeimage = (g_out_width + g_extra_pixel * 2 )
         		* (g_out_height + g_extra_pixel * 2) * 3 / 2;
 		} else {
 	        fmt.fmt.pix.bytesperline = g_out_width;
-			fmt.fmt.pix.priv = 0;
         	fmt.fmt.pix.sizeimage = 0;
 		}
 

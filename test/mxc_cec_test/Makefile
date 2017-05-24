@@ -1,19 +1,19 @@
 #
 # Makefile for MediaLB driver test app.
 #
-# list of platforms which did not want this test case
-INCLUDE_LIST:= IMX6Q
-
 INC += -I$(LINUXPATH)/include
-CFLAGS += -lpthread -lcec -lrt
 
-ifeq ($(EXCLUDE_LIST),$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
-OBJS = $(OBJDIR)/mxc_cec_test.out
-else
-OBJS =
-endif
+TARGET = $(OBJDIR)/mxc_cec_test.out
+OBJ = mxc_cec_test.o
 
-all : $(OBJS)
+all : $(TARGET)
+
+LDFLAGS += -lpthread -lcec -lrt -lstdc++ -pthread
+
+$(TARGET):$(OBJ)
+	$(CC) -o $(TARGET) $(OBJ) $(LDFLAGS) -Os
+	$(STRIP) $(TARGET)
+
 
 .PHONY: clean
 clean :

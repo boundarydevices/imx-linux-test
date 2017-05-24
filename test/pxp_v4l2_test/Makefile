@@ -1,15 +1,25 @@
-# list of platforms which want this test case
-INCLUDE_LIST:="IMX233 IMX28 IMX50 IMX51 IMX5 IMX6SL IMX6SX IMX7D IMX6UL"
+# Just use the pxp library to get contiguous physical memory for USERPTR testing
+# However, be aware that this is not the only way.
+CFLAGS += -DGET_CONTI_PHY_MEM_VIA_PXP_LIB
 
-CFLAGS += -lpthread
+TARGET = $(OBJDIR)/pxp_v4l2_test.out \
+	$(OBJDIR)/pxp_v4l2_out_test.sh \
+	$(OBJDIR)/mx6s_v4l2_capture.out
 
-ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
-OBJS = $(OBJDIR)/pxp_v4l2_test.out $(OBJDIR)/pxp_v4l2_out_test.sh
-else
-OBJS =
-endif
+all : $(TARGET)
 
-all : $(OBJS)
+LDFLAGS += -lpthread -lpxp -lstdc++ -pthread
+
+$(OBJDIR)/pxp_v4l2_test.out : pxp_v4l2_test.o
+	$(CC) -o $(OBJDIR)/pxp_v4l2_test.out pxp_v4l2_test.o $(LDFLAGS) -Os
+	$(STRIP) $(OBJDIR)/pxp_v4l2_test.out
+
+$(OBJDIR)/mx6s_v4l2_capture.out : mx6s_v4l2_capture.o
+	$(CC) -o $(OBJDIR)/mx6s_v4l2_capture.out mx6s_v4l2_capture.o $(LDFLAGS) -Os
+	$(STRIP) $(OBJDIR)/mx6s_v4l2_capture.out
+
+$(OBJDIR)/pxp_v4l2_out_test.sh: pxp_v4l2_out_test.sh
+	cp pxp_v4l2_out_test.sh $(OBJDIR)
 
 .PHONY: clean
 clean :

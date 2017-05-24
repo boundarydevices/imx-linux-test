@@ -19,8 +19,8 @@
 #include <string.h>
 #include <unistd.h>
 
-
 #include "hdmi-cec.h"
+#include "../../include/soc_check.h"
 static int ready_flay = 0;
 int my_hdmi_cec_callback(unsigned char event_type, void *parg)
 {
@@ -46,7 +46,16 @@ int my_hdmi_cec_callback(unsigned char event_type, void *parg)
 
 int main(int argc, char *argv[])
 {
-	printf("Start CEC testing! \n");
+	int ret;
+	char *soc_list[] = {"i.MX6Q", "i.MX6QP", "i.MX6DL", " "};
+
+	ret = soc_version_check(soc_list);
+	if (ret == 0) {
+		printf("mxc_cec_test.out not supported on current soc\n");
+		return 0;
+	}
+
+	printf("Start CEC testing!\n");
 	hdmi_cec_init();
 	hdmi_cec_open(Playback_Device,my_hdmi_cec_callback);
 	while(0 == ready_flay){

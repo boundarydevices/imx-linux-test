@@ -2,19 +2,21 @@
 
 source /unit_tests/test-utils.sh
 
+STATUS=0
+if [[ $(platform) != i.MX6Q* ]] && [[ $(platform) != i.MX6D* ]]; then
+	echo autorun-ipu.sh not supported on current soc
+	exit $STATUS
+fi
+
 start_time=`date`
 echo =============== test start from $start_time ==============================
 
 #
 # Exit status is 0 for PASS, nonzero for FAIL
 #
-STATUS=0
 
 # devnode test
-if ([ "$(platform)" = IMX51 ] || [ "$(platform)" = IMX53 ] \
-	|| [ "$(platform)" = IMX6 ]); then
 check_devnode "/dev/mxc_ipu"
-fi
 
 # Turn off fb blanking
 echo -e "\033[9;0]" > /dev/tty0
@@ -24,8 +26,6 @@ echo 0 > /sys/class/graphics/fb1/blank
 # IPU Tests
 #
 
-if ([ "$(platform)" = IMX51 ] || [ "$(platform)" = IMX53 ] \
-	|| [ "$(platform)" = IMX6 ]); then
 IPU_NO=`cat /sys/class/graphics/fb0/name`
 SHOW_ON_FBDEV="ipu0-1st-ovfb"
 if ([[ $IPU_NO == "DISP4 BG" ]] || [[ $IPU_NO == "DISP4 BG - DI1" ]]); then
@@ -147,8 +147,6 @@ done
 done
 
 rm -f $RGB_SMALL_FILE $RGB_FULL_FILE $YUV_SMALL_FILE $YUV_FULL_FILE
-
-fi
 
 print_status
 

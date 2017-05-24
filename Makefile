@@ -33,7 +33,7 @@ export INC CROSS_COMPILE LINUXPATH PLATFORM TOPDIR OBJDIR
 
 .PHONY: test module_test doc clean distclean pkg install
 
-all : test module_test
+all : test
 
 test:
 	@echo

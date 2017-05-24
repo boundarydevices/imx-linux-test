@@ -14,15 +14,8 @@ run_hdd_case()
 	# Generate Test data
 	dd if=/dev/urandom of=/root/hdd_data bs=512 count=10240
 
-	if [ "$(platform)" = "IMX31_3STACK" ]
-	then
-		dd if=/root/hdd_data of=/dev/hda bs=512 count=10240
-		dd if=/dev/hda of=/root/hdd_data1 bs=512 count=10240
-	else
-
-		dd if=/root/hdd_data of=/dev/sda bs=512 count=10240
-		dd if=/dev/sda of=/root/hdd_data1 bs=512 count=10240
-	fi
+	dd if=/root/hdd_data of=/dev/sda bs=512 count=10240
+	dd if=/dev/sda of=/root/hdd_data1 bs=512 count=10240
 
 	cmp /root/hdd_data1 /root/hdd_data
 
@@ -36,31 +29,11 @@ run_hdd_case()
 	fi
 }
 
-#setup
-if [ "$(platform)" = "IMX27ADS" ]
-then
-	echo "IMX27ADS"
-fi
-if [ "$(platform)" = "IMX31_3STACK" ]
-then
-	echo "IMX31_3STACK"
-	modprobe mxc-ide
-	sleep 5
-	modprobe ide_disk
-	sleep 1
-else
-	echo "$(platform)"
-	modprobe pata_fsl
-	sleep 5
-fi
+echo "$(platform)"
+modprobe pata_fsl
+sleep 5
 
-# devnode test
-if [ "$(platform)" = "IMX31_3STACK" ]
-then
-	check_devnode "/dev/hda"
-else
-	check_devnode "/dev/sda"
-fi
+check_devnode "/dev/sda"
 
 if [ "$STATUS" = 0 ]; then
 	run_hdd_case

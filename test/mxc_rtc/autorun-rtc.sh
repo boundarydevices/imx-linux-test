@@ -8,14 +8,8 @@ source /unit_tests/test-utils.sh
 STATUS=0
 
 echo "$(platform)"
-if [ "$(platform)" != IMX31ADS ] && [ "$(platform)" != IMX32ADS ] \
-    && [ "$(platform)" != IMX25_3STACK ] && [ "$(platform)" != IMX35_3STACK ]; then
-	rtc_test_param=--no-periodic
-		RTC_IRQS_EXPECTED=11
-else
-	rtc_test_param=--full
-	RTC_IRQS_EXPECTED=131
-fi
+rtc_test_param=--no-periodic
+RTC_IRQS_EXPECTED=11
 
 # devnode test
 check_devnode "/dev/rtc0"
@@ -39,10 +33,6 @@ if [ "$RTC_IRQS" != "$RTC_IRQS_EXPECTED" ]; then
 	STATUS=1
 else
 	echo "checking rtc interrupts PASS"
-       #RTC wait for time set notification test
-	if [ "$(platform)" == IMX50 ] || [ "$(platform)" == IMX51 ] || [ "$(platform)" == IMX53 ]; then
-          run_testcase "./rtc_timesetnotification_test.out"
-      fi
 fi
 
 print_status

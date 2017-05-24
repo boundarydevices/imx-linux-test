@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc.
+ * Copyright 2004-2013, 2016 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -479,7 +479,11 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 	struct v4l2_format fmt = {0};
 	struct v4l2_requestbuffers reqbuf = {0};
 	struct v4l2_mxc_offset off = {0};
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 	struct v4l2_rect icrop = {0};
+#else
+	struct v4l2_crop icrop = {0};
+#endif
 	struct vpu_display *disp;
 	struct v4l_specific_data *v4l_rsd;
 	int fd_fb;
@@ -708,14 +712,28 @@ v4l_display_open(struct decode *dec, int nframes, struct rot rotation, Rect crop
 		goto err;
 	} else if (right || bottom) {
 		if (cpu_is_mx6x()) {
-			/* This is aligned with new V4L interface on 2.6.38 kernel */
 			fmt.fmt.pix.width = width;
 			fmt.fmt.pix.height = height;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
+			/* This is aligned with new V4L interface on 2.6.38 kernel */
 			icrop.left = left;
 			icrop.top = top;
 			icrop.width = right - left;
 			icrop.height = bottom - top;
 			fmt.fmt.pix.priv =  (unsigned long)&icrop;
+#else
+			/* This is aligned with new V4L interface on 4.1 kernel */
+			icrop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+			icrop.c.left = left;
+			icrop.c.top = top;
+			icrop.c.width = right - left;
+			icrop.c.height =  bottom - top;
+			err = ioctl(fd, VIDIOC_S_INPUT_CROP, &icrop);
+			if (err < 0) {
+				err_msg("VIDIOC_S_INPUT_CROP failed\n");
+				goto err;
+			}
+#endif
 		} else {
 			fmt.fmt.pix.width = right - left;
 			fmt.fmt.pix.height = bottom - top;

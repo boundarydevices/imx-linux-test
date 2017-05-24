@@ -155,29 +155,7 @@ print_status()
 #
 platform()
 {
-	# Get Hardware string from proc, knock out spaces, periods, hyphens, capitalize it all.
-	plat=$(egrep '^Hardware' /proc/cpuinfo|sed -r 's,.*Freescale ,,'| \
-		sed 's,i,I,'|sed -r 's,( |\.|\-),,g')
-
-	revision=$(egrep '^Revision' /proc/cpuinfo|cut -d' ' -f2)
-
-	case $plat in
-		MX31* ) case $revision in
-				31* )	plat=IMX31ADS ;;
-				* )	plat=IMX32ADS ;;
-			esac ;;
-
-		MX253StackBoard )	plat=IMX25_3STACK ;;
-		MX313StackBoard )	plat=IMX31_3STACK ;;
-		MX353StackBoard )	plat=IMX35_3STACK ;;
-		MX373StackBoard )	plat=IMX37_3STACK ;;
-		MX51* )       		plat=IMX51 ;;
-		MX53* )       		plat=IMX53 ;;
-		MX50* )       		plat=IMX50 ;;
-		*MX6* )       		plat=IMX6 ;;
-
-		* )     ;;
-	esac
+	plat=`cat /sys/devices/soc0/soc_id`
 	echo "$plat"
 }
 

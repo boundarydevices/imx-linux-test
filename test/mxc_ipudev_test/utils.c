@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Freescale Semiconductor, Inc. All Rights Reserved.
+ * Copyright 2009-2016 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  */
 
@@ -85,7 +85,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 	/* general */
 	str = strstr(buf, "priority");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -98,7 +98,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "task_id");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -111,7 +111,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "timeout");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -124,7 +124,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "fcount");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -137,7 +137,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "loop_cnt");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -151,7 +151,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 	/* input */
 	str = strstr(buf, "in_width");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -164,7 +164,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "in_height");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -177,7 +177,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "in_fmt");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -191,7 +191,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "in_posx");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -206,7 +206,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "in_posy");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -221,7 +221,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "in_crop_w");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -236,7 +236,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "in_crop_h");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -251,7 +251,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "deinterlace_en");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -266,7 +266,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "motion_sel");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -282,7 +282,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 	/* overlay */
 	str = strstr(buf, "overlay_en");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -295,7 +295,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "ov_width");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -308,7 +308,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "ov_height");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -321,7 +321,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "ov_fmt");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -335,7 +335,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "ov_posx");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -350,7 +350,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "ov_posy");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -365,7 +365,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "ov_crop_w");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -380,7 +380,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "ov_crop_h");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -395,7 +395,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "alpha_mode");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -410,7 +410,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "alpha_value");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -425,7 +425,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "colorkey_en");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -440,7 +440,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "colorkey_value");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -456,7 +456,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 	/* output */
 	str = strstr(buf, "out_width");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -469,7 +469,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_height");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -482,7 +482,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_fmt");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -496,7 +496,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_rot");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -509,7 +509,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_posx");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -522,7 +522,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_posy");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -535,7 +535,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_crop_w");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -550,7 +550,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_crop_h");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -565,7 +565,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_to_fb");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -578,7 +578,7 @@ int parse_options(char *buf, ipu_test_handle_t *test_handle)
 
 	str = strstr(buf, "out_filename");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {

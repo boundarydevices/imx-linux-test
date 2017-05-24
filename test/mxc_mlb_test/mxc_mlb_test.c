@@ -27,6 +27,8 @@
 
 #include <linux/mxc_mlb.h>
 
+#include "../../include/soc_check.h"
+
 #define MLB_SYNC_DEV	"/dev/sync"
 #define MLB_CTRL_DEV	"/dev/ctrl"
 #define MLB_ASYNC_DEV	"/dev/async"
@@ -65,6 +67,13 @@ int main(int argc, char *argv[])
 {
 	int ret, flags;
 	char test_case_str[10] = { 0 };
+	char *soc_list[] = {"i.MX6SX", "i.MX6QP", "i.MX6Q", "i.MX6DL",  " "};
+
+	ret = soc_version_check(soc_list);
+	if (ret == 0) {
+		printf("mxc_mlb_test.out not supported on current soc\n");
+		return 0;
+	}
 
 	while (1) {
 		ret = getopt(argc, argv, "vf:t:hbq:p:");
@@ -296,6 +305,7 @@ int do_txrx_test(int fd)
 			ret = read(fd, buf, 2048);
 			if (ret <= 0) {
 				printf("Failed to read MLB packet: %s\n", strerror(errno));
+				break;
 			} else {
 				vprintf(">> Read MLB packet:\n(length)\n%d\n(data)\n", ret);
 				dump_hex(buf, ret);

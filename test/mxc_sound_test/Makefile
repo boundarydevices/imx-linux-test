@@ -3,10 +3,7 @@
 #
 CFLAGS += -Wall -D__LINUX -I$(LINUXPATH)/sound/oss -g $(CCOPTS) -lpthread
 
-# list of platforms which did not want this test case
-EXCLUDE_LIST:=
 
-ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = \
 	$(OBJDIR)/check_ioctls.out \
 	$(OBJDIR)/check_recording.out \
@@ -17,9 +14,6 @@ OBJS = \
 	$(OBJDIR)/check_synchronization.out \
 	$(OBJDIR)/check_2w1r.out \
 	$(OBJDIR)/autorun-sound.sh
-else
-OBJS =
-endif
 
 all : $(OBJS)
 

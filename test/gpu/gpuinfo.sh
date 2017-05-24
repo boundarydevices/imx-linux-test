@@ -1,5 +1,14 @@
 #!/bin/bash
 
+source /unit_tests/test-utils.sh
+
+STATUS=0
+if [[ $(platform) != i.MX6Q* ]] && [[ $(platform) != i.MX6D* ]] \
+&& [[ $(platform) != i.MX6SX ]] && [[ $(platform) != i.MX6SL ]]; then
+	echo "gpuinfo.sh not supported on current soc"
+	exit $STATUS
+fi
+
 input=$1
 echo "GPU Info"
 cat /sys/kernel/debug/gc/info

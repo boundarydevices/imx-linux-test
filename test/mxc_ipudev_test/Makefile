@@ -1,10 +1,6 @@
-# list of platforms which want this test case
-INCLUDE_LIST:=IMX51 IMX53 IMX6Q
-
 SRCS = mxc_ipudev_test.c utils.c
 LIBS += -lm -lrt
 
-ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 OBJS = $(OBJDIR)/mxc_ipudev_test.out
 $(OBJS): $(SRCS)
 	mkdir -p $(OBJDIR)
@@ -13,9 +9,6 @@ $(OBJS): $(SRCS)
 	cp autorun-ipu.sh $(OBJDIR)
 	cp stefan_interlaced_320x240_5frames.yv12 $(OBJDIR)
 	cp wall-1024x768-565.rgb $(OBJDIR)
-else
-OBJS =
-endif
 
 all: $(OBJS)
 

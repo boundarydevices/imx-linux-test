@@ -24,11 +24,8 @@ echo -n 0 > /sys/class/graphics/fb0/blank
 
 # Color tests
 echo FB Color test
-if [ "$(platform)" = IMX31_3STACK ] || [ "$(platform)" = IMX35_3STACK ] || [ "$(platform)" = IMX25_3STACK ]; then
-	bpp_list="16"
-else
-	bpp_list="16 24 32"
-fi
+
+bpp_list="16 24 32"
 
 for bpp in $bpp_list;
 do

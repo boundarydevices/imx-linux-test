@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2014 Freescale Semiconductor, Inc.
+ * Copyright 2004-2014, 2016 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -541,11 +541,7 @@ read_from_file(struct encode *enc)
 	int chromaInterleave = enc->cmdl->chromaInterleave;
 	int img_size, y_size, c_size;
 	int ret = 0;
-
-	if (enc->src_picwidth != pfb->strideY) {
-		err_msg("Make sure src pic width is a multiple of 16\n");
-		return -1;
-	}
+	int i;
 
 	divX = (format == MODE420 || format == MODE422) ? 2 : 1;
 	divY = (format == MODE420 || format == MODE224) ? 2 : 1;
@@ -558,15 +554,37 @@ read_from_file(struct encode *enc)
 	u_addr = pfb->addrCb + pfb->desc.virt_uaddr - pfb->desc.phy_addr;
 	v_addr = pfb->addrCr + pfb->desc.virt_uaddr - pfb->desc.phy_addr;
 
-	if (img_size == pfb->desc.size) {
-		ret = freadn(src_fd, (void *)y_addr, img_size);
-	} else {
-		ret = freadn(src_fd, (void *)y_addr, y_size);
-		if (chromaInterleave == 0) {
-			ret = freadn(src_fd, (void *)u_addr, c_size);
-			ret = freadn(src_fd, (void *)v_addr, c_size);
+	if (enc->src_picwidth == pfb->strideY) {
+		if (img_size == pfb->desc.size) {
+			ret = freadn(src_fd, (void *)y_addr, img_size);
 		} else {
-			ret = freadn(src_fd, (void *)u_addr, c_size * 2);
+			ret = freadn(src_fd, (void *)y_addr, y_size);
+			if (chromaInterleave == 0) {
+				ret = freadn(src_fd, (void *)u_addr, c_size);
+				ret = freadn(src_fd, (void *)v_addr, c_size);
+			} else {
+				ret = freadn(src_fd, (void *)u_addr, c_size * 2);
+			}
+		}
+	} else {
+		for (i = 0; i < enc->src_picheight; i++) {
+			ret = freadn(src_fd, (void *)y_addr, enc->src_picwidth);
+			y_addr += pfb->strideY;
+		}
+		if (chromaInterleave == 0) {
+			for (i = 0; i < enc->src_picheight / divY; i++) {
+				ret = freadn(src_fd, (void *)u_addr, enc->src_picwidth / divX);
+				u_addr += pfb->strideC;
+			}
+			for (i = 0; i < enc->src_picheight / divY; i++) {
+				ret = freadn(src_fd, (void *)v_addr, enc->src_picwidth / divX);
+				v_addr += pfb->strideC;
+			}
+		} else {
+			for (i = 0; i < enc->src_picheight / divY; i++) {
+				ret = freadn(src_fd, (void *)u_addr, enc->src_picwidth / divX * 2);
+				u_addr += pfb->strideC * 2;
+			}
 		}
 	}
 	return ret;
@@ -818,8 +836,8 @@ err2:
 
 	if (enc->mbInfo.addr)
 		free(enc->mbInfo.addr);
-	if (enc->mbInfo.addr)
-		free(enc->mbInfo.addr);
+	if (enc->mvInfo.addr)
+		free(enc->mvInfo.addr);
 	if (enc->sliceInfo.addr)
 		free(enc->sliceInfo.addr);
 
@@ -1154,7 +1172,7 @@ encoder_open(struct encode *enc)
 			encop.EncStdParam.avcParam.avc_frameCropBottom = 0;
 			if (enc->cmdl->rot_angle != 90 &&
 			    enc->cmdl->rot_angle != 270 &&
-			    enc->enc_picheight == 1080) {
+			    ((enc->enc_picwidth & 15) || (enc->enc_picheight & 15))) {
 				/*
 				 * In case of AVC encoder, when we want to use
 				 * unaligned display width frameCroppingFlag
@@ -1163,6 +1181,10 @@ encoder_open(struct encode *enc)
 				 */
 				encop.EncStdParam.avcParam.avc_frameCroppingFlag = 1;
 				encop.EncStdParam.avcParam.avc_frameCropBottom = 8;
+				encop.EncStdParam.avcParam.avc_frameCropRight
+					= ((enc->enc_picwidth + 15) & ~15) - enc->enc_picwidth;
+				encop.EncStdParam.avcParam.avc_frameCropBottom
+					= ((enc->enc_picheight + 15) & ~15) - enc->enc_picheight;
 			}
 
 		} else {

@@ -7,10 +7,6 @@ source /unit_tests/test-utils.sh
 #
 STATUS=0
 
-if [ "$(platform)" = IMX32ADS ]; then
-	exit $STATUS
-fi
-
 # devnode test
 check_devnode "/dev/hmp4e"
 insmod_test /lib/modules/$(kernel_version)/test/memalloc.ko

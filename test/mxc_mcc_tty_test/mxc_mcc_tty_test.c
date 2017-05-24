@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../../include/soc_check.h"
 
 static int uart_speed(int s)
 {
@@ -100,16 +101,15 @@ int CHUNKS = 100;
 
 void real_op(int fd, char op)
 {
-	char tmp[1024];
+	char tmp[CHUNK_SIZE + 1];
 	int i = 0, k = 0;
-	int count, total = 0;
+	int count = 0, total = 0;
 	char *opstr = (op == 'R' ? "reading" : "writing");
 
 	/* init buffer */
 	if (op == 'W') {
-		for (i = 0; i < CHUNK_SIZE; i++)
-			tmp[i] = (i + 1) % 0x100;
-		i = 0;
+		printf("Doesn't support write yet, just return here.\n");
+		return;
 	}
 
 	while (total < (CHUNK_SIZE * CHUNKS) && k < 10) {
@@ -118,8 +118,8 @@ void real_op(int fd, char op)
 			/* clear it first */
 			memset(tmp, 0, sizeof(tmp));
 			count = read(fd, tmp, CHUNK_SIZE);
-		} else
-			count = write(fd, tmp, CHUNK_SIZE);
+			tmp[CHUNK_SIZE] = '\0';
+		}
 
 		if (count < 0) {
 			printf("\nError while %s: %d attempt %d\n",
@@ -157,6 +157,14 @@ void real_op(int fd, char op)
 
 int main(int argc, char *argv[])
 {
+	int ret;
+	char *soc_list[] = {"i.MX6SX", "i.MX7D", " "};
+	ret = soc_version_check(soc_list);
+	if (ret == 0) {
+		printf("mmc_tty_test.out not supported on current soc\n");
+		return 0;
+	}
+
 	if (argc < 5)
 		printf("Usage:\n\t%s <PORT> <READ/WRITE> X Y\n"
 			"X : the group number\n"

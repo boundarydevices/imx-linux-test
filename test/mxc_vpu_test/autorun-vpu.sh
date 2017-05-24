@@ -7,7 +7,8 @@ source /unit_tests/test-utils.sh
 #
 STATUS=0
 
-if [ "$(platform)" = IMX31ADS ]; then
+if [[ $(platform) != i.MX6Q* ]] && [[ $(platform) != i.MX6D* ]]; then
+	echo autorun-vpu.sh not supported on current soc
 	exit $STATUS
 fi
 

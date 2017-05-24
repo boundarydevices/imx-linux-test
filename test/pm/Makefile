@@ -1,14 +1,6 @@
-# list of platforms which did not want this test case
-EXCLUDE_LIST:=
-
-ifeq (,$(findstring $(PLATFORM), $(EXCLUDE_LIST)))
 OBJS = \
 	$(OBJDIR)/suspend_quick_auto.sh \
 	$(OBJDIR)/suspend_random_auto.sh
-
-else
-OBJS =
-endif
 
 all : $(OBJS)
 

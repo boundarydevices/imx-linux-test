@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <linux/mxcfb.h>
 #include "mxc_ipudev_test.h"
+#include "../../include/soc_check.h"
 
 #define PAGE_ALIGN(x) (((x) + 4095) & ~4095)
 int ctrl_c_rev = 0;
@@ -178,6 +179,14 @@ int main(int argc, char *argv[])
 	struct fb_var_screeninfo fb_var;
 	struct fb_fix_screeninfo fb_fix;
 	int blank;
+	char *soc_list[] = {"i.MX6Q", "i.MX6QP", "i.MX6DL", " "};
+
+	ret = soc_version_check(soc_list);
+	if (ret == 0) {
+		printf("mxc_ipudev_test.out not supported on current soc\n");
+		return 0;
+	}
+
 
 	/*for ctrl-c*/
 	sigemptyset(&act.sa_mask);

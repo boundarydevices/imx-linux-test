@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright 2004-2015 Freescale Semiconductor, Inc. All rights reserved.
  */
 
 /*
@@ -512,16 +512,16 @@ err:
 int
 main(int argc, char **argv)
 {
-        struct v4l2_control ctrl;
-        struct v4l2_format fmt;
-        struct v4l2_framebuffer fb;
-        struct v4l2_cropcap cropcap;
+	struct v4l2_control ctrl;
+	struct v4l2_format fmt;
+	struct v4l2_framebuffer fb;
+	struct v4l2_cropcap cropcap;
 	struct v4l2_capability cap;
 	struct v4l2_fmtdesc fmtdesc;
-        struct v4l2_crop crop;
-	struct v4l2_rect icrop;
-        FILE * fd_in;
-        int retval = TPASS;
+	struct v4l2_crop crop;
+	struct v4l2_crop icrop;
+	FILE * fd_in;
+	int retval = TPASS;
 
         if (process_cmdline(argc, argv) < 0) {
                 printf("MXC Video4Linux Output Device Test\n\n" \
@@ -633,24 +633,34 @@ main(int argc, char **argv)
                 fb.flags = V4L2_FBUF_FLAG_PRIMARY;
         ioctl(fd_v4l, VIDIOC_S_FBUF, &fb);
 
+        icrop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+        icrop.c.top = g_icrop_top;
+        icrop.c.left = g_icrop_left;
+        if (g_icrop_w && g_icrop_h) {
+            icrop.c.width = g_icrop_w;
+            icrop.c.height = g_icrop_h;
+        } else {
+            icrop.c.width = g_in_width;
+            icrop.c.height = g_in_height;
+        }
+        if (ioctl(fd_v4l, VIDIOC_S_INPUT_CROP, &icrop) < 0) {
+            printf("set icrop failed\n");
+            retval = TFAIL;
+            goto err1;
+        }
+
         memset(&fmt, 0, sizeof(fmt));
         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
         fmt.fmt.pix.width=g_in_width;
         fmt.fmt.pix.height=g_in_height;
         fmt.fmt.pix.pixelformat = g_in_fmt;
-	if (g_vdi_enable)
-		fmt.fmt.pix.field = V4L2_FIELD_INTERLACED_TB;
-	if (g_icrop_w && g_icrop_h) {
-		icrop.left = g_icrop_left;
-		icrop.top = g_icrop_top;
-		icrop.width = g_icrop_w;
-		icrop.height = g_icrop_h;
-		fmt.fmt.pix.priv = (unsigned int)&icrop;
-        } else
-		fmt.fmt.pix.priv = 0;
+
+        if (g_vdi_enable)
+            fmt.fmt.pix.field = V4L2_FIELD_INTERLACED_TB;
+
         retval = mxc_v4l_output_setup(&fmt);
-	if (retval < 0)
-		goto err1;
+        if (retval < 0)
+		    goto err1;
 
         g_frame_size = fmt.fmt.pix.sizeimage;
 

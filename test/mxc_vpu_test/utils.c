@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 Freescale Semiconductor, Inc.
+ * Copyright 2004-2016 Freescale Semiconductor, Inc.
  *
  * Copyright (c) 2006, Chips & Media.  All rights reserved.
  */
@@ -653,7 +653,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "operation");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -666,7 +666,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "input");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -680,7 +680,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "output");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -694,7 +694,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "port");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -707,7 +707,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "format");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -720,7 +720,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "rotation");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -734,7 +734,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "ext_rot");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -749,7 +749,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
         str = strstr(buf, "ip");
         if (str != NULL) {
-                str = index(buf, '=');
+                str = strchr(buf, '=');
                 if (str != NULL) {
                         str++;
                         if (*str != '\0') {
@@ -763,7 +763,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "count");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -776,7 +776,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "chromaInterleave");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -789,7 +789,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "mp4Class");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -802,7 +802,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "deblock");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -815,7 +815,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "dering");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -828,7 +828,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "mirror");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -841,7 +841,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "width");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -854,7 +854,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "height");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -867,7 +867,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "bitrate");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -880,7 +880,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "prescan");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -894,7 +894,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "gop");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {
@@ -907,7 +907,7 @@ int parse_options(char *buf, struct cmd_line *cmd, int *mode)
 
 	str = strstr(buf, "quantParam");
 	if (str != NULL) {
-		str = index(buf, '=');
+		str = strchr(buf, '=');
 		if (str != NULL) {
 			str++;
 			if (*str != '\0') {

@@ -11,14 +11,8 @@ OBJ = main.o \
       loopback.o \
       transcode.o
 
-# list of platforms which want this test case
-INCLUDE_LIST:=IMX27ADS IMX51 IMX53 IMX6Q
 
-ifeq ($(PLATFORM),$(findstring $(PLATFORM),$(INCLUDE_LIST)))
 TARGET = mxc_vpu_test.out
-else
-TARGET =
-endif
 
 all: $(TARGET)
 

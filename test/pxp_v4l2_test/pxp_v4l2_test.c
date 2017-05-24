@@ -41,6 +41,8 @@
 #include <linux/fb.h>
 #include <linux/videodev2.h>
 
+#include "../../include/soc_check.h"
+
 #define MAX_V4L2_DEVICE_NR     64
 
 #define DEFAULT_WIDTH	320
@@ -838,6 +840,14 @@ int main(int argc, char **argv)
 {
 	struct pxp_control *pxp;
 	pthread_t sigtid;
+	int ret;
+	char *soc_list[] = {"i.MX6UL", "i.MX7D", "i.MX6SX", "i.MX6SL", " "};
+
+	ret = soc_version_check(soc_list);
+	if (ret == 0) {
+		printf("pxp_v4l2_test.out not supported on current soc\n");
+		return 0;
+	}
 
 	if (!(pxp = pxp_init(argc, argv)))
 		return 1;

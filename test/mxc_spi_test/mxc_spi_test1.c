@@ -202,6 +202,8 @@ int execute_buffer_test(int spi_id, int len, char *buffer)
 	res = transfer(fd, buffer, rbuf, len);
 	if (res < 0) {
 		printf("Failed transferring data: %d\n", errno);
+		free(rbuf);
+		close(fd);
 		return -1;
 	}
 

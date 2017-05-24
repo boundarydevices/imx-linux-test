@@ -13,15 +13,6 @@ script=$(basename $0)
 # which is on some boards.
 MESSAGE="$(date '+%H:%M:%S')"
 
-if [ "$(platform)" = IMX27ADS ]; then
-	# This check allows the test to be run multiple times without getting errors
-	if [ ! -e $MASTER_PATH ]; then
-		insmod_test /lib/modules/$(kernel_version)/kernel/drivers/w1/wire.ko
-		insmod_test /lib/modules/$(kernel_version)/kernel/drivers/w1/masters/mxc_w1.ko
-		insmod_test /lib/modules/$(kernel_version)/kernel/drivers/w1/slaves/w1_ds2433.ko
-	fi
-fi
-
 sleep 2
 
 echo

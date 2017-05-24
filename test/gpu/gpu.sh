@@ -1,6 +1,12 @@
 #!/bin/bash
 
 source /unit_tests/test-utils.sh
+
+if [[ $(platform) != i.MX6Q* ]] && [[ $(platform) != i.MX6D* ]] \
+&& [[ $(platform) != i.MX6SX ]] && [[ $(platform) != i.MX6SL ]]; then
+	echo gpu.sh not supported on current soc
+	exit $STATUS
+fi
 #
 #Save current directory
 #

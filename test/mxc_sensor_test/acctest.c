@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include "../../include/soc_check.h"
 
 #ifndef EV_SYN
 #define EV_SYN 0
@@ -298,6 +299,14 @@ int main(int argc, char **argv)
 	unsigned long bit[EV_MAX][NBITS(KEY_MAX)];
 	char name[256] = "Unknown";
 	int abs[5];
+	int ret;
+	char *soc_list[] = {"i.MX6UL", " "};
+
+	ret = soc_version_check(soc_list);
+	if (ret == 0) {
+		printf("acctest.out not supported on current soc\n");
+		return 0;
+	}
 
 	if (argc < 2) {
 		printf("Usage: evtest /dev/input/eventX\n");

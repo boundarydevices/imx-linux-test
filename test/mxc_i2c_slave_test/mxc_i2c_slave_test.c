@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	fd = open(I2C_MASTER_DEV, O_RDWR);
 	if (fd < 0) {
 		printf("i2c-slave-test:master thread:open device error\n");
-		goto fail;
+		return -1;
 	}
 
 	ret = ioctl(fd, I2C_SLAVE_FORCE, I2C_SLAVE_ADDR);
